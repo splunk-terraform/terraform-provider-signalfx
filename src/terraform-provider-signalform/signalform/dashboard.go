@@ -290,6 +290,32 @@ func dashboardResource() *schema.Resource {
 					},
 				},
 			},
+			"event_overlays": &schema.Schema{
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Description: "Event overlay to add to charts",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"event_line": &schema.Schema{
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Default:     false,
+							Description: "(false by default) Whether a vertical line should be displayed in the plot at the time the event occurs",
+						},
+						"label": &schema.Schema{
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "The text displaying in the dropdown menu used to select this event overlay as an active overlay for the dashboard.",
+						},
+						"color": &schema.Schema{
+							Type:         schema.TypeString,
+							Optional:     true,
+							Description:  "Color to use",
+							ValidateFunc: validatePerSignalColor,
+						},
+					},
+				},
+			},
 		},
 
 		Create: dashboardCreate,
