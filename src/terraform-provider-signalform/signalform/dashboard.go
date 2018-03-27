@@ -296,7 +296,7 @@ func dashboardResource() *schema.Resource {
 				Description: "Event overlay to add to charts",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"event_line": &schema.Schema{
+						"line": &schema.Schema{
 							Type:        schema.TypeBool,
 							Optional:    true,
 							Default:     false,
@@ -312,6 +312,11 @@ func dashboardResource() *schema.Resource {
 							Optional:     true,
 							Description:  "Color to use",
 							ValidateFunc: validatePerSignalColor,
+						},
+						"signal": &schema.Schema{
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "Search term used to define events",
 						},
 					},
 				},
@@ -347,6 +352,10 @@ func getPayloadDashboard(d *schema.ResourceData) ([]byte, error) {
 	}
 	if len(all_filters) > 0 {
 		payload["filters"] = all_filters
+	}
+
+	if overlays := getDashboardEventOverlays(d); len(overlays) > 0 {
+		payload["overlays"] = overlays
 	}
 
 	charts := getDashboardCharts(d)
@@ -502,6 +511,28 @@ func getDashboardVariables(d *schema.ResourceData) []map[string]interface{} {
 		vars_list[i] = item
 	}
 	return vars_list
+}
+
+func getDashboardEventOverlays(d *schema.ResourceData) []map[string]interface{} {
+	overlays := d.Get("event_overlays").(*schema.Set).List()
+	overlay_list := make([]map[string]interface{}, len(overlays))
+	for i, overlay := range overlays {
+		overlay := overlay.(map[string]interface{})
+		item := make(map[string]interface{})
+
+		item["eventSignal"] = overlay["signal"].(string)
+		item["eventLine"] = overlay["line"].(bool)
+		item["label"] = overlay["label"].(string)
+
+		if val, ok := overlay["color"].(string); ok {
+			if elem, ok := PaletteColors[val]; ok {
+				item["eventColorIndex"] = elem
+			}
+		}
+
+		overlay_list[i] = overlay
+	}
+	return overlay_list
 }
 
 func getDashboardFilters(d *schema.ResourceData) []map[string]interface{} {
