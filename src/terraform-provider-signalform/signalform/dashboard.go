@@ -355,7 +355,7 @@ func getPayloadDashboard(d *schema.ResourceData) ([]byte, error) {
 	}
 
 	if overlays := getDashboardEventOverlays(d); len(overlays) > 0 {
-		payload["overlays"] = overlays
+		payload["eventOverlays"] = overlays
 	}
 
 	charts := getDashboardCharts(d)
