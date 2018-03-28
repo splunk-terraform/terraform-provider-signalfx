@@ -290,7 +290,7 @@ func dashboardResource() *schema.Resource {
 					},
 				},
 			},
-			"event_overlays": &schema.Schema{
+			"event_overlay": &schema.Schema{
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "Event overlay to add to charts",
@@ -514,13 +514,16 @@ func getDashboardVariables(d *schema.ResourceData) []map[string]interface{} {
 }
 
 func getDashboardEventOverlays(d *schema.ResourceData) []map[string]interface{} {
-	overlays := d.Get("event_overlays").(*schema.Set).List()
+	overlays := d.Get("event_overlay").(*schema.Set).List()
 	overlay_list := make([]map[string]interface{}, len(overlays))
 	for i, overlay := range overlays {
 		overlay := overlay.(map[string]interface{})
 		item := make(map[string]interface{})
 
-		item["eventSignal"] = overlay["signal"].(string)
+		item["eventSignal"] = map[string]interface{}{
+			"eventSearchText": overlay["signal"].(string),
+			"eventType":       "eventTimeSeries",
+		}
 		item["eventLine"] = overlay["line"].(bool)
 		item["label"] = overlay["label"].(string)
 
@@ -530,7 +533,7 @@ func getDashboardEventOverlays(d *schema.ResourceData) []map[string]interface{} 
 			}
 		}
 
-		overlay_list[i] = overlay
+		overlay_list[i] = item
 	}
 	return overlay_list
 }
