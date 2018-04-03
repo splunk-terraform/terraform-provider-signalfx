@@ -291,7 +291,7 @@ func dashboardResource() *schema.Resource {
 				},
 			},
 			"event_overlay": &schema.Schema{
-				Type:        schema.TypeSet,
+				Type:        schema.TypeList,
 				Optional:    true,
 				Description: "Event overlay to add to charts",
 				Elem: &schema.Resource{
@@ -317,6 +317,32 @@ func dashboardResource() *schema.Resource {
 							Type:        schema.TypeString,
 							Required:    true,
 							Description: "Search term used to define events",
+						},
+						"sources": &schema.Schema{
+							Type:     schema.TypeList,
+							Optional: true,
+							Elem: &schema.Resource{
+								// THIS COMPILES, READ IT OUT NOW?
+								Schema: map[string]*schema.Schema{
+									"property": &schema.Schema{
+										Type:        schema.TypeString,
+										Required:    true,
+										Description: "A metric time series dimension or property name",
+									},
+									"negated": &schema.Schema{
+										Type:        schema.TypeBool,
+										Optional:    true,
+										Default:     false,
+										Description: "(false by default) Whether this filter should be a \"not\" filter",
+									},
+									"values": &schema.Schema{
+										Type:        schema.TypeSet,
+										Required:    true,
+										Elem:        &schema.Schema{Type: schema.TypeString},
+										Description: "List of strings (which will be treated as an OR filter on the property)",
+									},
+								},
+							},
 						},
 					},
 				},
