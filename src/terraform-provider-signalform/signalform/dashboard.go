@@ -593,8 +593,12 @@ func getDashboardEventOverlays(overlays []interface{}) []map[string]interface{} 
 			"eventSearchText": overlay["signal"].(string),
 			"eventType":       "eventTimeSeries",
 		}
-		item["eventLine"] = overlay["line"].(bool)
-		item["label"] = overlay["label"].(string)
+		if val, ok := overlay["line"].(bool); ok {
+			item["eventLine"] = val
+		}
+		if val, ok := overlay["label"].(string); ok {
+			item["label"] = val
+		}
 
 		if val, ok := overlay["color"].(string); ok {
 			if elem, ok := PaletteColors[val]; ok {
