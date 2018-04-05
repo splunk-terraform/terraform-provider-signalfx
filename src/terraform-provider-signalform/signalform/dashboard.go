@@ -353,23 +353,6 @@ func dashboardResource() *schema.Resource {
 				Description: "Event overlay added to charts by default to charts",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"line": &schema.Schema{
-							Type:        schema.TypeBool,
-							Optional:    true,
-							Default:     false,
-							Description: "(false by default) Whether a vertical line should be displayed in the plot at the time the event occurs",
-						},
-						"label": &schema.Schema{
-							Type:        schema.TypeString,
-							Optional:    true,
-							Description: "The text displaying in the dropdown menu used to select this event overlay as an active overlay for the dashboard.",
-						},
-						"color": &schema.Schema{
-							Type:         schema.TypeString,
-							Optional:     true,
-							Description:  "Color to use",
-							ValidateFunc: validatePerSignalColor,
-						},
 						"signal": &schema.Schema{
 							Type:        schema.TypeString,
 							Required:    true,
