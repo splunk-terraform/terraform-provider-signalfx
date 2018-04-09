@@ -3,8 +3,9 @@ package signalform
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/hashicorp/terraform/helper/schema"
 	"strings"
+
+	"github.com/hashicorp/terraform/helper/schema"
 )
 
 const (
@@ -89,8 +90,9 @@ func integrationCreate(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return fmt.Errorf("Failed creating json payload: %s", err.Error())
 	}
+	url := fmt.Sprintf("%s?skipValidation=true", INTEGRATION_API_URL)
 
-	return resourceCreate(INTEGRATION_API_URL, config.AuthToken, payload, d)
+	return resourceCreate(url, config.AuthToken, payload, d)
 }
 
 func integrationRead(d *schema.ResourceData, meta interface{}) error {
