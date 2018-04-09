@@ -15,6 +15,17 @@ const (
 func integrationResource() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
+			"synced": &schema.Schema{
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     true,
+				Description: "Whether the resource in SignalForm and SignalFx are identical or not. Used internally for syncing.",
+			},
+			"last_updated": &schema.Schema{
+				Type:        schema.TypeFloat,
+				Computed:    true,
+				Description: "Latest timestamp the resource was updated",
+			},
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
