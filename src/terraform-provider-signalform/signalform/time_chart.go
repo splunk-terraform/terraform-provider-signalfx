@@ -161,11 +161,13 @@ func timeChartResource() *schema.Resource {
 						"min_value": &schema.Schema{
 							Type:        schema.TypeFloat,
 							Optional:    true,
+							Default:     -math.MaxFloat32,
 							Description: "The minimum value for the right axis",
 						},
 						"max_value": &schema.Schema{
 							Type:        schema.TypeFloat,
 							Optional:    true,
+							Default:     math.MaxFloat32,
 							Description: "The maximum value for the right axis",
 						},
 						"label": &schema.Schema{
@@ -176,6 +178,7 @@ func timeChartResource() *schema.Resource {
 						"high_watermark": &schema.Schema{
 							Type:        schema.TypeFloat,
 							Optional:    true,
+							Default:     math.MaxFloat32,
 							Description: "A line to draw as a high watermark",
 						},
 						"high_watermark_label": &schema.Schema{
@@ -186,6 +189,7 @@ func timeChartResource() *schema.Resource {
 						"low_watermark": &schema.Schema{
 							Type:        schema.TypeFloat,
 							Optional:    true,
+							Default:     -math.MaxFloat32,
 							Description: "A line to draw as a low watermark",
 						},
 						"low_watermark_label": &schema.Schema{
@@ -224,11 +228,13 @@ func timeChartResource() *schema.Resource {
 						"min_value": &schema.Schema{
 							Type:        schema.TypeFloat,
 							Optional:    true,
+							Default:     -math.MaxFloat32,
 							Description: "The minimum value for the left axis",
 						},
 						"max_value": &schema.Schema{
 							Type:        schema.TypeFloat,
 							Optional:    true,
+							Default:     math.MaxFloat32,
 							Description: "The maximum value for the left axis",
 						},
 						"label": &schema.Schema{
@@ -239,6 +245,7 @@ func timeChartResource() *schema.Resource {
 						"high_watermark": &schema.Schema{
 							Type:        schema.TypeFloat,
 							Optional:    true,
+							Default:     math.MaxFloat32,
 							Description: "A line to draw as a high watermark",
 						},
 						"high_watermark_label": &schema.Schema{
@@ -249,6 +256,7 @@ func timeChartResource() *schema.Resource {
 						"low_watermark": &schema.Schema{
 							Type:        schema.TypeFloat,
 							Optional:    true,
+							Default:     -math.MaxFloat32,
 							Description: "A line to draw as a low watermark",
 						},
 						"low_watermark_label": &schema.Schema{
@@ -521,6 +529,13 @@ func getSingleAxisOptions(axisOpt map[string]interface{}) map[string]interface{}
 	}
 	if val, ok := axisOpt["low_watermark_label"]; ok {
 		item["lowWatermarkLabel"] = val.(string)
+	}
+
+	// special case: the axis object might exist, but it has no keys except
+	// watermarks
+	// in this case, we don't want to report an axis object to sfx at all
+	if len(item) == 0 {
+		return nil
 	}
 	return item
 }
