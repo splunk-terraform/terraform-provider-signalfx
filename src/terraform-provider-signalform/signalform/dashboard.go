@@ -420,14 +420,10 @@ func getPayloadDashboard(d *schema.ResourceData) ([]byte, error) {
 	}
 
 	overlays := d.Get("event_overlay").([]interface{})
-	if len(overlays) > 0 {
-		payload["eventOverlays"] = getDashboardEventOverlays(overlays)
-	}
+	payload["eventOverlays"] = getDashboardEventOverlays(overlays)
 
 	soverlays := d.Get("selected_event_overlay").([]interface{})
-	if len(soverlays) > 0 {
-		payload["selectedEventOverlays"] = getDashboardEventOverlays(soverlays)
-	}
+	payload["selectedEventOverlays"] = getDashboardEventOverlays(soverlays)
 
 	charts := getDashboardCharts(d)
 	column_charts := getDashboardColumns(d)
