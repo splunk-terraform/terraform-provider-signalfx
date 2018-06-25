@@ -223,19 +223,11 @@ func getPayloadDetector(d *schema.ResourceData) ([]byte, error) {
 	}
 
 	if val, ok := d.GetOk("teams"); ok {
-		teams := []string{}
-		for _, team := range val.([]interface{}) {
-			teams = append(teams, team.(string))
-		}
-		payload["teams"] = teams
+		payload["teams"] = val.([]interface{})
 	}
 
 	if val, ok := d.GetOk("tags"); ok {
-		tags := []string{}
-		for _, tag := range val.([]interface{}) {
-			tags = append(tags, tag.(string))
-		}
-		payload["tags"] = tags
+		payload["tags"] = val.([]interface{})
 	}
 
 	return json.Marshal(payload)
