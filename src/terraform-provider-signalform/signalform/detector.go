@@ -67,6 +67,18 @@ func detectorResource() *schema.Resource {
 				Default:     false,
 				Description: "(false by default) When true, markers will be drawn for each datapoint within the visualization.",
 			},
+			"show_event_lines": &schema.Schema{
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "(false by default) When true, vertical lines will be drawn for each triggered event within the visualization.",
+			},
+			"disable_sampling": &schema.Schema{
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "(false by default) When false, samples a subset of the output MTS in the visualization.",
+			},
 			"time_range": &schema.Schema{
 				Type:          schema.TypeString,
 				Optional:      true,
@@ -237,6 +249,12 @@ func getVisualizationOptionsDetector(d *schema.ResourceData) map[string]interfac
 	viz := make(map[string]interface{})
 	if val, ok := d.GetOk("show_data_markers"); ok {
 		viz["showDataMarkers"] = val.(bool)
+	}
+	if val, ok := d.GetOk("show_event_lines"); ok {
+		viz["showEventLines"] = val.(bool)
+	}
+	if val, ok := d.GetOk("disable_sampling"); ok {
+		viz["disableSampling"] = val.(bool)
 	}
 
 	timeMap := make(map[string]interface{})
