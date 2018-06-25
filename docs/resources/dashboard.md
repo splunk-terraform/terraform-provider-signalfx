@@ -86,6 +86,7 @@ The following arguments are supported in the resource block:
     * `label` - (Optional) Text shown in the dropdown when selecting this overlay from the menu.
     * `color` - (Optional) Color to use : gray, blue, azure, navy, brown, orange, yellow, iris, magenta, pink, purple, violet, lilac, emerald, green, aquamarine. ![Colors](https://github.com/Yelp/terraform-provider-signalform/raw/master/docs/resources/colors.png)
     * `signal` - Search term used to choose the events shown in the overlay.
+    * `type` - (Optional) Can be set to `eventTimeSeries` (the default) to refer to externally reported events, or `detectorEvents` to refer to events from detector triggers.
     * `source` - (Optional) Each element specifies a filter to use against the signal specified in the `signal`.
         * `property` - The name of a dimension to filter against.
         * `values` - A list of values to be used with the `property`, they will be combined via `OR`.

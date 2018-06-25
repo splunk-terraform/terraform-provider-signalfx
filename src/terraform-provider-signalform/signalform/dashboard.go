@@ -319,6 +319,13 @@ func dashboardResource() *schema.Resource {
 							Required:    true,
 							Description: "Search term used to define events",
 						},
+						"type": &schema.Schema{
+							Type:         schema.TypeString,
+							Optional:     true,
+							Default:      "eventTimeSeries",
+							Description:  "Source for this event's data. Can be \"eventTimeSeries\" (default) or \"detectorEvents\".",
+							ValidateFunc: validateEventOverlayType,
+						},
 						"source": &schema.Schema{
 							Type:     schema.TypeList,
 							Optional: true,
@@ -357,6 +364,13 @@ func dashboardResource() *schema.Resource {
 							Type:        schema.TypeString,
 							Required:    true,
 							Description: "Search term used to define events",
+						},
+						"type": &schema.Schema{
+							Type:         schema.TypeString,
+							Optional:     true,
+							Default:      "eventTimeSeries",
+							Description:  "Source for this event's data. Can be \"eventTimeSeries\" (default) or \"detectorEvents\".",
+							ValidateFunc: validateEventOverlayType,
 						},
 						"source": &schema.Schema{
 							Type:     schema.TypeList,
@@ -587,7 +601,7 @@ func getDashboardEventOverlays(overlays []interface{}) []map[string]interface{} 
 		item := make(map[string]interface{})
 		item["eventSignal"] = map[string]interface{}{
 			"eventSearchText": overlay["signal"].(string),
-			"eventType":       "eventTimeSeries",
+			"eventType":       overlay["type"].(string),
 		}
 		if val, ok := overlay["line"].(bool); ok {
 			item["eventLine"] = val
@@ -677,6 +691,18 @@ func dashboardDelete(d *schema.ResourceData, meta interface{}) error {
 func validateChartsResolution(v interface{}, k string) (we []string, errors []error) {
 	value := v.(string)
 	allowedWords := []string{"default", "low", "high", "highest"}
+	for _, word := range allowedWords {
+		if value == word {
+			return
+		}
+	}
+	errors = append(errors, fmt.Errorf("%s not allowed; must be one of: %s", value, strings.Join(allowedWords, ", ")))
+	return
+}
+
+func validateEventOverlayType(v interface{}, k string) (we []string, errors []error) {
+	value := v.(string)
+	allowedWords := []string{"eventTimeSeries", "detectorEvents"}
 	for _, word := range allowedWords {
 		if value == word {
 			return
