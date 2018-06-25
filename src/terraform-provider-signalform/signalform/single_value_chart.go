@@ -200,7 +200,7 @@ func getSingleValueChartOptions(d *schema.ResourceData) map[string]interface{} {
 		if val == "Scale" {
 			if colorScaleOptions := getColorScaleOptions(d); len(colorScaleOptions) > 0 {
 				viz["colorBy"] = "Scale"
-				viz["colorScale"] = colorScaleOptions
+				viz["colorScale2"] = colorScaleOptions
 			}
 		} else {
 			viz["colorBy"] = val.(string)
