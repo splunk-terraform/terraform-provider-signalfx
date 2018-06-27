@@ -49,5 +49,6 @@ The following arguments are supported in the resource block:
 * `refresh_interval` - (Optional) How often (in seconds) to refresh the value.
 * `max_precision` - (Optional) The maximum precision to for value displayed.
 * `is_timestamp_hidden` - (Optional) Whether to hide the timestamp in the chart. `false` by default.
+* `secondary_visualization` - (Optional) The type of secondary visualization. Can be `None`, `Radial`, `Linear`, or `Sparkline`. If unset, the SignalFx default is used (`None`).
 * `show_spark_line` - (Optional) Whether to show a trend line below the current value. `false` by default.
 * `synced` - (Optional) Whether the resource in SignalForm and SignalFx are identical or not. Used internally for syncing, you do not need to specify it. Whenever you see a change to this field in the plan, it means that your resource has been changed from the UI and Terraform is now going to re-sync it back to what is in your configuration.

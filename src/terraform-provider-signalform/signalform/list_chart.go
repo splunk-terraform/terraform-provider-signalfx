@@ -89,6 +89,12 @@ func listChartResource() *schema.Resource {
 				Optional:    true,
 				Description: "Maximum number of digits to display when rounding values up or down",
 			},
+			"secondary_visualization": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				Description:  "(false by default) What kind of secondary visualization to show (None, Radial, Linear, Sparkline)",
+				ValidateFunc: validateSecondaryVisualization,
+			},
 			"viz_options": &schema.Schema{
 				Type:        schema.TypeSet,
 				Optional:    true,
@@ -183,6 +189,12 @@ func getListChartOptions(d *schema.ResourceData) map[string]interface{} {
 	}
 	if maxPrecision, ok := d.GetOk("max_precision"); ok {
 		viz["maximumPrecision"] = maxPrecision.(int)
+	}
+	if val, ok := d.GetOk("secondary_visualization"); ok {
+		secondaryVisualization := val.(string)
+		if secondaryVisualization != "" {
+			viz["secondaryVisualization"] = secondaryVisualization
+		}
 	}
 
 	return viz

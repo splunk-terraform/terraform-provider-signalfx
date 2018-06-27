@@ -321,6 +321,18 @@ func validatePerSignalColor(v interface{}, k string) (we []string, errors []erro
 	return
 }
 
+func validateSecondaryVisualization(v interface{}, k string) (we []string, errors []error) {
+	value := v.(string)
+	allowedWords := []string{"", "None", "Radial", "Linear", "Sparkline"}
+	for _, word := range allowedWords {
+		if value == word {
+			return
+		}
+	}
+	errors = append(errors, fmt.Errorf("%s not allowed; must be one of: %s", value, strings.Join(allowedWords, ", ")))
+	return
+}
+
 /*
   Sanitize program_text to reduce the errors we get back from SignalFx
 */

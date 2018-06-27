@@ -85,6 +85,12 @@ func singleValueChartResource() *schema.Resource {
 				Description: "(false by default) Whether to show a trend line below the current value",
 				Default:     false,
 			},
+			"secondary_visualization": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				Description:  "(false by default) What kind of secondary visualization to show (None, Radial, Linear, Sparkline)",
+				ValidateFunc: validateSecondaryVisualization,
+			},
 			"color_scale": &schema.Schema{
 				Type:        schema.TypeSet,
 				Optional:    true,
@@ -218,6 +224,12 @@ func getSingleValueChartOptions(d *schema.ResourceData) map[string]interface{} {
 	}
 	if maxPrecision, ok := d.GetOk("max_precision"); ok {
 		viz["maximumPrecision"] = maxPrecision.(int)
+	}
+	if val, ok := d.GetOk("secondary_visualization"); ok {
+		secondaryVisualization := val.(string)
+		if secondaryVisualization != "" {
+			viz["secondaryVisualization"] = secondaryVisualization
+		}
 	}
 	viz["timestampHidden"] = d.Get("is_timestamp_hidden").(bool)
 	viz["showSparkLine"] = d.Get("show_spark_line").(bool)
