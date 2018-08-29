@@ -399,7 +399,7 @@ func getPayloadTimeChart(d *schema.ResourceData) ([]byte, error) {
 	payload := map[string]interface{}{
 		"name":        d.Get("name").(string),
 		"description": d.Get("description").(string),
-		"programText": sanitizeProgramText(d.Get("program_text").(string)),
+		"programText": d.Get("program_text").(string),
 	}
 
 	viz := getTimeChartOptions(d)

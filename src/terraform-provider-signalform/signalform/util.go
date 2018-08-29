@@ -332,14 +332,3 @@ func validateSecondaryVisualization(v interface{}, k string) (we []string, error
 	errors = append(errors, fmt.Errorf("%s not allowed; must be one of: %s", value, strings.Join(allowedWords, ", ")))
 	return
 }
-
-/*
-  Sanitize program_text to reduce the errors we get back from SignalFx
-*/
-func sanitizeProgramText(text string) string {
-	r, _ := regexp.Compile("\n[\t\n\v\f\r ]+")
-	sane := r.ReplaceAllString(text, "\n")
-	r, _ = regexp.Compile("^[\t\n\v\f\r ]+")
-	sane = r.ReplaceAllString(sane, "")
-	return sane
-}
