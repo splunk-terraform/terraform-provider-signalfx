@@ -321,6 +321,19 @@ func validatePerSignalColor(v interface{}, k string) (we []string, errors []erro
 	return
 }
 
+func validateFullPaletteColors(v interface{}, k string) (we []string, errors []error) {
+	value := v.(string)
+	if _, ok := FullPaletteColors[value]; !ok {
+		keys := make([]string, 0, len(FullPaletteColors))
+		for k := range FullPaletteColors {
+			keys = append(keys, k)
+		}
+		joinedColors := strings.Join(keys, ",")
+		errors = append(errors, fmt.Errorf("%s not allowed; must be either %s", value, joinedColors))
+	}
+	return
+}
+
 func validateSecondaryVisualization(v interface{}, k string) (we []string, errors []error) {
 	value := v.(string)
 	allowedWords := []string{"", "None", "Radial", "Linear", "Sparkline"}

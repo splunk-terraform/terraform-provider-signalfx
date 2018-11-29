@@ -83,6 +83,16 @@ func TestValidateSortByDescending(t *testing.T) {
 	assert.Equal(t, 0, len(errors))
 }
 
+func TestValidateFullPaletteColors(t *testing.T) {
+	_, errors := validateFullPaletteColors("chartreuse", "color_theme")
+	assert.Equal(t, 0, len(errors))
+}
+
+func TestValidateFullPaletteColorsFail(t *testing.T) {
+	_, errors := validateFullPaletteColors("fart", "color_theme")
+	assert.Equal(t, 1, len(errors))
+}
+
 func TestValidateSortByNoDirection(t *testing.T) {
 	_, errors := validateSortBy("foo", "sort_by")
 	assert.Equal(t, 1, len(errors))
