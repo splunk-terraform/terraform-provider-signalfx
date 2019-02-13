@@ -1,4 +1,4 @@
-package signalform
+package signalfx
 
 import (
 	"fmt"

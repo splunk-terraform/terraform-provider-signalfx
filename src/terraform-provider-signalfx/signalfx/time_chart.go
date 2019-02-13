@@ -1,4 +1,4 @@
-package signalform
+package signalfx
 
 import (
 	"encoding/json"
@@ -97,7 +97,7 @@ func timeChartResource() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     true,
-				Description: "Whether the resource in SignalForm and SignalFx are identical or not. Used internally for syncing.",
+				Description: "Whether the resource in the provider and SignalFx are identical or not. Used internally for syncing.",
 			},
 			"last_updated": &schema.Schema{
 				Type:        schema.TypeFloat,
@@ -662,7 +662,7 @@ func getTimeChartOptions(d *schema.ResourceData) map[string]interface{} {
 }
 
 func timechartCreate(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*signalformConfig)
+	config := meta.(*signalfxConfig)
 	payload, err := getPayloadTimeChart(d)
 	if err != nil {
 		return fmt.Errorf("Failed creating json payload: %s", err.Error())
@@ -672,14 +672,14 @@ func timechartCreate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func timechartRead(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*signalformConfig)
+	config := meta.(*signalfxConfig)
 	url := fmt.Sprintf("%s/%s", CHART_API_URL, d.Id())
 
 	return resourceRead(url, config.AuthToken, d)
 }
 
 func timechartUpdate(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*signalformConfig)
+	config := meta.(*signalfxConfig)
 	payload, err := getPayloadTimeChart(d)
 	if err != nil {
 		return fmt.Errorf("Failed creating json payload: %s", err.Error())
@@ -690,7 +690,7 @@ func timechartUpdate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func timechartDelete(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*signalformConfig)
+	config := meta.(*signalfxConfig)
 	url := fmt.Sprintf("%s/%s", CHART_API_URL, d.Id())
 	return resourceDelete(url, config.AuthToken, d)
 }

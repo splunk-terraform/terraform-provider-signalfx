@@ -2,7 +2,7 @@
 
 This chart type displays current data values in a list format.
 
-![List Chart](https://github.com/Yelp/terraform-provider-signalform/raw/master/docs/resources/list_chart.png)
+![List Chart](https://github.com/Yelp/terraform-provider-signalfx/raw/master/docs/resources/list_chart.png)
 
 The name of each value in the chart reflects the name of the plot and any associated dimensions. We recommend you click the Pencil icon and give the plot a meaningful name, as in plot B below. Otherwise, just the raw metric name will be displayed on the chart, as in plot A below.
 
@@ -10,7 +10,7 @@ The name of each value in the chart reflects the name of the plot and any associ
 ## Example Usage
 
 ```terraform
-resource "signalform_list_chart" "mylistchart0" {
+resource "signalfx_list_chart" "mylistchart0" {
     name = "CPU Total Idle - List"
 
     program_text = <<-EOF
@@ -46,4 +46,4 @@ The following arguments are supported in the resource block:
 * `max_precision` - (Optional) Maximum number of digits to display when rounding values up or down.
 * `secondary_visualization` - (Optional) The type of secondary visualization. Can be `None`, `Radial`, `Linear`, or `Sparkline`. If unset, the SignalFx default is used (`Sparkline`).
 * `sort_by` - (Optional) The property to use when sorting the elements. Use `value` if you want to sort by value. Must be prepended with `+` for ascending or `-` for descending (e.g. `-foo`).
-* `synced` - (Optional) Whether the resource in SignalForm and SignalFx are identical or not. Used internally for syncing, you do not need to specify it. Whenever you see a change to this field in the plan, it means that your resource has been changed from the UI and Terraform is now going to re-sync it back to what is in your configuration.
+* `synced` - (Optional) Whether the resource in the provider and SignalFx are identical or not. Used internally for syncing, you do not need to specify it. Whenever you see a change to this field in the plan, it means that your resource has been changed from the UI and Terraform is now going to re-sync it back to what is in your configuration.

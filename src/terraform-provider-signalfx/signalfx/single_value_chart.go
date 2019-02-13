@@ -1,19 +1,21 @@
-package signalform
+package signalfx
 
 import (
 	"encoding/json"
 	"fmt"
+	"math"
+
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
-func listChartResource() *schema.Resource {
+func singleValueChartResource() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
 			"synced": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     true,
-				Description: "Whether the resource in SignalForm and SignalFx are identical or not. Used internally for syncing.",
+				Description: "Whether the resource in the provider and SignalFx are identical or not. Used internally for syncing.",
 			},
 			"last_updated": &schema.Schema{
 				Type:        schema.TypeFloat,
@@ -54,7 +56,7 @@ func listChartResource() *schema.Resource {
 			"color_by": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "(Metric by default) Must be \"Metric\" or \"Dimension\"",
+				Description: "(Metric by default) Must be \"Metric\", \"Dimension\", or \"Scale\". \"Scale\" maps to Color by Value in the UI",
 			},
 			"max_delay": &schema.Schema{
 				Type:         schema.TypeInt,
@@ -62,38 +64,72 @@ func listChartResource() *schema.Resource {
 				Description:  "How long (in seconds) to wait for late datapoints",
 				ValidateFunc: validateMaxDelayValue,
 			},
-			"disable_sampling": &schema.Schema{
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Description: "(false by default) If false, samples a subset of the output MTS, which improves UI performance",
-			},
-			"sort_by": &schema.Schema{
-				Type:         schema.TypeString,
-				Optional:     true,
-				ValidateFunc: validateSortBy,
-				Description:  "The property to use when sorting the elements. Use 'value' if you want to sort by value. Must be prepended with + for ascending or - for descending (e.g. -foo)",
-			},
 			"refresh_interval": &schema.Schema{
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Description: "How often (in seconds) to refresh the values of the list",
 			},
-			"legend_fields_to_hide": &schema.Schema{
-				Type:        schema.TypeSet,
-				Optional:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
-				Description: "List of properties that shouldn't be displayed in the chart legend (i.e. dimension names)",
-			},
 			"max_precision": &schema.Schema{
 				Type:        schema.TypeInt,
 				Optional:    true,
-				Description: "Maximum number of digits to display when rounding values up or down",
+				Description: "The maximum precision to for values displayed in the list",
+			},
+			"is_timestamp_hidden": &schema.Schema{
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "(false by default) Whether to hide the timestamp in the chart",
+			},
+			"show_spark_line": &schema.Schema{
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "(false by default) Whether to show a trend line below the current value",
+				Default:     false,
 			},
 			"secondary_visualization": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
 				Description:  "(false by default) What kind of secondary visualization to show (None, Radial, Linear, Sparkline)",
 				ValidateFunc: validateSecondaryVisualization,
+			},
+			"color_scale": &schema.Schema{
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Description: "Single color range including both the color to display for that range and the borders of the range",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"gt": &schema.Schema{
+							Type:        schema.TypeFloat,
+							Optional:    true,
+							Default:     math.MaxFloat32,
+							Description: "Indicates the lower threshold non-inclusive value for this range",
+						},
+						"gte": &schema.Schema{
+							Type:        schema.TypeFloat,
+							Optional:    true,
+							Default:     math.MaxFloat32,
+							Description: "Indicates the lower threshold inclusive value for this range",
+						},
+						"lt": &schema.Schema{
+							Type:        schema.TypeFloat,
+							Optional:    true,
+							Default:     math.MaxFloat32,
+							Description: "Indicates the upper threshold non-inculsive value for this range",
+						},
+						"lte": &schema.Schema{
+							Type:        schema.TypeFloat,
+							Optional:    true,
+							Default:     math.MaxFloat32,
+							Description: "Indicates the upper threshold inclusive value for this range",
+						},
+						"color": &schema.Schema{
+							Type:         schema.TypeString,
+							Required:     true,
+							Description:  "The color to use. Must be either \"gray\", \"blue\", \"navy\", \"orange\", \"yellow\", \"magenta\", \"purple\", \"violet\", \"lilac\", \"green\", \"aquamarine\"",
+							ValidateFunc: validateHeatmapChartColor,
+						},
+					},
+				},
 			},
 			"viz_options": &schema.Schema{
 				Type:        schema.TypeSet,
@@ -133,27 +169,24 @@ func listChartResource() *schema.Resource {
 			},
 		},
 
-		Create: listchartCreate,
-		Read:   listchartRead,
-		Update: listchartUpdate,
-		Delete: listchartDelete,
+		Create: singlevaluechartCreate,
+		Read:   singlevaluechartRead,
+		Update: singlevaluechartUpdate,
+		Delete: singlevaluechartDelete,
 	}
 }
 
 /*
-  Use Resource object to construct json payload in order to create a list chart
+  Use Resource object to construct json payload in order to create a single value chart
 */
-func getPayloadListChart(d *schema.ResourceData) ([]byte, error) {
+func getPayloadSingleValueChart(d *schema.ResourceData) ([]byte, error) {
 	payload := map[string]interface{}{
 		"name":        d.Get("name").(string),
 		"description": d.Get("description").(string),
 		"programText": d.Get("program_text").(string),
 	}
 
-	viz := getListChartOptions(d)
-	if legendOptions := getLegendOptions(d); len(legendOptions) > 0 {
-		viz["legendOptions"] = legendOptions
-	}
+	viz := getSingleValueChartOptions(d)
 	if vizOptions := getPerSignalVizOptions(d); len(vizOptions) > 0 {
 		viz["publishLabelOptions"] = vizOptions
 	}
@@ -164,26 +197,29 @@ func getPayloadListChart(d *schema.ResourceData) ([]byte, error) {
 	return json.Marshal(payload)
 }
 
-func getListChartOptions(d *schema.ResourceData) map[string]interface{} {
+func getSingleValueChartOptions(d *schema.ResourceData) map[string]interface{} {
 	viz := make(map[string]interface{})
-	viz["type"] = "List"
+	viz["type"] = "SingleValue"
 	if val, ok := d.GetOk("unit_prefix"); ok {
 		viz["unitPrefix"] = val.(string)
 	}
 	if val, ok := d.GetOk("color_by"); ok {
-		viz["colorBy"] = val.(string)
+		if val == "Scale" {
+			if colorScaleOptions := getColorScaleOptions(d); len(colorScaleOptions) > 0 {
+				viz["colorBy"] = "Scale"
+				viz["colorScale2"] = colorScaleOptions
+			}
+		} else {
+			viz["colorBy"] = val.(string)
+		}
 	}
 
 	programOptions := make(map[string]interface{})
 	if val, ok := d.GetOk("max_delay"); ok {
 		programOptions["maxDelay"] = val.(int) * 1000
+		viz["programOptions"] = programOptions
 	}
-	programOptions["disableSampling"] = d.Get("disable_sampling").(bool)
-	viz["programOptions"] = programOptions
 
-	if sortBy, ok := d.GetOk("sort_by"); ok {
-		viz["sortBy"] = sortBy.(string)
-	}
 	if refreshInterval, ok := d.GetOk("refresh_interval"); ok {
 		viz["refreshInterval"] = refreshInterval.(int) * 1000
 	}
@@ -196,13 +232,15 @@ func getListChartOptions(d *schema.ResourceData) map[string]interface{} {
 			viz["secondaryVisualization"] = secondaryVisualization
 		}
 	}
+	viz["timestampHidden"] = d.Get("is_timestamp_hidden").(bool)
+	viz["showSparkLine"] = d.Get("show_spark_line").(bool)
 
 	return viz
 }
 
-func listchartCreate(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*signalformConfig)
-	payload, err := getPayloadListChart(d)
+func singlevaluechartCreate(d *schema.ResourceData, meta interface{}) error {
+	config := meta.(*signalfxConfig)
+	payload, err := getPayloadSingleValueChart(d)
 	if err != nil {
 		return fmt.Errorf("Failed creating json payload: %s", err.Error())
 	}
@@ -210,16 +248,16 @@ func listchartCreate(d *schema.ResourceData, meta interface{}) error {
 	return resourceCreate(CHART_API_URL, config.AuthToken, payload, d)
 }
 
-func listchartRead(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*signalformConfig)
+func singlevaluechartRead(d *schema.ResourceData, meta interface{}) error {
+	config := meta.(*signalfxConfig)
 	url := fmt.Sprintf("%s/%s", CHART_API_URL, d.Id())
 
 	return resourceRead(url, config.AuthToken, d)
 }
 
-func listchartUpdate(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*signalformConfig)
-	payload, err := getPayloadListChart(d)
+func singlevaluechartUpdate(d *schema.ResourceData, meta interface{}) error {
+	config := meta.(*signalfxConfig)
+	payload, err := getPayloadSingleValueChart(d)
 	if err != nil {
 		return fmt.Errorf("Failed creating json payload: %s", err.Error())
 	}
@@ -228,9 +266,8 @@ func listchartUpdate(d *schema.ResourceData, meta interface{}) error {
 	return resourceUpdate(url, config.AuthToken, payload, d)
 }
 
-func listchartDelete(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*signalformConfig)
+func singlevaluechartDelete(d *schema.ResourceData, meta interface{}) error {
+	config := meta.(*signalfxConfig)
 	url := fmt.Sprintf("%s/%s", CHART_API_URL, d.Id())
-
 	return resourceDelete(url, config.AuthToken, d)
 }
