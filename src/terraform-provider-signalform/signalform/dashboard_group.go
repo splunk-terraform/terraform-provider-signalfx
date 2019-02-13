@@ -60,11 +60,7 @@ func getPayloadDashboardGroup(d *schema.ResourceData) ([]byte, error) {
 	}
 
 	if val, ok := d.GetOk("teams"); ok {
-		teams := []string{}
-		for _, team := range val.([]interface{}) {
-			teams = append(teams, team.(string))
-		}
-		payload["teams"] = teams
+		payload["teams"] = val.([]interface{})
 	}
 
 	return json.Marshal(payload)

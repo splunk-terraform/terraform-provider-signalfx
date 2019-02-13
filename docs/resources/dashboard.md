@@ -52,6 +52,7 @@ The following arguments are supported in the resource block:
     * `property` - (Required) A metric time series dimension or property name.
     * `not` - (Optional) Whether this filter should be a not filter. `false` by default.
     * `values` - (Required) List of of strings (which will be treated as an OR filter on the property).
+    * `apply_if_exist` - (Optional) If true, this filter will also match data that doesn't have this property at all.
 * `variable` - (Optional) Dashboard variable to apply to each chart in the dashboard.
     * `property` - (Required) A metric time series dimension or property name.
     * `alias` - (Required) An alias for the dashboard variable. This text will appear as the label for the dropdown field on the dashboard.
@@ -61,6 +62,7 @@ The following arguments are supported in the resource block:
     * `values_suggested` - (Optional) A list of strings of suggested values for this variable; these suggestions will receive priority when values are autosuggested for this variable.
     * `restricted_suggestions` - (Optional) If `true`, this variable may only be set to the values listed in `values_suggested` and only these values will appear in autosuggestion menus. `false` by default.
     * `replace_only` - (Optional) If `true`, this variable will only apply to charts that have a filter for the property.
+    * `apply_if_exist` - (Optional) If true, this variable will also match data that doesn't have this property at all.
 * `chart` - (Optional) Chart ID and layout information for the charts in the dashboard.
     * `chart_id` - (Required) ID of the chart to display.
     * `width` - (Optional) How many columns (out of a total of 12) the chart should take up (between `1` and `12`). `12` by default.
@@ -79,6 +81,17 @@ The following arguments are supported in the resource block:
     * `start_row` - (Optional) Starting row number for the grid.
     * `width` - (Optional) How many columns (out of a total of `12`) every chart should take up (between `1` and `12`). `12` by default.
     * `height` - (Optional) How many rows every chart should take up (greater than or equal to 1). 1 by default.
+* `event_overlay` - (Optional) Specify a list of event overlays to include in the dashboard.
+    * `line` - (Optional) Show a vertical line for the event. `false` by default.
+    * `label` - (Optional) Text shown in the dropdown when selecting this overlay from the menu.
+    * `color` - (Optional) Color to use : gray, blue, azure, navy, brown, orange, yellow, iris, magenta, pink, purple, violet, lilac, emerald, green, aquamarine. ![Colors](https://github.com/Yelp/terraform-provider-signalform/raw/master/docs/resources/colors.png)
+    * `signal` - Search term used to choose the events shown in the overlay.
+    * `type` - (Optional) Can be set to `eventTimeSeries` (the default) to refer to externally reported events, or `detectorEvents` to refer to events from detector triggers.
+    * `source` - (Optional) Each element specifies a filter to use against the signal specified in the `signal`.
+        * `property` - The name of a dimension to filter against.
+        * `values` - A list of values to be used with the `property`, they will be combined via `OR`.
+        * `negated` - (Optional) If true,  only data that does not match the specified value of the specified property appear in the event overlay. Defaults to `false`.
+* `selected_event_overlay` - (Optional) Defines event overlays which are enabled by default. See `event_overlay` for a definition of fields.
 * `synced` - (Optional) Whether the resource in SignalForm and SignalFx are identical or not. Used internally for syncing, you do not need to specify it. Whenever you see a change to this field in the plan, it means that your resource has been changed from the UI and Terraform is now going to re-sync it back to what's in your configuration.
 * `tags` - (Optional) Tags associated with the dashboard.
 

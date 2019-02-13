@@ -37,8 +37,8 @@ The following arguments are supported in the resource block:
 * `name` - (Required) Name of the chart.
 * `program_text` - (Required) Signalflow program text for the chart. More info at <https://developers.signalfx.com/docs/signalflow-overview>.
 * `description` - (Optional) Description of the chart.
-* `color_by` - (Optional) Must be `"Dimension"` or `"Metric"`. `"Dimension"` by default.
-* `color_scale` - (Optional. `color_by` must be `"Scale"`) Single color range including both the color to display for that range and the borders of the range. Example: `[{ gt : 60, color : blue }, { lte : 60, color : yellow }]`. Look at this [link](https://docs.signalfx.com/en/latest/charts/chart-options-tab.html).
+* `color_by` - (Optional) Must be `"Dimension"`, `"Value"` or `"Metric"`. `"Dimension"` by default.
+* `color_scale` - (Optional. `color_by` must be `"Value"`) Single color range including both the color to display for that range and the borders of the range. Example: `[{ gt = 60, color = "blue" }, { lte = 60, color = "yellow" }]`. Look at this [link](https://docs.signalfx.com/en/latest/charts/chart-options-tab.html).
     * `gt` - (Optional) Indicates the lower threshold non-inclusive value for this range.
     * `gte` - (Optional) Indicates the lower threshold inclusive value for this range.
     * `lt` - (Optional) Indicates the upper threshold non-inculsive value for this range.
@@ -49,5 +49,6 @@ The following arguments are supported in the resource block:
 * `refresh_interval` - (Optional) How often (in seconds) to refresh the value.
 * `max_precision` - (Optional) The maximum precision to for value displayed.
 * `is_timestamp_hidden` - (Optional) Whether to hide the timestamp in the chart. `false` by default.
+* `secondary_visualization` - (Optional) The type of secondary visualization. Can be `None`, `Radial`, `Linear`, or `Sparkline`. If unset, the SignalFx default is used (`None`).
 * `show_spark_line` - (Optional) Whether to show a trend line below the current value. `false` by default.
 * `synced` - (Optional) Whether the resource in SignalForm and SignalFx are identical or not. Used internally for syncing, you do not need to specify it. Whenever you see a change to this field in the plan, it means that your resource has been changed from the UI and Terraform is now going to re-sync it back to what is in your configuration.

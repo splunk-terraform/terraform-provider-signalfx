@@ -321,13 +321,27 @@ func validatePerSignalColor(v interface{}, k string) (we []string, errors []erro
 	return
 }
 
-/*
-  Sanitize program_text to reduce the errors we get back from SignalFx
-*/
-func sanitizeProgramText(text string) string {
-	r, _ := regexp.Compile("\n[\t\n\v\f\r ]+")
-	sane := r.ReplaceAllString(text, "\n")
-	r, _ = regexp.Compile("^[\t\n\v\f\r ]+")
-	sane = r.ReplaceAllString(sane, "")
-	return sane
+func validateFullPaletteColors(v interface{}, k string) (we []string, errors []error) {
+	value := v.(string)
+	if _, ok := FullPaletteColors[value]; !ok {
+		keys := make([]string, 0, len(FullPaletteColors))
+		for k := range FullPaletteColors {
+			keys = append(keys, k)
+		}
+		joinedColors := strings.Join(keys, ",")
+		errors = append(errors, fmt.Errorf("%s not allowed; must be either %s", value, joinedColors))
+	}
+	return
+}
+
+func validateSecondaryVisualization(v interface{}, k string) (we []string, errors []error) {
+	value := v.(string)
+	allowedWords := []string{"", "None", "Radial", "Linear", "Sparkline"}
+	for _, word := range allowedWords {
+		if value == word {
+			return
+		}
+	}
+	errors = append(errors, fmt.Errorf("%s not allowed; must be one of: %s", value, strings.Join(allowedWords, ", ")))
+	return
 }

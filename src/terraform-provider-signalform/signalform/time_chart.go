@@ -3,9 +3,12 @@ package signalform
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/hashicorp/terraform/helper/schema"
 	"math"
+	"strconv"
 	"strings"
+
+	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform/terraform"
 )
 
 var PaletteColors = map[string]int{
@@ -25,6 +28,66 @@ var PaletteColors = map[string]int{
 	"emerald":    13,
 	"green":      14,
 	"aquamarine": 15,
+}
+
+var FullPaletteColors = map[string]int{
+	"gray":        0,
+	"blue":        1,
+	"azure":       2,
+	"navy":        3,
+	"brown":       4,
+	"orange":      5,
+	"yellow":      6,
+	"magenta":     7,
+	"purple":      8,
+	"pink":        9,
+	"violet":      10,
+	"lilac":       11,
+	"iris":        12,
+	"emerald":     13,
+	"green":       14,
+	"aquamarine":  15,
+	"red":         16,
+	"gold":        17,
+	"greenyellow": 18,
+	"chartreuse":  19,
+	"jade":        20,
+}
+
+func resourceAxisMigrateState(v int, is *terraform.InstanceState, meta interface{}) (*terraform.InstanceState, error) {
+	switch v {
+	case 0:
+		return migrateAxisStateV0toV1(is)
+	default:
+		return is, fmt.Errorf("Unexpected schema version: %d", v)
+	}
+}
+
+func migrateAxisStateV0toV1(is *terraform.InstanceState) (*terraform.InstanceState, error) {
+	if is.Empty() || is.Attributes == nil {
+		return is, nil
+	}
+	if v, ok := is.Attributes["max_value"]; ok {
+		if f, err := strconv.ParseFloat(v, 32); err == nil && f == math.MaxFloat32 {
+			delete(is.Attributes, "max_value")
+		}
+	}
+	if v, ok := is.Attributes["min_value"]; ok {
+		if f, err := strconv.ParseFloat(v, 32); err == nil && f == -math.MaxFloat32 {
+			delete(is.Attributes, "min_value")
+		}
+	}
+	if v, ok := is.Attributes["low_watermark"]; ok {
+		if f, err := strconv.ParseFloat(v, 32); err == nil && f == -math.MaxFloat32 {
+			delete(is.Attributes, "low_watermark")
+		}
+	}
+	if v, ok := is.Attributes["high_watermark"]; ok {
+		if f, err := strconv.ParseFloat(v, 32); err == nil && f == math.MaxFloat32 {
+			delete(is.Attributes, "high_watermark")
+		}
+	}
+	return is, nil
 }
 
 func timeChartResource() *schema.Resource {
@@ -116,6 +179,8 @@ func timeChartResource() *schema.Resource {
 				Type:     schema.TypeSet,
 				Optional: true,
 				Elem: &schema.Resource{
+					SchemaVersion: 1,
+					MigrateState:  resourceAxisMigrateState,
 					Schema: map[string]*schema.Schema{
 						"min_value": &schema.Schema{
 							Type:        schema.TypeFloat,
@@ -156,6 +221,24 @@ func timeChartResource() *schema.Resource {
 							Optional:    true,
 							Description: "A label to attach to the low watermark line",
 						},
+						"watermarks": &schema.Schema{
+							Type:     schema.TypeSet,
+							Optional: true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"value": &schema.Schema{
+										Type:        schema.TypeFloat,
+										Required:    true,
+										Description: "Axis value where the watermark line will be displayed",
+									},
+									"label": &schema.Schema{
+										Type:        schema.TypeString,
+										Optional:    true,
+										Description: "Label to display associated with the watermark line",
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -163,6 +246,8 @@ func timeChartResource() *schema.Resource {
 				Type:     schema.TypeSet,
 				Optional: true,
 				Elem: &schema.Resource{
+					SchemaVersion: 1,
+					MigrateState:  resourceAxisMigrateState,
 					Schema: map[string]*schema.Schema{
 						"min_value": &schema.Schema{
 							Type:        schema.TypeFloat,
@@ -202,6 +287,24 @@ func timeChartResource() *schema.Resource {
 							Type:        schema.TypeString,
 							Optional:    true,
 							Description: "A label to attach to the low watermark line",
+						},
+						"watermarks": &schema.Schema{
+							Type:     schema.TypeSet,
+							Optional: true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"value": &schema.Schema{
+										Type:        schema.TypeFloat,
+										Required:    true,
+										Description: "Axis value where the watermark line will be displayed",
+									},
+									"label": &schema.Schema{
+										Type:        schema.TypeString,
+										Optional:    true,
+										Description: "Label to display associated with the watermark line",
+									},
+								},
+							},
 						},
 					},
 				},
@@ -255,6 +358,21 @@ func timeChartResource() *schema.Resource {
 				Optional:     true,
 				Description:  "(LineChart by default) The default plot display style for the visualization. Must be \"LineChart\", \"AreaChart\", \"ColumnChart\", or \"Histogram\"",
 				ValidateFunc: validatePlotTypeTimeChart,
+			},
+			"histogram_options": &schema.Schema{
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Description: "Options specific to Histogram charts",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"color_theme": &schema.Schema{
+							Type:         schema.TypeString,
+							Optional:     true,
+							Description:  "Base color theme to use for the graph.",
+							ValidateFunc: validateFullPaletteColors,
+						},
+					},
+				},
 			},
 			"viz_options": &schema.Schema{
 				Type:        schema.TypeSet,
@@ -320,7 +438,7 @@ func getPayloadTimeChart(d *schema.ResourceData) ([]byte, error) {
 	payload := map[string]interface{}{
 		"name":        d.Get("name").(string),
 		"description": d.Get("description").(string),
-		"programText": sanitizeProgramText(d.Get("program_text").(string)),
+		"programText": d.Get("program_text").(string),
 	}
 
 	viz := getTimeChartOptions(d)
@@ -451,6 +569,13 @@ func getSingleAxisOptions(axisOpt map[string]interface{}) map[string]interface{}
 	if val, ok := axisOpt["low_watermark_label"]; ok {
 		item["lowWatermarkLabel"] = val.(string)
 	}
+
+	// special case: the axis object might exist, but it has no keys except
+	// watermarks
+	// in this case, we don't want to report an axis object to sfx at all
+	if len(item) == 0 {
+		return nil
+	}
 	return item
 }
 
@@ -517,6 +642,17 @@ func getTimeChartOptions(d *schema.ResourceData) map[string]interface{} {
 			viz["areaChartOptions"] = dataMarkersOption
 		} else if chartType == "LineChart" {
 			viz["lineChartOptions"] = dataMarkersOption
+		} else if chartType == "Histogram" {
+			histogramChartOptions := make(map[string]interface{})
+			if histogram_options, ok := d.GetOk("histogram_options"); ok {
+				hOptions := histogram_options.(*schema.Set).List()[0].(map[string]interface{})
+				if color_theme, ok := hOptions["color_theme"].(string); ok {
+					if elem, ok := FullPaletteColors[color_theme]; ok {
+						histogramChartOptions["colorThemeIndex"] = elem
+						viz["histogramChartOptions"] = histogramChartOptions
+					}
+				}
+			}
 		}
 	} else {
 		viz["lineChartOptions"] = dataMarkersOption
