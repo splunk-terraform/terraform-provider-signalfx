@@ -2,17 +2,17 @@
 
 Time charts display datpoints over a period of time.
 
-![Time Chart](https://github.com/Yelp/terraform-provider-signalform/raw/master/docs/resources/time_chart.png)
+![Time Chart](https://github.com/signalfx/terraform-provider-signalfx/raw/master/docs/resources/time_chart.png)
 
 The first four icons in the chart’s title bar represent four visualization options for time charts: line chart, area chart, column chart, and histogram chart (user the `plot_type` to choose your favorite chart type).
 
-![Time Chart Types](https://github.com/Yelp/terraform-provider-signalform/raw/master/docs/resources/time_chart_types.jpg)
+![Time Chart Types](https://github.com/signalfx/terraform-provider-signalfx/raw/master/docs/resources/time_chart_types.jpg)
 
 
 ## Example Usage
 
 ```terraform
-resource "signalform_time_chart" "mychart0" {
+resource "signalfx_time_chart" "mychart0" {
     name = "CPU Total Idle"
 
     program_text = <<-EOF
@@ -75,7 +75,7 @@ The following arguments are supported in the resource block:
     * `low_watermark_label` - (Optional) A label to attach to the low watermark line.
 * `viz_options` - (Optional) Plot-level customization options, associated with a publish statement.
     * `label` - (Required) Label used in the publish statement that displays the plot (metric time series data) you want to customize.
-    * `color` - (Optional) Color to use : gray, blue, azure, navy, brown, orange, yellow, iris, magenta, pink, purple, violet, lilac, emerald, green, aquamarine. ![Colors](https://github.com/Yelp/terraform-provider-signalform/raw/master/docs/resources/colors.png)
+    * `color` - (Optional) Color to use : gray, blue, azure, navy, brown, orange, yellow, iris, magenta, pink, purple, violet, lilac, emerald, green, aquamarine. ![Colors](https://github.com/signalfx/terraform-provider-signalfx/raw/master/docs/resources/colors.png)
     * `axis` - (Optional) Y-axis associated with values for this plot. Must be either `right` or `left`.
     * `plot_type` - (Optional) The visualization style to use. Must be `"LineChart"`, `"AreaChart"`, `"ColumnChart"`, or `"Histogram"`. Chart level `plot_type` by default.
     * `value_unit` - (Optional) A unit to attach to this plot. Units support automatic scaling (eg thousands of bytes will be displayed as kilobytes).
@@ -87,5 +87,5 @@ The following arguments are supported in the resource block:
 * `show_event_lines` - (Optional) Whether vertical highlight lines should be drawn in the visualizations at times when events occurred. `false` by default.
 * `show_data_markers` - (Optional) Show markers (circles) for each datapoint used to draw line or area charts. `false` by default.
 * `stacked` - (Optional) Whether area and bar charts in the visualization should be stacked. `false` by default.
-* `synced` - (Optional) Whether the resource in SignalForm and SignalFx are identical or not. Used internally for syncing, you do not need to specify it. Whenever you see a change to this field in the plan, it means that your resource has been changed from the UI and Terraform is now going to re-sync it back to what is in your configuration.
+* `synced` - (Optional) Whether the resource in the provider and SignalFx are identical or not. Used internally for syncing, you do not need to specify it. Whenever you see a change to this field in the plan, it means that your resource has been changed from the UI and Terraform is now going to re-sync it back to what is in your configuration.
 * `tags` - (Optional) Tags associated with the chart.

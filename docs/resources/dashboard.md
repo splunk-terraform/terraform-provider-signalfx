@@ -8,9 +8,9 @@ A dashboard is a curated collection of specific charts and supports dimensional 
 ## Example Usage
 
 ```terraform
-resource "signalform_dashboard" "mydashboard0" {
+resource "signalfx_dashboard" "mydashboard0" {
     name = "My Dashboard"
-    dashboard_group = "${signalform_dashboard_group.mydashboardgroup0.id}"
+    dashboard_group = "${signalfx_dashboard_group.mydashboardgroup0.id}"
 
     time_range = "-30m"
 
@@ -24,12 +24,12 @@ resource "signalform_dashboard" "mydashboard0" {
         values = ["uswest-1-"]
     }
     chart {
-        chart_id = "${signalform_time_chart.mychart0.id}"
+        chart_id = "${signalfx_time_chart.mychart0.id}"
         width = 12
         height = 1
     }
     chart {
-        chart_id = "${signalform_time_chart.mychart1.id}"
+        chart_id = "${signalfx_time_chart.mychart1.id}"
         width = 5
         height = 2
     }
@@ -84,7 +84,7 @@ The following arguments are supported in the resource block:
 * `event_overlay` - (Optional) Specify a list of event overlays to include in the dashboard.
     * `line` - (Optional) Show a vertical line for the event. `false` by default.
     * `label` - (Optional) Text shown in the dropdown when selecting this overlay from the menu.
-    * `color` - (Optional) Color to use : gray, blue, azure, navy, brown, orange, yellow, iris, magenta, pink, purple, violet, lilac, emerald, green, aquamarine. ![Colors](https://github.com/Yelp/terraform-provider-signalform/raw/master/docs/resources/colors.png)
+    * `color` - (Optional) Color to use : gray, blue, azure, navy, brown, orange, yellow, iris, magenta, pink, purple, violet, lilac, emerald, green, aquamarine. ![Colors](https://github.com/Yelp/terraform-provider-signalfx/raw/master/docs/resources/colors.png)
     * `signal` - Search term used to choose the events shown in the overlay.
     * `type` - (Optional) Can be set to `eventTimeSeries` (the default) to refer to externally reported events, or `detectorEvents` to refer to events from detector triggers.
     * `source` - (Optional) Each element specifies a filter to use against the signal specified in the `signal`.
@@ -92,7 +92,7 @@ The following arguments are supported in the resource block:
         * `values` - A list of values to be used with the `property`, they will be combined via `OR`.
         * `negated` - (Optional) If true,  only data that does not match the specified value of the specified property appear in the event overlay. Defaults to `false`.
 * `selected_event_overlay` - (Optional) Defines event overlays which are enabled by default. See `event_overlay` for a definition of fields.
-* `synced` - (Optional) Whether the resource in SignalForm and SignalFx are identical or not. Used internally for syncing, you do not need to specify it. Whenever you see a change to this field in the plan, it means that your resource has been changed from the UI and Terraform is now going to re-sync it back to what's in your configuration.
+* `synced` - (Optional) Whether the resource in the provider and SignalFx are identical or not. Used internally for syncing, you do not need to specify it. Whenever you see a change to this field in the plan, it means that your resource has been changed from the UI and Terraform is now going to re-sync it back to what's in your configuration.
 * `tags` - (Optional) Tags associated with the dashboard.
 
 
@@ -109,20 +109,20 @@ The are a bunch of use cases where this layout makes things too verbose and hard
 
 The dashboard is divided into equal-sized charts (defined by `width` and `height`). The charts are placed in the grid one after another starting from a row (called `start_row`) and a column (or `start_column`). If a chart does not fit in the same row (because the total width > max allowed by the dashboard), this and the next ones will be place in the next row(s).
 
-![Dashboard Grid](https://github.com/Yelp/terraform-provider-signalform/raw/master/docs/resources/dashboard_grid.png)
+![Dashboard Grid](https://github.com/Yelp/terraform-provider-signalfx/raw/master/docs/resources/dashboard_grid.png)
 
 ```terraform
-resource "signalform_dashboard" "grid_example" {
+resource "signalfx_dashboard" "grid_example" {
     name = "Grid"
-    dashboard_group = "${signalform_dashboard_group.example.id}"
+    dashboard_group = "${signalfx_dashboard_group.example.id}"
     time_range = "-15m"
 
     grid {
-        chart_ids = ["${concat(signalform_time_chart.rps.*.id,
-                signalform_time_chart.50ths.*.id,
-                signalform_time_chart.99ths.*.id,
-                signalform_time_chart.idle_workers.*.id,
-                signalform_time_chart.cpu_idle.*.id)}"]
+        chart_ids = ["${concat(signalfx_time_chart.rps.*.id,
+                signalfx_time_chart.50ths.*.id,
+                signalfx_time_chart.99ths.*.id,
+                signalfx_time_chart.idle_workers.*.id,
+                signalfx_time_chart.cpu_idle.*.id)}"]
         width = 3
         height = 1
         start_row = 0
@@ -135,52 +135,52 @@ resource "signalform_dashboard" "grid_example" {
 
 The dashboard is divided into equal-sized charts (defined by `width` and `height`). The charts are placed in the grid by column (column number is called `column`) starting from a row you specify (called `start_row`).
 
-![Dashboard Column](https://github.com/Yelp/terraform-provider-signalform/raw/master/docs/resources/dashboard_column.png)
+![Dashboard Column](https://github.com/Yelp/terraform-provider-signalfx/raw/master/docs/resources/dashboard_column.png)
 
 ```terraform
-resource "signalform_dashboard" "load" {
+resource "signalfx_dashboard" "load" {
     name = "Load"
-    dashboard_group = "${signalform_dashboard_group.example.id}"
+    dashboard_group = "${signalfx_dashboard_group.example.id}"
 
     column {
-        chart_ids = ["${signalform_single_value_chart.rps.*.id}"]
+        chart_ids = ["${signalfx_single_value_chart.rps.*.id}"]
         width = 2
     }
     column {
-        chart_ids = ["${signalform_time_chart.cpu_capacity.*.id}"]
+        chart_ids = ["${signalfx_time_chart.cpu_capacity.*.id}"]
         column = 2
         width = 4
     }
     chart {
-        chart_id = "${signalform_single_value_chart.loadbalancer_rps.id}"
+        chart_id = "${signalfx_single_value_chart.loadbalancer_rps.id}"
         width = 2
         height = 1
         row = 0
         column = 6
     }
     chart {
-        chart_id = "${signalform_time_chart.cpu_idle.id}"
+        chart_id = "${signalfx_time_chart.cpu_idle.id}"
         width = 4
         height = 1
         row = 0
         column = 8
     }
     chart {
-        chart_id = "${signalform_time_chart.network.id}"
+        chart_id = "${signalfx_time_chart.network.id}"
         width = 6
         height = 3
         row = 1
         column = 6
     }
     chart {
-        chart_id = "${signalform_single_value_chart.disk.id}"
+        chart_id = "${signalfx_single_value_chart.disk.id}"
         width = 2
         height = 1
         row = 5
         column = 6
     }
     chart {
-        chart_id = "${signalform_time_chart.mem.id}"
+        chart_id = "${signalfx_time_chart.mem.id}"
         width = 4
         height = 1
         row = 5
