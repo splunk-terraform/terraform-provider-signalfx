@@ -1,4 +1,4 @@
-PACKAGE := terraform-provider-signalfx
+PACKAGE := terraform-provider-signalform
 GOPATH  := $(shell pwd -L)
 BASE    := $(GOPATH)/src/$(PACKAGE)
 PATH    := $(GOPATH)/bin:$(PATH)
@@ -39,7 +39,7 @@ clean:
 .PHONY: build
 build: test
 	mkdir -p $(GOPATH)/bin
-	cd $(BASE) && go build -o $(GOPATH)/bin/terraform-provider-signalfx
+	cd $(BASE) && go build -o $(GOPATH)/bin/terraform-provider-signalform
 
 .PHONY: integration
 integration:

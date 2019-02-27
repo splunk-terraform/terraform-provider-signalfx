@@ -1,9 +1,8 @@
-package signalfx
+package signalform
 
 import (
 	"encoding/json"
 	"fmt"
-
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
@@ -14,7 +13,7 @@ func textChartResource() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     true,
-				Description: "Whether the resource in the provider and SignalFx are identical or not. Used internally for syncing.",
+				Description: "Whether the resource in SignalForm and SignalFx are identical or not. Used internally for syncing.",
 			},
 			"last_updated": &schema.Schema{
 				Type:        schema.TypeFloat,
@@ -84,7 +83,7 @@ func getTextChartOptions(d *schema.ResourceData) map[string]interface{} {
 }
 
 func textchartCreate(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*signalfxConfig)
+	config := meta.(*signalformConfig)
 	payload, err := getPayloadTextChart(d)
 	if err != nil {
 		return fmt.Errorf("Failed creating json payload: %s", err.Error())
@@ -94,14 +93,14 @@ func textchartCreate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func textchartRead(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*signalfxConfig)
+	config := meta.(*signalformConfig)
 	url := fmt.Sprintf("%s/%s", CHART_API_URL, d.Id())
 
 	return resourceRead(url, config.AuthToken, d)
 }
 
 func textchartUpdate(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*signalfxConfig)
+	config := meta.(*signalformConfig)
 	payload, err := getPayloadTextChart(d)
 	if err != nil {
 		return fmt.Errorf("Failed creating json payload: %s", err.Error())
@@ -112,7 +111,7 @@ func textchartUpdate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func textchartDelete(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*signalfxConfig)
+	config := meta.(*signalformConfig)
 	url := fmt.Sprintf("%s/%s", CHART_API_URL, d.Id())
 	return resourceDelete(url, config.AuthToken, d)
 }

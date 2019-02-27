@@ -1,4 +1,4 @@
-package signalfx
+package signalform
 
 import (
 	"encoding/json"
@@ -19,7 +19,7 @@ func integrationResource() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     true,
-				Description: "Whether the resource in the provider and SignalFx are identical or not. Used internally for syncing.",
+				Description: "Whether the resource in SignalForm and SignalFx are identical or not. Used internally for syncing.",
 			},
 			"last_updated": &schema.Schema{
 				Type:        schema.TypeFloat,
@@ -96,7 +96,7 @@ func getPayloadIntegration(d *schema.ResourceData) ([]byte, error) {
 }
 
 func integrationCreate(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*signalfxConfig)
+	config := meta.(*signalformConfig)
 	payload, err := getPayloadIntegration(d)
 	if err != nil {
 		return fmt.Errorf("Failed creating json payload: %s", err.Error())
@@ -107,14 +107,14 @@ func integrationCreate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func integrationRead(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*signalfxConfig)
+	config := meta.(*signalformConfig)
 	url := fmt.Sprintf("%s/%s", INTEGRATION_API_URL, d.Id())
 
 	return resourceRead(url, config.AuthToken, d)
 }
 
 func integrationUpdate(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*signalfxConfig)
+	config := meta.(*signalformConfig)
 	payload, err := getPayloadIntegration(d)
 	if err != nil {
 		return fmt.Errorf("Failed creating json payload: %s", err.Error())
@@ -125,7 +125,7 @@ func integrationUpdate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func integrationDelete(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*signalfxConfig)
+	config := meta.(*signalformConfig)
 	url := fmt.Sprintf("%s/%s", INTEGRATION_API_URL, d.Id())
 	return resourceDelete(url, config.AuthToken, d)
 }

@@ -1,4 +1,4 @@
-PROJECT := terraform-provider-signalfx
+PROJECT := terraform-provider-signalform
 
 ifdef BUILD_NUMBER
 	REAL_BUILD_NUMBER?=$(BUILD_NUMBER)
@@ -49,7 +49,7 @@ $(BINARY_FILE): .docker_container_id
 .docker_container_id: .docker_image_id
 	docker run --rm=false \
 		-e GOOS=$(GOOS) -e GOARCH=$(GOARCH) \
-		-v $(CURDIR)/../src/terraform-provider-signalfx:/go/src/terraform-provider-signalfx:ro \
+		-v $(CURDIR)/../src/terraform-provider-signalform:/go/src/terraform-provider-signalform:ro \
 		-v $(CURDIR)/build.sh:/build.sh:ro \
 		--cidfile=$(CURDIR)/.docker_container_id \
 		$$(cat .docker_image_id) \

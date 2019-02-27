@@ -1,4 +1,4 @@
-package: terraform-provider-signalfx
+package: terraform-provider-signalform
 import:
 - package: github.com/bgentry/go-netrc
   subpackages:

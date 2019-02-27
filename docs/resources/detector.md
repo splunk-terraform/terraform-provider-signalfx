@@ -2,14 +2,14 @@
 
 A detector is a collection of rules that define who should be notified when certain detect functions within SignalFlow fire alerts. Each rule maps a detect label to a severity and a list of notifications. When the conditions within the given detect function are fulfilled, notifications will be sent to the destinations defined in the rule for that detect function.
 
-![Detector](https://github.com/Yelp/terraform-provider-signalfx/raw/master/docs/resources/detector.png)
+![Detector](https://github.com/Yelp/terraform-provider-signalform/raw/master/docs/resources/detector.png)
 
 
 ## Example Usage
 
 ```terraform
-resource "signalfx_detector" "application_delay" {
-    provider = "signalx"
+resource "signalform_detector" "application_delay" {
+    provider = "signalform"
     count = "${length(var.clusters)}"
     name = " max average delay - ${var.clusters[count.index]}"
     description = "your application is slow - ${var.clusters[count.index]}"
@@ -33,7 +33,7 @@ resource "signalfx_detector" "application_delay" {
     }
 }
 
-provider "signalfx" {}
+provider "signalform" {}
 
 variable "clusters" {
     default = ["clusterA", "clusterB"]

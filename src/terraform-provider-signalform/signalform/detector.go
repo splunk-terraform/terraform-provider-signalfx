@@ -1,14 +1,13 @@
-package signalfx
+package signalform
 
 import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"sort"
-	"strings"
-
 	"github.com/hashicorp/terraform/helper/hashcode"
 	"github.com/hashicorp/terraform/helper/schema"
+	"sort"
+	"strings"
 )
 
 const (
@@ -23,7 +22,7 @@ func detectorResource() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     true,
-				Description: "Whether the resource in the provider and SignalFx are identical or not. Used internally for syncing.",
+				Description: "Whether the resource in SignalForm and SignalFx are identical or not. Used internally for syncing.",
 			},
 			"last_updated": &schema.Schema{
 				Type:        schema.TypeFloat,
@@ -309,7 +308,7 @@ func getNotifications(tf_notifications []interface{}) []map[string]interface{} {
 }
 
 func detectorCreate(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*signalfxConfig)
+	config := meta.(*signalformConfig)
 	payload, err := getPayloadDetector(d)
 	if err != nil {
 		return fmt.Errorf("Failed creating json payload: %s", err.Error())
@@ -319,14 +318,14 @@ func detectorCreate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func detectorRead(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*signalfxConfig)
+	config := meta.(*signalformConfig)
 	url := fmt.Sprintf("%s/%s", DETECTOR_API_URL, d.Id())
 
 	return resourceRead(url, config.AuthToken, d)
 }
 
 func detectorUpdate(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*signalfxConfig)
+	config := meta.(*signalformConfig)
 	payload, err := getPayloadDetector(d)
 	if err != nil {
 		return fmt.Errorf("Failed creating json payload: %s", err.Error())
@@ -337,7 +336,7 @@ func detectorUpdate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func detectorDelete(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*signalfxConfig)
+	config := meta.(*signalformConfig)
 	url := fmt.Sprintf("%s/%s", DETECTOR_API_URL, d.Id())
 
 	return resourceDelete(url, config.AuthToken, d)

@@ -1,9 +1,8 @@
-package signalfx
+package signalform
 
 import (
-	"testing"
-
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func TestValidatePlotTypeTimeChartAllowed(t *testing.T) {
