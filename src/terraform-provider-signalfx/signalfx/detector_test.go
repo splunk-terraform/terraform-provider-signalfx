@@ -1,9 +1,10 @@
-package signalform
+package signalfx
 
 import (
+	"testing"
+
 	"github.com/hashicorp/terraform/helper/hashcode"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestGetNotifications(t *testing.T) {

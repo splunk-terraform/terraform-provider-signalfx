@@ -1,4 +1,4 @@
-package signalform
+package signalfx
 
 import (
 	"bytes"
@@ -152,7 +152,7 @@ func resourceRead(url string, sfxToken string, d *schema.ResourceData) error {
 		if err != nil {
 			return fmt.Errorf("Failed unmarshaling for the resource %s during read: %s", d.Get("name"), err.Error())
 		}
-		// This implies the resource was modified in the Signalfx UI and therefore it is not synced with Signalform
+		// This implies the resource was modified in the Signalfx UI and therefore it is not synced.
 		last_updated := mapped_resp["lastUpdated"].(float64)
 		if last_updated > (d.Get("last_updated").(float64) + OFFSET) {
 			d.Set("synced", false)
@@ -211,7 +211,7 @@ func resourceUpdate(url string, sfxToken string, payload []byte, d *schema.Resou
 		if err != nil {
 			return fmt.Errorf("Failed unmarshaling for the resource %s during creation: %s", d.Get("name"), err.Error())
 		}
-		// If the resource was updated successfully with Signalform configs, it is now synced with Signalfx
+		// If the resource was updated successfully with configs, it is now synced with Signalfx
 		d.Set("synced", true)
 		d.Set("last_updated", mapped_resp["lastUpdated"].(float64))
 		resource_url := strings.Replace(fmt.Sprintf("%s", d.Get("resource_url")), "<id>", mapped_resp["id"].(string), 1)

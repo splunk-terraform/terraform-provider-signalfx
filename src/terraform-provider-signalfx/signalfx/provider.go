@@ -1,23 +1,24 @@
-package signalform
+package signalfx
 
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/bgentry/go-netrc/netrc"
-	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/hashicorp/terraform/terraform"
-	"github.com/mitchellh/go-homedir"
 	"io/ioutil"
 	"os"
 	"os/user"
 	"runtime"
+
+	"github.com/bgentry/go-netrc/netrc"
+	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform/terraform"
+	homedir "github.com/mitchellh/go-homedir"
 )
 
 var SystemConfigPath = "/etc/signalfx.conf"
 var HomeConfigSuffix = "/.signalfx.conf"
 var HomeConfigPath = ""
 
-type signalformConfig struct {
+type signalfxConfig struct {
 	AuthToken string `json:"auth_token"`
 }
 
@@ -32,22 +33,22 @@ func Provider() terraform.ResourceProvider {
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"signalform_detector":           detectorResource(),
-			"signalform_time_chart":         timeChartResource(),
-			"signalform_heatmap_chart":      heatmapChartResource(),
-			"signalform_single_value_chart": singleValueChartResource(),
-			"signalform_list_chart":         listChartResource(),
-			"signalform_text_chart":         textChartResource(),
-			"signalform_dashboard":          dashboardResource(),
-			"signalform_dashboard_group":    dashboardGroupResource(),
-			"signalform_integration":        integrationResource(),
+			"signalfx_detector":           detectorResource(),
+			"signalfx_time_chart":         timeChartResource(),
+			"signalfx_heatmap_chart":      heatmapChartResource(),
+			"signalfx_single_value_chart": singleValueChartResource(),
+			"signalfx_list_chart":         listChartResource(),
+			"signalfx_text_chart":         textChartResource(),
+			"signalfx_dashboard":          dashboardResource(),
+			"signalfx_dashboard_group":    dashboardGroupResource(),
+			"signalfx_integration":        integrationResource(),
 		},
-		ConfigureFunc: signalformConfigure,
+		ConfigureFunc: signalfxConfigure,
 	}
 }
 
-func signalformConfigure(data *schema.ResourceData) (interface{}, error) {
-	config := signalformConfig{}
+func signalfxConfigure(data *schema.ResourceData) (interface{}, error) {
+	config := signalfxConfig{}
 
 	// /etc/signalfx.conf has lowest priority
 	if _, err := os.Stat(SystemConfigPath); err == nil {
@@ -91,7 +92,7 @@ func signalformConfigure(data *schema.ResourceData) (interface{}, error) {
 	return &config, nil
 }
 
-func readConfigFile(configPath string, config *signalformConfig) error {
+func readConfigFile(configPath string, config *signalfxConfig) error {
 	configFile, err := ioutil.ReadFile(configPath)
 	if err != nil {
 		return fmt.Errorf("Failed to open config file. %s", err.Error())
@@ -103,7 +104,7 @@ func readConfigFile(configPath string, config *signalformConfig) error {
 	return nil
 }
 
-func readNetrcFile(config *signalformConfig) error {
+func readNetrcFile(config *signalfxConfig) error {
 	// Inspired by https://github.com/hashicorp/terraform/blob/master/vendor/github.com/hashicorp/go-getter/netrc.go
 	// Get the netrc file path
 	path := os.Getenv("NETRC")

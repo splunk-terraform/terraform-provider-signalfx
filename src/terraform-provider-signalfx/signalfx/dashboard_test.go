@@ -1,8 +1,9 @@
-package signalform
+package signalfx
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestValidateChartsResolutionAllowed(t *testing.T) {

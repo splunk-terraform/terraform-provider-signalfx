@@ -20,5 +20,5 @@ fpm \
     /go/bin/${project}="${tf_path}"/bin/
 
 env GOOS=${GOOS} GOARCH=${GOARCH} go build -v \
-    -o /dist/terraform-provider-signalform-${GOOS}_${GOARCH} \
-    terraform-provider-signalform
+    -o /dist/terraform-provider-signalfx-${GOOS}_${GOARCH} \
+    terraform-provider-signalfx

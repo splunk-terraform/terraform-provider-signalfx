@@ -1,12 +1,12 @@
 # Integration
 
-SignalFx supports integrations to ingest metrics from other monitoring systems, connect to Single Sign-On providers, and to report notifications for messaging and incident management. Note that your SignalForm API key must have admin permissions to use the SignalFx integration API.
+SignalFx supports integrations to ingest metrics from other monitoring systems, connect to Single Sign-On providers, and to report notifications for messaging and incident management. Note that your API key must have admin permissions to use the SignalFx integration API.
 
 ## Example Usage
 
 ```terraform
-resource "signalform_integration" "pagerduty_myteam" {
-    provider = "signalform"
+resource "signalfx_integration" "pagerduty_myteam" {
+    provider = "signalfx"
     name = "PD - My Team"
     enabled = true
     type = "PagerDuty"
