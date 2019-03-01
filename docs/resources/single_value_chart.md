@@ -4,12 +4,12 @@ This chart type displays a single number in a large font, representing the curre
 
 If the time period is in the past, the number represents the value of the metric near the end of the time period.
 
-![Single Value Chart](https://github.com/Yelp/terraform-provider-signalform/raw/master/docs/resources/single_value_chart.png)
+![Single Value Chart](https://github.com/Yelp/terraform-provider-signalfx/raw/master/docs/resources/single_value_chart.png)
 
 ## Example Usage
 
 ```terraform
-resource "signalform_single_value_chart" "mysvchart0" {
+resource "signalfx_single_value_chart" "mysvchart0" {
     name = "CPU Total Idle - Single Value"
 
     program_text = <<-EOF
@@ -43,7 +43,7 @@ The following arguments are supported in the resource block:
     * `gte` - (Optional) Indicates the lower threshold inclusive value for this range.
     * `lt` - (Optional) Indicates the upper threshold non-inculsive value for this range.
     * `lte` - (Optional) Indicates the upper threshold inclusive value for this range.
-    * `color` - (Required) The color range to use. Must be either gray, blue, navy, orange, yellow, magenta, purple, violet, lilac, green, aquamarine. ![Colors](https://github.com/Yelp/terraform-provider-signalform/raw/master/docs/resources/colors.png)
+    * `color` - (Required) The color range to use. Must be either gray, blue, navy, orange, yellow, magenta, purple, violet, lilac, green, aquamarine. ![Colors](https://github.com/signalfx/terraform-provider-signalfx/raw/master/docs/resources/colors.png)
 * `unit_prefix` - (Optional) Must be `"Metric"` or `"Binary"`. `"Metric"` by default.
 * `max_delay - (Optional) How long (in seconds) to wait for late datapoints
 * `refresh_interval` - (Optional) How often (in seconds) to refresh the value.
@@ -51,4 +51,4 @@ The following arguments are supported in the resource block:
 * `is_timestamp_hidden` - (Optional) Whether to hide the timestamp in the chart. `false` by default.
 * `secondary_visualization` - (Optional) The type of secondary visualization. Can be `None`, `Radial`, `Linear`, or `Sparkline`. If unset, the SignalFx default is used (`None`).
 * `show_spark_line` - (Optional) Whether to show a trend line below the current value. `false` by default.
-* `synced` - (Optional) Whether the resource in SignalForm and SignalFx are identical or not. Used internally for syncing, you do not need to specify it. Whenever you see a change to this field in the plan, it means that your resource has been changed from the UI and Terraform is now going to re-sync it back to what is in your configuration.
+* `synced` - (Optional) Whether the resource in the provider and SignalFx are identical or not. Used internally for syncing, you do not need to specify it. Whenever you see a change to this field in the plan, it means that your resource has been changed from the UI and Terraform is now going to re-sync it back to what is in your configuration.

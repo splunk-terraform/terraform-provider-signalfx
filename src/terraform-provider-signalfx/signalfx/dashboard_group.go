@@ -1,4 +1,4 @@
-package signalform
+package signalfx
 
 import (
 	"encoding/json"
@@ -16,7 +16,7 @@ func dashboardGroupResource() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     true,
-				Description: "Whether the resource in SignalForm and SignalFx are identical or not. Used internally for syncing.",
+				Description: "Whether the resource in the provider and SignalFx are identical or not. Used internally for syncing.",
 			},
 			"last_updated": &schema.Schema{
 				Type:        schema.TypeFloat,
@@ -67,7 +67,7 @@ func getPayloadDashboardGroup(d *schema.ResourceData) ([]byte, error) {
 }
 
 func dashboardgroupCreate(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*signalformConfig)
+	config := meta.(*signalfxConfig)
 	payload, err := getPayloadDashboardGroup(d)
 	if err != nil {
 		return fmt.Errorf("Failed creating json payload: %s", err.Error())
@@ -77,14 +77,14 @@ func dashboardgroupCreate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func dashboardgroupRead(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*signalformConfig)
+	config := meta.(*signalfxConfig)
 	url := fmt.Sprintf("%s/%s", DASHBOARD_GROUP_API_URL, d.Id())
 
 	return resourceRead(url, config.AuthToken, d)
 }
 
 func dashboardgroupUpdate(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*signalformConfig)
+	config := meta.(*signalfxConfig)
 	payload, err := getPayloadDashboardGroup(d)
 	if err != nil {
 		return fmt.Errorf("Failed creating json payload: %s", err.Error())
@@ -95,7 +95,7 @@ func dashboardgroupUpdate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func dashboardgroupDelete(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*signalformConfig)
+	config := meta.(*signalfxConfig)
 	url := fmt.Sprintf("%s/%s", DASHBOARD_GROUP_API_URL, d.Id())
 	return resourceDelete(url, config.AuthToken, d)
 }

@@ -1,4 +1,4 @@
-package signalform
+package signalfx
 
 import (
 	"encoding/json"
@@ -21,7 +21,7 @@ func dashboardResource() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     true,
-				Description: "Whether the resource in SignalForm and SignalFx are identical or not. Used internally for syncing.",
+				Description: "Whether the resource in the provider and SignalFx are identical or not. Used internally for syncing.",
 			},
 			"last_updated": &schema.Schema{
 				Type:        schema.TypeFloat,
@@ -652,35 +652,35 @@ func getDashboardFilters(d *schema.ResourceData) []map[string]interface{} {
 }
 
 func dashboardCreate(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*signalformConfig)
+	config := meta.(*signalfxConfig)
 	payload, err := getPayloadDashboard(d)
 	if err != nil {
 		return fmt.Errorf("Failed creating json payload: %s", err.Error())
 	}
-	log.Printf("[SignalForm] Dashboard Create Payload: %s", string(payload))
+	log.Printf("[SignalFx] Dashboard Create Payload: %s", string(payload))
 	return resourceCreate(DASHBOARD_API_URL, config.AuthToken, payload, d)
 }
 
 func dashboardRead(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*signalformConfig)
+	config := meta.(*signalfxConfig)
 	url := fmt.Sprintf("%s/%s", DASHBOARD_API_URL, d.Id())
 
 	return resourceRead(url, config.AuthToken, d)
 }
 
 func dashboardUpdate(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*signalformConfig)
+	config := meta.(*signalfxConfig)
 	payload, err := getPayloadDashboard(d)
 	if err != nil {
 		return fmt.Errorf("Failed creating json payload: %s", err.Error())
 	}
 	url := fmt.Sprintf("%s/%s", DASHBOARD_API_URL, d.Id())
-	log.Printf("[SignalForm] Dashboard Update Payload: %s", string(payload))
+	log.Printf("[SignalFx] Dashboard Update Payload: %s", string(payload))
 	return resourceUpdate(url, config.AuthToken, payload, d)
 }
 
 func dashboardDelete(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*signalformConfig)
+	config := meta.(*signalfxConfig)
 	url := fmt.Sprintf("%s/%s", DASHBOARD_API_URL, d.Id())
 	return resourceDelete(url, config.AuthToken, d)
 }

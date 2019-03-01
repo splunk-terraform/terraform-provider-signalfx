@@ -1,14 +1,15 @@
-package signalform
+package signalfx
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
+	"testing"
+
 	"github.com/hashicorp/terraform/config"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
 	"github.com/stretchr/testify/assert"
-	"io/ioutil"
-	"os"
-	"testing"
 )
 
 var OldSystemConfigPath = SystemConfigPath
@@ -58,13 +59,13 @@ func TestProviderConfigureFromNothing(t *testing.T) {
 
 func TestProviderConfigureFromTerraform(t *testing.T) {
 	defer resetGlobals()
-	tmpfileSystem, err := createTempConfigFile(`{"useless_config":"foo","auth_token":"ZZZ"}`, "signalform.conf")
+	tmpfileSystem, err := createTempConfigFile(`{"useless_config":"foo","auth_token":"ZZZ"}`, "signalfx.conf")
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 	defer os.Remove(tmpfileSystem.Name())
 	SystemConfigPath = tmpfileSystem.Name()
-	tmpfileHome, err := createTempConfigFile(`{"auth_token":"WWW"}`, "signalform.conf")
+	tmpfileHome, err := createTempConfigFile(`{"auth_token":"WWW"}`, "signalfx.conf")
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -85,7 +86,7 @@ func TestProviderConfigureFromTerraform(t *testing.T) {
 	if meta == nil {
 		t.Fatalf("Expected metadata, got nil. err: %s", err.Error())
 	}
-	configuration := meta.(*signalformConfig)
+	configuration := meta.(*signalfxConfig)
 	assert.Equal(t, "XXX", configuration.AuthToken)
 }
 
@@ -107,19 +108,19 @@ func TestProviderConfigureFromTerraformOnly(t *testing.T) {
 	if meta == nil {
 		t.Fatalf("Expected metadata, got nil. err: %s", err.Error())
 	}
-	configuration := meta.(*signalformConfig)
+	configuration := meta.(*signalfxConfig)
 	assert.Equal(t, "XXX", configuration.AuthToken)
 }
 
 func TestProviderConfigureFromEnvironment(t *testing.T) {
 	defer resetGlobals()
-	tmpfileSystem, err := createTempConfigFile(`{"useless_config":"foo","auth_token":"ZZZ"}`, "signalform.conf")
+	tmpfileSystem, err := createTempConfigFile(`{"useless_config":"foo","auth_token":"ZZZ"}`, "signalfx.conf")
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 	defer os.Remove(tmpfileSystem.Name())
 	SystemConfigPath = tmpfileSystem.Name()
-	tmpfileHome, err := createTempConfigFile(`{"auth_token":"WWW"}`, "signalform.conf")
+	tmpfileHome, err := createTempConfigFile(`{"auth_token":"WWW"}`, "signalfx.conf")
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -138,7 +139,7 @@ func TestProviderConfigureFromEnvironment(t *testing.T) {
 	if meta == nil {
 		t.Fatalf("Expected metadata, got nil. err: %s", err.Error())
 	}
-	configuration := meta.(*signalformConfig)
+	configuration := meta.(*signalfxConfig)
 	assert.Equal(t, "YYY", configuration.AuthToken)
 }
 
@@ -160,19 +161,19 @@ func TestProviderConfigureFromEnvironmentOnly(t *testing.T) {
 	if meta == nil {
 		t.Fatalf("Expected metadata, got nil. err: %s", err.Error())
 	}
-	configuration := meta.(*signalformConfig)
+	configuration := meta.(*signalfxConfig)
 	assert.Equal(t, "YYY", configuration.AuthToken)
 }
 
-func TestSignalformConfigureFromHomeFile(t *testing.T) {
+func TestSignalFxConfigureFromHomeFile(t *testing.T) {
 	defer resetGlobals()
-	tmpfileSystem, err := createTempConfigFile(`{"useless_config":"foo","auth_token":"ZZZ"}`, "signalform.conf")
+	tmpfileSystem, err := createTempConfigFile(`{"useless_config":"foo","auth_token":"ZZZ"}`, "signalfx.conf")
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 	defer os.Remove(tmpfileSystem.Name())
 	SystemConfigPath = tmpfileSystem.Name()
-	tmpfileHome, err := createTempConfigFile(`{"auth_token":"WWW"}`, "signalform.conf")
+	tmpfileHome, err := createTempConfigFile(`{"auth_token":"WWW"}`, "signalfx.conf")
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -190,13 +191,13 @@ func TestSignalformConfigureFromHomeFile(t *testing.T) {
 	if meta == nil {
 		t.Fatalf("Expected metadata, got nil. err: %s", err.Error())
 	}
-	configuration := meta.(*signalformConfig)
+	configuration := meta.(*signalfxConfig)
 	assert.Equal(t, "WWW", configuration.AuthToken)
 }
 
-func TestSignalformConfigureFromNetrcFile(t *testing.T) {
+func TestSignalFxConfigureFromNetrcFile(t *testing.T) {
 	defer resetGlobals()
-	tmpfileSystem, err := createTempConfigFile(`{"useless_config":"foo","auth_token":"ZZZ"}`, "signalform.conf")
+	tmpfileSystem, err := createTempConfigFile(`{"useless_config":"foo","auth_token":"ZZZ"}`, "signalfx.conf")
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -221,14 +222,14 @@ func TestSignalformConfigureFromNetrcFile(t *testing.T) {
 	if meta == nil {
 		t.Fatalf("Expected metadata, got nil. err: %s", err.Error())
 	}
-	configuration := meta.(*signalformConfig)
+	configuration := meta.(*signalfxConfig)
 	assert.Equal(t, "WWW", configuration.AuthToken)
 }
 
-func TestSignalformConfigureFromHomeFileOnly(t *testing.T) {
+func TestSignalFxConfigureFromHomeFileOnly(t *testing.T) {
 	defer resetGlobals()
 	SystemConfigPath = "filedoesnotexist"
-	tmpfileHome, err := createTempConfigFile(`{"auth_token":"WWW"}`, "signalform.conf")
+	tmpfileHome, err := createTempConfigFile(`{"auth_token":"WWW"}`, "signalfx.conf")
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -246,13 +247,13 @@ func TestSignalformConfigureFromHomeFileOnly(t *testing.T) {
 	if meta == nil {
 		t.Fatalf("Expected metadata, got nil. err: %s", err.Error())
 	}
-	configuration := meta.(*signalformConfig)
+	configuration := meta.(*signalfxConfig)
 	assert.Equal(t, "WWW", configuration.AuthToken)
 }
 
-func TestSignalformConfigureFromSystemFileOnly(t *testing.T) {
+func TestSignalFxConfigureFromSystemFileOnly(t *testing.T) {
 	defer resetGlobals()
-	tmpfileSystem, err := createTempConfigFile(`{"useless_config":"foo","auth_token":"ZZZ"}`, "signalform.conf")
+	tmpfileSystem, err := createTempConfigFile(`{"useless_config":"foo","auth_token":"ZZZ"}`, "signalfx.conf")
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -271,7 +272,7 @@ func TestSignalformConfigureFromSystemFileOnly(t *testing.T) {
 	if meta == nil {
 		t.Fatalf("Expected metadata, got nil. err: %s", err.Error())
 	}
-	configuration := meta.(*signalformConfig)
+	configuration := meta.(*signalfxConfig)
 	assert.Equal(t, "ZZZ", configuration.AuthToken)
 }
 
@@ -279,14 +280,14 @@ func TestReadConfigFileFileNotFound(t *testing.T) {
 	SystemConfigPath = "filedoesnotexist"
 	HomeConfigPath = "filedoesnotexist"
 	defer resetGlobals()
-	config := signalformConfig{}
+	config := signalfxConfig{}
 	err := readConfigFile("foo.conf", &config)
 	assert.Contains(t, err.Error(), "Failed to open config file")
 }
 
 func TestReadConfigFileParseError(t *testing.T) {
-	config := signalformConfig{}
-	tmpfile, err := createTempConfigFile(`{"auth_tok`, "signalform.conf")
+	config := signalfxConfig{}
+	tmpfile, err := createTempConfigFile(`{"auth_tok`, "signalfx.conf")
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -297,8 +298,8 @@ func TestReadConfigFileParseError(t *testing.T) {
 }
 
 func TestReadConfigFileSuccess(t *testing.T) {
-	config := signalformConfig{}
-	tmpfile, err := createTempConfigFile(`{"useless_config":"foo","auth_token":"XXX"}`, "signalform.conf")
+	config := signalfxConfig{}
+	tmpfile, err := createTempConfigFile(`{"useless_config":"foo","auth_token":"XXX"}`, "signalfx.conf")
 	if err != nil {
 		t.Fatal(err.Error())
 	}
