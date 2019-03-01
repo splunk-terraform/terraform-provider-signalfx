@@ -28,7 +28,6 @@ Changelog is available [here](https://github.com/Yelp/terraform-provider-signalf
     * [Integration](https://yelp.github.io/terraform-provider-signalfx/resources/integration.html)
 * [Build And Install](#build-and-install)
     * [Build binary from source](#build-binary-from-source)
-    * [Build debian package from source](#build-debian-package-from-source)
 * [Release](#release)
 * [Contributing](#contributing)
 * [FAQ](#faq)
