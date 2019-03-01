@@ -1,7 +1,7 @@
 package main
 
 import (
-	"terraform-provider-signalfx/signalfx"
+	"github.com/signalfx/terraform-provider-signalfx/signalfx"
 
 	"github.com/hashicorp/terraform/plugin"
 )
