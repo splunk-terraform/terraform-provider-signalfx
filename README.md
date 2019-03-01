@@ -90,8 +90,10 @@ Just like our configuration, we're just changing `signalform_` to `signalfx_`. H
 #!/bin/bash
 
 for resource in $(terraform state list); do
-        newresource=$(echo $resource | sed 's/signalform_/signalfx_/')
-        echo "terraform state mv $resource $newresource"
+  if [[ $resource == *"signalform_"* ]]; then
+    newresource=$(echo $resource | sed 's/signalform_/signalfx_/')
+    echo "terraform state mv $resource $newresource"
+  fi
 done
 ```
 
@@ -136,6 +138,7 @@ Once you have built the binary, place it in the same folder of your terraform in
 
 To make a new release:
 
+1. Decide on the next version, use [semantic versioning](https://semver.org/)
 1. Edit `CHANGELOG.md` and make sure all the goodies are in it!
 1. `git commit`
 1. `git tag v<VERSION>`
