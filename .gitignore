@@ -1,8 +1,3 @@
-pkg/
-bin/
-dist/
-src/github.com/
-src/terraform-provider-signalfx/vendor/
 .docker_container_id
 .docker_image_id
 terraform.tfstate
@@ -12,3 +7,4 @@ crash.log
 *.swp
 *.swo
 deps
+terraform-provider-signalfx
