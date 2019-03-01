@@ -120,77 +120,33 @@ Note: If you missed running `terraform init` in an earlier step you'll likely be
 To build the go binary from source:
 
 ```bash
-make build
+go build
 ```
 
-The output binary will be placed in the `bin/` folder.
+The output binary will be named `terraform-provider-signalfx`.
 
-The default platform target is `linux-amd64`. If you want to customize your target platform set the `GOOS` and `GOARCH` environment variables; e.g.:
+If you want to customize your target platform set the `GOOS` and `GOARCH` environment variables; e.g.:
 ```bash
 GOOS=darwin GOARCH=amd64 make build
 ```
 
 Once you have built the binary, place it in the same folder of your terraform installation for it to be available everywhere.
 
-### Build debian package from source
-
-If you want to build your package targeting at the same time Ubuntu Trusty and Xenial, then run:
-```shell
-make package
-```
-
-The output package will be placed in the `dist/` folder (e.g. `dist/terraform-provider-signalfx-0.9_2.2.5-default0_amd64.deb`)
-
-If you want to target a specific Ubuntu version, use the `itest_*` command as below:
-```shell
-make itest_trusty
-```
-
-You can set environament variables to customize your build:
-
-* `TF_PATH`: Path of your terraform installation. Default: `/nail/opt/terraform-$(TF_VERSION)`, with `TF_VERSION` being the one supported by the provider.
-* `ORG`: Organization name to be used for your package name. Default: `default` (e.g. `terraform-provider-signalfx-0.9_2.2.5-$(ORG)0_amd64.deb`)
-* `BUILD_NUMBER`: This variable will be used as iteration number. If not set, the default will be `0` (e.g. `terraform-provider-signalfx-0.9_2.2.5-default$(BUILD_NUMBER)_amd64.deb`)
-* `upstream_build_number`: If `BUILD_NUMBER` is not set and if your CI pipeline (e.g. Jenkins) defines this variable, then the job id will be used as iteration number for your package (e.g. `terraform-provider-signalfx-0.9_2.2.5-default$(upstream_build_number)_amd64.deb`)
-* `GOOS` and `GOARCH`: see the above [section](#build-binary-from-source). Remember to run `make clean` between builds with different target platform, so you start from a clean environment.
-
-Once you built the package, you can just install like:
-```shell
-sudo dpkg -i dist/terraform-provider-signalfx.deb
-```
-
 ## Release
 
 To make a new release:
 
-1. bump `VERSION` up in `build/Makefile` (use [semantic versioning](http://semver.org/))
-1. run `make changelog` and edit the changelog file
+1. Edit `CHANGELOG.md` and make sure all the goodies are in it!
 1. `git commit`
 1. `git tag v<VERSION>`
 1. `git push origin master && git push origin --tags`
-
 
 ## Contributing
 Everyone is encouraged to contribute to `terraform-provider-signalfx`. You can contribute by forking the GitHub repo and making a pull request or opening an issue.
 
 ## Running tests
 
-To run the tests, run `make test`
-
-To pass options to the test, e.g to target a specific test, pass the TEST_OPTS
-option to the make task - e.g
-
-```
-make test TEST_OPTS='-test.run TestSendRequestSuccess'
-```
-
-To make the tests run faster, you can run
-
-```
-make test TEST_OPTS='-i'
-```
-
-Subsequent make test commands should be quicker
+To run the tests, run `go test ./...`
 
 ## FAQ
 
