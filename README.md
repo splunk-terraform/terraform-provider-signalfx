@@ -14,7 +14,7 @@ Documentation is available [here](https://yelp.github.io/terraform-provider-sign
 
 Changelog is available [here](https://github.com/Yelp/terraform-provider-signalfx/blob/master/build/changelog).
 
-* [Conversion from SignalForm|#conversion-from-signalform]
+* [Conversion from SignalForm](#conversion-from-signalform)
 * Resources
     * [Detector](https://yelp.github.io/terraform-provider-signalfx/resources/detector.html)
     * [Chart](https://yelp.github.io/terraform-provider-signalfx/resources/chart.html)
