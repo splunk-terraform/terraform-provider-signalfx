@@ -15,6 +15,7 @@ Thanks to Yelp and Stripe for their contributions!
 
 ## Updated
 
+* Now uses Go 1.12 and module support, dropping use of Glide.
 * PagerDuty: Opt out of sending validation messages and add necessary friends: [PR](https://github.com/stripe/terraform-provider-signalform/pull/3)
 
 ## Bugfixes
