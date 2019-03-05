@@ -84,7 +84,7 @@ The following arguments are supported in the resource block:
 * `event_overlay` - (Optional) Specify a list of event overlays to include in the dashboard.
     * `line` - (Optional) Show a vertical line for the event. `false` by default.
     * `label` - (Optional) Text shown in the dropdown when selecting this overlay from the menu.
-    * `color` - (Optional) Color to use : gray, blue, azure, navy, brown, orange, yellow, iris, magenta, pink, purple, violet, lilac, emerald, green, aquamarine. ![Colors](https://github.com/Yelp/terraform-provider-signalfx/raw/master/docs/resources/colors.png)
+    * `color` - (Optional) Color to use : gray, blue, azure, navy, brown, orange, yellow, iris, magenta, pink, purple, violet, lilac, emerald, green, aquamarine. ![Colors](https://github.com/signalfx/terraform-provider-signalfx/raw/master/docs/resources/colors.png)
     * `signal` - Search term used to choose the events shown in the overlay.
     * `type` - (Optional) Can be set to `eventTimeSeries` (the default) to refer to externally reported events, or `detectorEvents` to refer to events from detector triggers.
     * `source` - (Optional) Each element specifies a filter to use against the signal specified in the `signal`.
@@ -109,7 +109,7 @@ The are a bunch of use cases where this layout makes things too verbose and hard
 
 The dashboard is divided into equal-sized charts (defined by `width` and `height`). The charts are placed in the grid one after another starting from a row (called `start_row`) and a column (or `start_column`). If a chart does not fit in the same row (because the total width > max allowed by the dashboard), this and the next ones will be place in the next row(s).
 
-![Dashboard Grid](https://github.com/Yelp/terraform-provider-signalfx/raw/master/docs/resources/dashboard_grid.png)
+![Dashboard Grid](https://github.com/signalfx/terraform-provider-signalfx/raw/master/docs/resources/dashboard_grid.png)
 
 ```terraform
 resource "signalfx_dashboard" "grid_example" {
@@ -135,7 +135,7 @@ resource "signalfx_dashboard" "grid_example" {
 
 The dashboard is divided into equal-sized charts (defined by `width` and `height`). The charts are placed in the grid by column (column number is called `column`) starting from a row you specify (called `start_row`).
 
-![Dashboard Column](https://github.com/Yelp/terraform-provider-signalfx/raw/master/docs/resources/dashboard_column.png)
+![Dashboard Column](https://github.com/signalfx/terraform-provider-signalfx/raw/master/docs/resources/dashboard_column.png)
 
 ```terraform
 resource "signalfx_dashboard" "load" {

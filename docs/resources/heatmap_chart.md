@@ -43,11 +43,11 @@ The following arguments are supported in the resource block:
 * `color_range` - (Optional. Conflict with color_scale) Values and color for the color range. Example: `color_range : { min : 0, max : 100, color : blue }`. Look at this [link](https://docs.signalfx.com/en/latest/charts/chart-options-tab.html).
     * `min_value` - (Optional) The minimum value within the coloring range.
     * `max_value` - (Optional) The maximum value within the coloring range.
-    * `color` - (Required) The color range to use. Must be either gray, blue, navy, orange, yellow, magenta, purple, violet, lilac, green, aquamarine. ![Colors](https://github.com/Yelp/terraform-provider-signalfx/raw/master/docs/resources/colors.png)
+    * `color` - (Required) The color range to use. Must be either gray, blue, navy, orange, yellow, magenta, purple, violet, lilac, green, aquamarine. ![Colors](https://github.com/signalfx/terraform-provider-signalfx/raw/master/docs/resources/colors.png)
 * `color_scale` - (Optional. Conflict with `color_range`) Single color range including both the color to display for that range and the borders of the range. Example: `[{ gt : 60, color : blue }, { lte : 60, color : yellow }]`. Look at this [link](https://docs.signalfx.com/en/latest/charts/chart-options-tab.html).
     * `gt` - (Optional) Indicates the lower threshold non-inclusive value for this range.
     * `gte` - (Optional) Indicates the lower threshold inclusive value for this range.
     * `lt` - (Optional) Indicates the upper threshold non-inculsive value for this range.
     * `lte` - (Optional) Indicates the upper threshold inclusive value for this range.
-    * `color` - (Required) The color range to use. Must be either gray, blue, navy, orange, yellow, magenta, purple, violet, lilac, green, aquamarine. ![Colors](https://github.com/Yelp/terraform-provider-signalfx/raw/master/docs/resources/colors.png)
+    * `color` - (Required) The color range to use. Must be either gray, blue, navy, orange, yellow, magenta, purple, violet, lilac, green, aquamarine. ![Colors](https://github.com/signalfx/terraform-provider-signalfx/raw/master/docs/resources/colors.png)
 * `synced` - (Optional) Whether the resource in the provider and SignalFx are identical or not. Used internally for syncing, you do not need to specify it. Whenever you see a change to this field in the plan, it means that your resource has been changed from the UI and Terraform is now going to re-sync it back to what is in your configuration.

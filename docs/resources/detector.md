@@ -2,7 +2,7 @@
 
 A detector is a collection of rules that define who should be notified when certain detect functions within SignalFlow fire alerts. Each rule maps a detect label to a severity and a list of notifications. When the conditions within the given detect function are fulfilled, notifications will be sent to the destinations defined in the rule for that detect function.
 
-![Detector](https://github.com/Yelp/terraform-provider-signalfx/raw/master/docs/resources/detector.png)
+![Detector](https://github.com/signalfx/terraform-provider-signalfx/raw/master/docs/resources/detector.png)
 
 
 ## Example Usage
