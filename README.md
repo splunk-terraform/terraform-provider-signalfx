@@ -10,7 +10,6 @@ This provider was originally created and maintained by [Yelp](https://www.yelp.c
 
 Changelog is available [here](https://github.com/signalfx/terraform-provider-signalfx/blob/master/CHANGELOG.md).
 
-* [Conversion from SignalForm](#conversion-from-signalform)
 * Resources
     * [Detector](https://github.com/signalfx/terraform-provider-signalfx/blob/master/docs/resources/detector.md)
     * [Chart](https://github.com/signalfx/terraform-provider-signalfx/blob/master/docs/resources/chart.md)
@@ -26,7 +25,46 @@ Changelog is available [here](https://github.com/signalfx/terraform-provider-sig
     * [Build binary from source](#build-binary-from-source)
 * [Release](#release)
 * [Contributing](#contributing)
+* [Conversion from SignalForm](#conversion-from-signalform)
 * [FAQ](#faq)
+
+Note: If you missed running `terraform init` in an earlier step you'll likely be prompted to do that now.
+
+## Build And Install
+
+### Build binary from source
+
+To build the go binary from source:
+
+```bash
+go build
+```
+
+The output binary will be named `terraform-provider-signalfx`.
+
+If you want to customize your target platform set the `GOOS` and `GOARCH` environment variables; e.g.:
+```bash
+GOOS=darwin GOARCH=amd64 make build
+```
+
+Once you have built the binary, place it in the same folder of your terraform installation for it to be available everywhere.
+
+## Release
+
+To make a new release:
+
+1. Decide on the next version, use [semantic versioning](https://semver.org/)
+1. Edit `CHANGELOG.md` and make sure all the goodies are in it!
+1. `git commit`
+1. `git tag v<VERSION>`
+1. `git push origin master && git push origin --tags`
+
+## Contributing
+Everyone is encouraged to contribute to `terraform-provider-signalfx`. You can contribute by forking the GitHub repo and making a pull request or opening an issue.
+
+## Running tests
+
+To run the tests, run `go test ./...`
 
 ## Conversion From SignalForm
 
@@ -107,44 +145,6 @@ After that we can run a `terraform plan` to ensure everything is unchanged:
 No changes. Infrastructure is up-to-date.
 …
 ```
-
-Note: If you missed running `terraform init` in an earlier step you'll likely be prompted to do that now.
-
-## Build And Install
-
-### Build binary from source
-
-To build the go binary from source:
-
-```bash
-go build
-```
-
-The output binary will be named `terraform-provider-signalfx`.
-
-If you want to customize your target platform set the `GOOS` and `GOARCH` environment variables; e.g.:
-```bash
-GOOS=darwin GOARCH=amd64 make build
-```
-
-Once you have built the binary, place it in the same folder of your terraform installation for it to be available everywhere.
-
-## Release
-
-To make a new release:
-
-1. Decide on the next version, use [semantic versioning](https://semver.org/)
-1. Edit `CHANGELOG.md` and make sure all the goodies are in it!
-1. `git commit`
-1. `git tag v<VERSION>`
-1. `git push origin master && git push origin --tags`
-
-## Contributing
-Everyone is encouraged to contribute to `terraform-provider-signalfx`. You can contribute by forking the GitHub repo and making a pull request or opening an issue.
-
-## Running tests
-
-To run the tests, run `go test ./...`
 
 ## FAQ
 
