@@ -2,7 +2,7 @@
 
 This chart type displays current data values in a list format.
 
-![List Chart](https://github.com/Yelp/terraform-provider-signalfx/raw/master/docs/resources/list_chart.png)
+![List Chart](https://github.com/signalfx/terraform-provider-signalfx/raw/master/docs/resources/list_chart.png)
 
 The name of each value in the chart reflects the name of the plot and any associated dimensions. We recommend you click the Pencil icon and give the plot a meaningful name, as in plot B below. Otherwise, just the raw metric name will be displayed on the chart, as in plot A below.
 
