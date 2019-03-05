@@ -4,28 +4,24 @@
 [![Build Status](https://travis-ci.org/Yelp/terraform-provider-signalfx.svg?branch=master)](https://travis-ci.org/Yelp/terraform-provider-signalfx)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-This is a terraform provider to codify [SignalFx](http://signalfx.com) detectors, charts and dashboards, thereby making it easier to create, manage and version control them.
+This is a [Terraform](https://www.terraform.io/) provider to codify [SignalFx](http://signalfx.com) detectors, charts and dashboards, thereby making it easier to create, manage and version control them.
 
-This provider was graciously maintained by [Yelp](https://www.yelp.com/engineering) for years before being taken over as an official SignalFx project. It also contains contributions from a fork maintained by [Stripe](https://stripe.com/). Thanks, folks!
+This provider was originally created and maintained by [Yelp](https://www.yelp.com/engineering) for years before being taken over as an official SignalFx project. It also contains contributions from a fork maintained by [Stripe](https://stripe.com/). Thanks, folks to Yelp and Stripe for their work!
 
-Please note that this provider is tested against Terraform **0.10**. We do not guarantee that the provider works correctly with any other version of Terraform, even though it might.
-
-Documentation is available [here](https://yelp.github.io/terraform-provider-signalfx/).
-
-Changelog is available [here](https://github.com/Yelp/terraform-provider-signalfx/blob/master/build/changelog).
+Changelog is available [here](https://github.com/signalfx/terraform-provider-signalfx/blob/master/CHANGELOG.md).
 
 * [Conversion from SignalForm](#conversion-from-signalform)
 * Resources
-    * [Detector](https://yelp.github.io/terraform-provider-signalfx/resources/detector.html)
-    * [Chart](https://yelp.github.io/terraform-provider-signalfx/resources/chart.html)
-        * [Time Chart](https://yelp.github.io/terraform-provider-signalfx/resources/time_chart.html)
-        * [List Chart](https://yelp.github.io/terraform-provider-signalfx/resources/list_chart.html)
-        * [Single Value Chart](https://yelp.github.io/terraform-provider-signalfx/resources/single_value_chart.html)
-        * [Heatmap Chart](https://yelp.github.io/terraform-provider-signalfx/resources/heatmap_chart.html)
-        * [Text Note](https://yelp.github.io/terraform-provider-signalfx/resources/text_note.html)
-    * [Dashboard](https://yelp.github.io/terraform-provider-signalfx/resources/dashboard.html)
-    * [Dashboard Group](https://yelp.github.io/terraform-provider-signalfx/resources/dashboard_group.html)
-    * [Integration](https://yelp.github.io/terraform-provider-signalfx/resources/integration.html)
+    * [Detector](https://signalfx.github.io/terraform-provider-signalfx/resources/detector.html)
+    * [Chart](https://signalfx.github.io/terraform-provider-signalfx/resources/chart.html)
+        * [Time Chart](https://signalfx.github.io/terraform-provider-signalfx/resources/time_chart.html)
+        * [List Chart](https://signalfx.github.io/terraform-provider-signalfx/resources/list_chart.html)
+        * [Single Value Chart](https://signalfx.github.io/terraform-provider-signalfx/resources/single_value_chart.html)
+        * [Heatmap Chart](https://signalfx.github.io/terraform-provider-signalfx/resources/heatmap_chart.html)
+        * [Text Note](https://signalfx.github.io/terraform-provider-signalfx/resources/text_note.html)
+    * [Dashboard](https://signalfx.github.io/terraform-provider-signalfx/resources/dashboard.html)
+    * [Dashboard Group](https://signalfx.github.io/terraform-provider-signalfx/resources/dashboard_group.html)
+    * [Integration](https://signalfx.github.io/terraform-provider-signalfx/resources/integration.html)
 * [Build And Install](#build-and-install)
     * [Build binary from source](#build-binary-from-source)
 * [Release](#release)
@@ -160,5 +156,5 @@ Yelp helpfully created and maintained this provider for years, then allowed Sign
 
 Sure! Any given a chart or detector created from the UI, you can see its representation in Signalflow from the Actions menu:
 
-![Show SignalFlow](https://github.com/Yelp/terraform-provider-signalfx/raw/master/docs/show_signalflow.png)
-![Signalflow](https://github.com/Yelp/terraform-provider-signalfx/raw/master/docs/signalflow.png)
+![Show SignalFlow](https://github.com/signalfx/terraform-provider-signalfx/raw/master/docs/show_signalflow.png)
+![Signalflow](https://github.com/signalfx/terraform-provider-signalfx/raw/master/docs/signalflow.png)
