@@ -2,7 +2,7 @@
 
 This special type of chart doesn’t display any metric data. Rather, it lets you place a text note on the dashboard.
 
-![Text Note](https://github.com/Yelp/terraform-provider-signalfx/raw/master/docs/resources/text_note.png)
+![Text Note](https://github.com/signalfx/terraform-provider-signalfx/raw/master/docs/resources/text_note.png)
 
 
 ## Example Usage
