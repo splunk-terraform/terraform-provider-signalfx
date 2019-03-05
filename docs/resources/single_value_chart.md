@@ -4,7 +4,7 @@ This chart type displays a single number in a large font, representing the curre
 
 If the time period is in the past, the number represents the value of the metric near the end of the time period.
 
-![Single Value Chart](https://github.com/Yelp/terraform-provider-signalfx/raw/master/docs/resources/single_value_chart.png)
+![Single Value Chart](https://github.com/signalfx/terraform-provider-signalfx/raw/master/docs/resources/single_value_chart.png)
 
 ## Example Usage
 
