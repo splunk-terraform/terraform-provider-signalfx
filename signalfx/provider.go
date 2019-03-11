@@ -19,7 +19,8 @@ var HomeConfigSuffix = "/.signalfx.conf"
 var HomeConfigPath = ""
 
 type signalfxConfig struct {
-	AuthToken string `json:"auth_token"`
+	AuthToken       string `json:"auth_token"`
+	CustomURLPrefix string `json:"custom_url_prefix"`
 }
 
 func Provider() terraform.ResourceProvider {
@@ -30,6 +31,12 @@ func Provider() terraform.ResourceProvider {
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("SFX_AUTH_TOKEN", ""),
 				Description: "SignalFx auth token",
+			},
+			"custom_url_prefix": &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				Default:     "app",
+				Description: "Custom prefix for your SignalFx org, often used with SSO",
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
