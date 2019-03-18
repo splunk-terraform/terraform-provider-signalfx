@@ -46,7 +46,7 @@ If you want to customize your target platform set the `GOOS` and `GOARCH` enviro
 GOOS=darwin GOARCH=amd64 make build
 ```
 
-Once you have built the binary, place it in the same folder of your terraform installation for it to be available everywhere.
+Once you have built the binary, place it in the your terraform installation for it to be available everywhere. For local use, this is usually `~/.terraform.d/plugins`.
 
 ## Release
 
