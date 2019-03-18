@@ -95,7 +95,9 @@ func signalfxConfigure(data *schema.ResourceData) (interface{}, error) {
 	if config.AuthToken == "" {
 		return &config, fmt.Errorf("auth_token: required field is not set")
 	}
-
+	if url, ok := data.GetOk("api_url"); ok {
+		config.APIURL = url.(string)
+	}
 	return &config, nil
 }
 

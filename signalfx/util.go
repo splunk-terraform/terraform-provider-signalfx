@@ -173,7 +173,7 @@ func resourceRead(url string, sfxToken string, d *schema.ResourceData) error {
 			// This implies that the resouce was deleted in the Signalfx UI and therefore we need to recreate it
 			d.SetId("")
 		} else {
-			return fmt.Errorf("For the resource %s SignalFx returned status %d: \n%s", d.Get("name"), status_code, resp_body)
+			return fmt.Errorf("For the resource '%s' SignalFx returned status %d: \n%s", d.Get("name"), status_code, resp_body)
 		}
 	}
 
@@ -215,7 +215,7 @@ func resourceUpdate(url string, sfxToken string, payload []byte, d *schema.Resou
 		d.Set("synced", true)
 		d.Set("last_updated", mapped_resp["lastUpdated"].(float64))
 	} else {
-		return fmt.Errorf("For the resource %s SignalFx returned status %d: \n%s", d.Get("name"), status_code, resp_body)
+		return fmt.Errorf("For the resource '%s' SignalFx returned status %d: \n%s", d.Get("name"), status_code, resp_body)
 	}
 	return nil
 }
