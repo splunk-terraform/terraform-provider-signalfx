@@ -50,7 +50,7 @@ var ChartColorsSlice = []chartColor{
 	{"lime_green", "#6bd37e"},
 }
 
-func buildAPIURL(apiURL string, path string) (string, error) {
+func buildURL(apiURL string, path string) (string, error) {
 	u, err := url.Parse(apiURL)
 	if err != nil {
 		return "", err

@@ -233,7 +233,7 @@ func singlevaluechartCreate(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return fmt.Errorf("Failed creating json payload: %s", err.Error())
 	}
-	url, err := buildAPIURL(config.APIURL, CHART_API_PATH)
+	url, err := buildURL(config.APIURL, CHART_API_PATH)
 	if err != nil {
 		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
 	}
@@ -244,7 +244,7 @@ func singlevaluechartCreate(d *schema.ResourceData, meta interface{}) error {
 func singlevaluechartRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 	path := fmt.Sprintf("%s/%s", CHART_API_PATH, d.Id())
-	url, err := buildAPIURL(config.APIURL, path)
+	url, err := buildURL(config.APIURL, path)
 	if err != nil {
 		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
 	}
@@ -259,7 +259,7 @@ func singlevaluechartUpdate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Failed creating json payload: %s", err.Error())
 	}
 	path := fmt.Sprintf("%s/%s", CHART_API_PATH, d.Id())
-	url, err := buildAPIURL(config.APIURL, path)
+	url, err := buildURL(config.APIURL, path)
 	if err != nil {
 		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
 	}
@@ -270,7 +270,7 @@ func singlevaluechartUpdate(d *schema.ResourceData, meta interface{}) error {
 func singlevaluechartDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 	path := fmt.Sprintf("%s/%s", CHART_API_PATH, d.Id())
-	url, err := buildAPIURL(config.APIURL, path)
+	url, err := buildURL(config.APIURL, path)
 	if err != nil {
 		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
 	}
