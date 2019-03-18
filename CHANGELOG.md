@@ -1,4 +1,6 @@
-# 3.0.0, in progress
+# 3.1.0, in progress
+
+# 3.0.0, 2019-03-18
 
 We're jumping to a 3.0.0 version number after forking from [Yelp's SignalForm](https://github.com/Yelp/terraform-provider-signalform/), incorporating [Stripe's fork](https://github.com/stripe/terraform-provider-signalform/), and renaming to `terraform-provider-signalfx`.
 
