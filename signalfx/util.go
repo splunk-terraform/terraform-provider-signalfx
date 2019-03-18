@@ -17,9 +17,8 @@ import (
 
 const (
 	// Workaround for Signalfx bug related to post processing and lastUpdatedTime
-	OFFSET        = 10000.0
-	CHART_API_URL = "https://api.signalfx.com/v2/chart"
-	CHART_URL     = "https://app.signalfx.com/#/chart/<id>"
+	OFFSET         = 10000.0
+	CHART_API_PATH = "/v2/chart"
 )
 
 type chartColor struct {

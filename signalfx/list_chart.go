@@ -21,17 +21,6 @@ func listChartResource() *schema.Resource {
 				Computed:    true,
 				Description: "Latest timestamp the resource was updated",
 			},
-			"resource_url": &schema.Schema{
-				Type:        schema.TypeString,
-				Optional:    true,
-				Default:     CHART_URL,
-				Description: "API URL of the chart",
-			},
-			"url": &schema.Schema{
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "URL of the chart",
-			},
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
@@ -208,12 +197,22 @@ func listchartCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Failed creating json payload: %s", err.Error())
 	}
 
-	return resourceCreate(CHART_API_URL, config.AuthToken, payload, d)
+	url, err := buildAPIURL(config.APIURL, CHART_API_PATH)
+	if err != nil {
+		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
+	}
+
+	return resourceCreate(url, config.AuthToken, payload, d)
 }
 
 func listchartRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	url := fmt.Sprintf("%s/%s", CHART_API_URL, d.Id())
+
+	path := fmt.Sprintf("%s/%s", CHART_API_PATH, d.Id())
+	url, err := buildAPIURL(config.APIURL, path)
+	if err != nil {
+		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
+	}
 
 	return resourceRead(url, config.AuthToken, d)
 }
@@ -224,14 +223,23 @@ func listchartUpdate(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return fmt.Errorf("Failed creating json payload: %s", err.Error())
 	}
-	url := fmt.Sprintf("%s/%s", CHART_API_URL, d.Id())
+
+	path := fmt.Sprintf("%s/%s", CHART_API_PATH, d.Id())
+	url, err := buildAPIURL(config.APIURL, path)
+	if err != nil {
+		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
+	}
 
 	return resourceUpdate(url, config.AuthToken, payload, d)
 }
 
 func listchartDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	url := fmt.Sprintf("%s/%s", CHART_API_URL, d.Id())
+	path := fmt.Sprintf("%s/%s", CHART_API_PATH, d.Id())
+	url, err := buildAPIURL(config.APIURL, path)
+	if err != nil {
+		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
+	}
 
 	return resourceDelete(url, config.AuthToken, d)
 }
