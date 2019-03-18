@@ -1,6 +1,5 @@
 # terraform-provider-signalfx
 
-[![GitHub version](https://badge.fury.io/gh/signalfx%2Fterraform-provider-signalfx.svg)](https://badge.fury.io/gh/signalfx%2Fterraform-provider-signalfx)
 [![Build Status](https://travis-ci.org/Yelp/terraform-provider-signalfx.svg?branch=master)](https://travis-ci.org/Yelp/terraform-provider-signalfx)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
