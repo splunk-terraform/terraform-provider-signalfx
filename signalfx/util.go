@@ -60,6 +60,17 @@ func buildURL(apiURL string, path string) (string, error) {
 	return u.String(), nil
 }
 
+func buildAppURL(appURL string, fragment string) (string, error) {
+	// Include a trailing slash, as without this Go doesn't add one for the fragment and that seems to be a required part of the url
+	u, err := url.Parse(appURL + "/")
+	if err != nil {
+		return "", err
+	}
+	// The URL is actually a fragment, so use that instead of Path
+	u.Fragment = fragment
+	return u.String(), nil
+}
+
 /*
   Utility function that wraps http calls to SignalFx
 */

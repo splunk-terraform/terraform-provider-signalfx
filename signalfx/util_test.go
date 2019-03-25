@@ -103,3 +103,9 @@ func TestBuildURL(t *testing.T) {
 	assert.NoError(t, error)
 	assert.Equal(t, "https://www.example.com/v2/chart", u)
 }
+
+func TestBuildAppURL(t *testing.T) {
+	u, error := buildAppURL("https://www.example.com", "/chart/abc123")
+	assert.NoError(t, error)
+	assert.Equal(t, "https://www.example.com/#/chart/abc123", u)
+}

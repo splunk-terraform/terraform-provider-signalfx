@@ -21,7 +21,7 @@ var HomeConfigPath = ""
 type signalfxConfig struct {
 	AuthToken    string `json:"auth_token"`
 	APIURL       string `json:"api_url"`
-	CustomDomain string `json:"custom_domain"`
+	CustomAppURL string `json:"custom_app_url"`
 }
 
 func Provider() terraform.ResourceProvider {
@@ -39,7 +39,7 @@ func Provider() terraform.ResourceProvider {
 				Default:     "https://api.signalfx.com",
 				Description: "API URL for your SignalFx org, may include a realm",
 			},
-			"custom_domain": &schema.Schema{
+			"custom_app_url": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
 				Default:     "https://app.signalfx.com",
@@ -105,8 +105,8 @@ func signalfxConfigure(data *schema.ResourceData) (interface{}, error) {
 	if url, ok := data.GetOk("api_url"); ok {
 		config.APIURL = url.(string)
 	}
-	if custom_domain, ok := data.GetOk("custom_domain"); ok {
-		config.CustomDomain = custom_domain.(string)
+	if custom_app_url, ok := data.GetOk("custom_app_url"); ok {
+		config.CustomAppURL = custom_app_url.(string)
 	}
 	return &config, nil
 }

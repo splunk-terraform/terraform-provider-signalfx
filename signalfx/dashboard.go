@@ -11,7 +11,7 @@ import (
 
 const (
 	DASHBOARD_API_PATH = "/v2/dashboard"
-	DASHBOARD_APP_PATH = "/#/dashboard/"
+	DASHBOARD_APP_PATH = "/dashboard/"
 )
 
 func dashboardResource() *schema.Resource {
@@ -661,8 +661,7 @@ func dashboardCreate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 	// Since things worked, set the URL and move on
-
-	appURL, err := buildURL(config.CustomDomain, DASHBOARD_APP_PATH+d.Id())
+	appURL, err := buildAppURL(config.CustomAppURL, DASHBOARD_APP_PATH+d.Id())
 	if err != nil {
 		return err
 	}
