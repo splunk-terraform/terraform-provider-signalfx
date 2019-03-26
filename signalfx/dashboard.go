@@ -23,15 +23,15 @@ func dashboardResource() *schema.Resource {
 				Default:     true,
 				Description: "Whether the resource in the provider and SignalFx are identical or not. Used internally for syncing.",
 			},
-			"url": &schema.Schema{
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "URL of the dashboard",
-			},
 			"last_updated": &schema.Schema{
 				Type:        schema.TypeFloat,
 				Computed:    true,
 				Description: "Latest timestamp the resource was updated",
+			},
+			"url": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "URL of the dashboard",
 			},
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
