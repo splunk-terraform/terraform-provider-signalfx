@@ -1,5 +1,7 @@
 # 3.1.0, in progress
 
+* Any use of a resource's `resource_url` should be replaced with `url`, most likely as an output value. See the Removed section below for more.
+
 ## Added
 
 ### New Configuration Options
