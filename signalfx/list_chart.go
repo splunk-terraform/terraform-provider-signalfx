@@ -21,6 +21,11 @@ func listChartResource() *schema.Resource {
 				Computed:    true,
 				Description: "Latest timestamp the resource was updated",
 			},
+			"url": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "URL of the chart",
+			},
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
