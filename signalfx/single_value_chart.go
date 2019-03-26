@@ -243,7 +243,14 @@ func singlevaluechartCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
 	}
 
-	return resourceCreate(url, config.AuthToken, payload, d)
+	err = resourceCreate(url, config.AuthToken, payload, d)
+	// Since things worked, set the URL and move on
+	appURL, err := buildAppURL(config.CustomAppURL, CHART_APP_PATH+d.Id())
+	if err != nil {
+		return err
+	}
+	d.Set("url", appURL)
+	return nil
 }
 
 func singlevaluechartRead(d *schema.ResourceData, meta interface{}) error {

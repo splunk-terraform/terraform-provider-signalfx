@@ -13,6 +13,7 @@ import (
 
 const (
 	DETECTOR_API_PATH = "/v2/detector"
+	DETECTOR_APP_PATH = "/detector/"
 )
 
 func detectorResource() *schema.Resource {
@@ -312,7 +313,17 @@ func detectorCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
 	}
 
-	return resourceCreate(url, config.AuthToken, payload, d)
+	err = resourceCreate(url, config.AuthToken, payload, d)
+	if err != nil {
+		return err
+	}
+	// Since things worked, set the URL and move on
+	appURL, err := buildAppURL(config.CustomAppURL, DETECTOR_APP_PATH+d.Id())
+	if err != nil {
+		return err
+	}
+	d.Set("url", appURL)
+	return nil
 }
 
 func detectorRead(d *schema.ResourceData, meta interface{}) error {
