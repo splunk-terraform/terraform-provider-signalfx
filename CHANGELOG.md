@@ -8,8 +8,8 @@
 
 The following new options were added to the provider's configuration:
 
-* `api_url` which allows users to customize the URL to which API requests will be send. This allows users of other realms or those using proxies to use this provider.
-* `custom_app_url` which allows users to customize the app URL used for viewing resources. This is mostly for users that use SSO with SignalFx, i.e. `https://yourcompany.signalfx.com`.
+* `api_url` which allows users to customize the URL to which API requests will be sent. This allows users of other realms or those using proxies to use this provider. Note you probably want to change `custom_app_url` as well!
+* `custom_app_url` which allows users to customize the app URL used for viewing resources. This is used by organizations using specific realms or those with a custom [SSO domain](https://docs.signalfx.com/en/latest/admin-guide/sso.html).
 
 ## Removed
 
