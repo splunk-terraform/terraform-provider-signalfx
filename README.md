@@ -1,6 +1,6 @@
 # terraform-provider-signalfx
 
-[![Changelog]](https://img.shields.io/badge/changelog-right%20here-blue.svg)(https://github.com/signalfx/terraform-provider-signalfx/blob/master/CHANGELOG.md)
+[![Changelog](https://img.shields.io/badge/changelog-right%20here-blue.svg)](https://github.com/signalfx/terraform-provider-signalfx/blob/master/CHANGELOG.md)
 [![Build Status](https://travis-ci.org/Yelp/terraform-provider-signalfx.svg?branch=master)](https://travis-ci.org/Yelp/terraform-provider-signalfx)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
