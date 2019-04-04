@@ -1,13 +1,12 @@
 # terraform-provider-signalfx
 
+[![Changelog]](https://img.shields.io/badge/changelog-right%20here-blue.svg)(https://github.com/signalfx/terraform-provider-signalfx/blob/master/CHANGELOG.md)
 [![Build Status](https://travis-ci.org/Yelp/terraform-provider-signalfx.svg?branch=master)](https://travis-ci.org/Yelp/terraform-provider-signalfx)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 This is a [Terraform](https://www.terraform.io/) provider to codify [SignalFx](http://signalfx.com) detectors, charts and dashboards, thereby making it easier to create, manage and version control them.
 
 This provider was originally created and maintained by [Yelp](https://www.yelp.com/engineering) for years before being taken over as an official SignalFx project. It also contains contributions from a fork maintained by [Stripe](https://stripe.com/). Thanks, folks to Yelp and Stripe for their work!
-
-Changelog is available [here](https://github.com/signalfx/terraform-provider-signalfx/blob/master/CHANGELOG.md).
 
 * Resources
     * [Detector](https://github.com/signalfx/terraform-provider-signalfx/blob/master/docs/resources/detector.md)
