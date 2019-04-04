@@ -27,8 +27,6 @@ Changelog is available [here](https://github.com/signalfx/terraform-provider-sig
 * [Conversion from SignalForm](#conversion-from-signalform)
 * [FAQ](#faq)
 
-Note: If you missed running `terraform init` in an earlier step you'll likely be prompted to do that now.
-
 ## Configuration
 
 This provider has the following configuration options:
