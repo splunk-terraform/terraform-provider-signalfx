@@ -97,3 +97,15 @@ func TestValidateSortByNoDirection(t *testing.T) {
 	_, errors := validateSortBy("foo", "sort_by")
 	assert.Equal(t, 1, len(errors))
 }
+
+func TestBuildURL(t *testing.T) {
+	u, error := buildURL("https://www.example.com", "/v2/chart")
+	assert.NoError(t, error)
+	assert.Equal(t, "https://www.example.com/v2/chart", u)
+}
+
+func TestBuildAppURL(t *testing.T) {
+	u, error := buildAppURL("https://www.example.com", "/chart/abc123")
+	assert.NoError(t, error)
+	assert.Equal(t, "https://www.example.com/#/chart/abc123", u)
+}

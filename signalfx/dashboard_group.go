@@ -7,7 +7,7 @@ import (
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
-const DASHBOARD_GROUP_API_URL = "https://api.signalfx.com/v2/dashboardgroup"
+const DASHBOARD_GROUP_API_PATH = "/v2/dashboardgroup"
 
 func dashboardGroupResource() *schema.Resource {
 	return &schema.Resource{
@@ -73,12 +73,21 @@ func dashboardgroupCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Failed creating json payload: %s", err.Error())
 	}
 
-	return resourceCreate(DASHBOARD_GROUP_API_URL, config.AuthToken, payload, d)
+	url, err := buildURL(config.APIURL, DASHBOARD_GROUP_API_PATH)
+	if err != nil {
+		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
+	}
+
+	return resourceCreate(url, config.AuthToken, payload, d)
 }
 
 func dashboardgroupRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	url := fmt.Sprintf("%s/%s", DASHBOARD_GROUP_API_URL, d.Id())
+	path := fmt.Sprintf("%s/%s", DASHBOARD_GROUP_API_PATH, d.Id())
+	url, err := buildURL(config.APIURL, path)
+	if err != nil {
+		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
+	}
 
 	return resourceRead(url, config.AuthToken, d)
 }
@@ -89,13 +98,22 @@ func dashboardgroupUpdate(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return fmt.Errorf("Failed creating json payload: %s", err.Error())
 	}
-	url := fmt.Sprintf("%s/%s", DASHBOARD_GROUP_API_URL, d.Id())
+	path := fmt.Sprintf("%s/%s", DASHBOARD_GROUP_API_PATH, d.Id())
+	url, err := buildURL(config.APIURL, path)
+	if err != nil {
+		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
+	}
 
 	return resourceUpdate(url, config.AuthToken, payload, d)
 }
 
 func dashboardgroupDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	url := fmt.Sprintf("%s/%s", DASHBOARD_GROUP_API_URL, d.Id())
+	path := fmt.Sprintf("%s/%s", DASHBOARD_GROUP_API_PATH, d.Id())
+	url, err := buildURL(config.APIURL, path)
+	if err != nil {
+		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
+	}
+
 	return resourceDelete(url, config.AuthToken, d)
 }

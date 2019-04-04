@@ -29,6 +29,15 @@ Changelog is available [here](https://github.com/signalfx/terraform-provider-sig
 
 Note: If you missed running `terraform init` in an earlier step you'll likely be prompted to do that now.
 
+## Configuration
+
+This provider has the following configuration options:
+
+* `auth_token` (required) - The auth token for [authentication](https://developers.signalfx.com/basics/authentication.html)
+* `api_url` - The API URL to use for communicating with SignalFx. This is helpful for organizations who need to set their Realm or use a proxy.
+ Note: You likely want to change `custom_app_url` too!
+* `custom_app_url` - The application URL that users should use to interact with assets in the browser. This is used by organizations using specific realms or those with a custom [SSO domain](https://docs.signalfx.com/en/latest/admin-guide/sso.html).
+
 ## Build And Install
 
 ### Build binary from source

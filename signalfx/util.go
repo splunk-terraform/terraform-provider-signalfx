@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"math"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -16,9 +17,9 @@ import (
 
 const (
 	// Workaround for Signalfx bug related to post processing and lastUpdatedTime
-	OFFSET        = 10000.0
-	CHART_API_URL = "https://api.signalfx.com/v2/chart"
-	CHART_URL     = "https://app.signalfx.com/#/chart/<id>"
+	OFFSET         = 10000.0
+	CHART_API_PATH = "/v2/chart"
+	CHART_APP_PATH = "/chart/"
 )
 
 type chartColor struct {
@@ -48,6 +49,27 @@ var ChartColorsSlice = []chartColor{
 	{"vivid_yellow", "#ea1849"},
 	{"light_green", "#acef7f"},
 	{"lime_green", "#6bd37e"},
+}
+
+func buildURL(apiURL string, path string) (string, error) {
+	u, err := url.Parse(apiURL)
+	if err != nil {
+		return "", err
+	}
+
+	u.Path = path
+	return u.String(), nil
+}
+
+func buildAppURL(appURL string, fragment string) (string, error) {
+	// Include a trailing slash, as without this Go doesn't add one for the fragment and that seems to be a required part of the url
+	u, err := url.Parse(appURL + "/")
+	if err != nil {
+		return "", err
+	}
+	// The URL is actually a fragment, so use that instead of Path
+	u.Fragment = fragment
+	return u.String(), nil
 }
 
 /*
@@ -158,19 +180,12 @@ func resourceRead(url string, sfxToken string, d *schema.ResourceData) error {
 			d.Set("synced", false)
 			d.Set("last_updated", last_updated)
 		}
-		var resource_url string
-		if val, ok := d.GetOk("resource_url"); ok {
-			resource_url = strings.Replace(fmt.Sprintf("%s", val), "<id>", mapped_resp["id"].(string), 1)
-		} else {
-			resource_url = "DUMMY"
-		}
-		d.Set("url", resource_url)
 	} else {
 		if status_code == 404 && strings.Contains(string(resp_body), " not found") {
 			// This implies that the resouce was deleted in the Signalfx UI and therefore we need to recreate it
 			d.SetId("")
 		} else {
-			return fmt.Errorf("For the resource %s SignalFx returned status %d: \n%s", d.Get("name"), status_code, resp_body)
+			return fmt.Errorf("For the resource '%s' SignalFx returned status %d: \n%s", d.Get("name"), status_code, resp_body)
 		}
 	}
 
@@ -191,9 +206,6 @@ func resourceCreate(url string, sfxToken string, payload []byte, d *schema.Resou
 		d.SetId(fmt.Sprintf("%s", mapped_resp["id"].(string)))
 		d.Set("last_updated", mapped_resp["lastUpdated"].(float64))
 		d.Set("synced", true)
-		// Replace "<id>" with the actual Resource ID
-		resource_url := strings.Replace(fmt.Sprintf("%s", d.Get("resource_url")), "<id>", mapped_resp["id"].(string), 1)
-		d.Set("url", resource_url)
 	} else {
 		return fmt.Errorf("For the resource %s SignalFx returned status %d: \n%s", d.Get("name"), status_code, resp_body)
 	}
@@ -214,10 +226,8 @@ func resourceUpdate(url string, sfxToken string, payload []byte, d *schema.Resou
 		// If the resource was updated successfully with configs, it is now synced with Signalfx
 		d.Set("synced", true)
 		d.Set("last_updated", mapped_resp["lastUpdated"].(float64))
-		resource_url := strings.Replace(fmt.Sprintf("%s", d.Get("resource_url")), "<id>", mapped_resp["id"].(string), 1)
-		d.Set("url", resource_url)
 	} else {
-		return fmt.Errorf("For the resource %s SignalFx returned status %d: \n%s", d.Get("name"), status_code, resp_body)
+		return fmt.Errorf("For the resource '%s' SignalFx returned status %d: \n%s", d.Get("name"), status_code, resp_body)
 	}
 	return nil
 }

@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	DASHBOARD_API_URL = "https://api.signalfx.com/v2/dashboard"
-	DASHBOARD_URL     = "https://app.signalfx.com/#/dashboard/<id>"
+	DASHBOARD_API_PATH = "/v2/dashboard"
+	DASHBOARD_APP_PATH = "/dashboard/"
 )
 
 func dashboardResource() *schema.Resource {
@@ -27,12 +27,6 @@ func dashboardResource() *schema.Resource {
 				Type:        schema.TypeFloat,
 				Computed:    true,
 				Description: "Latest timestamp the resource was updated",
-			},
-			"resource_url": &schema.Schema{
-				Type:        schema.TypeString,
-				Optional:    true,
-				Default:     DASHBOARD_URL,
-				Description: "API URL of the dashboard",
 			},
 			"url": &schema.Schema{
 				Type:        schema.TypeString,
@@ -658,12 +652,30 @@ func dashboardCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Failed creating json payload: %s", err.Error())
 	}
 	log.Printf("[SignalFx] Dashboard Create Payload: %s", string(payload))
-	return resourceCreate(DASHBOARD_API_URL, config.AuthToken, payload, d)
+	url, err := buildURL(config.APIURL, DASHBOARD_API_PATH)
+	if err != nil {
+		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
+	}
+	err = resourceCreate(url, config.AuthToken, payload, d)
+	if err != nil {
+		return err
+	}
+	// Since things worked, set the URL and move on
+	appURL, err := buildAppURL(config.CustomAppURL, DASHBOARD_APP_PATH+d.Id())
+	if err != nil {
+		return err
+	}
+	d.Set("url", appURL)
+	return nil
 }
 
 func dashboardRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	url := fmt.Sprintf("%s/%s", DASHBOARD_API_URL, d.Id())
+	path := fmt.Sprintf("%s/%s", DASHBOARD_API_PATH, d.Id())
+	url, err := buildURL(config.APIURL, path)
+	if err != nil {
+		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
+	}
 
 	return resourceRead(url, config.AuthToken, d)
 }
@@ -674,14 +686,26 @@ func dashboardUpdate(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return fmt.Errorf("Failed creating json payload: %s", err.Error())
 	}
-	url := fmt.Sprintf("%s/%s", DASHBOARD_API_URL, d.Id())
+
+	path := fmt.Sprintf("%s/%s", DASHBOARD_API_PATH, d.Id())
+	url, err := buildURL(config.APIURL, path)
+	if err != nil {
+		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
+	}
+
 	log.Printf("[SignalFx] Dashboard Update Payload: %s", string(payload))
 	return resourceUpdate(url, config.AuthToken, payload, d)
 }
 
 func dashboardDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	url := fmt.Sprintf("%s/%s", DASHBOARD_API_URL, d.Id())
+
+	path := fmt.Sprintf("%s/%s", DASHBOARD_API_PATH, d.Id())
+	url, err := buildURL(config.APIURL, path)
+	if err != nil {
+		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
+	}
+
 	return resourceDelete(url, config.AuthToken, d)
 }
 

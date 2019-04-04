@@ -19,7 +19,9 @@ var HomeConfigSuffix = "/.signalfx.conf"
 var HomeConfigPath = ""
 
 type signalfxConfig struct {
-	AuthToken string `json:"auth_token"`
+	AuthToken    string `json:"auth_token"`
+	APIURL       string `json:"api_url"`
+	CustomAppURL string `json:"custom_app_url"`
 }
 
 func Provider() terraform.ResourceProvider {
@@ -30,6 +32,18 @@ func Provider() terraform.ResourceProvider {
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("SFX_AUTH_TOKEN", ""),
 				Description: "SignalFx auth token",
+			},
+			"api_url": &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				Default:     "https://api.signalfx.com",
+				Description: "API URL for your SignalFx org, may include a realm",
+			},
+			"custom_app_url": &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				Default:     "https://app.signalfx.com",
+				Description: "Application URL for your SignalFx org, often customzied for organizations using SSO",
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
@@ -88,7 +102,12 @@ func signalfxConfigure(data *schema.ResourceData) (interface{}, error) {
 	if config.AuthToken == "" {
 		return &config, fmt.Errorf("auth_token: required field is not set")
 	}
-
+	if url, ok := data.GetOk("api_url"); ok {
+		config.APIURL = url.(string)
+	}
+	if custom_app_url, ok := data.GetOk("custom_app_url"); ok {
+		config.CustomAppURL = custom_app_url.(string)
+	}
 	return &config, nil
 }
 

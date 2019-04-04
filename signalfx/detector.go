@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	DETECTOR_API_URL = "https://api.signalfx.com/v2/detector"
-	DETECTOR_URL     = "https://app.signalfx.com/#/detector/v2/<id>/edit"
+	DETECTOR_API_PATH = "/v2/detector"
+	DETECTOR_APP_PATH = "/detector/"
 )
 
 func detectorResource() *schema.Resource {
@@ -33,13 +33,7 @@ func detectorResource() *schema.Resource {
 			"url": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Url of the detector",
-			},
-			"resource_url": &schema.Schema{
-				Type:        schema.TypeString,
-				Optional:    true,
-				Default:     DETECTOR_URL,
-				Description: "Base Detector url",
+				Description: "URL of the detector",
 			},
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
@@ -314,13 +308,31 @@ func detectorCreate(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return fmt.Errorf("Failed creating json payload: %s", err.Error())
 	}
+	url, err := buildURL(config.APIURL, DETECTOR_API_PATH)
+	if err != nil {
+		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
+	}
 
-	return resourceCreate(DETECTOR_API_URL, config.AuthToken, payload, d)
+	err = resourceCreate(url, config.AuthToken, payload, d)
+	if err != nil {
+		return err
+	}
+	// Since things worked, set the URL and move on
+	appURL, err := buildAppURL(config.CustomAppURL, DETECTOR_APP_PATH+d.Id())
+	if err != nil {
+		return err
+	}
+	d.Set("url", appURL)
+	return nil
 }
 
 func detectorRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	url := fmt.Sprintf("%s/%s", DETECTOR_API_URL, d.Id())
+	path := fmt.Sprintf("%s/%s", DETECTOR_API_PATH, d.Id())
+	url, err := buildURL(config.APIURL, path)
+	if err != nil {
+		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
+	}
 
 	return resourceRead(url, config.AuthToken, d)
 }
@@ -331,14 +343,22 @@ func detectorUpdate(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return fmt.Errorf("Failed creating json payload: %s", err.Error())
 	}
-	url := fmt.Sprintf("%s/%s", DETECTOR_API_URL, d.Id())
+	path := fmt.Sprintf("%s/%s", DETECTOR_API_PATH, d.Id())
+	url, err := buildURL(config.APIURL, path)
+	if err != nil {
+		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
+	}
 
 	return resourceUpdate(url, config.AuthToken, payload, d)
 }
 
 func detectorDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	url := fmt.Sprintf("%s/%s", DETECTOR_API_URL, d.Id())
+	path := fmt.Sprintf("%s/%s", DETECTOR_API_PATH, d.Id())
+	url, err := buildURL(config.APIURL, path)
+	if err != nil {
+		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
+	}
 
 	return resourceDelete(url, config.AuthToken, d)
 }
