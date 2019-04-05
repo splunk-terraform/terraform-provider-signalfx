@@ -9,7 +9,6 @@ A detector is a collection of rules that define who should be notified when cert
 
 ```terraform
 resource "signalfx_detector" "application_delay" {
-    provider = "signalx"
     count = "${length(var.clusters)}"
     name = " max average delay - ${var.clusters[count.index]}"
     description = "your application is slow - ${var.clusters[count.index]}"
