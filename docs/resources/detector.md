@@ -58,8 +58,8 @@ variable "clusters" {
     * `severity` - (Required) The severity of the rule, must be one of: `"Critical"`, `"Major"`, `"Minor"`, `"Warning"`, `"Info"`.
     * `disabled` - (Optional) When true, notifications and events will not be generated for the detect label. `false` by default.
     * `notifications` - (Optional) List of strings specifying where notifications will be sent when an incident occurs. See <https://developers.signalfx.com/detectors_reference.html#operation/Create%20Single%20Detector> for more info.
-    * `parameterized_body` - (Optional) Custom notification message body when an alert is triggered. See <https://docs.signalfx.com/en/latest/detect-alert/set-up-detectors.html#message-preview> for more info.
-    * `parameterized_subject` - (Optional) Custom notification message subject when an alert is triggered. See <https://docs.signalfx.com/en/latest/detect-alert/set-up-detectors.html#message-preview> for more info.
+    * `parameterized_body` - (Optional) Custom notification message body when an alert is triggered. See <https://docs.signalfx.com/en/latest/detect-alert/set-up-detectors.html#about-detectors#alert-settings> for more info.
+    * `parameterized_subject` - (Optional) Custom notification message subject when an alert is triggered. See <https://docs.signalfx.com/en/latest/detect-alert/set-up-detectors.html#about-detectors#alert-settings> for more info.
     * `runbook_url` - (Optional) URL of page to consult when an alert is triggered. This can be used with custom notification messages.
     * `tip` - (Optional) Plain text suggested first course of action, such as a command line to execute. This can be used with custom notification messages.
 
