@@ -39,7 +39,7 @@ The following arguments are supported in the resource block:
 * `description` - (Optional) Description of the chart.
 * `unit_prefix` - (Optional) Must be `"Metric"` or `"Binary`". `"Metric"` by default.
 * `color_by` - (Optional) Must be `"Dimension"` or `"Metric"`. `"Dimension"` by default.
-* `max_delay - (Optional) How long (in seconds) to wait for late datapoints.
+* `max_delay` - (Optional) How long (in seconds) to wait for late datapoints.
 * `disable_sampling` - (Optional) If `false`, samples a subset of the output MTS, which improves UI performance. `false` by default.
 * `refresh_interval` - (Optional) How often (in seconds) to refresh the values of the list.
 * `legend_fields_to_hide` - (Optional) List of properties that should not be displayed in the chart legend (i.e. dimension names). All the properties are visible by default.

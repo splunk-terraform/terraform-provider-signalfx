@@ -35,7 +35,7 @@ The following arguments are supported in the resource block:
 * `description` - (Optional) Description of the chart.
 * `unit_prefix` - (Optional) Must be `"Metric"` or `"Binary`". `"Metric"` by default.
 * `minimum_resolution` - (Optional) The minimum resolution (in seconds) to use for computing the underlying program.
-* `max_delay - (Optional) How long (in seconds) to wait for late datapoints.
+* `max_delay` - (Optional) How long (in seconds) to wait for late datapoints.
 * `disable_sampling` - (Optional) If `false`, samples a subset of the output MTS, which improves UI performance. `false` by default.
 * `group_by` - (Optional) Properties to group by in the heatmap (in nesting order).
 * `sort_by` - (Optional) The property to use when sorting the elements. Must be prepended with `+` for ascending or `-` for descending (e.g. `-foo`).
