@@ -45,7 +45,7 @@ The following arguments are supported in the resource block:
     * `lte` - (Optional) Indicates the upper threshold inclusive value for this range.
     * `color` - (Required) The color range to use. Must be either gray, blue, navy, orange, yellow, magenta, purple, violet, lilac, green, aquamarine. ![Colors](https://github.com/signalfx/terraform-provider-signalfx/raw/master/docs/resources/colors.png)
 * `unit_prefix` - (Optional) Must be `"Metric"` or `"Binary"`. `"Metric"` by default.
-* `max_delay - (Optional) How long (in seconds) to wait for late datapoints
+* `max_delay` - (Optional) How long (in seconds) to wait for late datapoints
 * `refresh_interval` - (Optional) How often (in seconds) to refresh the value.
 * `max_precision` - (Optional) The maximum precision to for value displayed.
 * `is_timestamp_hidden` - (Optional) Whether to hide the timestamp in the chart. `false` by default.
