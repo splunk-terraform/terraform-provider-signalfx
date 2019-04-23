@@ -294,6 +294,12 @@ func getNotifications(tf_notifications []interface{}) []map[string]interface{} {
 			item["url"] = vars[2]
 		} else if vars[0] == "Team" || vars[0] == "TeamEmail" {
 			item["team"] = vars[1]
+		} else if vars[0] == "Opsgenie" {
+			item["credentialId"] = vars[1]
+			item["credentialName"] = vars[2]
+			item["responderName"] = vars[3]
+			item["responderId"] = vars[4]
+			item["responderType"] = vars[5]
 		}
 
 		notifications_list[i] = item
