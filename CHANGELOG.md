@@ -4,6 +4,8 @@
 
 ## Added
 
+* [Support](https://github.com/signalfx/terraform-provider-signalfx/pull/16) for OpsGenie as a notifier for detectors, thanks [juliawong](https://github.com/juliawong).
+
 ### New Configuration Options
 
 The following new options were added to the provider's configuration:
