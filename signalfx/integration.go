@@ -47,14 +47,49 @@ func integrationResource() *schema.Resource {
 				Optional:      true,
 				Description:   "PagerDuty API key",
 				Sensitive:     true,
-				ConflictsWith: []string{"webhook_url"},
+				ConflictsWith: []string{"webhook_url", "poll_rate", "services", "project_service_keys"},
 			},
 			"webhook_url": &schema.Schema{
 				Type:          schema.TypeString,
 				Optional:      true,
 				Description:   "Slack Incoming Webhook URL",
 				Sensitive:     true,
-				ConflictsWith: []string{"api_key"},
+				ConflictsWith: []string{"api_key", "poll_rate", "services", "project_service_keys"},
+			},
+			"poll_rate": &schema.Schema{
+				Type:          schema.TypeInt,
+				Optional:      true,
+				Description:   "GCP poll rate",
+				ConflictsWith: []string{"api_key", "webhook_url"},
+				ValidateFunc:  validatePollRate,
+			},
+			"services": &schema.Schema{
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "GCP enabled services",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+				ConflictsWith: []string{"api_key", "webhook_url"},
+			},
+			"project_service_keys": &schema.Schema{
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "GCP project service keys",
+				Sensitive:   true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"project_id": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"project_key": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+					},
+				},
+				ConflictsWith: []string{"api_key", "webhook_url"},
 			},
 		},
 
@@ -67,7 +102,7 @@ func integrationResource() *schema.Resource {
 
 func validateIntegrationType(v interface{}, k string) (we []string, errors []error) {
 	value := v.(string)
-	allowedWords := []string{"PagerDuty", "Slack"}
+	allowedWords := []string{"PagerDuty", "Slack", "GCP"}
 	for _, word := range allowedWords {
 		if value == word {
 			return
@@ -90,6 +125,10 @@ func getPayloadIntegration(d *schema.ResourceData) ([]byte, error) {
 		payload["apiKey"] = d.Get("api_key").(string)
 	case "Slack":
 		payload["webhookUrl"] = d.Get("webhook_url").(string)
+	case "GCP":
+		payload["pollRate"] = d.Get("poll_rate").(int)
+		payload["services"] = expandServices(d.Get("services").([]interface{}))
+		payload["projectServiceKeys"] = expandProjectServiceKeys(d.Get("project_service_keys").([]interface{}))
 	}
 
 	return json.Marshal(payload)
@@ -144,4 +183,41 @@ func integrationDelete(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	return resourceDelete(url, config.AuthToken, d)
+}
+
+func expandServices(services []interface{}) []string {
+	if len(services) == 0 {
+		return []string{}
+	}
+	payload := make([]string, 0, len(services))
+	for _, service := range services {
+		if service != nil {
+			payload = append(payload, service.(string))
+		}
+	}
+	return payload
+}
+
+func expandProjectServiceKeys(projects []interface{}) []map[string]string {
+	if len(projects) == 0 {
+		return []map[string]string{}
+	}
+	payload := make([]map[string]string, 0, len(projects))
+	for _, project := range projects {
+		m := project.(map[string]interface{})
+		config := map[string]string{
+			"projectId":  m["project_id"].(string),
+			"projectKey": m["project_key"].(string),
+		}
+		payload = append(payload, config)
+	}
+	return payload
+}
+
+func validatePollRate(value interface{}, key string) (warns []string, errors []error) {
+	v := value.(int)
+	if v != 60000 && v != 300000 {
+		errors = append(errors, fmt.Errorf("%q must be either 60000 or 300000, got: %d", key, v))
+	}
+	return
 }
