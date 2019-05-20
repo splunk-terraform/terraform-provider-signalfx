@@ -12,6 +12,7 @@ func TestGetNotifications(t *testing.T) {
 		"Email,test@yelp.com",
 		"PagerDuty,credId",
 		"Webhook,test,https://foo.bar.com?user=test&action=alert",
+		"Opsgenie,credId,credName,respName,respId,respType",
 	}
 
 	expected := []map[string]interface{}{
@@ -27,6 +28,14 @@ func TestGetNotifications(t *testing.T) {
 			"type":   "Webhook",
 			"secret": "test",
 			"url":    "https://foo.bar.com?user=test&action=alert",
+		},
+		map[string]interface{}{
+			"type":           "Opsgenie",
+			"credentialId":   "credId",
+			"credentialName": "credName",
+			"responderName":  "respName",
+			"responderId":    "respId",
+			"responderType":  "respType",
 		},
 	}
 	assert.Equal(t, expected, getNotifications(values))
