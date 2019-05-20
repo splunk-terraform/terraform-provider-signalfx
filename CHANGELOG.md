@@ -16,6 +16,7 @@ The following new options were added to the provider's configuration:
 ## Fixed
 
 * Fixed some busted links in documentation.
+* Fixed [bug](https://github.com/signalfx/terraform-provider-signalfx/issues/15) in docs for Single Value Charts and appropriate values for `color_by`. Thanks [MovieStoreGuy](https://github.com/MovieStoreGuy) for reporting and [draquila](https://github.com/draquila) for suggesting the fix.
 
 ## Removed
 
