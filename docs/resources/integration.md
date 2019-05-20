@@ -18,7 +18,7 @@ resource "signalfx_integration" "pagerduty_myteam" {
 
 * `name` - (Required) Name of the integration.
 * `enabled` - (Required) Whether the integration is enabled.
-* `type` - (Required) Type of the integration. See the full list at <https://developers.signalfx.com/reference#integrations-overview>.
+* `type` - (Required) Type of the integration. See [the full list here](https://developers.signalfx.com/integrations_reference.html).
 * `api_key` - (Required for `PagerDuty`) PagerDuty API key.
 * `webhook_url` - (Required for `Slack`) Slack incoming webhook URL.
 
