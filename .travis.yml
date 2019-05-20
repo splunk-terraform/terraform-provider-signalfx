@@ -6,3 +6,5 @@ install:
   - bash scripts/gitcookie.sh
 go:
   - 1.12
+env:
+  - GO111MODULE=on
