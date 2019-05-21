@@ -84,8 +84,9 @@ func integrationResource() *schema.Resource {
 							Required: true,
 						},
 						"project_key": {
-							Type:     schema.TypeString,
-							Required: true,
+							Type:      schema.TypeString,
+							Required:  true,
+							Sensitive: true,
 						},
 					},
 				},
