@@ -4,10 +4,9 @@ SignalFx supports integrations to ingest metrics from other monitoring systems, 
 
 ## Example Usage
 
-**PagerDuty**
+### PagerDuty
 ```terraform
 resource "signalfx_integration" "pagerduty_myteam" {
-    provider = "signalfx"
     name = "PD - My Team"
     enabled = true
     type = "PagerDuty"
@@ -15,10 +14,9 @@ resource "signalfx_integration" "pagerduty_myteam" {
 }
 ```
 
-**GCP**
+### GCP
 ```terraform
 resource "signalfx_integration" "gcp_myteam" {
-    provider = "signalfx"
     name = "GCP - My Team"
     enabled = true
     type = "GCP"
@@ -51,3 +49,15 @@ resource "signalfx_integration" "gcp_myteam" {
 **Notes**
 
 This resource does not support all known types of integration. Contributions are welcome to implement more types.
+
+## Experimental Integration Specific Resources
+
+In a future release the current generic `signalfx_integration` will be replaced with specific resources for each integration. The first instance of this, `signalfx_pagerduty_integration` provides an example.
+
+```terraform
+resource "signalfx_integration" "signalfx_pagerduty_integration" {
+    name = "PD - My Team"
+    enabled = true
+    api_key = "1234567890"
+}
+```

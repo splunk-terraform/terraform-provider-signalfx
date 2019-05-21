@@ -2,6 +2,16 @@
 
 ## Added
 
+### New Integration Style, Preview
+
+SignalFx's Integration API uses a single endpoint for all calls, but varies the JSON document that is submitted. As such, this provider follows the same convention, using `signalfx_integration` as a resource with a bunch of mixed keys.
+
+In this release we've added a new resource for PagerDuty integrations called `signalfx_pagerduty_integration`. It matches the existing use of `signalfx_integration` with a `type = "PagerDuty"`.
+
+It is expected that this form of specific integrations will replace the generic one. This is a boon for maintenance and more explicit for users.
+
+Please open issues if you have comments, and feel free to use this resource. A future release will deprecate and remove `signalfx_integration` if all goes well.
+
 ## Fixed
 
 ## Removed
