@@ -1,4 +1,12 @@
-# 3.1.0, in progress
+# 3.2.0, In Progress
+
+## Added
+
+## Fixed
+
+## Removed
+
+# 3.1.0, 2019-05-21
 
 * Any use of a resource's `resource_url` should be replaced with `url`, most likely as an output value. See the Removed section below for more.
 
