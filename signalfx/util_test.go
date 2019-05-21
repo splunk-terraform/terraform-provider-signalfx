@@ -115,3 +115,7 @@ func TestBuildAppURL(t *testing.T) {
 	assert.NoError(t, error)
 	assert.Equal(t, "https://www.example.com/#/chart/abc123", u)
 }
+
+func TestLegendFieldOptions(t *testing.T) {
+
+}

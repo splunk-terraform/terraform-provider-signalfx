@@ -324,6 +324,27 @@ func timeChartResource() *schema.Resource {
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "List of properties that shouldn't be displayed in the chart legend (i.e. dimension names)",
 			},
+			"legend_options_fields": &schema.Schema{
+				Type: schema.TypeList,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"property_name": &schema.Schema{
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "The name of a property to hide or show in the data table.",
+						},
+						"enabled": &schema.Schema{
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Default:     true,
+							Description: "(true by default) Determines if this property is displayed in the data table.",
+						},
+					},
+				},
+				Optional:      true,
+				ConflictsWith: []string{"legend_fields_to_hide"},
+				Description:   "List of property and enabled flags to control the order and presence of datatable labels in a chart.",
+			},
 			"show_event_lines": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,

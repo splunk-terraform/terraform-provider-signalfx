@@ -286,6 +286,34 @@ func getLegendOptions(d *schema.ResourceData) map[string]interface{} {
 }
 
 /*
+	Util method to get Legend Chart Options for fields
+*/
+func getLegendFieldOptions(d *schema.ResourceData) map[string]interface{} {
+	if fields, ok := d.GetOk("legend_options_fields"); ok {
+		fields := fields.([]*schema.ResourceData)
+		legendOptions := make(map[string]interface{})
+		fieldsOpts := make([]map[string]interface{}, len(fields))
+		for i, field := range fields {
+			property := field.Get("property_name").(string)
+			if property == "metric" {
+				property = "sf_originatingMetric"
+			} else if property == "plot_label" || property == "Plot Label" {
+				property = "sf_metric"
+			}
+			item := make(map[string]interface{})
+			item["property"] = property
+			item["enabled"] = false
+			fieldsOpts[i] = item
+		}
+		if len(fieldsOpts) > 0 {
+			legendOptions["fields"] = fieldsOpts
+			return legendOptions
+		}
+	}
+	return nil
+}
+
+/*
 	Util method to validate SignalFx specific string format.
 */
 func validateSignalfxRelativeTime(v interface{}, k string) (we []string, errors []error) {
