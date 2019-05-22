@@ -207,7 +207,7 @@ func resourceCreate(url string, sfxToken string, payload []byte, d *schema.Resou
 		d.Set("last_updated", mapped_resp["lastUpdated"].(float64))
 		d.Set("synced", true)
 	} else {
-		fmt.Printf("For the resource %s SignalFx returned status %d: \n%s", d.Get("name"), status_code, resp_body)
+	 	d.Get("name"), status_code, resp_body)
 		return fmt.Errorf("For the resource %s SignalFx returned status %d: \n%s", d.Get("name"), status_code, resp_body)
 	}
 	return nil
