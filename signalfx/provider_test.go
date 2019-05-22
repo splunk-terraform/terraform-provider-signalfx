@@ -51,21 +51,26 @@ func TestProvider(t *testing.T) {
 	}
 }
 
-// func TestProviderConfigureFromNothing(t *testing.T) {
-// 	defer resetGlobals()
-// 	SystemConfigPath = "filedoesnotexist"
-// 	HomeConfigPath = "filedoesnotexist"
-// 	raw := make(map[string]interface{})
-// 	rawConfig, err := config.NewRawConfig(raw)
-// 	if err != nil {
-// 		t.Fatalf("Error creating mock config: %s", err.Error())
-// 	}
-//
-// 	rp := Provider()
-// 	err = rp.Configure(terraform.NewResourceConfig(rawConfig))
-// 	assert.NotNil(t, err)
-// 	assert.Contains(t, err.Error(), "auth_token: required field is not set")
-// }
+func TestProviderConfigureFromNothing(t *testing.T) {
+	defer resetGlobals()
+
+	old := os.Getenv("SFX_AUTH_TOKEN")
+	defer os.Setenv("SFX_AUTH_TOKEN", old)
+	os.Unsetenv("SFX_AUTH_TOKEN")
+
+	SystemConfigPath = "filedoesnotexist"
+	HomeConfigPath = "filedoesnotexist"
+	raw := make(map[string]interface{})
+	rawConfig, err := config.NewRawConfig(raw)
+	if err != nil {
+		t.Fatalf("Error creating mock config: %s", err.Error())
+	}
+
+	rp := Provider()
+	err = rp.Configure(terraform.NewResourceConfig(rawConfig))
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "auth_token: required field is not set")
+}
 
 func TestProviderConfigureFromTerraform(t *testing.T) {
 	defer resetGlobals()
