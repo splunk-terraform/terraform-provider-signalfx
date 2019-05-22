@@ -302,7 +302,7 @@ func getLegendFieldOptions(d *schema.ResourceData) map[string]interface{} {
 			}
 			item := make(map[string]interface{})
 			item["property"] = property
-			item["enabled"] = false
+			item["enabled"] = d.Get("enabled").(bool)
 			fieldsOpts[i] = item
 		}
 		if len(fieldsOpts) > 0 {
