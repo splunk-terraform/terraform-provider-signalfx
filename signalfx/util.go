@@ -290,7 +290,7 @@ func getLegendOptions(d *schema.ResourceData) map[string]interface{} {
 */
 func getLegendFieldOptions(d *schema.ResourceData) map[string]interface{} {
 	if fields, ok := d.GetOk("legend_options_fields"); ok {
-		fields := fields.([]map[string]interface{})
+		fields := fields.([]interface{})
 		if len(fields) > 0 {
 			legendOptions := make(map[string]interface{})
 			legendOptions["fields"] = fields

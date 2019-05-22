@@ -26,6 +26,29 @@ resource "signalfx_time_chart" "mychart0" {
     show_data_markers = true
 
     legend_fields_to_hide = ["collector", "prefix", "hostname"]
+    // Or…
+    legend_options_fields = [
+      {
+        property = "shc_name"
+        present = true
+      },
+      {
+        property = "role"
+        present = true
+      },
+      {
+        property = "collector"
+        present = false
+      },
+      {
+        property = "prefix"
+        present = false
+      },
+      {
+        property = "hostname"
+        present = false
+      }
+    ]
     viz_options {
         label = "CPU Idle"
         axis = "left"
