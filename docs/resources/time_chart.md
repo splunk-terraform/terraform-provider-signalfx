@@ -26,7 +26,7 @@ resource "signalfx_time_chart" "mychart0" {
     show_data_markers = true
 
     legend_fields_to_hide = ["collector", "prefix", "hostname"]
-    // Or…
+    // Or… if you want to control order/etc
     legend_options_fields = [
       {
         property = "shc_name"

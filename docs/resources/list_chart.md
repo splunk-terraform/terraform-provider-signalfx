@@ -24,6 +24,8 @@ resource "signalfx_list_chart" "mylistchart0" {
     max_delay = 2
     disable_sampling = true
     refresh_interval = 1
+    legend_fields_to_hide = ["collector", "host"]
+    // Or… if you want to control order/etc
     legend_options_fields = [
       {
         property = "cluster_name"
