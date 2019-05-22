@@ -288,8 +288,8 @@ func getLegendOptions(d *schema.ResourceData) map[string]interface{} {
 /*
 	Util method to get Legend Chart Options for fields
 */
-func getLegendFieldOptions(d map[string]interface{}) map[string]interface{} {
-	if fields, ok := d["legend_options_fields"]; ok {
+func getLegendFieldOptions(d *schema.ResourceData) map[string]interface{} {
+	if fields, ok := d.GetOk("legend_options_fields"); ok {
 		fields := fields.([]map[string]interface{})
 		if len(fields) > 0 {
 			legendOptions := make(map[string]interface{})
