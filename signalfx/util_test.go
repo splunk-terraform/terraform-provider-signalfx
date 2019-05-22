@@ -99,9 +99,15 @@ func TestValidateSortByNoDirection(t *testing.T) {
 }
 
 func TestBuildURL(t *testing.T) {
-	u, error := buildURL("https://www.example.com", "/v2/chart")
+	u, error := buildURL("https://www.example.com", "/v2/chart", map[string]string{})
 	assert.NoError(t, error)
 	assert.Equal(t, "https://www.example.com/v2/chart", u)
+}
+
+func TestBuildURLWithParams(t *testing.T) {
+	u, error := buildURL("https://www.example.com", "/v2/chart", map[string]string{"foo": "bar"})
+	assert.NoError(t, error)
+	assert.Equal(t, "https://www.example.com/v2/chart?foo=bar", u)
 }
 
 func TestBuildAppURL(t *testing.T) {
