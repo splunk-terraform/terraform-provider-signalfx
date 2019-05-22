@@ -25,7 +25,6 @@ resource "signalfx_single_value_chart" "mysvchart0" {
     refresh_interval = 1
     max_precision = 2
     is_timestamp_hidden = true
-    show_spark_line = true
 }
 ```
 

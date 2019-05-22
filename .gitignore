@@ -6,5 +6,4 @@ crash.log
 *.lock
 *.swp
 *.swo
-deps
 terraform-provider-signalfx
