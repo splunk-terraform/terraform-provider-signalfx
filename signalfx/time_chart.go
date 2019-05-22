@@ -319,16 +319,17 @@ func timeChartResource() *schema.Resource {
 				Description: "Dimension to show in the on-chart legend. On-chart legend is off unless a dimension is specified. Allowed: 'metric', 'plot_label' and any dimension.",
 			},
 			"legend_fields_to_hide": &schema.Schema{
-				Type:        schema.TypeSet,
-				Optional:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
-				Description: "List of properties that shouldn't be displayed in the chart legend (i.e. dimension names)",
+				Type:          schema.TypeSet,
+				Optional:      true,
+				ConflictsWith: []string{"legend_options_fields"},
+				Elem:          &schema.Schema{Type: schema.TypeString},
+				Description:   "List of properties that shouldn't be displayed in the chart legend (i.e. dimension names)",
 			},
 			"legend_options_fields": &schema.Schema{
 				Type: schema.TypeList,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"property_name": &schema.Schema{
+						"property": &schema.Schema{
 							Type:        schema.TypeString,
 							Required:    true,
 							Description: "The name of a property to hide or show in the data table.",

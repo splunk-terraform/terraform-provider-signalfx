@@ -117,5 +117,46 @@ func TestBuildAppURL(t *testing.T) {
 }
 
 func TestLegendFieldOptions(t *testing.T) {
+	fields := []map[string]interface{}{
+		{
+			"property": "sf_originatingMetric",
+			"enabled":  false,
+		},
+		{
+			"property": "sf_metric",
+			"enabled":  false,
+		},
+		{
+			"property": "foo",
+			"enabled":  false,
+		},
+		{
+			"property": "bar",
+			"enabled":  true,
+		},
+	}
 
+	expected := map[string]interface{}{
+		"fields": []map[string]interface{}{
+			map[string]interface{}{
+				"property": "sf_originatingMetric",
+				"enabled":  false,
+			},
+			map[string]interface{}{
+				"property": "sf_metric",
+				"enabled":  false,
+			},
+			map[string]interface{}{
+				"property": "foo",
+				"enabled":  false,
+			},
+			map[string]interface{}{
+				"property": "bar",
+				"enabled":  true,
+			},
+		},
+	}
+	assert.Equal(t, expected, getLegendFieldOptions(map[string]interface{}{
+		"legend_options_fields": fields,
+	}))
 }
