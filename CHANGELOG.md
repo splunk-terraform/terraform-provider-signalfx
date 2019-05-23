@@ -15,6 +15,7 @@ Please open issues if you have comments, and feel free to use this resource. A f
 ## Fixed
 
 * Creating a Dashboard Group no longer implicitly creates an empty dashboard of the same name as a member of the group. Note: This will *not* remove any dashboards previously created that way, nor will it prevent you from creating a dashboard group with nothing in it. That's on you! Thanks to [MovieStoreGuy](https://github.com/MovieStoreGuy) for flagging this.
+* Charts no longer [silently fail](https://github.com/signalfx/terraform-provider-signalfx/pull/25) to create. Thanks [djmason](https://github.com/djmason)!
 
 ## Removed
 
