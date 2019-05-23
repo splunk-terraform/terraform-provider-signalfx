@@ -244,6 +244,9 @@ func singlevaluechartCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	err = resourceCreate(url, config.AuthToken, payload, d)
+	if err != nil {
+		return err
+	}
 	// Since things worked, set the URL and move on
 	appURL, err := buildAppURL(config.CustomAppURL, CHART_APP_PATH+d.Id())
 	if err != nil {
