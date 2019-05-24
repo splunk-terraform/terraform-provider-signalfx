@@ -319,10 +319,32 @@ func timeChartResource() *schema.Resource {
 				Description: "Dimension to show in the on-chart legend. On-chart legend is off unless a dimension is specified. Allowed: 'metric', 'plot_label' and any dimension.",
 			},
 			"legend_fields_to_hide": &schema.Schema{
-				Type:        schema.TypeSet,
-				Optional:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
-				Description: "List of properties that shouldn't be displayed in the chart legend (i.e. dimension names)",
+				Type:          schema.TypeSet,
+				Optional:      true,
+				ConflictsWith: []string{"legend_options_fields"},
+				Elem:          &schema.Schema{Type: schema.TypeString},
+				Description:   "List of properties that shouldn't be displayed in the chart legend (i.e. dimension names)",
+			},
+			"legend_options_fields": &schema.Schema{
+				Type: schema.TypeList,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"property": &schema.Schema{
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "The name of a property to hide or show in the data table.",
+						},
+						"enabled": &schema.Schema{
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Default:     true,
+							Description: "(true by default) Determines if this property is displayed in the data table.",
+						},
+					},
+				},
+				Optional:      true,
+				ConflictsWith: []string{"legend_fields_to_hide"},
+				Description:   "List of property and enabled flags to control the order and presence of datatable labels in a chart.",
 			},
 			"show_event_lines": &schema.Schema{
 				Type:        schema.TypeBool,
@@ -439,9 +461,18 @@ func getPayloadTimeChart(d *schema.ResourceData) ([]byte, error) {
 	if axesOptions := getAxesOptions(d); len(axesOptions) > 0 {
 		viz["axes"] = axesOptions
 	}
+	// There are two ways to maniplate the legend. The first is keyed from
+	// `legend_fields_to_hide`. Anything in this is marked as hidden. Unspecified
+	// fields default to showing up in SFx's UI.
 	if legendOptions := getLegendOptions(d); len(legendOptions) > 0 {
 		viz["legendOptions"] = legendOptions
+		// Alternatively, the `legend_options_fields` provides finer control,
+		// allowing ordering and on/off toggles. This is preferred, but we keep
+		// `legend_fields_to_hide` for convenience.
+	} else if legendOptions := getLegendFieldOptions(d); len(legendOptions) > 0 {
+		viz["legendOptions"] = legendOptions
 	}
+
 	if vizOptions := getPerSignalVizOptions(d); len(vizOptions) > 0 {
 		viz["publishLabelOptions"] = vizOptions
 	}

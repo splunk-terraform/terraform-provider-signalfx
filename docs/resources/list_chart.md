@@ -25,6 +25,25 @@ resource "signalfx_list_chart" "mylistchart0" {
     disable_sampling = true
     refresh_interval = 1
     legend_fields_to_hide = ["collector", "host"]
+    // Or… if you want to control order/etc
+    legend_options_fields = [
+      {
+        property = "cluster_name"
+        present = true
+      },
+      {
+        property = "role"
+        present = true
+      },
+      {
+        property = "collector"
+        present = false
+      },
+      {
+        property = "host"
+        present = false
+      }
+    ]
     max_precision = 2
     sort_by = "-value"
  }
@@ -43,6 +62,8 @@ The following arguments are supported in the resource block:
 * `disable_sampling` - (Optional) If `false`, samples a subset of the output MTS, which improves UI performance. `false` by default.
 * `refresh_interval` - (Optional) How often (in seconds) to refresh the values of the list.
 * `legend_fields_to_hide` - (Optional) List of properties that should not be displayed in the chart legend (i.e. dimension names). All the properties are visible by default.
+* `legend_options_fields` - (Optional) List of property names and enabled flags that should be displayed in the data table for the chart, in the order provided. This option cannot be used with `legend_fields_to_hide`.
+    * `property` The name of the property to display. Note the special values of `sf_metric` which shows the label of the time series `publish()` and `sf_originatingMetric` that shows the name of the metric for the time series being displayed.
 * `max_precision` - (Optional) Maximum number of digits to display when rounding values up or down.
 * `secondary_visualization` - (Optional) The type of secondary visualization. Can be `None`, `Radial`, `Linear`, or `Sparkline`. If unset, the SignalFx default is used (`Sparkline`).
 * `sort_by` - (Optional) The property to use when sorting the elements. Use `value` if you want to sort by value. Must be prepended with `+` for ascending or `-` for descending (e.g. `-foo`).

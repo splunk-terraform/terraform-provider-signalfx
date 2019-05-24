@@ -146,9 +146,18 @@ func getPayloadListChart(d *schema.ResourceData) ([]byte, error) {
 	}
 
 	viz := getListChartOptions(d)
+	// There are two ways to maniplate the legend. The first is keyed from
+	// `legend_fields_to_hide`. Anything in this is marked as hidden. Unspecified
+	// fields default to showing up in SFx's UI.
 	if legendOptions := getLegendOptions(d); len(legendOptions) > 0 {
 		viz["legendOptions"] = legendOptions
+		// Alternatively, the `legend_options_fields` provides finer control,
+		// allowing ordering and on/off toggles. This is preferred, but we keep
+		// `legend_fields_to_hide` for convenience.
+	} else if legendOptions := getLegendFieldOptions(d); len(legendOptions) > 0 {
+		viz["legendOptions"] = legendOptions
 	}
+
 	if vizOptions := getPerSignalVizOptions(d); len(vizOptions) > 0 {
 		viz["publishLabelOptions"] = vizOptions
 	}

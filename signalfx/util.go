@@ -286,6 +286,21 @@ func getLegendOptions(d *schema.ResourceData) map[string]interface{} {
 }
 
 /*
+	Util method to get Legend Chart Options for fields
+*/
+func getLegendFieldOptions(d *schema.ResourceData) map[string]interface{} {
+	if fields, ok := d.GetOk("legend_options_fields"); ok {
+		fields := fields.([]interface{})
+		if len(fields) > 0 {
+			legendOptions := make(map[string]interface{})
+			legendOptions["fields"] = fields
+			return legendOptions
+		}
+	}
+	return nil
+}
+
+/*
 	Util method to validate SignalFx specific string format.
 */
 func validateSignalfxRelativeTime(v interface{}, k string) (we []string, errors []error) {
