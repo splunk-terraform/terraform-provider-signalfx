@@ -1,4 +1,14 @@
-# 3.2.0, In Progress
+# 3.3.0, Pending
+
+## Added
+
+## Fixed
+
+## Removed
+
+## Changed
+
+# 3.2.0, 2019-05-24
 
 ## Added
 * Start of [acceptance tests](https://github.com/signalfx/terraform-provider-signalfx/pull/24) (dashboards, charts, dashboard groups)
@@ -21,8 +31,6 @@ Please open issues if you have comments, and feel free to use this resource. A f
 * Creating a Dashboard Group [no longer implicitly creates an empty dashboard of the same name](https://github.com/signalfx/terraform-provider-signalfx/pull/23) as a member of the group. Note: This will *not* remove any dashboards previously created that way, nor will it prevent you from creating a dashboard group with nothing in it. That's on you! Thanks to [MovieStoreGuy](https://github.com/MovieStoreGuy) for flagging this.
 * Charts no longer [silently fail](https://github.com/signalfx/terraform-provider-signalfx/pull/25) to create on errors. Thanks [djmason](https://github.com/djmason)!
 * Fixed a bug in the example for single value charts.
-
-## Removed
 
 ## Changed
 * Bumped terraform dependency version
