@@ -1,6 +1,8 @@
 # 3.2.0, In Progress
 
 ## Added
+* Start of acceptance tests (dashboards, charts, dashboard groups)
+* Use of [signalfx-go](https://github.com/signalfx/signalfx-go) in acceptance tests, with plans to use it for all API calls in the future.
 
 ### New Integration Style, Preview
 
@@ -15,9 +17,14 @@ Please open issues if you have comments, and feel free to use this resource. A f
 ## Fixed
 
 * Creating a Dashboard Group no longer implicitly creates an empty dashboard of the same name as a member of the group. Note: This will *not* remove any dashboards previously created that way, nor will it prevent you from creating a dashboard group with nothing in it. That's on you! Thanks to [MovieStoreGuy](https://github.com/MovieStoreGuy) for flagging this.
-* Charts no longer [silently fail](https://github.com/signalfx/terraform-provider-signalfx/pull/25) to create. Thanks [djmason](https://github.com/djmason)!
+* Charts no longer [silently fail](https://github.com/signalfx/terraform-provider-signalfx/pull/25) to create on errors. Thanks [djmason](https://github.com/djmason)!
+* Fixed a bug in the example for single value charts.
 
 ## Removed
+
+## Changed
+* Bumped terraform dependency version
+* Adjusted some tests to deal with having `SFX_AUTH_TOKEN` set when running acceptance tests.
 
 # 3.1.0, 2019-05-21
 
