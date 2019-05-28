@@ -91,10 +91,13 @@ The following arguments are supported in the resource block:
       * `property` - The name of a dimension to filter against.
       * `values` - A list of values to be used with the `property`, they will be combined via `OR`.
       * `negated` - (Optional) If true,  only data that does not match the specified value of the specified property appear in the event overlay. Defaults to `false`.
-* `selected_event_overlay` - (Optional) Defines event overlays which are enabled by default. Any overlay specified here should have an accompanying entry in `event_overlay.source`, which mirrors the fields here.
-    * `property` - The name of a dimension to filter against.
-    * `values` - A list of values to be used with the `property`, they will be combined via `OR`.
-    * `negated` - (Optional) If true,  only data that does not match the specified value of the specified property appear in the event overlay. Defaults to `false`.
+* `selected_event_overlay` - (Optional) Defines event overlays which are enabled by **default**. Any overlay specified here should have an accompanying entry in `event_overlay`, which are similar to the properties here.
+    * `signal` - Search term used to choose the events shown in the overlay.
+    * `type` - (Optional) Can be set to `eventTimeSeries` (the default) to refer to externally reported events, or `detectorEvents` to refer to events from detector triggers.
+    * `source` - (Optional) Each element specifies a filter to use against the signal specified in the `signal`.
+      * `property` - The name of a dimension to filter against.
+      * `values` - A list of values to be used with the `property`, they will be combined via `OR`.
+      * `negated` - (Optional) If true,  only data that does not match the specified value of the specified property appear in the event overlay. Defaults to `false`.
 * `synced` - (Optional) Whether the resource in the provider and SignalFx are identical or not. Used internally for syncing, you do not need to specify it. Whenever you see a change to this field in the plan, it means that your resource has been changed from the UI and Terraform is now going to re-sync it back to what's in your configuration.
 * `tags` - (Optional) Tags associated with the dashboard.
 
