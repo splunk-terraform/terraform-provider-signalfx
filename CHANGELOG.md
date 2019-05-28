@@ -2,6 +2,9 @@
 
 ## Added
 
+* Added docs for Slack integration.
+* Added acceptance tests for Integration and Detector.
+
 ## Fixed
 
 ## Removed
