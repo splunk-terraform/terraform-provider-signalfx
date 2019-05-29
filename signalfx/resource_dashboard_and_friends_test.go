@@ -271,6 +271,11 @@ resource "signalfx_event_feed_chart" "myeventfeed0" {
 	name = "Interesting Events"
 	description = "Lorem ipsum dolor sit fartet"
 	program_text = "A = events(eventType='Fart Testing').publish(label='A')"
+
+	viz_options {
+			label = "A"
+			color = "orange"
+	}
 }
 
 resource "signalfx_dashboard_group" "mydashboardgroup0" {

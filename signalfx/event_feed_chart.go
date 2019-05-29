@@ -41,6 +41,26 @@ func eventFeedChartResource() *schema.Resource {
 				Required:    true,
 				Description: "Signalflow program text for the chart. More info at \"https://developers.signalfx.com/docs/signalflow-overview\"",
 			},
+			"viz_options": &schema.Schema{
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Description: "Plot-level customization options, associated with a publish statement",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"label": &schema.Schema{
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "The label used in the publish statement that displays the plot (metric time series data) you want to customize",
+						},
+						"color": &schema.Schema{
+							Type:         schema.TypeString,
+							Optional:     true,
+							Description:  "Color to use",
+							ValidateFunc: validatePerSignalColor,
+						},
+					},
+				},
+			},
 		},
 
 		Create: eventFeedChartCreate,
