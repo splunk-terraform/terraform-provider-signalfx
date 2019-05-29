@@ -43,6 +43,7 @@ resource "signalfx_integration" "slack_myteam" {
     type = "Slack"
     webhook_url = "http://example.com"
 }
+```
 
 ## Argument Reference
 
