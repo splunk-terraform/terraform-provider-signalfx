@@ -1,7 +1,6 @@
 package signalfx
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -115,24 +114,24 @@ func validateIntegrationType(v interface{}, k string) (we []string, errors []err
 
 func getPayloadIntegration(d *schema.ResourceData) ([]byte, error) {
 	integrationType := d.Get("type").(string)
-	payload := map[string]interface{}{
-		"name":    d.Get("name").(string),
-		"enabled": d.Get("enabled").(bool),
-		"type":    integrationType,
-	}
 
+	var payload []byte
+	var err error
 	switch integrationType {
 	case "PagerDuty":
-		payload["apiKey"] = d.Get("api_key").(string)
+		payload, err = getPagerDutyPayloadIntegration(d)
 	case "Slack":
-		payload["webhookUrl"] = d.Get("webhook_url").(string)
+		payload, err = getSlackPayloadIntegration(d)
 	case "GCP":
-		payload["pollRate"] = d.Get("poll_rate").(int)
-		payload["services"] = expandServices(d.Get("services").([]interface{}))
-		payload["projectServiceKeys"] = expandProjectServiceKeys(d.Get("project_service_keys").([]interface{}))
+		payload, err = getGCPPayloadIntegration(d)
+	default:
+		err = fmt.Errorf("Unknown integration type: %s", integrationType)
 	}
 
-	return json.Marshal(payload)
+	if err != nil {
+		return nil, err
+	}
+	return payload, nil
 }
 
 func integrationCreate(d *schema.ResourceData, meta interface{}) error {
