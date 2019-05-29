@@ -15,6 +15,7 @@ This provider was originally created and maintained by [Yelp](https://www.yelp.c
         * [Single Value Chart](https://github.com/signalfx/terraform-provider-signalfx/blob/master/docs/resources/single_value_chart.md)
         * [Heatmap Chart](https://github.com/signalfx/terraform-provider-signalfx/blob/master/docs/resources/heatmap_chart.md)
         * [Text Note](https://github.com/signalfx/terraform-provider-signalfx/blob/master/docs/resources/text_note.md)
+        * [Event Feed](https://github.com/signalfx/terraform-provider-signalfx/blob/master/docs/resources/event_feed_chart.md)
     * [Dashboard](https://github.com/signalfx/terraform-provider-signalfx/blob/master/docs/resources/dashboard.md)
     * [Dashboard Group](https://github.com/signalfx/terraform-provider-signalfx/blob/master/docs/resources/dashboard_group.md)
     * [Integration](https://github.com/signalfx/terraform-provider-signalfx/blob/master/docs/resources/integration.md)

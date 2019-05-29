@@ -49,6 +49,7 @@ func Provider() terraform.ResourceProvider {
 		ResourcesMap: map[string]*schema.Resource{
 			"signalfx_detector":              detectorResource(),
 			"signalfx_time_chart":            timeChartResource(),
+			"signalfx_event_feed_chart":      eventFeedChartResource(),
 			"signalfx_heatmap_chart":         heatmapChartResource(),
 			"signalfx_single_value_chart":    singleValueChartResource(),
 			"signalfx_list_chart":            listChartResource(),
