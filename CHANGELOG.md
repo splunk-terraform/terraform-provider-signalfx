@@ -4,6 +4,7 @@
 
 * Added docs for Slack integration.
 * Added acceptance tests for Integration and Detector.
+* [New resource]() `signalfx_event_feed_chart` for [Event Feed charts](https://docs.signalfx.com/en/latest/dashboards/dashboard-add-info.html#adding-an-event-feed-chart-to-a-dashboard).
 
 ## Fixed
 

@@ -267,6 +267,12 @@ resource "signalfx_text_chart" "mynote0" {
     EOF
 }
 
+resource "signalfx_event_feed_chart" "myeventfeed0" {
+	name = "Interesting Events"
+	description = "Lorem ipsum dolor sit fartet"
+	program_text = "A = events(eventType='Fart Testing').publish(label='A')"
+}
+
 resource "signalfx_dashboard_group" "mydashboardgroup0" {
     name = "My team dashboard group NEW"
     description = "Cool dashboard group "
@@ -346,10 +352,10 @@ func testAccCheckDashboardGroupResourceExists(s *terraform.State) error {
 
 	for _, rs := range s.RootModule().Resources {
 		switch rs.Type {
-		case "signalfx_time_chart", "signalfx_list_chart", "signalfx_single_value_chart", "signalfx_heatmap_chart", "signalfx_text_chart":
+		case "signalfx_time_chart", "signalfx_list_chart", "signalfx_single_value_chart", "signalfx_heatmap_chart", "signalfx_text_chart", "signalfx_event_feed_chart":
 			chart, err := client.GetChart(rs.Primary.ID)
 			if chart.Id != rs.Primary.ID || err != nil {
-				return fmt.Errorf("Error finding time chart %s: %s", rs.Primary.ID, err)
+				return fmt.Errorf("Error finding chart %s: %s", rs.Primary.ID, err)
 			}
 		case "signalfx_dashboard":
 			dash, err := client.GetDashboard(rs.Primary.ID)
@@ -373,10 +379,10 @@ func testAccDashboardGroupDestroy(s *terraform.State) error {
 	client, _ := sfx.NewClient(os.Getenv("SFX_AUTH_TOKEN"))
 	for _, rs := range s.RootModule().Resources {
 		switch rs.Type {
-		case "signalfx_time_chart", "signalfx_list_chart", "signalfx_single_value_chart", "signalfx_heatmap_chart", "signalfx_text_chart":
+		case "signalfx_time_chart", "signalfx_list_chart", "signalfx_single_value_chart", "signalfx_heatmap_chart", "signalfx_text_chart", "signalfx_event_feed_chart":
 			chart, _ := client.GetChart(rs.Primary.ID)
 			if chart.Id != "" {
-				return fmt.Errorf("Found deleted time chart %s", rs.Primary.ID)
+				return fmt.Errorf("Found deleted chart %s", rs.Primary.ID)
 			}
 		case "signalfx_dashboard":
 			dash, _ := client.GetDashboard(rs.Primary.ID)
