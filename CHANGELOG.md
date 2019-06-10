@@ -1,4 +1,4 @@
-# 3.3.0, Pending
+# 3.3.0 (Unreleased)
 
 ## Added
 
@@ -12,6 +12,8 @@
 ## Removed
 
 ## Changed
+
+* Added Go module vendor directory per [HashiCorp guidelines](https://github.com/signalfx/terraform-provider-signalfx/issues/37)
 
 # 3.2.0, 2019-05-24
 
