@@ -25,30 +25,20 @@ func detectorResource() *schema.Resource {
 				Default:     true,
 				Description: "Whether the resource in the provider and SignalFx are identical or not. Used internally for syncing.",
 			},
-			"last_updated": &schema.Schema{
-				Type:        schema.TypeFloat,
-				Computed:    true,
-				Description: "Latest timestamp the resource was updated",
-			},
-			"url": &schema.Schema{
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "URL of the detector",
-			},
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Name of the detector",
 			},
-			"description": &schema.Schema{
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "Description of the detector",
-			},
 			"program_text": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Signalflow program text for the detector. More info at \"https://developers.signalfx.com/docs/signalflow-overview\"",
+			},
+			"description": &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Description of the detector",
 			},
 			"max_delay": &schema.Schema{
 				Type:         schema.TypeInt,
@@ -111,17 +101,6 @@ func detectorResource() *schema.Resource {
 				Description: "Set of rules used for alerting",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"description": &schema.Schema{
-							Type:        schema.TypeString,
-							Optional:    true,
-							Description: "Description of the rule",
-						},
-						"notifications": &schema.Schema{
-							Type:        schema.TypeList,
-							Optional:    true,
-							Elem:        &schema.Schema{Type: schema.TypeString},
-							Description: "List of strings specifying where notifications will be sent when an incident occurs. See https://developers.signalfx.com/v2/docs/detector-model#notifications-models for more info",
-						},
 						"severity": &schema.Schema{
 							Type:         schema.TypeString,
 							Required:     true,
@@ -132,6 +111,17 @@ func detectorResource() *schema.Resource {
 							Type:        schema.TypeString,
 							Required:    true,
 							Description: "A detect label which matches a detect label within the program text",
+						},
+						"description": &schema.Schema{
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "Description of the rule",
+						},
+						"notifications": &schema.Schema{
+							Type:        schema.TypeList,
+							Optional:    true,
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Description: "List of strings specifying where notifications will be sent when an incident occurs. See https://developers.signalfx.com/v2/docs/detector-model#notifications-models for more info",
 						},
 						"disabled": &schema.Schema{
 							Type:        schema.TypeBool,
@@ -162,6 +152,16 @@ func detectorResource() *schema.Resource {
 					},
 				},
 				Set: resourceRuleHash,
+			},
+			"last_updated": &schema.Schema{
+				Type:        schema.TypeFloat,
+				Computed:    true,
+				Description: "Latest timestamp the resource was updated",
+			},
+			"url": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "URL of the detector",
 			},
 		},
 

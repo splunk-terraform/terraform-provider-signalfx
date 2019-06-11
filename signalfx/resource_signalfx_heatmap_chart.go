@@ -12,36 +12,20 @@ import (
 func heatmapChartResource() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
-			"synced": &schema.Schema{
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     true,
-				Description: "Whether the resource in the provider and SignalFx are identical or not. Used internally for syncing.",
-			},
-			"last_updated": &schema.Schema{
-				Type:        schema.TypeFloat,
-				Computed:    true,
-				Description: "Latest timestamp the resource was updated",
-			},
-			"url": &schema.Schema{
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "URL of the chart",
-			},
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Name of the chart",
 			},
-			"description": &schema.Schema{
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "Description of the chart (Optional)",
-			},
 			"program_text": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Signalflow program text for the chart. More info at \"https://developers.signalfx.com/docs/signalflow-overview\"",
+			},
+			"description": &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Description of the chart (Optional)",
 			},
 			"unit_prefix": &schema.Schema{
 				Type:        schema.TypeString,
@@ -83,6 +67,12 @@ func heatmapChartResource() *schema.Resource {
 				Description: "Values and color for the color range. Example: colorRange : { min : 0, max : 100, color : \"blue\" }",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
+						"color": &schema.Schema{
+							Type:         schema.TypeString,
+							Required:     true,
+							Description:  "The color range to use. Must be either \"gray\", \"blue\", \"navy\", \"orange\", \"yellow\", \"magenta\", \"purple\", \"violet\", \"lilac\", \"green\", \"aquamarine\"",
+							ValidateFunc: validateHeatmapChartColor,
+						},
 						"min_value": &schema.Schema{
 							Type:        schema.TypeFloat,
 							Optional:    true,
@@ -95,12 +85,6 @@ func heatmapChartResource() *schema.Resource {
 							Default:     math.MaxFloat32,
 							Description: "The maximum value within the coloring range",
 						},
-						"color": &schema.Schema{
-							Type:         schema.TypeString,
-							Required:     true,
-							Description:  "The color range to use. Must be either \"gray\", \"blue\", \"navy\", \"orange\", \"yellow\", \"magenta\", \"purple\", \"violet\", \"lilac\", \"green\", \"aquamarine\"",
-							ValidateFunc: validateHeatmapChartColor,
-						},
 					},
 				},
 			},
@@ -110,6 +94,12 @@ func heatmapChartResource() *schema.Resource {
 				Description: "Single color range including both the color to display for that range and the borders of the range",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
+						"color": &schema.Schema{
+							Type:         schema.TypeString,
+							Required:     true,
+							Description:  "The color to use. Must be either \"gray\", \"blue\", \"navy\", \"orange\", \"yellow\", \"magenta\", \"purple\", \"violet\", \"lilac\", \"green\", \"aquamarine\"",
+							ValidateFunc: validateHeatmapChartColor,
+						},
 						"gt": &schema.Schema{
 							Type:        schema.TypeFloat,
 							Optional:    true,
@@ -134,12 +124,6 @@ func heatmapChartResource() *schema.Resource {
 							Default:     math.MaxFloat32,
 							Description: "Indicates the upper threshold inclusive value for this range",
 						},
-						"color": &schema.Schema{
-							Type:         schema.TypeString,
-							Required:     true,
-							Description:  "The color to use. Must be either \"gray\", \"blue\", \"navy\", \"orange\", \"yellow\", \"magenta\", \"purple\", \"violet\", \"lilac\", \"green\", \"aquamarine\"",
-							ValidateFunc: validateHeatmapChartColor,
-						},
 					},
 				},
 			},
@@ -148,6 +132,22 @@ func heatmapChartResource() *schema.Resource {
 				Optional:    true,
 				Default:     false,
 				Description: "(false by default) Whether to show the timestamp in the chart",
+			},
+			"synced": &schema.Schema{
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     true,
+				Description: "Whether the resource in the provider and SignalFx are identical or not. Used internally for syncing.",
+			},
+			"last_updated": &schema.Schema{
+				Type:        schema.TypeFloat,
+				Computed:    true,
+				Description: "Latest timestamp the resource was updated",
+			},
+			"url": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "URL of the chart",
 			},
 		},
 

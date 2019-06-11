@@ -17,36 +17,26 @@ const (
 func dashboardResource() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
+			"name": &schema.Schema{
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Name of the dashboard",
+			},
+			"dashboard_group": &schema.Schema{
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The ID of the dashboard group that contains the dashboard. If an ID is not provided during creation, the dashboard will be placed in a newly created dashboard group",
+			},
 			"synced": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     true,
 				Description: "Whether the resource in the provider and SignalFx are identical or not. Used internally for syncing.",
 			},
-			"last_updated": &schema.Schema{
-				Type:        schema.TypeFloat,
-				Computed:    true,
-				Description: "Latest timestamp the resource was updated",
-			},
-			"url": &schema.Schema{
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "URL of the dashboard",
-			},
-			"name": &schema.Schema{
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "Name of the dashboard",
-			},
 			"description": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Description of the dashboard (Optional)",
-			},
-			"dashboard_group": &schema.Schema{
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "The ID of the dashboard group that contains the dashboard. If an ID is not provided during creation, the dashboard will be placed in a newly created dashboard group",
 			},
 			"charts_resolution": &schema.Schema{
 				Type:         schema.TypeString,
@@ -264,17 +254,17 @@ func dashboardResource() *schema.Resource {
 							Required:    true,
 							Description: "A metric time series dimension or property name",
 						},
-						"negated": &schema.Schema{
-							Type:        schema.TypeBool,
-							Optional:    true,
-							Default:     false,
-							Description: "(false by default) Whether this filter should be a \"not\" filter",
-						},
 						"values": &schema.Schema{
 							Type:        schema.TypeSet,
 							Required:    true,
 							Elem:        &schema.Schema{Type: schema.TypeString},
 							Description: "List of strings (which will be treated as an OR filter on the property)",
+						},
+						"negated": &schema.Schema{
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Default:     false,
+							Description: "(false by default) Whether this filter should be a \"not\" filter",
 						},
 						"apply_if_exist": &schema.Schema{
 							Type:        schema.TypeBool,
@@ -291,6 +281,11 @@ func dashboardResource() *schema.Resource {
 				Description: "Event overlay to add to charts",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
+						"signal": &schema.Schema{
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "Search term used to define events",
+						},
 						"line": &schema.Schema{
 							Type:        schema.TypeBool,
 							Optional:    true,
@@ -307,11 +302,6 @@ func dashboardResource() *schema.Resource {
 							Optional:     true,
 							Description:  "Color to use",
 							ValidateFunc: validatePerSignalColor,
-						},
-						"signal": &schema.Schema{
-							Type:        schema.TypeString,
-							Required:    true,
-							Description: "Search term used to define events",
 						},
 						"type": &schema.Schema{
 							Type:         schema.TypeString,
@@ -330,17 +320,17 @@ func dashboardResource() *schema.Resource {
 										Required:    true,
 										Description: "A metric time series dimension or property name",
 									},
-									"negated": &schema.Schema{
-										Type:        schema.TypeBool,
-										Optional:    true,
-										Default:     false,
-										Description: "(false by default) Whether this filter should be a \"not\" filter",
-									},
 									"values": &schema.Schema{
 										Type:        schema.TypeSet,
 										Required:    true,
 										Elem:        &schema.Schema{Type: schema.TypeString},
 										Description: "List of strings (which will be treated as an OR filter on the property)",
+									},
+									"negated": &schema.Schema{
+										Type:        schema.TypeBool,
+										Optional:    true,
+										Default:     false,
+										Description: "(false by default) Whether this filter should be a \"not\" filter",
 									},
 								},
 							},
@@ -376,23 +366,33 @@ func dashboardResource() *schema.Resource {
 										Required:    true,
 										Description: "A metric time series dimension or property name",
 									},
-									"negated": &schema.Schema{
-										Type:        schema.TypeBool,
-										Optional:    true,
-										Default:     false,
-										Description: "(false by default) Whether this filter should be a \"not\" filter",
-									},
 									"values": &schema.Schema{
 										Type:        schema.TypeSet,
 										Required:    true,
 										Elem:        &schema.Schema{Type: schema.TypeString},
 										Description: "List of strings (which will be treated as an OR filter on the property)",
 									},
+									"negated": &schema.Schema{
+										Type:        schema.TypeBool,
+										Optional:    true,
+										Default:     false,
+										Description: "(false by default) Whether this filter should be a \"not\" filter",
+									},
 								},
 							},
 						},
 					},
 				},
+			},
+			"last_updated": &schema.Schema{
+				Type:        schema.TypeFloat,
+				Computed:    true,
+				Description: "Latest timestamp the resource was updated",
+			},
+			"url": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "URL of the dashboard",
 			},
 		},
 

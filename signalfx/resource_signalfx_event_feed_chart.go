@@ -10,36 +10,26 @@ import (
 func eventFeedChartResource() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
-			"synced": &schema.Schema{
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     true,
-				Description: "Whether the resource in the provider and SignalFx are identical or not. Used internally for syncing.",
-			},
-			"last_updated": &schema.Schema{
-				Type:        schema.TypeFloat,
-				Computed:    true,
-				Description: "Latest timestamp the resource was updated",
-			},
-			"url": &schema.Schema{
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "URL of the chart",
-			},
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Name of the chart",
+			},
+			"program_text": &schema.Schema{
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Signalflow program text for the chart. More info at \"https://developers.signalfx.com/docs/signalflow-overview\"",
 			},
 			"description": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Description of the chart (Optional)",
 			},
-			"program_text": &schema.Schema{
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "Signalflow program text for the chart. More info at \"https://developers.signalfx.com/docs/signalflow-overview\"",
+			"synced": &schema.Schema{
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     true,
+				Description: "Whether the resource in the provider and SignalFx are identical or not. Used internally for syncing.",
 			},
 			"viz_options": &schema.Schema{
 				Type:        schema.TypeSet,
@@ -60,6 +50,16 @@ func eventFeedChartResource() *schema.Resource {
 						},
 					},
 				},
+			},
+			"last_updated": &schema.Schema{
+				Type:        schema.TypeFloat,
+				Computed:    true,
+				Description: "Latest timestamp the resource was updated",
+			},
+			"url": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "URL of the chart",
 			},
 		},
 
