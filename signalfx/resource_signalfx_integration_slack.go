@@ -13,12 +13,6 @@ import (
 func integrationSlackResource() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
-			"synced": &schema.Schema{
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     true,
-				Description: "Whether the resource in the provider and SignalFx are identical or not. Used internally for syncing.",
-			},
 			"last_updated": &schema.Schema{
 				Type:        schema.TypeFloat,
 				Computed:    true,
@@ -39,6 +33,12 @@ func integrationSlackResource() *schema.Resource {
 				Optional:    true,
 				Description: "Slack Webhook URL for integration",
 				Sensitive:   true,
+			},
+			"synced": &schema.Schema{
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     true,
+				Description: "Whether the resource in the provider and SignalFx are identical or not. Used internally for syncing.",
 			},
 		},
 

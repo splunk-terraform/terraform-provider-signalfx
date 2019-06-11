@@ -10,6 +10,21 @@ import (
 func textChartResource() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
+			"name": &schema.Schema{
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Name of the chart",
+			},
+			"description": &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Description of the chart (Optional)",
+			},
+			"markdown": &schema.Schema{
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Markdown text to display. More info at: https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet",
+			},
 			"synced": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
@@ -25,21 +40,6 @@ func textChartResource() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "URL of the chart",
-			},
-			"name": &schema.Schema{
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "Name of the chart",
-			},
-			"description": &schema.Schema{
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "Description of the chart (Optional)",
-			},
-			"markdown": &schema.Schema{
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "Markdown text to display. More info at: https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet",
 			},
 		},
 
