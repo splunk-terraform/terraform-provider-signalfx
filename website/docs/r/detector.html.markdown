@@ -1,12 +1,12 @@
 ---
 layout: "signalfx"
-page_title: "SignalFx: signalfx_detector"
-sidebar_current: "docs-signalfx-resource-detector"
+page_title: "SignalFx: signalfx_resource"
+sidebar_current: "docs-signalfx-resource-dashboard"
 description: |-
-  Provides a SignalFx detector resource. This can be used to create and manage detectors.
+  Allows Terraform to create and manage SignalFx Dashboards
 ---
 
-# signalfx_detector
+# Resource: signalfx_detector
 
 Provides a SignalFx detector resource. This can be used to create and manage detectors.
 
@@ -42,6 +42,42 @@ provider "signalfx" {}
 variable "clusters" {
     default = ["clusterA", "clusterB"]
 }
+```
+
+## Notification Format
+
+As SignalFx supports different notification mechanisms a comma-delimited string is used to provide inputs. This will likely be changed in a future iteration of the provider. For now, here are some example of how to configure each notification type:
+
+### Email
+
+```
+notifications = ["Email,foo-alerts@bar.com"]
+```
+
+### Opsgenie
+
+Note that the `credentialId` is the SignalFx-provided ID shown after setting up your Opsgenie integration.
+
+```
+notifications = ["Opsgenie,credentialId,credentialName,responderName,responderId,responderType"]
+```
+
+### PagerDuty
+
+```
+notifications = ["PagerDuty,credentialId"]
+```
+
+### Slack
+
+```
+notifications = ["Slack,channel"]
+```
+
+### Webhook
+
+```
+notifications = ["Webhook,secret,url"]
 ```
 
 ## Argument Reference

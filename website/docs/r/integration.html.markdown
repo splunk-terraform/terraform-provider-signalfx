@@ -1,4 +1,12 @@
-# Integration
+---
+layout: "signalfx"
+page_title: "SignalFx: signalfx_resource"
+sidebar_current: "docs-signalfx-resource-integration"
+description: |-
+  Allows Terraform to create and manage SignalFx Integrations
+---
+
+# Resource: signalfx_integration
 
 SignalFx supports integrations to ingest metrics from other monitoring systems, connect to Single Sign-On providers, and to report notifications for messaging and incident management. Note that your API key must have admin permissions to use the SignalFx integration API.
 

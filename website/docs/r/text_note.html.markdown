@@ -1,9 +1,14 @@
-# Text Note
+---
+layout: "signalfx"
+page_title: "SignalFx: signalfx_resource"
+sidebar_current: "docs-signalfx-resource-text-note"
+description: |-
+  Allows Terraform to create and manage SignalFx text notes
+---
+
+# Resource: signalfx_text_note
 
 This special type of chart doesn’t display any metric data. Rather, it lets you place a text note on the dashboard.
-
-![Text Note](https://github.com/signalfx/terraform-provider-signalfx/raw/master/docs/resources/text_note.png)
-
 
 ## Example Usage
 
@@ -32,7 +37,6 @@ resource "signalfx_text_chart" "mynote0" {
     EOF
 }
 ```
-
 
 ## Argument Reference
 

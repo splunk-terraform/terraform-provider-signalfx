@@ -1,13 +1,16 @@
-# Time Chart
+---
+layout: "signalfx"
+page_title: "SignalFx: signalfx_resource"
+sidebar_current: "docs-signalfx-resource-time-chart"
+description: |-
+  Allows Terraform to create and manage SignalFx time charts
+---
 
-Time charts display datpoints over a period of time.
+# Resource: signalfx_time_chart
 
-![Time Chart](https://github.com/signalfx/terraform-provider-signalfx/raw/master/docs/resources/time_chart.png)
+Provides a SignalFx time chart resource. This can be used to create and manage the different types of time charts.
 
-The first four icons in the chart’s title bar represent four visualization options for time charts: line chart, area chart, column chart, and histogram chart (user the `plot_type` to choose your favorite chart type).
-
-![Time Chart Types](https://github.com/signalfx/terraform-provider-signalfx/raw/master/docs/resources/time_chart_types.jpg)
-
+Time charts display data points over a period of time.
 
 ## Example Usage
 
@@ -62,7 +65,6 @@ resource "signalfx_time_chart" "mychart0" {
 }
 ```
 
-
 ## Argument Reference
 
 The following arguments are supported in the resource block:
@@ -98,7 +100,7 @@ The following arguments are supported in the resource block:
     * `low_watermark_label` - (Optional) A label to attach to the low watermark line.
 * `viz_options` - (Optional) Plot-level customization options, associated with a publish statement.
     * `label` - (Required) Label used in the publish statement that displays the plot (metric time series data) you want to customize.
-    * `color` - (Optional) Color to use : gray, blue, azure, navy, brown, orange, yellow, iris, magenta, pink, purple, violet, lilac, emerald, green, aquamarine. ![Colors](https://github.com/signalfx/terraform-provider-signalfx/raw/master/docs/resources/colors.png)
+    * `color` - (Optional) Color to use : gray, blue, azure, navy, brown, orange, yellow, iris, magenta, pink, purple, violet, lilac, emerald, green, aquamarine.
     * `axis` - (Optional) Y-axis associated with values for this plot. Must be either `right` or `left`.
     * `plot_type` - (Optional) The visualization style to use. Must be `"LineChart"`, `"AreaChart"`, `"ColumnChart"`, or `"Histogram"`. Chart level `plot_type` by default.
     * `value_unit` - (Optional) A unit to attach to this plot. Units support automatic scaling (eg thousands of bytes will be displayed as kilobytes).
