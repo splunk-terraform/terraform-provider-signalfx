@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
 	homedir "github.com/mitchellh/go-homedir"
+	sfx "github.com/signalfx/signalfx-go"
 )
 
 var SystemConfigPath = "/etc/signalfx.conf"
@@ -22,6 +23,7 @@ type signalfxConfig struct {
 	AuthToken    string `json:"auth_token"`
 	APIURL       string `json:"api_url"`
 	CustomAppURL string `json:"custom_app_url"`
+	Client       *sfx.Client
 }
 
 func Provider() terraform.ResourceProvider {
@@ -112,6 +114,13 @@ func signalfxConfigure(data *schema.ResourceData) (interface{}, error) {
 	if custom_app_url, ok := data.GetOk("custom_app_url"); ok {
 		config.CustomAppURL = custom_app_url.(string)
 	}
+
+	client, err := sfx.NewClient(config.AuthToken, sfx.APIUrl(config.APIURL))
+	if err != nil {
+		return &config, err
+	}
+	config.Client = client
+
 	return &config, nil
 }
 
