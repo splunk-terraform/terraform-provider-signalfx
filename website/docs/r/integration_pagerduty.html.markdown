@@ -13,10 +13,9 @@ SignalFx PagerDuty integrations
 ## Example Usage
 
 ```terraform
-resource "signalfx_integration" "pagerduty_myteam" {
+resource "signalfx_integration_pagerduty" "pagerduty_myteam" {
     name = "PD - My Team"
     enabled = true
-    type = "PagerDuty"
     api_key = "1234567890"
 }
 ```

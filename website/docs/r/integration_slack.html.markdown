@@ -13,10 +13,9 @@ SignalFx Slack integration.
 ## Example Usage
 
 ```terraform
-resource "signalfx_integration" "slack_myteam" {
+resource "signalfx_integration_slack" "slack_myteam" {
     name = "Slack - My Team"
     enabled = true
-    type = "Slack"
     webhook_url = "http://example.com"
 }
 ```
