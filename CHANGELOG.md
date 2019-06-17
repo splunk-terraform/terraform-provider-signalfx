@@ -10,6 +10,8 @@
 
 ## Fixed
 
+* [Adjusted](https://github.com/signalfx/terraform-provider-signalfx/pull/28) confusing docs for dashboard event overlays. Thanks to [detouched](https://github.com/detouched) for flagging!
+
 ## Removed
 
 ## Changed
