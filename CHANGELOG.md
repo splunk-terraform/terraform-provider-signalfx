@@ -31,6 +31,7 @@ NOTES:
 ## Changed
 
 * Added Go module vendor directory per [HashiCorp guidelines](https://github.com/signalfx/terraform-provider-signalfx/issues/37)
+* The attribute `time_range` of Detectors and Dashboards have changed from `String` to `Int`. Values like `1h` must now be expressed in seconds. For example `1h` should become `3600` as that's how many seconds are in an hour.
 
 # 3.2.0 (2019-05-24)
 
