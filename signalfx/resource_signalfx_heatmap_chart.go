@@ -43,6 +43,11 @@ func heatmapChartResource() *schema.Resource {
 				Description:  "How long (in seconds) to wait for late datapoints",
 				ValidateFunc: validateMaxDelayValue,
 			},
+			"refresh_interval": &schema.Schema{
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Description: "How often (in seconds) to refresh the values of the heatmap",
+			},
 			"disable_sampling": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
@@ -217,9 +222,13 @@ func getHeatmapOptionsChart(d *schema.ResourceData) map[string]interface{} {
 	if val, ok := d.GetOk("max_delay"); ok {
 		programOptions["maxDelay"] = val.(int) * 1000
 	}
+
 	programOptions["disableSampling"] = d.Get("disable_sampling").(bool)
 	viz["programOptions"] = programOptions
 
+	if refreshInterval, ok := d.GetOk("refresh_interval"); ok {
+		viz["refreshInterval"] = refreshInterval.(int) * 1000
+	}
 	if groupByOptions, ok := d.GetOk("group_by"); ok {
 		viz["groupBy"] = groupByOptions.([]interface{})
 	}
