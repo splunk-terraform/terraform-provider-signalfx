@@ -177,18 +177,17 @@ func detectorResource() *schema.Resource {
 */
 func getPayloadDetector(d *schema.ResourceData) (*detector.CreateUpdateDetectorRequest, error) {
 
-	tf_rules := d.Get("rule").(*schema.Set).List()
-	rules_list := make([]detector.Rule, len(tf_rules))
-
-	for i, tf_rule := range tf_rules {
-		tf_rule := tf_rule.(map[string]interface{})
+	tfRules := d.Get("rule").(*schema.Set).List()
+	rulesList := make([]detector.Rule, 0, len(tfRules))
+	for i, tfRule := range tfRules {
+		tfRule := tfRule.(map[string]interface{})
 		rule := detector.Rule{
-			Description: tf_rule["description"].(string),
-			DetectLabel: tf_rule["detect_label"].(string),
-			Disabled:    tf_rule["disabled"].(bool),
+			Description: tfRule["description"].(string),
+			DetectLabel: tfRule["detect_label"].(string),
+			Disabled:    tfRule["disabled"].(bool),
 		}
 
-		tfSev := tf_rule["severity"].(string)
+		tfSev := tfRule["severity"].(string)
 		sev := detector.INFO
 		switch tfSev {
 		case "Critical":
@@ -204,39 +203,39 @@ func getPayloadDetector(d *schema.ResourceData) (*detector.CreateUpdateDetectorR
 		}
 		rule.Severity = sev
 
-		if val, ok := tf_rule["parameterized_body"]; ok {
+		if val, ok := tfRule["parameterized_body"]; ok {
 			rule.ParameterizedBody = val.(string)
 		}
 
-		if val, ok := tf_rule["parameterized_subject"]; ok {
+		if val, ok := tfRule["parameterized_subject"]; ok {
 			rule.ParameterizedSubject = val.(string)
 		}
 
-		if val, ok := tf_rule["runbook_url"]; ok {
+		if val, ok := tfRule["runbook_url"]; ok {
 			rule.RunbookUrl = val.(string)
 		}
 
-		if val, ok := tf_rule["tip"]; ok {
+		if val, ok := tfRule["tip"]; ok {
 			rule.Tip = val.(string)
 		}
 
-		if notifications, ok := tf_rule["notifications"]; ok {
+		if notifications, ok := tfRule["notifications"]; ok {
 			notify := getNotifications(notifications.([]interface{}))
 			rule.Notifications = notify
 		}
 
-		rules_list[i] = rule
+		rulesList[i] = rule
 	}
 
 	cudr := &detector.CreateUpdateDetectorRequest{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
 		ProgramText: d.Get("program_text").(string),
-		Rules:       rules_list,
+		Rules:       rulesList,
 	}
 
 	if val, ok := d.GetOk("max_delay"); ok {
-		cudr.MaxDelay = val.(int32) * 1000
+		cudr.MaxDelay = int32(val.(int) * 1000)
 	}
 
 	cudr.VisualizationOptions = make([]detector.Visualization, 1)
@@ -268,7 +267,7 @@ func getVisualizationOptionsDetector(d *schema.ResourceData) detector.Visualizat
 	// timeMap := make(map[string]interface{})
 	tr := detector.Time{}
 	if val, ok := d.GetOk("time_range"); ok {
-		tr.Range = val.(int32) * 1000
+		tr.Range = int32(val.(int)) * 1000
 		tr.Type = "relative"
 	}
 	if val, ok := d.GetOk("start_time"); ok {
@@ -324,10 +323,6 @@ func detectorCreate(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return fmt.Errorf("Failed creating json payload: %s", err.Error())
 	}
-	// url, err := buildURL(config.APIURL, DETECTOR_API_PATH, map[string]string{})
-	// if err != nil {
-	// 	return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
-	// }
 
 	detector, err := config.Client.CreateDetector(payload)
 	if err != nil {
@@ -345,11 +340,6 @@ func detectorCreate(d *schema.ResourceData, meta interface{}) error {
 
 func detectorRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	// path := fmt.Sprintf("%s/%s", DETECTOR_API_PATH, d.Id())
-	// url, err := buildURL(config.APIURL, path, map[string]string{})
-	// if err != nil {
-	// 	return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
-	// }
 	detector, err := config.Client.GetDetector(d.Id())
 	if err != nil {
 		return err
