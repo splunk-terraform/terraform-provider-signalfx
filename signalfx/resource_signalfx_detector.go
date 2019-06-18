@@ -278,7 +278,6 @@ func getVisualizationOptionsDetector(d *schema.ResourceData) *detector.Visualiza
 		// Return a nil ptr so we don't serialize nothing
 		return nil
 	}
-	log.Printf("[DEBUG] Fuck it's not empty")
 
 	return &viz
 }
