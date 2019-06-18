@@ -67,7 +67,7 @@ func TestValidateSignalfxRelativeTimeNotAllowed(t *testing.T) {
 	assert.Equal(t, 1, len(errors))
 }
 
-func TestConversionSignalfxrealtiveTimeIntoMs(t *testing.T) {
+func TestConversionSignalfxRelativeTimeIntoMs(t *testing.T) {
 	ms, err := fromRangeToMilliSeconds("-15m")
 	assert.Equal(t, 900000, ms)
 	assert.Nil(t, err)

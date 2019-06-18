@@ -166,13 +166,13 @@ func TestAccCreateDetector(t *testing.T) {
 				Config: newDetectorConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckDetectorResourceExists,
-					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "name", "max average delay UPDATED"),
-					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "description", "your application is slowER"),
-					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "disable_sampling", "false"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "name", "max average delay"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "description", "your application is slow"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "max_delay", "30"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "program_text", "signal = data('app.delay').max()\ndetect(when(signal > 60, '5m')).publish('Processing old messages 5m')\ndetect(when(signal > 60, '30m')).publish('Processing old messages 30m')\n"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "show_data_markers", "false"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "show_event_lines", "false"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "disable_sampling", "false"),
 				),
 			},
 			// Update It
@@ -181,8 +181,7 @@ func TestAccCreateDetector(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckDetectorResourceExists,
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "name", "max average delay UPDATED"),
-					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "description", "your application is slow"),
-					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "disable_sampling", "false"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "description", "your application is slowER"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "max_delay", "30"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "program_text", "signal = data('app.delay').max()\ndetect(when(signal > 60, '5m')).publish('Processing old messages 5m')\ndetect(when(signal > 60, '30m')).publish('Processing old messages 30m')\n"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "show_data_markers", "true"),
@@ -197,7 +196,6 @@ func TestAccCreateDetector(t *testing.T) {
 
 func testAccCheckDetectorResourceExists(s *terraform.State) error {
 	client, _ := sfx.NewClient(os.Getenv("SFX_AUTH_TOKEN"))
-
 	for _, rs := range s.RootModule().Resources {
 		switch rs.Type {
 		case "signalfx_detector":

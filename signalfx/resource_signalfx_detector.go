@@ -236,11 +236,19 @@ func getPayloadDetector(d *schema.ResourceData) (*detector.CreateUpdateDetectorR
 	cudr.VisualizationOptions = getVisualizationOptionsDetector(d)
 
 	if val, ok := d.GetOk("teams"); ok {
-		cudr.Teams = val.([]string)
+		teams := []string{}
+		for _, t := range val.([]interface{}) {
+			teams = append(teams, t.(string))
+		}
+		cudr.Teams = teams
 	}
 
 	if val, ok := d.GetOk("tags"); ok {
-		cudr.Tags = val.([]string)
+		tags := []string{}
+		for _, t := range val.([]interface{}) {
+			tags = append(tags, t.(string))
+		}
+		cudr.Tags = tags
 	}
 	return cudr, nil
 }
@@ -325,8 +333,8 @@ func detectorCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Failed creating json payload: %s", err.Error())
 	}
 
-	payload2, _ := json.Marshal(payload)
-	log.Printf("[DEBUG] Payload: %s", string(payload2))
+	debugOutput, _ := json.Marshal(payload)
+	log.Printf("[DEBUG] Create Payload: %s", string(debugOutput))
 
 	detector, err := config.Client.CreateDetector(payload)
 	if err != nil {
@@ -349,6 +357,8 @@ func detectorRead(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
+	log.Printf("[DEBUG] Got Detector %v", detector)
+
 	if err := d.Set("name", detector.Name); err != nil {
 		return nil
 	}
@@ -369,7 +379,6 @@ func detectorRead(d *schema.ResourceData, meta interface{}) error {
 	if err := d.Set("tags", detector.Tags); err != nil {
 		return nil
 	}
-
 	viz := detector.VisualizationOptions
 	if viz != nil {
 		if err := d.Set("show_data_markers", viz.ShowDataMarkers); err != nil {
@@ -424,6 +433,9 @@ func detectorUpdate(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return fmt.Errorf("Failed creating json payload: %s", err.Error())
 	}
+
+	debugOutput, _ := json.Marshal(payload)
+	log.Printf("[DEBUG] Update Payload: %s", string(debugOutput))
 
 	detector, err := config.Client.UpdateDetector(d.Id(), payload)
 	if err != nil {
