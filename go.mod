@@ -17,7 +17,7 @@ require (
 	github.com/mitchellh/copystructure v1.0.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/hashstructure v1.0.0 // indirect
-	github.com/signalfx/signalfx-go v0.0.0-20190617161432-794746711904
+	github.com/signalfx/signalfx-go v0.0.0-20190618142756-12a1b2a0722d
 	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/stretchr/testify v1.3.0
 	github.com/zclconf/go-cty v0.0.0-20190212192503-19dda139b164 // indirect

@@ -178,7 +178,7 @@ func detectorResource() *schema.Resource {
 func getPayloadDetector(d *schema.ResourceData) (*detector.CreateUpdateDetectorRequest, error) {
 
 	tfRules := d.Get("rule").(*schema.Set).List()
-	rulesList := make([]detector.Rule, 0, len(tfRules))
+	rulesList := make([]detector.Rule, len(tfRules))
 	for i, tfRule := range tfRules {
 		tfRule := tfRule.(map[string]interface{})
 		rule := detector.Rule{
@@ -223,7 +223,6 @@ func getPayloadDetector(d *schema.ResourceData) (*detector.CreateUpdateDetectorR
 			notify := getNotifications(notifications.([]interface{}))
 			rule.Notifications = notify
 		}
-
 		rulesList[i] = rule
 	}
 
@@ -264,7 +263,6 @@ func getVisualizationOptionsDetector(d *schema.ResourceData) detector.Visualizat
 		viz.DisableSampling = val.(bool)
 	}
 
-	// timeMap := make(map[string]interface{})
 	tr := detector.Time{}
 	if val, ok := d.GetOk("time_range"); ok {
 		tr.Range = int32(val.(int)) * 1000
@@ -364,7 +362,7 @@ func detectorRead(d *schema.ResourceData, meta interface{}) error {
 		return nil
 	}
 
-	viz := detector.VisualizationOptions[0]
+	viz := detector.VisualizationOptions
 	if err := d.Set("show_data_markers", viz.ShowDataMarkers); err != nil {
 		return nil
 	}
@@ -390,7 +388,7 @@ func detectorRead(d *schema.ResourceData, meta interface{}) error {
 		return nil
 	}
 
-	rules := make([]map[string]interface{}, 0, len(detector.Rules))
+	rules := make([]map[string]interface{}, len(detector.Rules))
 	for i, r := range detector.Rules {
 		rule := make(map[string]interface{})
 		rule["severity"] = r.Severity
