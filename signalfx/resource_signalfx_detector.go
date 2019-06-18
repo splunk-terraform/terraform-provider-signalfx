@@ -2,7 +2,9 @@ package signalfx
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
+	"log"
 	"sort"
 	"strings"
 
@@ -19,12 +21,6 @@ const (
 func detectorResource() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
-			"synced": &schema.Schema{
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     true,
-				Description: "Whether the resource in the provider and SignalFx are identical or not. Used internally for syncing.",
-			},
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
@@ -237,8 +233,7 @@ func getPayloadDetector(d *schema.ResourceData) (*detector.CreateUpdateDetectorR
 		cudr.MaxDelay = int32(val.(int) * 1000)
 	}
 
-	cudr.VisualizationOptions = make([]detector.Visualization, 1)
-	cudr.VisualizationOptions[0] = getVisualizationOptionsDetector(d)
+	cudr.VisualizationOptions = getVisualizationOptionsDetector(d)
 
 	if val, ok := d.GetOk("teams"); ok {
 		cudr.Teams = val.([]string)
@@ -322,6 +317,9 @@ func detectorCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Failed creating json payload: %s", err.Error())
 	}
 
+	payload2, _ := json.Marshal(payload)
+	log.Printf("[DEBUG] Payload: %s", string(payload2))
+
 	detector, err := config.Client.CreateDetector(payload)
 	if err != nil {
 		return err
@@ -352,7 +350,9 @@ func detectorRead(d *schema.ResourceData, meta interface{}) error {
 	if err := d.Set("program_text", detector.ProgramText); err != nil {
 		return nil
 	}
-	if err := d.Set("max_delay", detector.MaxDelay); err != nil {
+	// We divide by 1000 because the API uses millis, but this provider uses
+	// seconds
+	if err := d.Set("max_delay", detector.MaxDelay/1000); err != nil {
 		return nil
 	}
 	if err := d.Set("teams", detector.Teams); err != nil {
@@ -374,8 +374,9 @@ func detectorRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	tr := viz.Time
-	// XXX This is broken, it should be a string!
-	if err := d.Set("time_range", tr.Range); err != nil {
+	// We divide by 1000 because the API uses millis, but this provider uses
+	// seconds
+	if err := d.Set("time_range", tr.Range/1000); err != nil {
 		return nil
 	}
 	if err := d.Set("start_time", tr.Start); err != nil {
@@ -413,13 +414,8 @@ func detectorUpdate(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return fmt.Errorf("Failed creating json payload: %s", err.Error())
 	}
-	// path := fmt.Sprintf("%s/%s", DETECTOR_API_PATH, d.Id())
-	// url, err := buildURL(config.APIURL, path, map[string]string{})
-	// if err != nil {
-	// 	return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
-	// }
 
-	detector, err := config.Client.CreateDetector(payload)
+	detector, err := config.Client.UpdateDetector(d.Id(), payload)
 	if err != nil {
 		return err
 	}
