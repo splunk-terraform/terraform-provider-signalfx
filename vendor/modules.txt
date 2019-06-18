@@ -166,12 +166,12 @@ github.com/posener/complete
 github.com/posener/complete/cmd/install
 github.com/posener/complete/cmd
 github.com/posener/complete/match
-# github.com/signalfx/signalfx-go v0.0.0-20190528160746-d657bfe21d9e
+# github.com/signalfx/signalfx-go v0.0.0-20190618170153-516f7eeb4993
 github.com/signalfx/signalfx-go
+github.com/signalfx/signalfx-go/detector
 github.com/signalfx/signalfx-go/chart
 github.com/signalfx/signalfx-go/dashboard
 github.com/signalfx/signalfx-go/dashboard_group
-github.com/signalfx/signalfx-go/detector
 # github.com/stretchr/testify v1.3.0
 github.com/stretchr/testify/assert
 # github.com/ulikunitz/xz v0.5.5

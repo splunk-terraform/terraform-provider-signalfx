@@ -245,7 +245,7 @@ func getPayloadDetector(d *schema.ResourceData) (*detector.CreateUpdateDetectorR
 	return cudr, nil
 }
 
-func getVisualizationOptionsDetector(d *schema.ResourceData) detector.Visualization {
+func getVisualizationOptionsDetector(d *schema.ResourceData) *detector.Visualization {
 	viz := detector.Visualization{}
 
 	if val, ok := d.GetOk("show_data_markers"); ok {
@@ -258,20 +258,29 @@ func getVisualizationOptionsDetector(d *schema.ResourceData) detector.Visualizat
 		viz.DisableSampling = val.(bool)
 	}
 
-	tr := detector.Time{}
 	if val, ok := d.GetOk("time_range"); ok {
+		tr := &detector.Time{}
 		tr.Range = int32(val.(int)) * 1000
 		tr.Type = "relative"
+		viz.Time = tr
 	}
 	if val, ok := d.GetOk("start_time"); ok {
+		tr := &detector.Time{}
 		tr.Type = "absolute"
 		tr.Start = val.(int32) * 1000
 		if val, ok := d.GetOk("end_time"); ok {
 			tr.End = val.(int32) * 1000
 		}
+		viz.Time = tr
 	}
-	viz.Time = tr
-	return viz
+
+	if (detector.Visualization{}) == viz {
+		// Return a nil ptr so we don't serialize nothing
+		return nil
+	}
+	log.Printf("[DEBUG] Fuck it's not empty")
+
+	return &viz
 }
 
 /*
@@ -363,30 +372,32 @@ func detectorRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	viz := detector.VisualizationOptions
-	if err := d.Set("show_data_markers", viz.ShowDataMarkers); err != nil {
-		return nil
-	}
-	if err := d.Set("show_event_lines", viz.ShowEventLines); err != nil {
-		return nil
-	}
-	if err := d.Set("disable_sampling", viz.DisableSampling); err != nil {
-		return nil
-	}
+	if viz != nil {
+		if err := d.Set("show_data_markers", viz.ShowDataMarkers); err != nil {
+			return nil
+		}
+		if err := d.Set("show_event_lines", viz.ShowEventLines); err != nil {
+			return nil
+		}
+		if err := d.Set("disable_sampling", viz.DisableSampling); err != nil {
+			return nil
+		}
 
-	tr := viz.Time
-	// We divide by 1000 because the API uses millis, but this provider uses
-	// seconds
-	if err := d.Set("time_range", tr.Range/1000); err != nil {
-		return nil
-	}
-	if err := d.Set("start_time", tr.Start); err != nil {
-		return nil
-	}
-	if err := d.Set("end_time", tr.End); err != nil {
-		return nil
-	}
-	if err := d.Set("type", tr.Type); err != nil {
-		return nil
+		tr := viz.Time
+		// We divide by 1000 because the API uses millis, but this provider uses
+		// seconds
+		if err := d.Set("time_range", tr.Range/1000); err != nil {
+			return nil
+		}
+		if err := d.Set("start_time", tr.Start); err != nil {
+			return nil
+		}
+		if err := d.Set("end_time", tr.End); err != nil {
+			return nil
+		}
+		if err := d.Set("type", tr.Type); err != nil {
+			return nil
+		}
 	}
 
 	rules := make([]map[string]interface{}, len(detector.Rules))

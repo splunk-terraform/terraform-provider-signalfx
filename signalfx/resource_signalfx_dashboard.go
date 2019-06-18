@@ -45,9 +45,10 @@ func dashboardResource() *schema.Resource {
 				ValidateFunc: validateChartsResolution,
 			},
 			"time_range": &schema.Schema{
-				Type:          schema.TypeInt,
+				Type:          schema.TypeString,
 				Optional:      true,
-				Description:   "Seconds to display in the visualization. This is a rolling range from the current time. Example: 8600 = `-1h`",
+				ValidateFunc:  validateSignalfxRelativeTime,
+				Description:   "From when to display data. SignalFx time syntax (e.g. -5m, -1h)",
 				ConflictsWith: []string{"start_time", "end_time"},
 			},
 			"start_time": &schema.Schema{

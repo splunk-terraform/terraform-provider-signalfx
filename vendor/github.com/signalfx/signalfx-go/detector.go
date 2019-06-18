@@ -3,7 +3,8 @@ package signalfx
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
+	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -27,6 +28,11 @@ func (c *Client) CreateDetector(detectorRequest *detector.CreateUpdateDetectorRe
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode != http.StatusOK {
+		message, _ := ioutil.ReadAll(resp.Body)
+		return nil, fmt.Errorf("Bad status %d: %s", resp.StatusCode, message)
+	}
+
 	finalDetector := &detector.Detector{}
 
 	err = json.NewDecoder(resp.Body).Decode(finalDetector)
@@ -44,30 +50,51 @@ func (c *Client) DeleteDetector(id string) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return errors.New("Unexpected status code: " + resp.Status)
+		message, _ := ioutil.ReadAll(resp.Body)
+		return fmt.Errorf("Unexpected status code: %d: %s", resp.StatusCode, message)
 	}
 
 	return nil
 }
 
 // DisableDetector disables a detector.
-func (c *Client) DisableDetector(id string) error {
-	resp, err := c.doRequest("PUT", DetectorAPIURL+"/"+id+"/disable", nil, nil)
+func (c *Client) DisableDetector(id string, labels []string) error {
+	payload, err := json.Marshal(labels)
+	if err != nil {
+		return err
+	}
+
+	resp, err := c.doRequest("PUT", DetectorAPIURL+"/"+id+"/disable", nil, bytes.NewReader(payload))
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusNoContent {
+		message, _ := ioutil.ReadAll(resp.Body)
+		return fmt.Errorf("Unexpected status code: %d: %s", resp.StatusCode, message)
+	}
 
 	return nil
 }
 
 // EnableDetector enables a detector.
-func (c *Client) EnableDetector(id string) error {
-	resp, err := c.doRequest("PUT", DetectorAPIURL+"/"+id+"/enable", nil, nil)
+func (c *Client) EnableDetector(id string, labels []string) error {
+	payload, err := json.Marshal(labels)
+	if err != nil {
+		return err
+	}
+
+	resp, err := c.doRequest("PUT", DetectorAPIURL+"/"+id+"/enable", nil, bytes.NewReader(payload))
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusNoContent {
+		message, _ := ioutil.ReadAll(resp.Body)
+		return fmt.Errorf("Unexpected status code: %d: %s", resp.StatusCode, message)
+	}
 
 	return nil
 }
@@ -75,11 +102,15 @@ func (c *Client) EnableDetector(id string) error {
 // GetDetector gets a detector.
 func (c *Client) GetDetector(id string) (*detector.Detector, error) {
 	resp, err := c.doRequest("GET", DetectorAPIURL+"/"+id, nil, nil)
-
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		message, _ := ioutil.ReadAll(resp.Body)
+		return nil, fmt.Errorf("Bad status %d: %s", resp.StatusCode, message)
+	}
 
 	finalDetector := &detector.Detector{}
 
@@ -100,6 +131,11 @@ func (c *Client) UpdateDetector(id string, detectorRequest *detector.CreateUpdat
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		message, _ := ioutil.ReadAll(resp.Body)
+		return nil, fmt.Errorf("Bad status %d: %s", resp.StatusCode, message)
+	}
 
 	finalDetector := &detector.Detector{}
 

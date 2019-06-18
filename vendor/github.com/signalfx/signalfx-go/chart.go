@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -26,6 +28,11 @@ func (c *Client) CreateChart(chartRequest *chart.CreateUpdateChartRequest) (*cha
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		message, _ := ioutil.ReadAll(resp.Body)
+		return nil, fmt.Errorf("Unexpected status code: %d: %s", resp.StatusCode, message)
+	}
 
 	finalChart := &chart.Chart{}
 
@@ -59,6 +66,11 @@ func (c *Client) GetChart(id string) (*chart.Chart, error) {
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode != http.StatusOK {
+		message, _ := ioutil.ReadAll(resp.Body)
+		return nil, fmt.Errorf("Unexpected status code: %d: %s", resp.StatusCode, message)
+	}
+
 	finalChart := &chart.Chart{}
 
 	err = json.NewDecoder(resp.Body).Decode(finalChart)
@@ -78,6 +90,11 @@ func (c *Client) UpdateChart(id string, chartRequest *chart.CreateUpdateChartReq
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		message, _ := ioutil.ReadAll(resp.Body)
+		return nil, fmt.Errorf("Unexpected status code: %d: %s", resp.StatusCode, message)
+	}
 
 	finalChart := &chart.Chart{}
 

@@ -15,7 +15,7 @@ type Detector struct {
 	// User ID of the initial creator
 	Creator string `json:"creator,omitempty"`
 	// User-defined JSON object containing metadata
-	CustomProperties interface{} `json:"customProperties,omitempty"`
+	CustomProperties *interface{} `json:"customProperties,omitempty"`
 	// Description of the detector. It appears in the Detector window displayed from the web UI Actions menu
 	Description string `json:"description,omitempty"`
 	// System-defined identifier for the detector
@@ -40,6 +40,6 @@ type Detector struct {
 	Tags []string `json:"tags,omitempty"`
 	// IDs of teams associated with this detector. Teams associated with a detector can see the detector and its active alerts on the team's landing page in the web UI. The list of teams associated with a detector is independent of notification settings.  Teams specified in this field don\\'\\'t automatically get notified of new alerts, and teams that choose to get alerts do not have to display the detector on their team landing page in the web application.
 	Teams []string `json:"teams,omitempty"`
-	// Options that control the appearance of a detector in the SignalFx web UI. Each element in the array is a 'Visualization'.
-	VisualizationOptions []Visualization `json:"visualizationOptions,omitempty"`
+	// Options that control the appearance of a detector in the SignalFx web UI.
+	VisualizationOptions *Visualization `json:"visualizationOptions,omitempty"`
 }

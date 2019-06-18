@@ -76,6 +76,7 @@ func (c *Client) doRequest(method string, path string, params url.Values, body i
 	}
 	req, err := http.NewRequest(method, destURL.String(), body)
 	req.Header.Set(AuthHeaderKey, c.authToken)
+	req.Header.Set("Content-Type", "application/json")
 	if err != nil {
 		return nil, err
 	}

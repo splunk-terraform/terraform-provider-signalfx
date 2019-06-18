@@ -20,7 +20,7 @@ resource "signalfx_time_chart" "mychart0" {
         data("cpu.total.idle", filter=myfilters).publish(label="CPU Idle")
         EOF
 
-    time_range = "-15m"
+    time_range = 900
 
     plot_type = "LineChart"
     show_data_markers = true
@@ -172,7 +172,7 @@ resource "signalfx_time_chart" "mychart0" {
         data("cpu.total.idle", filter=myfilters).publish(label="CPU Idle")
         EOF
 
-    time_range = "-15m"
+    time_range = 900
 
     plot_type = "LineChart"
     show_data_markers = true
@@ -386,17 +386,17 @@ func testAccDashboardGroupDestroy(s *terraform.State) error {
 		switch rs.Type {
 		case "signalfx_time_chart", "signalfx_list_chart", "signalfx_single_value_chart", "signalfx_heatmap_chart", "signalfx_text_chart", "signalfx_event_feed_chart":
 			chart, _ := client.GetChart(rs.Primary.ID)
-			if chart.Id != "" {
+			if chart != nil {
 				return fmt.Errorf("Found deleted chart %s", rs.Primary.ID)
 			}
 		case "signalfx_dashboard":
 			dash, _ := client.GetDashboard(rs.Primary.ID)
-			if dash.Id != "" {
+			if dash != nil {
 				return fmt.Errorf("Found deleted dashboard %s", rs.Primary.ID)
 			}
 		case "signalfx_dashboard_group":
 			dashgroup, _ := client.GetDashboardGroup(rs.Primary.ID)
-			if dashgroup.Id != "" {
+			if dashgroup != nil {
 				return fmt.Errorf("Found deleted dashboard group %s", rs.Primary.ID)
 			}
 		default:
