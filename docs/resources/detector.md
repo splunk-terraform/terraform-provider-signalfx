@@ -39,6 +39,34 @@ variable "clusters" {
 }
 ```
 
+## Notification Format
+
+As SignalFx supports different notification mechanisms a comma-delimited string is used to provide inputs. This will likely be changed in a future iteration of the provider. For now, here are some example of how to configure each notification type:
+
+### Email
+
+notifications = ["Email,foo-alerts@bar.com"]
+
+### Opsgenie
+
+Note that the `credentialId` is the SignalFx-provided ID shown after setting up your Opsgenie integration.
+
+```
+notifications = ["Opsgenie,credentialId,credentialName,responderName,responderId,responderType"]
+```
+
+### PagerDuty
+
+notifications = ["PagerDuty,credentialId"]
+
+### Slack
+
+notifications = ["Slack,channel"]
+
+### Webhook
+
+notifications = ["Webhook,secret,url"]
+
 ## Argument Reference
 
 * `name` - (Required) Name of the detector.
