@@ -45,7 +45,9 @@ As SignalFx supports different notification mechanisms a comma-delimited string 
 
 ### Email
 
+```
 notifications = ["Email,foo-alerts@bar.com"]
+```
 
 ### Opsgenie
 
@@ -57,15 +59,21 @@ notifications = ["Opsgenie,credentialId,credentialName,responderName,responderId
 
 ### PagerDuty
 
+```
 notifications = ["PagerDuty,credentialId"]
+```
 
 ### Slack
 
+```
 notifications = ["Slack,channel"]
+```
 
 ### Webhook
 
+```
 notifications = ["Webhook,secret,url"]
+```
 
 ## Argument Reference
 
