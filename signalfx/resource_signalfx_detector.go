@@ -326,6 +326,82 @@ func getNotifications(tf_notifications []interface{}) []map[string]interface{} {
 	return notifications_list
 }
 
+func getNotifyStringFromAPI(notification map[string]interface{}) (string, error) {
+	nt, ok := notification["type"].(string)
+	if !ok {
+		return "", fmt.Errorf("Missing type field in notification body")
+	}
+	switch nt {
+	case "Email":
+		email, ok := notification["email"].(string)
+		if !ok {
+			return "", fmt.Errorf("Missing email field from Email body")
+		}
+		return fmt.Sprintf("%s,%s", nt, email), nil
+	case "Opsgenie":
+		cred, ok := notification["credentialId"].(string)
+		if !ok {
+			return "", fmt.Errorf("Missing credentialId field from notification body")
+		}
+		credName, ok := notification["credentialName"].(string)
+		if !ok {
+			return "", fmt.Errorf("Missing credentialName field from notification body")
+		}
+		respName, ok := notification["responderName"].(string)
+		if !ok {
+			return "", fmt.Errorf("Missing responderName field from notification body")
+		}
+		respId, ok := notification["responderId"].(string)
+		if !ok {
+			return "", fmt.Errorf("Missing responderId field from notification body")
+		}
+		respType, ok := notification["responderType"].(string)
+		if !ok {
+			return "", fmt.Errorf("Missing responderType field from notification body")
+		}
+		return fmt.Sprintf("%s,%s,%s,%s,%s,%s", nt, cred, credName, respName, respId, respType), nil
+
+	case "PagerDuty":
+		cred, ok := notification["credentialId"].(string)
+		if !ok {
+			return "", fmt.Errorf("Missing credentialId field from notification body")
+		}
+		return fmt.Sprintf("%s,%s", nt, cred), nil
+	case "Slack":
+		cred, ok := notification["credentialId"].(string)
+		if !ok {
+			return "", fmt.Errorf("Missing credentialId field from notification body")
+		}
+		channel, ok := notification["channel"].(string)
+		if !ok {
+			return "", fmt.Errorf("Missing channel field from notification body")
+		}
+		return fmt.Sprintf("%s,%s,%s", nt, cred, channel), nil
+	case "Team", "TeamEmail":
+		team, ok := notification["team"].(string)
+		if !ok {
+			return "", fmt.Errorf("Missing team field from notification body")
+		}
+		return fmt.Sprintf("%s,%s", nt, team), nil
+	case "Webhook":
+		cred, ok := notification["credentialId"].(string)
+		if !ok {
+			return "", fmt.Errorf("Missing credentialId field from notification body")
+		}
+		secret, ok := notification["secret"].(string)
+		if !ok {
+			return "", fmt.Errorf("Missing secret field from notification body")
+		}
+		url, ok := notification["url"].(string)
+		if !ok {
+			return "", fmt.Errorf("Missing url field from notification body")
+		}
+		return fmt.Sprintf("%s,%s,%s,%s", nt, cred, secret, url), nil
+	}
+
+	return "", nil
+}
+
 func detectorCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 	payload, err := getPayloadDetector(d)
@@ -345,7 +421,9 @@ func detectorCreate(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return err
 	}
-	d.Set("url", appURL)
+	if err := d.Set("url", appURL); err != nil {
+		return err
+	}
 	d.SetId(det.Id)
 
 	return detectorAPIToTF(d, det)
@@ -418,7 +496,16 @@ func detectorAPIToTF(d *schema.ResourceData, det *detector.Detector) error {
 		rule["severity"] = r.Severity
 		rule["detect_label"] = r.DetectLabel
 		rule["description"] = r.Description
-		rule["notifications"] = r.Notifications
+
+		notifications := make([]string, len(r.Notifications))
+		for i, not := range r.Notifications {
+			tfNot, err := getNotifyStringFromAPI(not)
+			if err != nil {
+				return err
+			}
+			notifications[i] = tfNot
+		}
+		rule["notifications"] = notifications
 		rule["disabled"] = r.Disabled
 		rule["parameterized_body"] = r.ParameterizedBody
 		rule["parameterized_subject"] = r.ParameterizedSubject
@@ -426,7 +513,9 @@ func detectorAPIToTF(d *schema.ResourceData, det *detector.Detector) error {
 		rule["tip"] = r.Tip
 		rules[i] = rule
 	}
-	d.Set("rule", rules)
+	if err := d.Set("rule", rules); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -451,9 +540,12 @@ func detectorUpdate(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return err
 	}
-	d.Set("url", appURL)
+	if err := d.Set("url", appURL); err != nil {
+		return err
+	}
 	d.SetId(det.Id)
-	return detectorAPIToTF(d, det)
+	v := detectorAPIToTF(d, det)
+	return v
 }
 
 func detectorDelete(d *schema.ResourceData, meta interface{}) error {

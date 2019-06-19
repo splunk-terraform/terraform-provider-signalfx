@@ -14,6 +14,62 @@ import (
 	sfx "github.com/signalfx/signalfx-go"
 )
 
+func TestNotifyStringFromAPI(t *testing.T) {
+	values := []map[string]interface{}{
+		{
+			"type":  "Email",
+			"email": "foo@example.com",
+		},
+		{
+			"type":           "Opsgenie",
+			"credentialId":   "XXX",
+			"credentialName": "YYY",
+			"responderName":  "Foo",
+			"responderId":    "ABC123",
+			"responderType":  "Team",
+		},
+		{
+			"type":         "PagerDuty",
+			"credentialId": "XXX",
+		},
+		{
+			"type":         "Slack",
+			"credentialId": "XXX",
+			"channel":      "#foobar",
+		},
+		{
+			"type": "Team",
+			"team": "ABC123",
+		},
+		{
+			"type": "TeamEmail",
+			"team": "ABC123",
+		},
+		{
+			"type":         "Webhook",
+			"credentialId": "XXX",
+			"secret":       "YYY",
+			"url":          "http://www.example.com",
+		},
+	}
+
+	expected := []string{
+		"Email,foo@example.com",
+		"Opsgenie,XXX,YYY,Foo,ABC123,Team",
+		"PagerDuty,XXX",
+		"Slack,XXX,#foobar",
+		"Team,ABC123",
+		"TeamEmail,ABC123",
+		"Webhook,XXX,YYY,http://www.example.com",
+	}
+
+	for i, v := range values {
+		result, err := getNotifyStringFromAPI(v)
+		assert.NoError(t, err, "Got error making notify string")
+		assert.Equal(t, expected[i], result)
+	}
+}
+
 func TestGetNotifications(t *testing.T) {
 	values := []interface{}{
 		"Email,test@yelp.com",
@@ -180,7 +236,7 @@ func TestAccCreateUpdateDetector(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1250591008.disabled", "false"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1250591008.notifications.#", "1"),
 
-					// resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1250591008.notifications.0", "Email,foo-alerts@example.com"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1250591008.notifications.0", "Email,foo-alerts@example.com"),
 
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1250591008.parameterized_body", ""),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1250591008.parameterized_subject", ""),
@@ -192,7 +248,7 @@ func TestAccCreateUpdateDetector(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1714348016.disabled", "false"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1714348016.notifications.#", "1"),
 
-					// resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1714348016.notifications.0", "Email,foo-alerts@example.com"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1714348016.notifications.0", "Email,foo-alerts@example.com"),
 
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1714348016.parameterized_body", ""),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1714348016.parameterized_subject", ""),
@@ -209,6 +265,8 @@ func TestAccCreateUpdateDetector(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "name", "max average delay UPDATED"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "description", "your application is slowER"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "max_delay", "30"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay",
+						"time_range", "3600"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "program_text", "signal = data('app.delay').max()\ndetect(when(signal > 60, '5m')).publish('Processing old messages 5m')\ndetect(when(signal > 60, '30m')).publish('Processing old messages 30m')\n"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "show_data_markers", "true"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "show_event_lines", "true"),
@@ -217,7 +275,7 @@ func TestAccCreateUpdateDetector(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "tags.0", "a"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "tags.1", "b"),
 
-					// resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1250591008.notifications.0", "Email,foo-alerts@example.com"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1250591008.notifications.0", "Email,foo-alerts@example.com"),
 
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1250591008.parameterized_body", ""),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1250591008.parameterized_subject", ""),
@@ -229,7 +287,7 @@ func TestAccCreateUpdateDetector(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1714348016.disabled", "false"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1714348016.notifications.#", "1"),
 
-					// resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1714348016.notifications.0", "Email,foo-alerts@example.com"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1714348016.notifications.0", "Email,foo-alerts@example.com"),
 
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1714348016.parameterized_body", ""),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1714348016.parameterized_subject", ""),
