@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform/helper/hashcode"
 	"github.com/hashicorp/terraform/helper/resource"
@@ -155,7 +156,7 @@ resource "signalfx_detector" "application_delay" {
 }
 `
 
-func TestAccCreateDetector(t *testing.T) {
+func TestAccCreateUpdateDetector(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
@@ -173,6 +174,31 @@ func TestAccCreateDetector(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "show_data_markers", "false"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "show_event_lines", "false"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "disable_sampling", "false"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.#", "2"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1250591008.description", "maximum > 60 for 5m"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1250591008.detect_label", "Processing old messages 5m"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1250591008.disabled", "false"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1250591008.notifications.#", "1"),
+
+					// resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1250591008.notifications.0", "Email,foo-alerts@example.com"),
+
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1250591008.parameterized_body", ""),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1250591008.parameterized_subject", ""),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1250591008.runbook_url", ""),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1250591008.severity", "Warning"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1250591008.tip", ""),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1714348016.description", "maximum > 60 for 30m"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1714348016.detect_label", "Processing old messages 30m"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1714348016.disabled", "false"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1714348016.notifications.#", "1"),
+
+					// resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1714348016.notifications.0", "Email,foo-alerts@example.com"),
+
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1714348016.parameterized_body", ""),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1714348016.parameterized_subject", ""),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1714348016.runbook_url", ""),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1714348016.severity", "Critical"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1714348016.tip", ""),
 				),
 			},
 			// Update It
@@ -187,7 +213,29 @@ func TestAccCreateDetector(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "show_data_markers", "true"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "show_event_lines", "true"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "disable_sampling", "true"),
-					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "tags", "a, b"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "tags.#", "2"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "tags.0", "a"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "tags.1", "b"),
+
+					// resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1250591008.notifications.0", "Email,foo-alerts@example.com"),
+
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1250591008.parameterized_body", ""),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1250591008.parameterized_subject", ""),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1250591008.runbook_url", ""),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1250591008.severity", "Warning"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1250591008.tip", ""),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1714348016.description", "maximum > 60 for 30m"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1714348016.detect_label", "Processing old messages 30m"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1714348016.disabled", "false"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1714348016.notifications.#", "1"),
+
+					// resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1714348016.notifications.0", "Email,foo-alerts@example.com"),
+
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1714348016.parameterized_body", ""),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1714348016.parameterized_subject", ""),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1714348016.runbook_url", ""),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1714348016.severity", "Critical"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1714348016.tip", ""),
 				),
 			},
 		},
@@ -207,6 +255,8 @@ func testAccCheckDetectorResourceExists(s *terraform.State) error {
 			return fmt.Errorf("Unexpected resource of type: %s", rs.Type)
 		}
 	}
+	// Add some time to let the API quiesce. This may be removed in the future.
+	time.Sleep(time.Duration(1) * time.Second)
 
 	return nil
 }

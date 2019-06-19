@@ -336,7 +336,7 @@ func detectorCreate(d *schema.ResourceData, meta interface{}) error {
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] Create Payload: %s", string(debugOutput))
 
-	detector, err := config.Client.CreateDetector(payload)
+	det, err := config.Client.CreateDetector(payload)
 	if err != nil {
 		return err
 	}
@@ -346,40 +346,44 @@ func detectorCreate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 	d.Set("url", appURL)
-	d.SetId(detector.Id)
-	return nil
+	d.SetId(det.Id)
+
+	return detectorAPIToTF(d, det)
 }
 
 func detectorRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	detector, err := config.Client.GetDetector(d.Id())
+	det, err := config.Client.GetDetector(d.Id())
 	if err != nil {
 		return err
 	}
+	return detectorAPIToTF(d, det)
+}
 
-	log.Printf("[DEBUG] Got Detector %v", detector)
+func detectorAPIToTF(d *schema.ResourceData, det *detector.Detector) error {
+	log.Printf("[DEBUG] Got Detector %v", det)
 
-	if err := d.Set("name", detector.Name); err != nil {
+	if err := d.Set("name", det.Name); err != nil {
 		return nil
 	}
-	if err := d.Set("description", detector.Description); err != nil {
+	if err := d.Set("description", det.Description); err != nil {
 		return nil
 	}
-	if err := d.Set("program_text", detector.ProgramText); err != nil {
+	if err := d.Set("program_text", det.ProgramText); err != nil {
 		return nil
 	}
 	// We divide by 1000 because the API uses millis, but this provider uses
 	// seconds
-	if err := d.Set("max_delay", detector.MaxDelay/1000); err != nil {
+	if err := d.Set("max_delay", det.MaxDelay/1000); err != nil {
 		return nil
 	}
-	if err := d.Set("teams", detector.Teams); err != nil {
+	if err := d.Set("teams", det.Teams); err != nil {
 		return nil
 	}
-	if err := d.Set("tags", detector.Tags); err != nil {
+	if err := d.Set("tags", det.Tags); err != nil {
 		return nil
 	}
-	viz := detector.VisualizationOptions
+	viz := det.VisualizationOptions
 	if viz != nil {
 		if err := d.Set("show_data_markers", viz.ShowDataMarkers); err != nil {
 			return nil
@@ -408,8 +412,8 @@ func detectorRead(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
-	rules := make([]map[string]interface{}, len(detector.Rules))
-	for i, r := range detector.Rules {
+	rules := make([]map[string]interface{}, len(det.Rules))
+	for i, r := range det.Rules {
 		rule := make(map[string]interface{})
 		rule["severity"] = r.Severity
 		rule["detect_label"] = r.DetectLabel
@@ -437,20 +441,19 @@ func detectorUpdate(d *schema.ResourceData, meta interface{}) error {
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] Update Payload: %s", string(debugOutput))
 
-	detector, err := config.Client.UpdateDetector(d.Id(), payload)
+	det, err := config.Client.UpdateDetector(d.Id(), payload)
 	if err != nil {
 		return err
 	}
+	log.Printf("[DEBUG] Update Response: %v", det)
 	// Since things worked, set the URL and move on
 	appURL, err := buildAppURL(config.CustomAppURL, DETECTOR_APP_PATH+d.Id())
 	if err != nil {
 		return err
 	}
 	d.Set("url", appURL)
-	d.SetId(detector.Id)
-
-	return nil
-	// return resourceUpdate(url, config.AuthToken, payload, d)
+	d.SetId(det.Id)
+	return detectorAPIToTF(d, det)
 }
 
 func detectorDelete(d *schema.ResourceData, meta interface{}) error {
