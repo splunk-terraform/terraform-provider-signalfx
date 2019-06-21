@@ -1,6 +1,8 @@
 Terraform `signalfx` Provider
 =========================
 
+**Note:** This provider is currently in the progress of becoming an "official" provider that is included with Terraform. People who want to browse docs here — which is everyone until it's on the Terraform site — can find [configuration documentation here](https://github.com/signalfx/terraform-provider-signalfx/blob/master/website/docs/index.html.markdown) and [resource documentation here](https://github.com/signalfx/terraform-provider-signalfx/tree/master/website/docs/r). Thanks for your patience!
+
 - Website: https://www.terraform.io
 - [![Gitter chat](https://badges.gitter.im/hashicorp-terraform/Lobby.png)](https://gitter.im/hashicorp-terraform/Lobby)
 - Mailing list: [Google Groups](http://groups.google.com/group/terraform-tool)
