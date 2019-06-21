@@ -149,11 +149,6 @@ func detectorResource() *schema.Resource {
 				},
 				Set: resourceRuleHash,
 			},
-			"last_updated": &schema.Schema{
-				Type:        schema.TypeFloat,
-				Computed:    true,
-				Description: "Latest timestamp the resource was updated",
-			},
 			"url": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
