@@ -1,9 +1,16 @@
-# Dashboard
+---
+layout: "signalfx"
+page_title: "SignalFx: signalfx_resource"
+sidebar_current: "docs-signalfx-resource-dashboard"
+description: |-
+  Allows Terraform to create and manage SignalFx Dashboards
+---
+
+# Resource: signalfx_dashboard
 
 A dashboard is a curated collection of specific charts and supports dimensional [filters](http://docs.signalfx.com/en/latest/dashboards/dashboard-filter-dynamic.html#filter-dashboard-charts), [dashboard variables](http://docs.signalfx.com/en/latest/dashboards/dashboard-filter-dynamic.html#dashboard-variables) and [time range](http://docs.signalfx.com/en/latest/_sidebars-and-includes/using-time-range-selector.html#time-range-selector) options. These options are applied to all charts in the dashboard, providing a consistent view of the data displayed in that dashboard. This also means that when you open a chart to drill down for more details, you are viewing the same data that is visible in the dashboard view.
 
-**NOTE:** Since every dashboard is included in a [dashboard group](dashboard_group.md) (SignalFx collection of dashboards), you need to create that first and reference it as shown in the example.
-
+**NOTE:** Since every dashboard is included in a [dashboard group](dashboard_group.html) (SignalFx collection of dashboards), you need to create that first and reference it as shown in the example.
 
 ## Example Usage
 
@@ -35,7 +42,6 @@ resource "signalfx_dashboard" "mydashboard0" {
     }
 }
 ```
-
 
 ## Argument Reference
 
@@ -84,7 +90,7 @@ The following arguments are supported in the resource block:
 * `event_overlay` - (Optional) Specify a list of event overlays to include in the dashboard. Note: These overlays correspond to the *suggested* event overlays specified in the web UI, and they're not automatically applied as active overlays. To set default active event overlays, use the `selected_event_overlay` property instead.
     * `line` - (Optional) Show a vertical line for the event. `false` by default.
     * `label` - (Optional) Text shown in the dropdown when selecting this overlay from the menu.
-    * `color` - (Optional) Color to use : gray, blue, azure, navy, brown, orange, yellow, iris, magenta, pink, purple, violet, lilac, emerald, green, aquamarine. ![Colors](https://github.com/signalfx/terraform-provider-signalfx/raw/master/docs/resources/colors.png)
+    * `color` - (Optional) Color to use : gray, blue, azure, navy, brown, orange, yellow, iris, magenta, pink, purple, violet, lilac, emerald, green, aquamarine.
     * `signal` - Search term used to choose the events shown in the overlay.
     * `type` - (Optional) Can be set to `eventTimeSeries` (the default) to refer to externally reported events, or `detectorEvents` to refer to events from detector triggers.
     * `source` - (Optional) Each element specifies a filter to use against the signal specified in the `signal`.
@@ -115,8 +121,6 @@ The are a bunch of use cases where this layout makes things too verbose and hard
 
 The dashboard is divided into equal-sized charts (defined by `width` and `height`). The charts are placed in the grid one after another starting from a row (called `start_row`) and a column (or `start_column`). If a chart does not fit in the same row (because the total width > max allowed by the dashboard), this and the next ones will be place in the next row(s).
 
-![Dashboard Grid](https://github.com/signalfx/terraform-provider-signalfx/raw/master/docs/resources/dashboard_grid.png)
-
 ```terraform
 resource "signalfx_dashboard" "grid_example" {
     name = "Grid"
@@ -140,8 +144,6 @@ resource "signalfx_dashboard" "grid_example" {
 ### Column
 
 The dashboard is divided into equal-sized charts (defined by `width` and `height`). The charts are placed in the grid by column (column number is called `column`) starting from a row you specify (called `start_row`).
-
-![Dashboard Column](https://github.com/signalfx/terraform-provider-signalfx/raw/master/docs/resources/dashboard_column.png)
 
 ```terraform
 resource "signalfx_dashboard" "load" {

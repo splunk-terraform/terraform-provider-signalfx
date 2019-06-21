@@ -1,4 +1,12 @@
-# Event Feed
+---
+layout: "signalfx"
+page_title: "SignalFx: signalfx_resource"
+sidebar_current: "docs-signalfx-resource-event-feed-chart"
+description: |-
+  Allows Terraform to create and manage SignalFx time charts
+---
+
+# Resource: signalfx_event_feed_chart
 
 Displays a listing of events as a widget in a dashboard.
 
@@ -16,7 +24,6 @@ resource "signalfx_event_feed_chart" "mynote0" {
     }
 }
 ```
-
 
 ## Argument Reference
 

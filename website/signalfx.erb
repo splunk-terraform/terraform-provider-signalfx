@@ -1,0 +1,62 @@
+<% wrap_layout :inner do %>
+  <% content_for :sidebar do %>
+    <div class="docs-sidebar hidden-print affix-top" role="complementary">
+      <ul class="nav docs-sidenav">
+        <li<%= sidebar_current("docs-home") %>>
+          <a href="/docs/providers/index.html">All Providers</a>
+        </li>
+
+        <li<%= sidebar_current("docs-signalfx-index") %>>
+          <a href="/docs/providers/signalfx/index.html">SignalFx Provider</a>
+        </li>
+
+        <li<%= sidebar_current("docs-signalfx-resource") %>>
+          <a href="#">Resources</a>
+          <ul class="nav nav-visible">
+            <li<%= sidebar_current("docs-signalfx-resource-dashboard") %>>
+              <a href="/docs/providers/signalfx/r/dashboard.html">signalfx_dashboard</a>
+            </li>
+            <li<%= sidebar_current("docs-signalfx-resource-dashboard-group") %>>
+              <a href="/docs/providers/signalfx/r/dashboard_group.html">signalfx_dashboard_group</a>
+            </li>
+            <li<%= sidebar_current("docs-signalfx-resource-detector") %>>
+              <a href="/docs/providers/signalfx/r/detector.html">signalfx_detector</a>
+            </li>
+            <li<%= sidebar_current("docs-signalfx-resource-integration") %>>
+              <a href="/docs/providers/signalfx/r/integration.html">signalfx_integration</a>
+            </li>
+            <li<%= sidebar_current("docs-signalfx-resource-integration-gcp") %>>
+              <a href="/docs/providers/signalfx/r/integration_gcp.html">signalfx_integration_gcp</a>
+            </li>
+            <li<%= sidebar_current("docs-signalfx-resource-integration-pagerduty") %>>
+              <a href="/docs/providers/signalfx/r/integration_pagerduty.html">signalfx_integration_pagerduty</a>
+            </li>
+            <li<%= sidebar_current("docs-signalfx-resource-integration-slack") %>>
+              <a href="/docs/providers/signalfx/r/integration_slack.html">signalfx_integration_slack</a>
+            </li>
+            <li<%= sidebar_current("docs-signalfx-resource-event-feed-chart") %>>
+              <a href="/docs/providers/signalfx/r/event_feed_chart.html">signalfx_event_feed_chart</a>
+            </li>
+            <li<%= sidebar_current("docs-signalfx-resource-heatmap-chart") %>>
+              <a href="/docs/providers/signalfx/r/heatmap_chart.html">signalfx_heatmap_chart</a>
+            </li>
+            <li<%= sidebar_current("docs-signalfx-resource-list-chart") %>>
+              <a href="/docs/providers/signalfx/r/list_chart.html">signalfx_list_chart</a>
+            </li>
+            <li<%= sidebar_current("docs-signalfx-resource-single-value-chart") %>>
+              <a href="/docs/providers/signalfx/r/single_value_chart.html">signalfx_single_value_chart</a>
+            </li>
+            <li<%= sidebar_current("docs-signalfx-resource-text-chart") %>>
+              <a href="/docs/providers/signalfx/r/text_chart.html">signalfx_text_chart</a>
+            </li>
+            <li<%= sidebar_current("docs-signalfx-resource-time-chart") %>>
+              <a href="/docs/providers/signalfx/r/time_chart.html">signalfx_time_chart</a>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  <% end %>
+
+  <%= yield %>
+<% end %>

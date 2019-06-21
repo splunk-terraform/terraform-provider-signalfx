@@ -1,10 +1,16 @@
-# Single Value Chart
+---
+layout: "signalfx"
+page_title: "SignalFx: signalfx_resource"
+sidebar_current: "docs-signalfx-resource-single-value-chart"
+description: |-
+  Allows Terraform to create and manage SignalFx single value charts
+---
+
+# Resource: signalfx_single_value_chart
 
 This chart type displays a single number in a large font, representing the current value of a single metric on a plot line.
 
 If the time period is in the past, the number represents the value of the metric near the end of the time period.
-
-![Single Value Chart](https://github.com/signalfx/terraform-provider-signalfx/raw/master/docs/resources/single_value_chart.png)
 
 ## Example Usage
 
@@ -28,7 +34,6 @@ resource "signalfx_single_value_chart" "mysvchart0" {
 }
 ```
 
-
 ## Argument Reference
 
 The following arguments are supported in the resource block:
@@ -42,7 +47,7 @@ The following arguments are supported in the resource block:
     * `gte` - (Optional) Indicates the lower threshold inclusive value for this range.
     * `lt` - (Optional) Indicates the upper threshold non-inculsive value for this range.
     * `lte` - (Optional) Indicates the upper threshold inclusive value for this range.
-    * `color` - (Required) The color range to use. Must be either gray, blue, navy, orange, yellow, magenta, purple, violet, lilac, green, aquamarine. ![Colors](https://github.com/signalfx/terraform-provider-signalfx/raw/master/docs/resources/colors.png)
+    * `color` - (Required) The color range to use. Must be either gray, blue, navy, orange, yellow, magenta, purple, violet, lilac, green, aquamarine.
 * `unit_prefix` - (Optional) Must be `"Metric"` or `"Binary"`. `"Metric"` by default.
 * `max_delay` - (Optional) How long (in seconds) to wait for late datapoints
 * `refresh_interval` - (Optional) How often (in seconds) to refresh the value.
