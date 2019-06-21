@@ -28,10 +28,13 @@ NOTES:
 
 ## Removed
 
+* There is no longer a `synced` attribute of `signalfx_detector`.
+
 ## Changed
 
+* The resource `signalfx_detector` has been rewritten to use [signalfx-go](https://github.com/signalfx/signalfx-go). The acceptance tests have been beefed up to spot any regressions.
+  * The attribute `time_range` of Detectors has changed from `String` to `Int`. Values like `1h` must now be expressed in seconds. For example `1h` should become `3600` as that's how many seconds are in an hour.
 * Added Go module vendor directory per [HashiCorp guidelines](https://github.com/signalfx/terraform-provider-signalfx/issues/37)
-* The attribute `time_range` of Detectors has changed from `String` to `Int`. Values like `1h` must now be expressed in seconds. For example `1h` should become `3600` as that's how many seconds are in an hour.
 
 # 3.2.0 (2019-05-24)
 
