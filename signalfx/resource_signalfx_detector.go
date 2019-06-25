@@ -14,8 +14,7 @@ import (
 )
 
 const (
-	DETECTOR_API_PATH = "/v2/detector"
-	DETECTOR_APP_PATH = "/detector/"
+	DetectorAppPath = "/detector/"
 )
 
 func detectorResource() *schema.Resource {
@@ -412,7 +411,7 @@ func detectorCreate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 	// Since things worked, set the URL and move on
-	appURL, err := buildAppURL(config.CustomAppURL, DETECTOR_APP_PATH+d.Id())
+	appURL, err := buildAppURL(config.CustomAppURL, DetectorAppPath+d.Id())
 	if err != nil {
 		return err
 	}
@@ -531,7 +530,7 @@ func detectorUpdate(d *schema.ResourceData, meta interface{}) error {
 	}
 	log.Printf("[DEBUG] Update Response: %v", det)
 	// Since things worked, set the URL and move on
-	appURL, err := buildAppURL(config.CustomAppURL, DETECTOR_APP_PATH+d.Id())
+	appURL, err := buildAppURL(config.CustomAppURL, DetectorAppPath+d.Id())
 	if err != nil {
 		return err
 	}
