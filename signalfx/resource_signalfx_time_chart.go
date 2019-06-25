@@ -550,11 +550,11 @@ func getSingleAxisOptions(axisOpt map[string]interface{}) *chart.Axes {
 	var axis *chart.Axes
 
 	if val, ok := axisOpt["min_value"]; ok {
-		if val.(float32) != -math.MaxFloat32 {
+		if val.(float64) != -math.MaxFloat32 {
 			if axis == nil {
 				axis = &chart.Axes{}
 			}
-			axis.Min = val.(float32)
+			axis.Min = float32(val.(float64))
 		}
 	}
 	if val, ok := axisOpt["max_value"]; ok {
@@ -562,7 +562,7 @@ func getSingleAxisOptions(axisOpt map[string]interface{}) *chart.Axes {
 			if axis == nil {
 				axis = &chart.Axes{}
 			}
-			axis.Max = val.(float32)
+			axis.Max = float32(val.(float64))
 		}
 	}
 	if val, ok := axisOpt["label"]; ok {
@@ -575,11 +575,11 @@ func getSingleAxisOptions(axisOpt map[string]interface{}) *chart.Axes {
 		if axis == nil {
 			axis = &chart.Axes{}
 		}
-		if val.(float32) != math.MaxFloat32 {
+		if val.(float64) != math.MaxFloat32 {
 			if axis == nil {
 				axis = &chart.Axes{}
 			}
-			axis.HighWaterMark = val.(float32)
+			axis.HighWaterMark = float32(val.(float64))
 		}
 	}
 	if val, ok := axisOpt["high_watermark_label"]; ok {
@@ -592,11 +592,11 @@ func getSingleAxisOptions(axisOpt map[string]interface{}) *chart.Axes {
 		if axis == nil {
 			axis = &chart.Axes{}
 		}
-		if val.(float32) != -math.MaxFloat32 {
+		if val.(float64) != -math.MaxFloat32 {
 			if axis == nil {
 				axis = &chart.Axes{}
 			}
-			axis.LowWaterMark = val.(float32)
+			axis.LowWaterMark = float32(val.(float64))
 		}
 	}
 	if val, ok := axisOpt["low_watermark_label"]; ok {
@@ -658,17 +658,17 @@ func getTimeChartOptions(d *schema.ResourceData) *chart.Options {
 	var timeOptions *chart.TimeDisplayOptions
 	if val, ok := d.GetOk("time_range"); ok {
 		timeOptions = &chart.TimeDisplayOptions{
-			Range: val.(int64) * 1000,
+			Range: int64(val.(int) * 1000),
 			Type:  "relative",
 		}
 	}
 	if val, ok := d.GetOk("start_time"); ok {
 		timeOptions = &chart.TimeDisplayOptions{
-			Start: val.(int64) * 1000,
+			Start: int64(val.(int) * 1000),
 			Type:  "absolute",
 		}
 		if val, ok := d.GetOk("end_time"); ok {
-			timeOptions.End = val.(int64) * 1000
+			timeOptions.End = int64(val.(int) * 1000)
 		}
 	}
 	options.Time = timeOptions

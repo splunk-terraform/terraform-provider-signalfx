@@ -184,7 +184,7 @@ func getListChartOptions(d *schema.ResourceData) *chart.Options {
 		if programOptions == nil {
 			programOptions = &chart.GeneralOptions{}
 		}
-		programOptions.MaxDelay = val.(int32) * 1000
+		programOptions.MaxDelay = int32(val.(int) * 1000)
 	}
 	if val, ok := d.GetOk("disable_sampling"); ok {
 		if programOptions == nil {
@@ -198,10 +198,10 @@ func getListChartOptions(d *schema.ResourceData) *chart.Options {
 		options.SortBy = sortBy.(string)
 	}
 	if refreshInterval, ok := d.GetOk("refresh_interval"); ok {
-		options.RefreshInterval = refreshInterval.(int32) * 1000
+		options.RefreshInterval = int32(refreshInterval.(int) * 1000)
 	}
 	if maxPrecision, ok := d.GetOk("max_precision"); ok {
-		options.MaximumPrecision = maxPrecision.(int32)
+		options.MaximumPrecision = int32(maxPrecision.(int))
 	}
 	if val, ok := d.GetOk("secondary_visualization"); ok {
 		secondaryVisualization := val.(string)
