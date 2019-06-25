@@ -437,51 +437,51 @@ func detectorAPIToTF(d *schema.ResourceData, det *detector.Detector) error {
 	log.Printf("[DEBUG] Got Detector %v", det)
 
 	if err := d.Set("name", det.Name); err != nil {
-		return nil
+		return err
 	}
 	if err := d.Set("description", det.Description); err != nil {
-		return nil
+		return err
 	}
 	if err := d.Set("program_text", det.ProgramText); err != nil {
-		return nil
+		return err
 	}
 	// We divide by 1000 because the API uses millis, but this provider uses
 	// seconds
 	if err := d.Set("max_delay", det.MaxDelay/1000); err != nil {
-		return nil
+		return err
 	}
 	if err := d.Set("teams", det.Teams); err != nil {
-		return nil
+		return err
 	}
 	if err := d.Set("tags", det.Tags); err != nil {
-		return nil
+		return err
 	}
 	viz := det.VisualizationOptions
 	if viz != nil {
 		if err := d.Set("show_data_markers", viz.ShowDataMarkers); err != nil {
-			return nil
+			return err
 		}
 		if err := d.Set("show_event_lines", viz.ShowEventLines); err != nil {
-			return nil
+			return err
 		}
 		if err := d.Set("disable_sampling", viz.DisableSampling); err != nil {
-			return nil
+			return err
 		}
 
 		tr := viz.Time
 		// We divide by 1000 because the API uses millis, but this provider uses
 		// seconds
 		if err := d.Set("time_range", tr.Range/1000); err != nil {
-			return nil
+			return err
 		}
 		if err := d.Set("start_time", tr.Start); err != nil {
-			return nil
+			return err
 		}
 		if err := d.Set("end_time", tr.End); err != nil {
-			return nil
+			return err
 		}
 		if err := d.Set("type", tr.Type); err != nil {
-			return nil
+			return err
 		}
 	}
 
@@ -545,13 +545,8 @@ func detectorUpdate(d *schema.ResourceData, meta interface{}) error {
 
 func detectorDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	path := fmt.Sprintf("%s/%s", DETECTOR_API_PATH, d.Id())
-	url, err := buildURL(config.APIURL, path, map[string]string{})
-	if err != nil {
-		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
-	}
 
-	return resourceDelete(url, config.AuthToken, d)
+	return config.Client.DeleteDetector(d.Id())
 }
 
 /*
