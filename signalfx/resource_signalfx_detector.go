@@ -479,9 +479,6 @@ func detectorAPIToTF(d *schema.ResourceData, det *detector.Detector) error {
 		if err := d.Set("end_time", tr.End); err != nil {
 			return err
 		}
-		if err := d.Set("type", tr.Type); err != nil {
-			return err
-		}
 	}
 
 	rules := make([]map[string]interface{}, len(det.Rules))
