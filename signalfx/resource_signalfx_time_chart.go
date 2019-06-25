@@ -3,12 +3,15 @@ package signalfx
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"math"
 	"strconv"
 	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
+
+	chart "github.com/signalfx/signalfx-go/chart"
 )
 
 var PaletteColors = map[string]int{
@@ -422,17 +425,6 @@ func timeChartResource() *schema.Resource {
 					},
 				},
 			},
-			"synced": &schema.Schema{
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     true,
-				Description: "Whether the resource in the provider and SignalFx are identical or not. Used internally for syncing.",
-			},
-			"last_updated": &schema.Schema{
-				Type:        schema.TypeFloat,
-				Computed:    true,
-				Description: "Latest timestamp the resource was updated",
-			},
 			"url": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -450,11 +442,20 @@ func timeChartResource() *schema.Resource {
 /*
   Use Resource object to construct json payload in order to create a time chart
 */
-func getPayloadTimeChart(d *schema.ResourceData) ([]byte, error) {
-	payload := map[string]interface{}{
-		"name":        d.Get("name").(string),
-		"description": d.Get("description").(string),
-		"programText": d.Get("program_text").(string),
+func getPayloadTimeChart(d *schema.ResourceData) (*chart.CreateUpdateChartRequest, error) {
+	var tags []string
+	if val, ok := d.GetOk("tags"); ok {
+		tags := []string{}
+		for _, tag := range val.([]interface{}) {
+			tags = append(tags, tag.(string))
+		}
+	}
+
+	payload := &chart.CreateUpdateChartRequest{
+		Name:        d.Get("name").(string),
+		Description: d.Get("description").(string),
+		ProgramText: d.Get("program_text").(string),
+		Tags:        tags,
 	}
 
 	viz := getTimeChartOptions(d)
@@ -490,15 +491,8 @@ func getPayloadTimeChart(d *schema.ResourceData) ([]byte, error) {
 	if len(viz) > 0 {
 		payload["options"] = viz
 	}
-	if val, ok := d.GetOk("tags"); ok {
-		tags := []string{}
-		for _, tag := range val.([]interface{}) {
-			tags = append(tags, tag.(string))
-		}
-		payload["tags"] = tags
-	}
 
-	return json.Marshal(payload)
+	return payload
 }
 
 func getPerSignalVizOptions(d *schema.ResourceData) []map[string]interface{} {
@@ -691,12 +685,10 @@ func timechartCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Failed creating json payload: %s", err.Error())
 	}
 
-	url, err := buildURL(config.APIURL, CHART_API_PATH, map[string]string{})
-	if err != nil {
-		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
-	}
+	debugOutput, _ := json.Marshal(payload)
+	log.Printf("[DEBUG] Create Payload: %s", string(debugOutput))
 
-	err = resourceCreate(url, config.AuthToken, payload, d)
+	chart, err := config.Client.CreateChart(payload)
 	if err != nil {
 		return err
 	}
@@ -706,18 +698,35 @@ func timechartCreate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 	d.Set("url", appURL)
-	return nil
+	if err := d.Set("url", appURL); err != nil {
+		return err
+	}
+	d.SetId(chart.Id)
+
+	return timeChartAPIToTF(d, chart)
 }
 
 func timechartRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	path := fmt.Sprintf("%s/%s", CHART_API_PATH, d.Id())
-	url, err := buildURL(config.APIURL, path, map[string]string{})
+
+	chart, err := config.Client.GetChart(d.Id())
 	if err != nil {
-		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
+		return err
+	}
+	return timeChartAPIToTF(d, chart)
+}
+
+func timeChartAPIToTF(d *schema.ResourceData, chart *chart.Chart) error {
+	log.Printf("[DEBUG] Got Time Chart %v", chart)
+
+	if err := d.Set("name", chart.Name); err != nil {
+		return err
+	}
+	if err := d.Set("description", chart.Description); err != nil {
+		return err
 	}
 
-	return resourceRead(url, config.AuthToken, d)
+	return nil
 }
 
 func timechartUpdate(d *schema.ResourceData, meta interface{}) error {
