@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
+	chart "github.com/signalfx/signalfx-go/chart"
 )
 
 const (
@@ -269,11 +270,12 @@ func resourceDelete(url string, sfxToken string, d *schema.ResourceData) error {
 /*
 	Util method to get Legend Chart Options.
 */
-func getLegendOptions(d *schema.ResourceData) map[string]interface{} {
+func getLegendOptions(d *schema.ResourceData) *chart.DataTableOptions {
+	var options *chart.DataTableOptions
 	if properties, ok := d.GetOk("legend_fields_to_hide"); ok {
 		properties := properties.(*schema.Set).List()
-		legendOptions := make(map[string]interface{})
-		properties_opts := make([]map[string]interface{}, len(properties))
+
+		propertiesOpts := make([]*chart.DataTableOptionsFields, len(properties))
 		for i, property := range properties {
 			property := property.(string)
 			if property == "metric" {
@@ -281,29 +283,39 @@ func getLegendOptions(d *schema.ResourceData) map[string]interface{} {
 			} else if property == "plot_label" || property == "Plot Label" {
 				property = "sf_metric"
 			}
-			item := make(map[string]interface{})
-			item["property"] = property
-			item["enabled"] = false
-			properties_opts[i] = item
+			item := &chart.DataTableOptionsFields{
+				Property: property,
+				Enabled:  false,
+			}
+			propertiesOpts[i] = item
 		}
-		if len(properties_opts) > 0 {
-			legendOptions["fields"] = properties_opts
-			return legendOptions
+		if len(propertiesOpts) > 0 {
+			options = &chart.DataTableOptions{
+				Fields: propertiesOpts,
+			}
 		}
 	}
-	return nil
+	return options
 }
 
 /*
 	Util method to get Legend Chart Options for fields
 */
-func getLegendFieldOptions(d *schema.ResourceData) map[string]interface{} {
+func getLegendFieldOptions(d *schema.ResourceData) *chart.DataTableOptions {
 	if fields, ok := d.GetOk("legend_options_fields"); ok {
 		fields := fields.([]interface{})
 		if len(fields) > 0 {
-			legendOptions := make(map[string]interface{})
-			legendOptions["fields"] = fields
-			return legendOptions
+			legendOptions := make([]*chart.DataTableOptionsFields, len(fields))
+			for i, f := range fields {
+				f := f.(map[string]interface{})
+				legendOptions[i] = &chart.DataTableOptionsFields{
+					Property: f["property"].(string),
+					Enabled:  f["enbabled"].(bool),
+				}
+			}
+			return &chart.DataTableOptions{
+				Fields: legendOptions,
+			}
 		}
 	}
 	return nil

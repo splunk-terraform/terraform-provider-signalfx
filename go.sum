@@ -308,6 +308,10 @@ github.com/signalfx/signalfx-go v0.0.0-20190624202750-799ea2649336 h1:NqD3BD+yzd
 github.com/signalfx/signalfx-go v0.0.0-20190624202750-799ea2649336/go.mod h1:0Q0eueMWMC8r+jq+LJIGrspzvLF+hpWO9cggHlSpwVs=
 github.com/signalfx/signalfx-go v0.0.0-20190624203128-1ac34b96d8df h1:xNfaOgb5v5UW832MG9gOfrlpd0RwlPScC4QMG1AtMCU=
 github.com/signalfx/signalfx-go v0.0.0-20190624203128-1ac34b96d8df/go.mod h1:0Q0eueMWMC8r+jq+LJIGrspzvLF+hpWO9cggHlSpwVs=
+github.com/signalfx/signalfx-go v0.0.0-20190625143721-217862e94b58 h1:Hygbf/SvHs+lCD0P4SAhHlG2LA5f3D9myPkLF7U/sGw=
+github.com/signalfx/signalfx-go v0.0.0-20190625143721-217862e94b58/go.mod h1:0Q0eueMWMC8r+jq+LJIGrspzvLF+hpWO9cggHlSpwVs=
+github.com/signalfx/signalfx-go v0.0.0-20190625145813-eadf70386f54 h1:We1iayW5cQmccjRKP8sdkZTCAohpoS56tEDtbzyw+qU=
+github.com/signalfx/signalfx-go v0.0.0-20190625145813-eadf70386f54/go.mod h1:0Q0eueMWMC8r+jq+LJIGrspzvLF+hpWO9cggHlSpwVs=
 github.com/signalfx/signalfx-go v0.0.0-20190625194855-e4d58fd3159f h1:SGfl0k9UNfHc0AfoJirz2vPiM1FUIu5IbTjJdHHmKUY=
 github.com/signalfx/signalfx-go v0.0.0-20190625194855-e4d58fd3159f/go.mod h1:0Q0eueMWMC8r+jq+LJIGrspzvLF+hpWO9cggHlSpwVs=
 github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d/go.mod h1:OnSkiWE9lh6wB0YB77sQom3nweQdgAjqCqsofrRNTgc=
@@ -386,6 +390,7 @@ golang.org/x/tools v0.0.0-20180917221912-90fa682c2a6e/go.mod h1:n7NCudcB/nEzxVGm
 golang.org/x/tools v0.0.0-20190328211700-ab21143f2384/go.mod h1:LCzVGOaR6xXOjkQ3onu1FJEFr0SW1gC7cKk1uF8kGRs=
 golang.org/x/tools v0.0.0-20190624180213-70d37148ca0c/go.mod h1:/rFqwRUd4F7ZHNgwSSTFct+R/Kf4OFW1sUzUTQQTgfc=
 golang.org/x/tools v0.0.0-20190624190245-7f2218787638/go.mod h1:/rFqwRUd4F7ZHNgwSSTFct+R/Kf4OFW1sUzUTQQTgfc=
+golang.org/x/tools v0.0.0-20190624222133-a101b041ded4/go.mod h1:/rFqwRUd4F7ZHNgwSSTFct+R/Kf4OFW1sUzUTQQTgfc=
 golang.org/x/tools v0.0.0-20190625160430-252024b82959/go.mod h1:/rFqwRUd4F7ZHNgwSSTFct+R/Kf4OFW1sUzUTQQTgfc=
 google.golang.org/api v0.0.0-20171005000305-7a7376eff6a5 h1:PDkJGYjSvxJyevtZRGmBSO+HjbIKuqYEEc8gB51or4o=
 google.golang.org/api v0.0.0-20171005000305-7a7376eff6a5/go.mod h1:4mhQ8q/RsB7i+udVvVy5NUi08OU8ZlA0gRVgrF7VFY0=

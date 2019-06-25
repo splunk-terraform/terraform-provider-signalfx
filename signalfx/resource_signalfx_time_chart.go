@@ -442,7 +442,7 @@ func timeChartResource() *schema.Resource {
 /*
   Use Resource object to construct json payload in order to create a time chart
 */
-func getPayloadTimeChart(d *schema.ResourceData) (*chart.CreateUpdateChartRequest, error) {
+func getPayloadTimeChart(d *schema.ResourceData) *chart.CreateUpdateChartRequest {
 	var tags []string
 	if val, ok := d.GetOk("tags"); ok {
 		tags := []string{}
@@ -460,22 +460,22 @@ func getPayloadTimeChart(d *schema.ResourceData) (*chart.CreateUpdateChartReques
 
 	viz := getTimeChartOptions(d)
 	if axesOptions := getAxesOptions(d); len(axesOptions) > 0 {
-		viz["axes"] = axesOptions
+		viz.Axes = axesOptions
 	}
 	// There are two ways to maniplate the legend. The first is keyed from
 	// `legend_fields_to_hide`. Anything in this is marked as hidden. Unspecified
 	// fields default to showing up in SFx's UI.
-	if legendOptions := getLegendOptions(d); len(legendOptions) > 0 {
-		viz["legendOptions"] = legendOptions
+	if legendOptions := getLegendOptions(d); legendOptions != nil {
+		viz.LegendOptions = legendOptions
 		// Alternatively, the `legend_options_fields` provides finer control,
 		// allowing ordering and on/off toggles. This is preferred, but we keep
 		// `legend_fields_to_hide` for convenience.
-	} else if legendOptions := getLegendFieldOptions(d); len(legendOptions) > 0 {
-		viz["legendOptions"] = legendOptions
+	} else if legendOptions := getLegendFieldOptions(d); legendOptions != nil {
+		viz.LegendOptions = legendOptions
 	}
 
 	if vizOptions := getPerSignalVizOptions(d); len(vizOptions) > 0 {
-		viz["publishLabelOptions"] = vizOptions
+		viz.PublishLabelOptions = vizOptions
 	}
 	if onChartLegendDim, ok := d.GetOk("on_chart_legend_dimension"); ok {
 		if onChartLegendDim == "metric" {
@@ -483,207 +483,231 @@ func getPayloadTimeChart(d *schema.ResourceData) (*chart.CreateUpdateChartReques
 		} else if onChartLegendDim == "plot_label" {
 			onChartLegendDim = "sf_metric"
 		}
-		viz["onChartLegendOptions"] = map[string]interface{}{
-			"showLegend":        true,
-			"dimensionInLegend": onChartLegendDim,
+		viz.OnChartLegendOptions = &chart.LegendOptions{
+			ShowLegend:        true,
+			DimensionInLegend: onChartLegendDim.(string),
 		}
 	}
-	if len(viz) > 0 {
-		payload["options"] = viz
-	}
+	payload.Options = viz
 
 	return payload
 }
 
-func getPerSignalVizOptions(d *schema.ResourceData) []map[string]interface{} {
+func getPerSignalVizOptions(d *schema.ResourceData) []*chart.PublishLabelOptions {
 	viz := d.Get("viz_options").(*schema.Set).List()
-	viz_list := make([]map[string]interface{}, len(viz))
+	vizList := make([]*chart.PublishLabelOptions, len(viz))
 	for i, v := range viz {
 		v := v.(map[string]interface{})
-		item := make(map[string]interface{})
-
-		item["label"] = v["label"].(string)
+		item := &chart.PublishLabelOptions{
+			Label: v["label"].(string),
+		}
 		if val, ok := v["color"].(string); ok {
 			if elem, ok := PaletteColors[val]; ok {
-				item["paletteIndex"] = elem
+				item.PaletteIndex = int32(elem)
 			}
 		}
 		if val, ok := v["plot_type"].(string); ok && val != "" {
-			item["plotType"] = val
+			item.PlotType = val
 		}
 		if val, ok := v["axis"].(string); ok && val != "" {
 			if val == "right" {
-				item["yAxis"] = 1
+				item.YAxis = int32(1)
 			} else {
-				item["yAxis"] = 0
+				item.YAxis = int32(0)
 			}
 		}
 		if val, ok := v["value_unit"].(string); ok && val != "" {
-			item["valueUnit"] = val
+			item.ValueUnit = val
 		}
 		if val, ok := v["value_suffix"].(string); ok && val != "" {
-			item["valueSuffix"] = val
+			item.ValueSuffix = val
 		}
 		if val, ok := v["value_prefix"].(string); ok && val != "" {
-			item["valuePrefix"] = val
+			item.ValuePrefix = val
 		}
 
-		viz_list[i] = item
+		vizList[i] = item
 	}
-	return viz_list
+	return vizList
 }
 
-func getAxesOptions(d *schema.ResourceData) []map[string]interface{} {
-	axes_list_opts := make([]map[string]interface{}, 2)
-	if tf_axis_opts, ok := d.GetOk("axis_right"); ok {
-		tf_right_axis_opts := tf_axis_opts.(*schema.Set).List()[0]
-		tf_opt := tf_right_axis_opts.(map[string]interface{})
-		axes_list_opts[1] = getSingleAxisOptions(tf_opt)
+func getAxesOptions(d *schema.ResourceData) []*chart.Axes {
+	axesListopts := make([]*chart.Axes, 2)
+	if tfAxisOpts, ok := d.GetOk("axis_right"); ok {
+		tfRightAxisOpts := tfAxisOpts.(*schema.Set).List()[0]
+		tfOpt := tfRightAxisOpts.(map[string]interface{})
+		axesListopts[1] = getSingleAxisOptions(tfOpt)
 	}
-	if tf_axis_opts, ok := d.GetOk("axis_left"); ok {
-		tf_left_axis_opts := tf_axis_opts.(*schema.Set).List()[0]
-		tf_opt := tf_left_axis_opts.(map[string]interface{})
-		axes_list_opts[0] = getSingleAxisOptions(tf_opt)
+	if tfAxisOpts, ok := d.GetOk("axis_left"); ok {
+		tfLeftAxisOpts := tfAxisOpts.(*schema.Set).List()[0]
+		tfOpt := tfLeftAxisOpts.(map[string]interface{})
+		axesListopts[0] = getSingleAxisOptions(tfOpt)
 	}
-	return axes_list_opts
+	return axesListopts
 }
 
-func getSingleAxisOptions(axisOpt map[string]interface{}) map[string]interface{} {
-	item := make(map[string]interface{})
+func getSingleAxisOptions(axisOpt map[string]interface{}) *chart.Axes {
+	var axis *chart.Axes
 
 	if val, ok := axisOpt["min_value"]; ok {
-		if val.(float64) == -math.MaxFloat32 {
-			item["min"] = nil
-		} else {
-			item["min"] = val.(float64)
+		if val.(float32) != -math.MaxFloat32 {
+			if axis == nil {
+				axis = &chart.Axes{}
+			}
+			axis.Min = val.(float32)
 		}
 	}
 	if val, ok := axisOpt["max_value"]; ok {
-		if val.(float64) == math.MaxFloat32 {
-			item["max"] = nil
-		} else {
-			item["max"] = val.(float64)
+		if val.(float64) != math.MaxFloat32 {
+			if axis == nil {
+				axis = &chart.Axes{}
+			}
+			axis.Max = val.(float32)
 		}
 	}
 	if val, ok := axisOpt["label"]; ok {
-		item["label"] = val.(string)
+		if axis == nil {
+			axis = &chart.Axes{}
+		}
+		axis.Label = val.(string)
 	}
 	if val, ok := axisOpt["high_watermark"]; ok {
-		if val.(float64) == math.MaxFloat32 {
-			item["highWatermark"] = nil
-		} else {
-			item["highWatermark"] = val.(float64)
+		if axis == nil {
+			axis = &chart.Axes{}
+		}
+		if val.(float32) != math.MaxFloat32 {
+			if axis == nil {
+				axis = &chart.Axes{}
+			}
+			axis.HighWaterMark = val.(float32)
 		}
 	}
 	if val, ok := axisOpt["high_watermark_label"]; ok {
-		item["highWatermarkLabel"] = val.(string)
+		if axis == nil {
+			axis = &chart.Axes{}
+		}
+		axis.HighWaterMarkLabel = val.(string)
 	}
 	if val, ok := axisOpt["low_watermark"]; ok {
-		if val.(float64) == -math.MaxFloat32 {
-			item["lowWatermark"] = nil
-		} else {
-			item["lowWatermark"] = val.(float64)
+		if axis == nil {
+			axis = &chart.Axes{}
+		}
+		if val.(float32) != -math.MaxFloat32 {
+			if axis == nil {
+				axis = &chart.Axes{}
+			}
+			axis.LowWaterMark = val.(float32)
 		}
 	}
 	if val, ok := axisOpt["low_watermark_label"]; ok {
-		item["lowWatermarkLabel"] = val.(string)
+		if axis == nil {
+			axis = &chart.Axes{}
+		}
+		axis.LowWaterMarkLabel = val.(string)
 	}
 
-	// special case: the axis object might exist, but it has no keys except
-	// watermarks
-	// in this case, we don't want to report an axis object to sfx at all
-	if len(item) == 0 {
-		return nil
-	}
-	return item
+	return axis
 }
 
-func getTimeChartOptions(d *schema.ResourceData) map[string]interface{} {
-	viz := make(map[string]interface{})
-	viz["type"] = "TimeSeriesChart"
+func getTimeChartOptions(d *schema.ResourceData) *chart.Options {
+	options := &chart.Options{
+		Stacked: d.Get("stacked").(bool),
+		Type:    "TimeSeriesChart",
+	}
 	if val, ok := d.GetOk("unit_prefix"); ok {
-		viz["unitPrefix"] = val.(string)
+		options.UnitPrefix = val.(string)
 	}
 	if val, ok := d.GetOk("color_by"); ok {
-		viz["colorBy"] = val.(string)
+		options.ColorBy = val.(string)
 	}
 	if val, ok := d.GetOk("show_event_lines"); ok {
-		viz["showEventLines"] = val.(bool)
+		options.ShowEventLines = val.(bool)
 	}
-	viz["stacked"] = d.Get("stacked").(bool)
 	if val, ok := d.GetOk("plot_type"); ok {
-		viz["defaultPlotType"] = val.(string)
+		options.DefaultPlotType = val.(string)
 	}
+
 	if val, ok := d.GetOk("axes_precision"); ok {
-		viz["axisPrecision"] = val.(int)
+		options.AxisPrecision = val.(int32)
 	}
 	if val, ok := d.GetOk("axes_include_zero"); ok {
-		viz["includeZero"] = val.(bool)
+		options.IncludeZero = val.(bool)
 	}
 
-	programOptions := make(map[string]interface{})
+	var programOptions *chart.GeneralOptions
 	if val, ok := d.GetOk("minimum_resolution"); ok {
-		programOptions["minimumResolution"] = val.(int) * 1000
+		if programOptions == nil {
+			programOptions = &chart.GeneralOptions{}
+		}
+		programOptions.MinimumResolution = val.(int32) * 1000
 	}
 	if val, ok := d.GetOk("max_delay"); ok {
-		programOptions["maxDelay"] = val.(int) * 1000
+		if programOptions == nil {
+			programOptions = &chart.GeneralOptions{}
+		}
+		programOptions.MaxDelay = val.(int32) * 1000
 	}
 	if val, ok := d.GetOk("disable_sampling"); ok {
-		programOptions["disableSampling"] = val.(bool)
+		if programOptions == nil {
+			programOptions = &chart.GeneralOptions{}
+		}
+		programOptions.DisableSampling = val.(bool)
 	}
-	if len(programOptions) > 0 {
-		viz["programOptions"] = programOptions
-	}
+	options.ProgramOptions = programOptions
 
-	timeMap := make(map[string]interface{})
+	var timeOptions *chart.TimeDisplayOptions
 	if val, ok := d.GetOk("time_range"); ok {
-		timeMap["range"] = val.(int) * 1000
-		timeMap["type"] = "relative"
-	}
-	if val, ok := d.GetOk("start_time"); ok {
-		timeMap["start"] = val.(int) * 1000
-		timeMap["type"] = "absolute"
-		if val, ok := d.GetOk("end_time"); ok {
-			timeMap["end"] = val.(int) * 1000
+		timeOptions = &chart.TimeDisplayOptions{
+			Range: val.(int64) * 1000,
+			Type:  "relative",
 		}
 	}
-	if len(timeMap) > 0 {
-		viz["time"] = timeMap
+	if val, ok := d.GetOk("start_time"); ok {
+		timeOptions = &chart.TimeDisplayOptions{
+			Start: val.(int64) * 1000,
+			Type:  "absolute",
+		}
+		if val, ok := d.GetOk("end_time"); ok {
+			timeOptions.End = val.(int64) * 1000
+		}
 	}
+	options.Time = timeOptions
 
-	dataMarkersOption := make(map[string]interface{})
-	dataMarkersOption["showDataMarkers"] = d.Get("show_data_markers").(bool)
+	// dataMarkersOption := make(map[string]interface{})
+	showDataMarkers := d.Get("show_data_markers").(bool)
 	if chartType, ok := d.GetOk("plot_type"); ok {
 		chartType := chartType.(string)
-		if chartType == "AreaChart" {
-			viz["areaChartOptions"] = dataMarkersOption
-		} else if chartType == "LineChart" {
-			viz["lineChartOptions"] = dataMarkersOption
-		} else if chartType == "Histogram" {
-			histogramChartOptions := make(map[string]interface{})
-			if histogram_options, ok := d.GetOk("histogram_options"); ok {
-				hOptions := histogram_options.(*schema.Set).List()[0].(map[string]interface{})
-				if color_theme, ok := hOptions["color_theme"].(string); ok {
-					if elem, ok := FullPaletteColors[color_theme]; ok {
-						histogramChartOptions["colorThemeIndex"] = elem
-						viz["histogramChartOptions"] = histogramChartOptions
+		switch chartType {
+		case "AreaChart":
+			options.AreaChartOptions = &chart.AreaChartOptions{
+				ShowDataMarkers: showDataMarkers,
+			}
+		case "Histogram":
+			if histogramOptions, ok := d.GetOk("histogram_options"); ok {
+				hOptions := histogramOptions.(*schema.Set).List()[0].(map[string]interface{})
+				if colorTheme, ok := hOptions["color_theme"].(string); ok {
+					if elem, ok := FullPaletteColors[colorTheme]; ok {
+						options.HistogramChartOptions = &chart.HistogramChartOptions{
+							ColorThemeIndex: int32(elem),
+						}
 					}
 				}
 			}
+		// Not we don't have an option for LineChart as it is the same as
+		// this default
+		default:
+			options.LineChartOptions = &chart.LineChartOptions{
+				ShowDataMarkers: showDataMarkers,
+			}
 		}
-	} else {
-		viz["lineChartOptions"] = dataMarkersOption
 	}
 
-	return viz
+	return options
 }
 
 func timechartCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	payload, err := getPayloadTimeChart(d)
-	if err != nil {
-		return fmt.Errorf("Failed creating json payload: %s", err.Error())
-	}
+	payload := getPayloadTimeChart(d)
 
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] Create Payload: %s", string(debugOutput))
@@ -703,7 +727,7 @@ func timechartCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 	d.SetId(chart.Id)
 
-	return timeChartAPIToTF(d, chart)
+	return timechartAPIToTF(d, chart)
 }
 
 func timechartRead(d *schema.ResourceData, meta interface{}) error {
@@ -713,10 +737,10 @@ func timechartRead(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return err
 	}
-	return timeChartAPIToTF(d, chart)
+	return timechartAPIToTF(d, chart)
 }
 
-func timeChartAPIToTF(d *schema.ResourceData, chart *chart.Chart) error {
+func timechartAPIToTF(d *schema.ResourceData, chart *chart.Chart) error {
 	log.Printf("[DEBUG] Got Time Chart %v", chart)
 
 	if err := d.Set("name", chart.Name); err != nil {
@@ -725,23 +749,184 @@ func timeChartAPIToTF(d *schema.ResourceData, chart *chart.Chart) error {
 	if err := d.Set("description", chart.Description); err != nil {
 		return err
 	}
+	if err := d.Set("program_text", chart.ProgramText); err != nil {
+		return err
+	}
+	if err := d.Set("tags", chart.Tags); err != nil {
+		return err
+	}
+	options := chart.Options
+
+	if err := d.Set("axis_precision", options.AxisPrecision); err != nil {
+		return err
+	}
+	if err := d.Set("axes_include_zero", options.IncludeZero); err != nil {
+		return err
+	}
+	if err := d.Set("color_by", options.ColorBy); err != nil {
+		return err
+	}
+	if err := d.Set("plot_type", options.DefaultPlotType); err != nil {
+		return err
+	}
+	if err := d.Set("show_event_lines", options.ShowEventLines); err != nil {
+		return err
+	}
+	if err := d.Set("stacked", options.Stacked); err != nil {
+		return err
+	}
+
+	if options.AreaChartOptions != nil {
+		if err := d.Set("show_data_markers", options.AreaChartOptions.ShowDataMarkers); err != nil {
+			return err
+		}
+	}
+	if options.LineChartOptions != nil {
+		if err := d.Set("show_data_markers", options.LineChartOptions.ShowDataMarkers); err != nil {
+			return err
+		}
+	}
+	if options.HistogramChartOptions != nil {
+		color, err := getNameFromPaletteColorsByIndex(int(options.HistogramChartOptions.ColorThemeIndex))
+		if err != nil {
+			return err
+		}
+		histOptions := map[string]interface{}{
+			"color_theme": color,
+		}
+		if err := d.Set("histogram_options", histOptions); err != nil {
+			return err
+		}
+	}
+
+	if len(options.Axes) > 0 {
+		if err := d.Set("left_axis", axisToMap(options.Axes[0])); err != nil {
+			return err
+		}
+		if err := d.Set("right_axis", axisToMap(options.Axes[0])); err != nil {
+			return err
+		}
+	}
+
+	if options.ProgramOptions != nil {
+		if err := d.Set("minimum_resolution", options.ProgramOptions.MinimumResolution); err != nil {
+			return err
+		}
+		if err := d.Set("max_delay", options.ProgramOptions.MaxDelay); err != nil {
+			return err
+		}
+		if err := d.Set("disable_sampling", options.ProgramOptions.DisableSampling); err != nil {
+			return err
+		}
+	}
+
+	if options.Time != nil {
+		if options.Time.Type == "relative" {
+			if err := d.Set("time_range", options.Time.Range); err != nil {
+				return err
+			}
+		} else {
+			if err := d.Set("start_time", options.Time.Start/1000); err != nil {
+				return err
+			}
+			if err := d.Set("end_time", options.Time.End/1000); err != nil {
+				return err
+			}
+		}
+	}
+
+	if len(options.PublishLabelOptions) > 0 {
+		plos := make([]map[string]interface{}, len(options.PublishLabelOptions))
+		for i, plo := range options.PublishLabelOptions {
+			no, err := publishLabelOptionsToMap(plo)
+			if err != nil {
+				return err
+			}
+			plos[i] = no
+		}
+		if err := d.Set("viz_options", plos); err != nil {
+			return err
+		}
+	}
+
+	if options.LegendOptions != nil && len(options.LegendOptions.Fields) > 0 {
+		fields := make([]map[string]interface{}, len(options.LegendOptions.Fields))
+		for i, lo := range options.LegendOptions.Fields {
+			fields[i] = map[string]interface{}{
+				"property": lo.Property,
+				"enabled":  lo.Enabled,
+			}
+		}
+		if err := d.Set("legend_options_fields", fields); err != nil {
+			return err
+		}
+	}
+
+	if options.OnChartLegendOptions != nil {
+		if err := d.Set("on_chart_legend_dimension", options.OnChartLegendOptions.DimensionInLegend); err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
 
-func timechartUpdate(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*signalfxConfig)
-	payload, err := getPayloadTimeChart(d)
-	if err != nil {
-		return fmt.Errorf("Failed creating json payload: %s", err.Error())
+func axisToMap(axis *chart.Axes) *map[string]interface{} {
+	if axis != nil {
+		return &map[string]interface{}{
+			"high_watermark":       axis.HighWaterMark,
+			"high_watermark_label": axis.HighWaterMarkLabel,
+			"label":                axis.Label,
+			"low_watermark":        axis.LowWaterMark,
+			"low_watermark_label":  axis.LowWaterMarkLabel,
+			"max":                  axis.Max,
+			"mine":                 axis.Min,
+		}
 	}
-	path := fmt.Sprintf("%s/%s", CHART_API_PATH, d.Id())
-	url, err := buildURL(config.APIURL, path, map[string]string{})
+	return nil
+}
+
+func publishLabelOptionsToMap(options *chart.PublishLabelOptions) (map[string]interface{}, error) {
+	color, err := getNameFromPaletteColorsByIndex(int(options.PaletteIndex))
 	if err != nil {
-		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
+		return map[string]interface{}{}, err
+	}
+	axis := "left"
+	if options.YAxis == 1 {
+		axis = "right"
 	}
 
-	return resourceUpdate(url, config.AuthToken, payload, d)
+	return map[string]interface{}{
+		"label":        options.Label,
+		"color":        color,
+		"axis":         axis,
+		"plot_type":    options.PlotType,
+		"value_unit":   options.ValueUnit,
+		"value_suffix": options.ValueSuffix,
+		"value_prefix": options.ValuePrefix,
+	}, nil
+}
+
+func timechartUpdate(d *schema.ResourceData, meta interface{}) error {
+	config := meta.(*signalfxConfig)
+	payload := getPayloadTimeChart(d)
+
+	chart, err := config.Client.UpdateChart(d.Id(), payload)
+	if err != nil {
+		return err
+	}
+	log.Printf("[DEBUG] Update Response: %v", chart)
+
+	// Since things worked, set the URL and move on
+	appURL, err := buildAppURL(config.CustomAppURL, CHART_APP_PATH+d.Id())
+	if err != nil {
+		return err
+	}
+	if err := d.Set("url", appURL); err != nil {
+		return err
+	}
+	d.SetId(chart.Id)
+	return timechartAPIToTF(d, chart)
 }
 
 func timechartDelete(d *schema.ResourceData, meta interface{}) error {
