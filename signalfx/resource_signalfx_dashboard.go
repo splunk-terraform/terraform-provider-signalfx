@@ -4,14 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
+	dashboard "github.com/signalfx/signalfx-go/dashboard"
 )
 
 const (
-	DASHBOARD_API_PATH = "/v2/dashboard"
-	DASHBOARD_APP_PATH = "/dashboard/"
+	DashboardAppPath = "/dashboard/"
 )
 
 func dashboardResource() *schema.Resource {
@@ -26,12 +27,6 @@ func dashboardResource() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "The ID of the dashboard group that contains the dashboard. If an ID is not provided during creation, the dashboard will be placed in a newly created dashboard group",
-			},
-			"synced": &schema.Schema{
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     true,
-				Description: "Whether the resource in the provider and SignalFx are identical or not. Used internally for syncing.",
 			},
 			"description": &schema.Schema{
 				Type:        schema.TypeString,
@@ -388,11 +383,6 @@ func dashboardResource() *schema.Resource {
 					},
 				},
 			},
-			"last_updated": &schema.Schema{
-				Type:        schema.TypeFloat,
-				Computed:    true,
-				Description: "Latest timestamp the resource was updated",
-			},
 			"url": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -410,243 +400,273 @@ func dashboardResource() *schema.Resource {
 /*
   Use Resource object to construct json payload in order to create a dashboard
 */
-func getPayloadDashboard(d *schema.ResourceData) ([]byte, error) {
-	payload := map[string]interface{}{
-		"name":        d.Get("name").(string),
-		"description": d.Get("description").(string),
-		"groupId":     d.Get("dashboard_group").(string),
+func getPayloadDashboard(d *schema.ResourceData) (*dashboard.CreateUpdateDashboardRequest, error) {
+
+	cudr := &dashboard.CreateUpdateDashboardRequest{
+		Name:        d.Get("name").(string),
+		Description: d.Get("description").(string),
+		GroupId:     d.Get("dashboard_group").(string),
 	}
 
-	all_filters := make(map[string]interface{})
+	allFilters := &dashboard.ChartsFilters{}
 	if filters := getDashboardFilters(d); len(filters) > 0 {
-		all_filters["sources"] = filters
+		allFilters.Sources = filters
 	}
 	if variables := getDashboardVariables(d); len(variables) > 0 {
-		all_filters["variables"] = variables
+		allFilters.Variables = variables
 	}
-	if time := getDashboardTime(d); len(time) > 0 {
-		all_filters["time"] = time
-	}
-	if len(all_filters) > 0 {
-		payload["filters"] = all_filters
-	}
+	allFilters.Time = getDashboardTime(d)
+	cudr.Filters = allFilters
 
 	overlays := d.Get("event_overlay").([]interface{})
-	payload["eventOverlays"] = getDashboardEventOverlays(overlays)
+	cudr.EventOverlays = getDashboardEventOverlays(overlays)
 
-	soverlays := d.Get("selected_event_overlay").([]interface{})
-	payload["selectedEventOverlays"] = getDashboardEventOverlays(soverlays)
+	if soverlays, ok := d.GetOk("selected_event_overlay"); ok {
+		soverlays := soverlays.([]interface{})
+		cudr.SelectedEventOverlays = getDashboardEventOverlayFilters(soverlays)
+	}
 
 	charts := getDashboardCharts(d)
-	column_charts := getDashboardColumns(d)
-	dashboard_charts := append(charts, column_charts...)
-	grid_charts := getDashboardGrids(d)
-	dashboard_charts = append(dashboard_charts, grid_charts...)
-	if len(dashboard_charts) > 0 {
-		payload["charts"] = dashboard_charts
+	columnCharts := getDashboardColumns(d)
+	dashboardCharts := append(charts, columnCharts...)
+	gridCharts := getDashboardGrids(d)
+	dashboardCharts = append(dashboardCharts, gridCharts...)
+	if len(dashboardCharts) > 0 {
+		cudr.Charts = dashboardCharts
+		// payload["charts"] = dashboard_charts
 	}
 
 	if chartsResolution, ok := d.GetOk("charts_resolution"); ok {
-		payload["chartDensity"] = strings.ToUpper(chartsResolution.(string))
+		density := strings.ToUpper(chartsResolution.(string))
+		switch density {
+		case "LOW":
+			cudr.ChartDensity = dashboard.LOW
+		case "HIGH":
+			cudr.ChartDensity = dashboard.HIGH
+		case "HIGHEST":
+			cudr.ChartDensity = dashboard.HIGHEST
+		default:
+			cudr.ChartDensity = dashboard.DEFAULT
+		}
 	}
 	if val, ok := d.GetOk("tags"); ok {
 		tags := []string{}
 		for _, tag := range val.([]interface{}) {
 			tags = append(tags, tag.(string))
 		}
-		payload["tags"] = tags
+		cudr.Tags = tags
 	}
 
-	return json.Marshal(payload)
+	return cudr, nil
 }
 
-func getDashboardTime(d *schema.ResourceData) map[string]interface{} {
-	timeMap := make(map[string]interface{})
+func getDashboardTime(d *schema.ResourceData) *dashboard.ChartsFiltersTime {
+	var timeFilter *dashboard.ChartsFiltersTime
 	if val, ok := d.GetOk("time_range"); ok {
-		timeMap["start"] = val.(string)
-		timeMap["end"] = "Now"
+		timeFilter = &dashboard.ChartsFiltersTime{
+			Start: val.(string),
+			End:   "Now",
+		}
 	} else {
+		timeFilter = &dashboard.ChartsFiltersTime{}
 		if val, ok := d.GetOk("start_time"); ok {
-			timeMap["start"] = val.(int) * 1000
+			timeFilter.Start = strconv.Itoa(val.(int) * 1000)
 		}
 		if val, ok := d.GetOk("end_time"); ok {
-			timeMap["end"] = val.(int) * 1000
+			timeFilter.End = strconv.Itoa(val.(int) * 1000)
 		}
 	}
-
-	if len(timeMap) > 0 {
-		return timeMap
-	}
-	return nil
+	return timeFilter
 }
 
-func getDashboardCharts(d *schema.ResourceData) []map[string]interface{} {
+func getDashboardCharts(d *schema.ResourceData) []*dashboard.DashboardChart {
 	charts := d.Get("chart").(*schema.Set).List()
-	charts_list := make([]map[string]interface{}, len(charts))
+	chartsList := make([]*dashboard.DashboardChart, len(charts))
 	for i, chart := range charts {
 		chart := chart.(map[string]interface{})
-		item := make(map[string]interface{})
+		item := &dashboard.DashboardChart{
+			ChartId: chart["chart_id"].(string),
+			Column:  chart["column"].(int32),
+			Height:  chart["height"].(int32),
+			Row:     chart["row"].(int32),
+			Width:   chart["width"].(int32),
+		}
 
-		item["chartId"] = chart["chart_id"].(string)
-		item["row"] = chart["row"].(int)
-		item["column"] = chart["column"].(int)
-		item["height"] = chart["height"].(int)
-		item["width"] = chart["width"].(int)
-
-		charts_list[i] = item
+		chartsList[i] = item
 	}
-	return charts_list
+	return chartsList
 }
 
-func getDashboardColumns(d *schema.ResourceData) []map[string]interface{} {
+func getDashboardColumns(d *schema.ResourceData) []*dashboard.DashboardChart {
 	columns := d.Get("column").(*schema.Set).List()
-	charts := make([]map[string]interface{}, 0)
+	charts := make([]*dashboard.DashboardChart, 0)
 	for _, column := range columns {
 		column := column.(map[string]interface{})
 
-		current_row := column["start_row"].(int)
-		column_number := column["column"].(int)
-		width := column["width"].(int)
-		height := column["height"].(int)
-		for _, chart_id := range column["chart_ids"].([]interface{}) {
-			item := make(map[string]interface{})
+		currentRow := column["start_row"].(int32)
+		columnNumber := column["column"].(int32)
+		for _, chartID := range column["chart_ids"].([]interface{}) {
+			item := &dashboard.DashboardChart{
+				ChartId: chartID.(string),
+				Column:  columnNumber,
+				Height:  column["height"].(int32),
+				Row:     currentRow,
+				Width:   column["width"].(int32),
+			}
 
-			item["chartId"] = chart_id.(string)
-			item["height"] = height
-			item["width"] = width
-			item["column"] = column_number
-			item["row"] = current_row
-
-			current_row++
+			currentRow++
 			charts = append(charts, item)
 		}
 	}
 	return charts
 }
 
-func getDashboardGrids(d *schema.ResourceData) []map[string]interface{} {
+func getDashboardGrids(d *schema.ResourceData) []*dashboard.DashboardChart {
 	grids := d.Get("grid").(*schema.Set).List()
-	charts := make([]map[string]interface{}, 0)
+	charts := make([]*dashboard.DashboardChart, 0)
 	for _, grid := range grids {
 		grid := grid.(map[string]interface{})
 
-		current_row := grid["start_row"].(int)
-		current_column := grid["start_column"].(int)
-		width := grid["width"].(int)
-		height := grid["height"].(int)
-		for _, chart_id := range grid["chart_ids"].([]interface{}) {
-			item := make(map[string]interface{})
-
-			item["chartId"] = chart_id.(string)
-			item["height"] = height
-			item["width"] = width
-
-			if current_column+width > 12 {
-				current_row += 1
-				current_column = grid["start_column"].(int)
+		width := grid["width"].(int32)
+		currentRow := grid["start_row"].(int32)
+		currentColumn := grid["start_column"].(int32)
+		for _, chartID := range grid["chart_ids"].([]interface{}) {
+			if currentColumn+width > 12 {
+				currentRow++
+				currentColumn = grid["start_column"].(int32)
 			}
-			item["row"] = current_row
-			item["column"] = current_column
 
-			current_column += width
+			item := &dashboard.DashboardChart{
+				ChartId: chartID.(string),
+				Column:  currentColumn,
+				Height:  grid["height"].(int32),
+				Row:     currentRow,
+				Width:   grid["width"].(int32),
+			}
+			currentColumn += width
 			charts = append(charts, item)
 		}
 	}
 	return charts
 }
 
-func getDashboardVariables(d *schema.ResourceData) []map[string]interface{} {
+func getDashboardVariables(d *schema.ResourceData) []*dashboard.ChartsWebUiFilter {
 	variables := d.Get("variable").(*schema.Set).List()
-	vars_list := make([]map[string]interface{}, len(variables))
+	varsList := make([]*dashboard.ChartsWebUiFilter, len(variables))
 	for i, variable := range variables {
 		variable := variable.(map[string]interface{})
-		item := make(map[string]interface{})
 
-		item["property"] = variable["property"].(string)
-		item["description"] = variable["description"].(string)
-		item["alias"] = variable["alias"].(string)
+		var values []string
 		if val, ok := variable["values"]; ok {
-			values_list := val.(*schema.Set).List()
-			if len(values_list) != 0 {
-				item["value"] = values_list
-			} else {
-				item["value"] = ""
+			tfValues := val.(*schema.Set).List()
+			for _, v := range tfValues {
+				values = append(values, v.(string))
 			}
-		} else {
-			item["value"] = ""
 		}
-		item["required"] = variable["value_required"].(bool)
+
+		var preferredSuggestions []string
 		if val, ok := variable["values_suggested"]; ok {
-			values_list := val.(*schema.Set).List()
-			if len(values_list) != 0 {
-				item["preferredSuggestions"] = val.(*schema.Set).List()
+			tfValues := val.(*schema.Set).List()
+			for _, v := range tfValues {
+				preferredSuggestions = append(preferredSuggestions, v.(string))
 			}
 		}
-		item["restricted"] = variable["restricted_suggestions"].(bool)
-		item["applyIfExists"] = variable["apply_if_exist"].(bool)
 
-		item["replaceOnly"] = variable["replace_only"].(bool)
+		item := &dashboard.ChartsWebUiFilter{
+			Alias:                variable["alias"].(string),
+			ApplyIfExists:        variable["apply_if_exist"].(bool),
+			Description:          variable["description"].(string),
+			PreferredSuggestions: preferredSuggestions,
+			Property:             variable["property"].(string),
+			Required:             variable["value_required"].(bool),
+			ReplaceOnly:          variable["replace_only"].(bool),
+			Restricted:           variable["restricted_suggestions"].(bool),
+			Value:                values,
+		}
 
-		vars_list[i] = item
+		varsList[i] = item
 	}
-	return vars_list
+	return varsList
 }
 
-func getDashboardEventOverlays(overlays []interface{}) []map[string]interface{} {
-	overlay_list := make([]map[string]interface{}, len(overlays))
+func getDashboardEventOverlays(overlays []interface{}) []*dashboard.ChartEventOverlay {
+	overlayList := make([]*dashboard.ChartEventOverlay, len(overlays))
 	for i, overlay := range overlays {
 		overlay := overlay.(map[string]interface{})
-		item := make(map[string]interface{})
-		item["eventSignal"] = map[string]interface{}{
-			"eventSearchText": overlay["signal"].(string),
-			"eventType":       overlay["type"].(string),
+		item := &dashboard.ChartEventOverlay{
+			EventSignal: &dashboard.DashboardEventSignal{
+				EventSearchText: overlay["signal"].(string),
+				EventType:       overlay["type"].(string),
+			},
 		}
 		if val, ok := overlay["line"].(bool); ok {
-			item["eventLine"] = val
+			item.EventLine = val
 		}
 		if val, ok := overlay["label"].(string); ok {
-			item["label"] = val
+			item.Label = val
 		}
 
 		if val, ok := overlay["color"].(string); ok {
 			if elem, ok := PaletteColors[val]; ok {
-				item["eventColorIndex"] = elem
+				item.EventColorIndex = int32(elem)
 			}
 		}
 
 		if sources, ok := overlay["source"].([]interface{}); ok {
-			sources_list := make([]map[string]interface{}, len(sources))
-			for j, source := range sources {
-				source := source.(map[string]interface{})
-				s := make(map[string]interface{})
-				s["property"] = source["property"].(string)
-				s["value"] = source["values"].(*schema.Set).List()
-				s["NOT"] = source["negated"].(bool)
-				sources_list[j] = s
-			}
-			item["sources"] = sources_list
+			item.Sources = getDashboardEventOverlayFilters(sources)
 		}
 
-		overlay_list[i] = item
+		overlayList[i] = item
 	}
-	return overlay_list
+	return overlayList
 }
 
-func getDashboardFilters(d *schema.ResourceData) []map[string]interface{} {
+func getDashboardEventOverlayFilters(sources []interface{}) []*dashboard.EventOverlayFilter {
+	sourcesList := make([]*dashboard.EventOverlayFilter, len(sources))
+	for j, source := range sources {
+		source := source.(map[string]interface{})
+
+		tfValues := source["values"].(*schema.Set).List()
+		values := make([]string, len(tfValues))
+		for i, v := range tfValues {
+			values[i] = v.(string)
+		}
+
+		s := &dashboard.EventOverlayFilter{
+			NOT:      source["negated"].(bool),
+			Property: source["property"].(string),
+			Value:    values,
+		}
+		sourcesList[j] = s
+	}
+	return sourcesList
+}
+
+func getDashboardFilters(d *schema.ResourceData) []*dashboard.ChartsSingleFilter {
 	filters := d.Get("filter").(*schema.Set).List()
-	filter_list := make([]map[string]interface{}, len(filters))
+	filterList := make([]*dashboard.ChartsSingleFilter, len(filters))
 	for i, filter := range filters {
 		filter := filter.(map[string]interface{})
-		item := make(map[string]interface{})
 
-		item["property"] = filter["property"].(string)
-		item["NOT"] = filter["negated"].(bool)
-		item["applyIfExists"] = filter["apply_if_exist"].(bool)
-		item["value"] = filter["values"].(*schema.Set).List()
+		var values []string
+		tfValues := filter["values"].(*schema.Set).List()
+		if len(tfValues) > 0 {
+			values = []string{}
+			for _, v := range tfValues {
+				values = append(values, v.(string))
+			}
+		}
 
-		filter_list[i] = item
+		item := &dashboard.ChartsSingleFilter{
+			NOT:           filter["negated"].(bool),
+			Property:      filter["property"].(string),
+			Value:         values,
+			ApplyIfExists: filter["apply_if_exist"].(bool),
+		}
+
+		filterList[i] = item
 	}
-	return filter_list
+	return filterList
 }
 
 func dashboardCreate(d *schema.ResourceData, meta interface{}) error {
@@ -655,33 +675,188 @@ func dashboardCreate(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return fmt.Errorf("Failed creating json payload: %s", err.Error())
 	}
-	log.Printf("[SignalFx] Dashboard Create Payload: %s", string(payload))
-	url, err := buildURL(config.APIURL, DASHBOARD_API_PATH, map[string]string{})
-	if err != nil {
-		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
-	}
-	err = resourceCreate(url, config.AuthToken, payload, d)
+
+	debugOutput, _ := json.Marshal(payload)
+	log.Printf("[DEBUG] Dashboard Create Payload: %s", debugOutput)
+
+	dash, err := config.Client.CreateDashboard(payload)
 	if err != nil {
 		return err
 	}
 	// Since things worked, set the URL and move on
-	appURL, err := buildAppURL(config.CustomAppURL, DASHBOARD_APP_PATH+d.Id())
+	appURL, err := buildAppURL(config.CustomAppURL, DashboardAppPath+d.Id())
 	if err != nil {
 		return err
 	}
-	d.Set("url", appURL)
-	return nil
+	if err := d.Set("url", appURL); err != nil {
+		return err
+	}
+	d.SetId(dash.Id)
+
+	return dashboardAPIToTF(d, dash)
 }
 
 func dashboardRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	path := fmt.Sprintf("%s/%s", DASHBOARD_API_PATH, d.Id())
-	url, err := buildURL(config.APIURL, path, map[string]string{})
+	dash, err := config.Client.GetDashboard(d.Id())
 	if err != nil {
-		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
+		return err
 	}
 
-	return resourceRead(url, config.AuthToken, d)
+	return dashboardAPIToTF(d, dash)
+}
+
+func dashboardAPIToTF(d *schema.ResourceData, dash *dashboard.Dashboard) error {
+	log.Printf("[DEBUG] Got Dashboard %v", dash)
+
+	if err := d.Set("name", dash.Name); err != nil {
+		return err
+	}
+	if err := d.Set("dashboard_group", dash.GroupId); err != nil {
+		return err
+	}
+	if err := d.Set("description", dash.Description); err != nil {
+		return err
+	}
+	if err := d.Set("charts_resolution", dash.ChartDensity); err != nil {
+		return err
+	}
+	// Charts
+	charts := make([]map[string]interface{}, len(dash.Charts))
+	for i, c := range dash.Charts {
+		chart := make(map[string]interface{})
+		chart["chart_id"] = c.ChartId
+		chart["height"] = c.Height
+		chart["width"] = c.Width
+		chart["row"] = c.Row
+		chart["column"] = c.Column
+		charts[i] = chart
+	}
+	if err := d.Set("charts", charts); err != nil {
+		return err
+	}
+
+	// Filters
+	if dash.Filters != nil {
+		filters := dash.Filters
+		// Map Sources to filters
+		if len(filters.Sources) > 0 {
+			tfFilters := make([]map[string]interface{}, len(filters.Sources))
+			for i, source := range filters.Sources {
+				tfFilter := make(map[string]interface{})
+				tfFilter["not"] = source.NOT
+				tfFilter["property"] = source.Property
+				tfFilter["values"] = source.Value
+				tfFilter["apply_if_exist"] = source.ApplyIfExists
+				tfFilters[i] = tfFilter
+			}
+			if err := d.Set("filter", tfFilters); err != nil {
+				return err
+			}
+		}
+		// Map Time to fields
+		if filters.Time != nil {
+			timeFilter := filters.Time
+			if strings.ToUpper(timeFilter.End) == "NOW" {
+				if err := d.Set("time_range", timeFilter.Start); err != nil {
+					return err
+				}
+			} else {
+				if timeFilter.Start != "" {
+					start, err := strconv.Atoi(timeFilter.Start)
+					if err != nil {
+						return fmt.Errorf("Unable to convert start time %s to integer: %s", timeFilter.Start, err)
+					}
+					if err := d.Set("start_time", start/1000); err != nil {
+						return err
+					}
+				}
+				if timeFilter.End != "" {
+					end, err := strconv.Atoi(timeFilter.End)
+					if err != nil {
+						return fmt.Errorf("Unable to convert end time %s to integer: %s", timeFilter.End, err)
+					}
+					if err := d.Set("end_time", end/1000); err != nil {
+						return err
+					}
+				}
+			}
+		}
+		// Map variables to variable
+		if len(filters.Variables) > 0 {
+			dashVars := make([]map[string]interface{}, len(filters.Variables))
+			for i, v := range filters.Variables {
+				dashVar := make(map[string]interface{})
+				dashVar["property"] = v.Property
+				dashVar["alias"] = v.Alias
+				dashVar["description"] = v.Description
+				dashVar["values"] = v.Value
+				dashVar["value_required"] = v.Required
+				dashVar["values_suggested"] = v.PreferredSuggestions
+				dashVar["restricted_suggestions"] = v.Restricted
+				dashVar["replace_only"] = v.ReplaceOnly
+				dashVar["apply_if_exist"] = v.ApplyIfExists
+				dashVars[i] = dashVar
+			}
+			if err := d.Set("variable", dashVars); err != nil {
+				return err
+			}
+		}
+	}
+
+	// Chart Event Overlays
+	if len(dash.EventOverlays) > 0 {
+		evOverlays := make([]map[string]interface{}, len(dash.EventOverlays))
+		for i, v := range dash.EventOverlays {
+			evOverlay := make(map[string]interface{})
+			evOverlay["line"] = v.EventLine
+			evOverlay["label"] = v.Label
+			colorName, err := getNameFromPaletteColorsByIndex(int(v.EventColorIndex))
+			if err != nil {
+				return fmt.Errorf("Unknown event overlay color: %d", v.EventColorIndex)
+			}
+			evOverlay["color"] = colorName
+			evOverlay["signal"] = v.EventSignal.EventSearchText
+			evOverlay["type"] = v.EventSignal.EventType
+			evOverlays[i] = evOverlay
+
+			if len(v.Sources) > 0 {
+				sources := make([]map[string]interface{}, len(v.Sources))
+				for i, s := range v.Sources {
+					source := make(map[string]interface{})
+					source["negated"] = s.NOT
+					source["values"] = s.Value
+					source["property"] = s.Property
+					sources[i] = source
+				}
+			}
+		}
+		if err := d.Set("event_overlay", evOverlays); err != nil {
+			return err
+		}
+
+		// Event Overlays
+		if len(dash.SelectedEventOverlays) > 0 {
+			sevs := make([]map[string]interface{}, len(dash.SelectedEventOverlays))
+			for i, s := range dash.SelectedEventOverlays {
+				source := make(map[string]interface{})
+				source["negated"] = s.NOT
+				source["values"] = s.Value
+				source["property"] = s.Property
+				sevs[i] = source
+			}
+			if err := d.Set("selected_event_overlay", sevs); err != nil {
+				return err
+			}
+		}
+
+	}
+
+	if err := d.Set("tags", dash.Tags); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func dashboardUpdate(d *schema.ResourceData, meta interface{}) error {
@@ -691,26 +866,31 @@ func dashboardUpdate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Failed creating json payload: %s", err.Error())
 	}
 
-	path := fmt.Sprintf("%s/%s", DASHBOARD_API_PATH, d.Id())
-	url, err := buildURL(config.APIURL, path, map[string]string{})
-	if err != nil {
-		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
-	}
+	debugOutput, _ := json.Marshal(payload)
+	log.Printf("[DEBUG] Update Payload: %s", string(debugOutput))
 
-	log.Printf("[SignalFx] Dashboard Update Payload: %s", string(payload))
-	return resourceUpdate(url, config.AuthToken, payload, d)
+	dash, err := config.Client.UpdateDashboard(d.Id(), payload)
+	if err != nil {
+		return err
+	}
+	log.Printf("[DEBUG] Update Response: %v", dash)
+	// Since things worked, set the URL and move on
+	appURL, err := buildAppURL(config.CustomAppURL, DashboardAppPath+d.Id())
+	if err != nil {
+		return err
+	}
+	if err := d.Set("url", appURL); err != nil {
+		return err
+	}
+	d.SetId(dash.Id)
+	return dashboardAPIToTF(d, dash)
 }
 
 func dashboardDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 
-	path := fmt.Sprintf("%s/%s", DASHBOARD_API_PATH, d.Id())
-	url, err := buildURL(config.APIURL, path, map[string]string{})
-	if err != nil {
-		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
-	}
-
-	return resourceDelete(url, config.AuthToken, d)
+	err := config.Client.DeleteDashboard(d.Id())
+	return err
 }
 
 /*

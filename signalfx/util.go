@@ -128,6 +128,15 @@ func validateSortBy(v interface{}, k string) (we []string, errors []error) {
 	return
 }
 
+func getNameFromPaletteColorsByIndex(index int) (string, error) {
+	for k, v := range PaletteColors {
+		if v == index {
+			return k, nil
+		}
+	}
+	return "", fmt.Errorf("Unknown color index %d", index)
+}
+
 /*
 	Get Color Scale Options
 */
