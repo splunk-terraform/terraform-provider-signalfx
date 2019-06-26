@@ -404,7 +404,7 @@ func detectorCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	debugOutput, _ := json.Marshal(payload)
-	log.Printf("[DEBUG] Create Payload: %s", string(debugOutput))
+	log.Printf("[DEBUG] SignalFx: Create Detector Payload: %s", string(debugOutput))
 
 	det, err := config.Client.CreateDetector(payload)
 	if err != nil {
@@ -433,7 +433,7 @@ func detectorRead(d *schema.ResourceData, meta interface{}) error {
 }
 
 func detectorAPIToTF(d *schema.ResourceData, det *detector.Detector) error {
-	log.Printf("[DEBUG] Got Detector %v", det)
+	log.Printf("[DEBUG] SignalFx: Got Detector to enState: %v", det)
 
 	if err := d.Set("name", det.Name); err != nil {
 		return err
@@ -519,13 +519,13 @@ func detectorUpdate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	debugOutput, _ := json.Marshal(payload)
-	log.Printf("[DEBUG] Update Payload: %s", string(debugOutput))
+	log.Printf("[DEBUG] SignalFx: Update Detector Payload: %s", string(debugOutput))
 
 	det, err := config.Client.UpdateDetector(d.Id(), payload)
 	if err != nil {
 		return err
 	}
-	log.Printf("[DEBUG] Update Response: %v", det)
+	log.Printf("[DEBUG] SignalFx: Update Detector Response: %v", det)
 	// Since things worked, set the URL and move on
 	appURL, err := buildAppURL(config.CustomAppURL, DetectorAppPath+det.Id)
 	if err != nil {
