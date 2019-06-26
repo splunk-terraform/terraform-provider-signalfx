@@ -36,7 +36,7 @@ func dashboardResource() *schema.Resource {
 			"charts_resolution": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
-				Default:      dashboard.HIGHEST,
+				Default:      dashboard.DEFAULT,
 				Description:  "Specifies the chart data display resolution for charts in this dashboard. Value can be one of \"default\", \"low\", \"high\", or \"highest\". default by default",
 				ValidateFunc: validateChartsResolution,
 			},
@@ -424,7 +424,7 @@ func getPayloadDashboard(d *schema.ResourceData) (*dashboard.CreateUpdateDashboa
 
 	if soverlays, ok := d.GetOk("selected_event_overlay"); ok {
 		soverlays := soverlays.([]interface{})
-		cudr.SelectedEventOverlays = getDashboardEventOverlayFilters(soverlays)
+		cudr.SelectedEventOverlays = getDashboardEventOverlays(soverlays)
 	}
 
 	charts := getDashboardCharts(d)
@@ -627,6 +627,7 @@ func getDashboardEventOverlayFilters(sources []interface{}) []*dashboard.EventOv
 	for j, source := range sources {
 		source := source.(map[string]interface{})
 
+		log.Printf("[DEBUG] SignalFx: %v", source)
 		tfValues := source["values"].(*schema.Set).List()
 		values := make([]string, len(tfValues))
 		for i, v := range tfValues {
@@ -685,7 +686,7 @@ func dashboardCreate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 	// Since things worked, set the URL and move on
-	appURL, err := buildAppURL(config.CustomAppURL, DashboardAppPath+d.Id())
+	appURL, err := buildAppURL(config.CustomAppURL, DashboardAppPath+dash.Id)
 	if err != nil {
 		return err
 	}
@@ -830,27 +831,38 @@ func dashboardAPIToTF(d *schema.ResourceData, dash *dashboard.Dashboard) error {
 					source["property"] = s.Property
 					sources[i] = source
 				}
+				evOverlay["source"] = sources
 			}
 		}
 		if err := d.Set("event_overlay", evOverlays); err != nil {
 			return err
 		}
+	}
 
-		// Event Overlays
-		if len(dash.SelectedEventOverlays) > 0 {
-			sevs := make([]map[string]interface{}, len(dash.SelectedEventOverlays))
-			for i, s := range dash.SelectedEventOverlays {
-				source := make(map[string]interface{})
-				source["negated"] = s.NOT
-				source["values"] = flattenStringSliceToSet(s.Value)
-				source["property"] = s.Property
-				sevs[i] = source
-			}
-			if err := d.Set("selected_event_overlay", sevs); err != nil {
-				return err
+	// Chart Selected Event Overlays
+	if len(dash.SelectedEventOverlays) > 0 {
+		sevs := make([]map[string]interface{}, len(dash.SelectedEventOverlays))
+		for i, s := range dash.SelectedEventOverlays {
+			evOverlay := make(map[string]interface{})
+			evOverlay["signal"] = s.EventSignal.EventSearchText
+			evOverlay["type"] = s.EventSignal.EventType
+			sevs[i] = evOverlay
+
+			if len(s.Sources) > 0 {
+				sources := make([]map[string]interface{}, len(s.Sources))
+				for i, s := range s.Sources {
+					source := make(map[string]interface{})
+					source["negated"] = s.NOT
+					source["values"] = flattenStringSliceToSet(s.Value)
+					source["property"] = s.Property
+					sources[i] = source
+				}
+				evOverlay["source"] = sources
 			}
 		}
-
+		if err := d.Set("selected_event_overlay", sevs); err != nil {
+			return err
+		}
 	}
 
 	if err := d.Set("tags", dash.Tags); err != nil {
@@ -876,7 +888,7 @@ func dashboardUpdate(d *schema.ResourceData, meta interface{}) error {
 	}
 	log.Printf("[DEBUG] SignalFx: Update Dashboard Response: %v", dash)
 	// Since things worked, set the URL and move on
-	appURL, err := buildAppURL(config.CustomAppURL, DashboardAppPath+d.Id())
+	appURL, err := buildAppURL(config.CustomAppURL, DashboardAppPath+dash.Id)
 	if err != nil {
 		return err
 	}

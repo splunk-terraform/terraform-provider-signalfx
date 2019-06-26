@@ -411,7 +411,7 @@ func detectorCreate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 	// Since things worked, set the URL and move on
-	appURL, err := buildAppURL(config.CustomAppURL, DetectorAppPath+d.Id())
+	appURL, err := buildAppURL(config.CustomAppURL, DetectorAppPath+det.Id)
 	if err != nil {
 		return err
 	}
@@ -527,7 +527,7 @@ func detectorUpdate(d *schema.ResourceData, meta interface{}) error {
 	}
 	log.Printf("[DEBUG] Update Response: %v", det)
 	// Since things worked, set the URL and move on
-	appURL, err := buildAppURL(config.CustomAppURL, DetectorAppPath+d.Id())
+	appURL, err := buildAppURL(config.CustomAppURL, DetectorAppPath+det.Id)
 	if err != nil {
 		return err
 	}
