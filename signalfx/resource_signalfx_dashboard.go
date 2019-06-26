@@ -36,6 +36,7 @@ func dashboardResource() *schema.Resource {
 			"charts_resolution": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
+				Default:      dashboard.HIGHEST,
 				Description:  "Specifies the chart data display resolution for charts in this dashboard. Value can be one of \"default\", \"low\", \"high\", or \"highest\". default by default",
 				ValidateFunc: validateChartsResolution,
 			},
@@ -486,10 +487,10 @@ func getDashboardCharts(d *schema.ResourceData) []*dashboard.DashboardChart {
 		chart := chart.(map[string]interface{})
 		item := &dashboard.DashboardChart{
 			ChartId: chart["chart_id"].(string),
-			Column:  chart["column"].(int32),
-			Height:  chart["height"].(int32),
-			Row:     chart["row"].(int32),
-			Width:   chart["width"].(int32),
+			Column:  int32(chart["column"].(int)),
+			Height:  int32(chart["height"].(int)),
+			Row:     int32(chart["row"].(int)),
+			Width:   int32(chart["width"].(int)),
 		}
 
 		chartsList[i] = item
@@ -503,15 +504,15 @@ func getDashboardColumns(d *schema.ResourceData) []*dashboard.DashboardChart {
 	for _, column := range columns {
 		column := column.(map[string]interface{})
 
-		currentRow := column["start_row"].(int32)
-		columnNumber := column["column"].(int32)
+		currentRow := column["start_row"].(int)
+		columnNumber := column["column"].(int)
 		for _, chartID := range column["chart_ids"].([]interface{}) {
 			item := &dashboard.DashboardChart{
 				ChartId: chartID.(string),
-				Column:  columnNumber,
-				Height:  column["height"].(int32),
-				Row:     currentRow,
-				Width:   column["width"].(int32),
+				Column:  int32(columnNumber),
+				Height:  int32(column["height"].(int)),
+				Row:     int32(currentRow),
+				Width:   int32(column["width"].(int)),
 			}
 
 			currentRow++
@@ -677,7 +678,7 @@ func dashboardCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	debugOutput, _ := json.Marshal(payload)
-	log.Printf("[DEBUG] Dashboard Create Payload: %s", debugOutput)
+	log.Printf("[DEBUG] SignalFx: Dashboard Create Payload: %s", debugOutput)
 
 	dash, err := config.Client.CreateDashboard(payload)
 	if err != nil {
@@ -707,7 +708,7 @@ func dashboardRead(d *schema.ResourceData, meta interface{}) error {
 }
 
 func dashboardAPIToTF(d *schema.ResourceData, dash *dashboard.Dashboard) error {
-	log.Printf("[DEBUG] Got Dashboard %v", dash)
+	log.Printf("[DEBUG] SignalFx: Got Dashboard to enState %v", dash)
 
 	if err := d.Set("name", dash.Name); err != nil {
 		return err
@@ -732,7 +733,7 @@ func dashboardAPIToTF(d *schema.ResourceData, dash *dashboard.Dashboard) error {
 		chart["column"] = c.Column
 		charts[i] = chart
 	}
-	if err := d.Set("charts", charts); err != nil {
+	if err := d.Set("chart", charts); err != nil {
 		return err
 	}
 
@@ -744,9 +745,9 @@ func dashboardAPIToTF(d *schema.ResourceData, dash *dashboard.Dashboard) error {
 			tfFilters := make([]map[string]interface{}, len(filters.Sources))
 			for i, source := range filters.Sources {
 				tfFilter := make(map[string]interface{})
-				tfFilter["not"] = source.NOT
+				tfFilter["negated"] = source.NOT
 				tfFilter["property"] = source.Property
-				tfFilter["values"] = source.Value
+				tfFilter["values"] = flattenStringSliceToSet(source.Value)
 				tfFilter["apply_if_exist"] = source.ApplyIfExists
 				tfFilters[i] = tfFilter
 			}
@@ -790,9 +791,9 @@ func dashboardAPIToTF(d *schema.ResourceData, dash *dashboard.Dashboard) error {
 				dashVar["property"] = v.Property
 				dashVar["alias"] = v.Alias
 				dashVar["description"] = v.Description
-				dashVar["values"] = v.Value
+				dashVar["values"] = flattenStringSliceToSet(v.Value)
 				dashVar["value_required"] = v.Required
-				dashVar["values_suggested"] = v.PreferredSuggestions
+				dashVar["values_suggested"] = flattenStringSliceToSet(v.PreferredSuggestions)
 				dashVar["restricted_suggestions"] = v.Restricted
 				dashVar["replace_only"] = v.ReplaceOnly
 				dashVar["apply_if_exist"] = v.ApplyIfExists
@@ -825,7 +826,7 @@ func dashboardAPIToTF(d *schema.ResourceData, dash *dashboard.Dashboard) error {
 				for i, s := range v.Sources {
 					source := make(map[string]interface{})
 					source["negated"] = s.NOT
-					source["values"] = s.Value
+					source["values"] = flattenStringSliceToSet(s.Value)
 					source["property"] = s.Property
 					sources[i] = source
 				}
@@ -841,7 +842,7 @@ func dashboardAPIToTF(d *schema.ResourceData, dash *dashboard.Dashboard) error {
 			for i, s := range dash.SelectedEventOverlays {
 				source := make(map[string]interface{})
 				source["negated"] = s.NOT
-				source["values"] = s.Value
+				source["values"] = flattenStringSliceToSet(s.Value)
 				source["property"] = s.Property
 				sevs[i] = source
 			}
@@ -867,13 +868,13 @@ func dashboardUpdate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	debugOutput, _ := json.Marshal(payload)
-	log.Printf("[DEBUG] Update Payload: %s", string(debugOutput))
+	log.Printf("[DEBUG] SignalFx: Update Dashboard Payload: %s", string(debugOutput))
 
 	dash, err := config.Client.UpdateDashboard(d.Id(), payload)
 	if err != nil {
 		return err
 	}
-	log.Printf("[DEBUG] Update Response: %v", dash)
+	log.Printf("[DEBUG] SignalFx: Update Dashboard Response: %v", dash)
 	// Since things worked, set the URL and move on
 	appURL, err := buildAppURL(config.CustomAppURL, DashboardAppPath+d.Id())
 	if err != nil {

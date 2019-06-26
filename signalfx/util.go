@@ -107,6 +107,17 @@ func sendRequest(method string, url string, token string, payload []byte) (int, 
 	return resp.StatusCode, body, nil
 }
 
+func flattenStringSliceToSet(slice []string) *schema.Set {
+	if len(slice) < 1 {
+		return nil
+	}
+	values := make([]interface{}, len(slice))
+	for i, v := range slice {
+		values[i] = v
+	}
+	return schema.NewSet(schema.HashString, values)
+}
+
 /*
   Validates max_delay field; it must be between 0 and 900 seconds (15m in).
 */
@@ -310,7 +321,7 @@ func getLegendFieldOptions(d *schema.ResourceData) *chart.DataTableOptions {
 				f := f.(map[string]interface{})
 				legendOptions[i] = &chart.DataTableOptionsFields{
 					Property: f["property"].(string),
-					Enabled:  f["enbabled"].(bool),
+					Enabled:  f["enabled"].(bool),
 				}
 			}
 			return &chart.DataTableOptions{

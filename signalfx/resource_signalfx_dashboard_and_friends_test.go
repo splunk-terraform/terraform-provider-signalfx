@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
@@ -25,7 +26,19 @@ resource "signalfx_time_chart" "mychart0" {
     plot_type = "LineChart"
     show_data_markers = true
 
-    legend_fields_to_hide = ["collector", "prefix", "hostname"]
+    legend_options_fields = [
+			{
+				property = "collector"
+				enabled = false
+			}, {
+
+				property = "prefix"
+				enabled = false
+			}, {
+				property = "hostname"
+				enabled = false
+			}
+		]
     viz_options {
         label = "CPU Idle"
         axis = "left"
@@ -177,7 +190,20 @@ resource "signalfx_time_chart" "mychart0" {
     plot_type = "LineChart"
     show_data_markers = true
 
-    legend_fields_to_hide = ["collector", "prefix", "hostname"]
+		legend_options_fields = [
+			{
+				property = "collector"
+				enabled = false
+			}, {
+
+				property = "prefix"
+				enabled = false
+			}, {
+				property = "hostname"
+				enabled = false
+			}
+		]
+
     viz_options {
         label = "CPU Idle"
         axis = "left"
@@ -376,6 +402,8 @@ func testAccCheckDashboardGroupResourceExists(s *terraform.State) error {
 			return fmt.Errorf("Unexpected resource of type: %s", rs.Type)
 		}
 	}
+	// Add some time to let the API quiesce. This may be removed in the future.
+	time.Sleep(time.Duration(2) * time.Second)
 
 	return nil
 }

@@ -316,7 +316,7 @@ func testAccCheckDetectorResourceExists(s *terraform.State) error {
 		}
 	}
 	// Add some time to let the API quiesce. This may be removed in the future.
-	time.Sleep(time.Duration(2) * time.Second)
+	time.Sleep(time.Duration(3) * time.Second)
 
 	return nil
 }

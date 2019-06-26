@@ -314,6 +314,10 @@ github.com/signalfx/signalfx-go v0.0.0-20190625145813-eadf70386f54 h1:We1iayW5cQ
 github.com/signalfx/signalfx-go v0.0.0-20190625145813-eadf70386f54/go.mod h1:0Q0eueMWMC8r+jq+LJIGrspzvLF+hpWO9cggHlSpwVs=
 github.com/signalfx/signalfx-go v0.0.0-20190625194855-e4d58fd3159f h1:SGfl0k9UNfHc0AfoJirz2vPiM1FUIu5IbTjJdHHmKUY=
 github.com/signalfx/signalfx-go v0.0.0-20190625194855-e4d58fd3159f/go.mod h1:0Q0eueMWMC8r+jq+LJIGrspzvLF+hpWO9cggHlSpwVs=
+github.com/signalfx/signalfx-go v0.0.0-20190625202345-e73662e1e610 h1:1loUgxhwouFTc6s94FpaLXtEw5PLB0COxzX1ttOKwlM=
+github.com/signalfx/signalfx-go v0.0.0-20190625202345-e73662e1e610/go.mod h1:0Q0eueMWMC8r+jq+LJIGrspzvLF+hpWO9cggHlSpwVs=
+github.com/signalfx/signalfx-go v0.0.0-20190625203310-23d034c9714a h1:ipzd40ye3bCpqk4MAWyVEkgx4rLs4tGt13sZtCBQVHs=
+github.com/signalfx/signalfx-go v0.0.0-20190625203310-23d034c9714a/go.mod h1:0Q0eueMWMC8r+jq+LJIGrspzvLF+hpWO9cggHlSpwVs=
 github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d/go.mod h1:OnSkiWE9lh6wB0YB77sQom3nweQdgAjqCqsofrRNTgc=
 github.com/smartystreets/assertions v0.0.0-20190116191733-b6c0e53d7304/go.mod h1:OnSkiWE9lh6wB0YB77sQom3nweQdgAjqCqsofrRNTgc=
 github.com/smartystreets/assertions v1.0.0/go.mod h1:kHHU4qYBaI3q23Pp3VPrmWhuIUrLW/7eUrw0BU5VaoM=

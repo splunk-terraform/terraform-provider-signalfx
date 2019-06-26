@@ -19,7 +19,7 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/hashstructure v1.0.0 // indirect
 	github.com/signalfx/golib v2.4.0+incompatible // indirect
-	github.com/signalfx/signalfx-go v0.0.0-20190625194855-e4d58fd3159f
+	github.com/signalfx/signalfx-go v0.0.0-20190625203310-23d034c9714a
 	github.com/smartystreets/assertions v1.0.0 // indirect
 	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/stretchr/testify v1.3.0

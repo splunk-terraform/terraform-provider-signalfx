@@ -265,7 +265,7 @@ func heatmapchartCreate(d *schema.ResourceData, meta interface{}) error {
 
 	url, err := buildURL(config.APIURL, CHART_API_PATH, map[string]string{})
 	if err != nil {
-		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
+		return fmt.Errorf("[DEBUG] SignalFx: Error constructing API URL: %s", err.Error())
 	}
 
 	err = resourceCreate(url, config.AuthToken, payload, d)
@@ -286,7 +286,7 @@ func heatmapchartRead(d *schema.ResourceData, meta interface{}) error {
 	path := fmt.Sprintf("%s/%s", CHART_API_PATH, d.Id())
 	url, err := buildURL(config.APIURL, path, map[string]string{})
 	if err != nil {
-		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
+		return fmt.Errorf("[DEBUG] SignalFx: Error constructing API URL: %s", err.Error())
 	}
 
 	return resourceRead(url, config.AuthToken, d)
@@ -302,7 +302,7 @@ func heatmapchartUpdate(d *schema.ResourceData, meta interface{}) error {
 	path := fmt.Sprintf("%s/%s", CHART_API_PATH, d.Id())
 	url, err := buildURL(config.APIURL, path, map[string]string{})
 	if err != nil {
-		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
+		return fmt.Errorf("[DEBUG] SignalFx: Error constructing API URL: %s", err.Error())
 	}
 
 	return resourceUpdate(url, config.AuthToken, payload, d)
@@ -313,7 +313,7 @@ func heatmapchartDelete(d *schema.ResourceData, meta interface{}) error {
 	path := fmt.Sprintf("%s/%s", CHART_API_PATH, d.Id())
 	url, err := buildURL(config.APIURL, path, map[string]string{})
 	if err != nil {
-		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
+		return fmt.Errorf("[DEBUG] SignalFx: Error constructing API URL: %s", err.Error())
 	}
 
 	return resourceDelete(url, config.AuthToken, d)

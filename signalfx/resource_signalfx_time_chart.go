@@ -119,6 +119,7 @@ func timeChartResource() *schema.Resource {
 			"color_by": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
+				Default:     "Dimension",
 				Description: "(Dimension by default) Must be \"Dimension\" or \"Metric\"",
 			},
 			"minimum_resolution": &schema.Schema{
@@ -165,13 +166,13 @@ func timeChartResource() *schema.Resource {
 						"min_value": &schema.Schema{
 							Type:        schema.TypeFloat,
 							Optional:    true,
-							Default:     -math.MaxFloat32,
+							Default:     -math.MaxFloat64,
 							Description: "The minimum value for the right axis",
 						},
 						"max_value": &schema.Schema{
 							Type:        schema.TypeFloat,
 							Optional:    true,
-							Default:     math.MaxFloat32,
+							Default:     math.MaxFloat64,
 							Description: "The maximum value for the right axis",
 						},
 						"label": &schema.Schema{
@@ -182,7 +183,7 @@ func timeChartResource() *schema.Resource {
 						"high_watermark": &schema.Schema{
 							Type:        schema.TypeFloat,
 							Optional:    true,
-							Default:     math.MaxFloat32,
+							Default:     math.MaxFloat64,
 							Description: "A line to draw as a high watermark",
 						},
 						"high_watermark_label": &schema.Schema{
@@ -193,7 +194,7 @@ func timeChartResource() *schema.Resource {
 						"low_watermark": &schema.Schema{
 							Type:        schema.TypeFloat,
 							Optional:    true,
-							Default:     -math.MaxFloat32,
+							Default:     -math.MaxFloat64,
 							Description: "A line to draw as a low watermark",
 						},
 						"low_watermark_label": &schema.Schema{
@@ -537,11 +538,15 @@ func getAxesOptions(d *schema.ResourceData) []*chart.Axes {
 		tfRightAxisOpts := tfAxisOpts.(*schema.Set).List()[0]
 		tfOpt := tfRightAxisOpts.(map[string]interface{})
 		axesListopts[1] = getSingleAxisOptions(tfOpt)
+	} else {
+		axesListopts[1] = &chart.Axes{}
 	}
 	if tfAxisOpts, ok := d.GetOk("axis_left"); ok {
 		tfLeftAxisOpts := tfAxisOpts.(*schema.Set).List()[0]
 		tfOpt := tfLeftAxisOpts.(map[string]interface{})
 		axesListopts[0] = getSingleAxisOptions(tfOpt)
+	} else {
+		axesListopts[0] = &chart.Axes{}
 	}
 	return axesListopts
 }
@@ -550,7 +555,7 @@ func getSingleAxisOptions(axisOpt map[string]interface{}) *chart.Axes {
 	var axis *chart.Axes
 
 	if val, ok := axisOpt["min_value"]; ok {
-		if val.(float64) != -math.MaxFloat32 {
+		if val.(float64) != -math.MaxFloat64 {
 			if axis == nil {
 				axis = &chart.Axes{}
 			}
@@ -558,7 +563,7 @@ func getSingleAxisOptions(axisOpt map[string]interface{}) *chart.Axes {
 		}
 	}
 	if val, ok := axisOpt["max_value"]; ok {
-		if val.(float64) != math.MaxFloat32 {
+		if val.(float64) != math.MaxFloat64 {
 			if axis == nil {
 				axis = &chart.Axes{}
 			}
@@ -575,35 +580,35 @@ func getSingleAxisOptions(axisOpt map[string]interface{}) *chart.Axes {
 		if axis == nil {
 			axis = &chart.Axes{}
 		}
-		if val.(float64) != math.MaxFloat32 {
+		if val.(float64) != math.MaxFloat64 {
 			if axis == nil {
 				axis = &chart.Axes{}
 			}
-			axis.HighWaterMark = float32(val.(float64))
+			axis.HighWatermark = float32(val.(float64))
 		}
 	}
 	if val, ok := axisOpt["high_watermark_label"]; ok {
 		if axis == nil {
 			axis = &chart.Axes{}
 		}
-		axis.HighWaterMarkLabel = val.(string)
+		axis.HighWatermarkLabel = val.(string)
 	}
 	if val, ok := axisOpt["low_watermark"]; ok {
 		if axis == nil {
 			axis = &chart.Axes{}
 		}
-		if val.(float64) != -math.MaxFloat32 {
+		if val.(float64) != -math.MaxFloat64 {
 			if axis == nil {
 				axis = &chart.Axes{}
 			}
-			axis.LowWaterMark = float32(val.(float64))
+			axis.LowWatermark = float32(val.(float64))
 		}
 	}
 	if val, ok := axisOpt["low_watermark_label"]; ok {
 		if axis == nil {
 			axis = &chart.Axes{}
 		}
-		axis.LowWaterMarkLabel = val.(string)
+		axis.LowWatermarkLabel = val.(string)
 	}
 
 	return axis
@@ -710,7 +715,7 @@ func timechartCreate(d *schema.ResourceData, meta interface{}) error {
 	payload := getPayloadTimeChart(d)
 
 	debugOutput, _ := json.Marshal(payload)
-	log.Printf("[DEBUG] Create Payload: %s", string(debugOutput))
+	log.Printf("[DEBUG] SignalFx: Create Time Chart Payload: %s", string(debugOutput))
 
 	chart, err := config.Client.CreateChart(payload)
 	if err != nil {
@@ -740,26 +745,23 @@ func timechartRead(d *schema.ResourceData, meta interface{}) error {
 	return timechartAPIToTF(d, chart)
 }
 
-func timechartAPIToTF(d *schema.ResourceData, chart *chart.Chart) error {
-	log.Printf("[DEBUG] Got Time Chart %v", chart)
+func timechartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
+	log.Printf("[DEBUG] SignalFx: Got Time Chart to enState %v", c)
 
-	if err := d.Set("name", chart.Name); err != nil {
+	if err := d.Set("name", c.Name); err != nil {
 		return err
 	}
-	if err := d.Set("description", chart.Description); err != nil {
+	if err := d.Set("description", c.Description); err != nil {
 		return err
 	}
-	if err := d.Set("program_text", chart.ProgramText); err != nil {
+	if err := d.Set("program_text", c.ProgramText); err != nil {
 		return err
 	}
-	if err := d.Set("tags", chart.Tags); err != nil {
+	if err := d.Set("tags", c.Tags); err != nil {
 		return err
 	}
-	options := chart.Options
+	options := c.Options
 
-	if err := d.Set("axis_precision", options.AxisPrecision); err != nil {
-		return err
-	}
 	if err := d.Set("axes_include_zero", options.IncludeZero); err != nil {
 		return err
 	}
@@ -800,11 +802,24 @@ func timechartAPIToTF(d *schema.ResourceData, chart *chart.Chart) error {
 	}
 
 	if len(options.Axes) > 0 {
-		if err := d.Set("left_axis", axisToMap(options.Axes[0])); err != nil {
-			return err
+		axisLeft := options.Axes[0]
+		// We need to verify that there are real axes and not just nil
+		// or zeroed structs, so we do comparison before setting each.
+		if (axisLeft == nil || *axisLeft == chart.Axes{}) {
+			log.Printf("[DEBUG] SignalFx: Axis Right is nil or zero, skipping")
+		} else {
+			if err := d.Set("axis_left", axisToMap(axisLeft)); err != nil {
+				return err
+			}
 		}
-		if err := d.Set("right_axis", axisToMap(options.Axes[0])); err != nil {
-			return err
+		axisRight := options.Axes[1]
+		if (axisRight == nil || *axisRight == chart.Axes{}) {
+			log.Printf("[DEBUG] SignalFx: Axis Right is nil or zero, skipping")
+		} else {
+			log.Printf("[DEBUG] SignalFx: Axis Right is real: %v", axisRight)
+			if err := d.Set("axis_right", axisToMap(axisRight)); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -822,7 +837,7 @@ func timechartAPIToTF(d *schema.ResourceData, chart *chart.Chart) error {
 
 	if options.Time != nil {
 		if options.Time.Type == "relative" {
-			if err := d.Set("time_range", options.Time.Range); err != nil {
+			if err := d.Set("time_range", options.Time.Range/1000); err != nil {
 				return err
 			}
 		} else {
@@ -871,16 +886,18 @@ func timechartAPIToTF(d *schema.ResourceData, chart *chart.Chart) error {
 	return nil
 }
 
-func axisToMap(axis *chart.Axes) *map[string]interface{} {
+func axisToMap(axis *chart.Axes) []*map[string]interface{} {
 	if axis != nil {
-		return &map[string]interface{}{
-			"high_watermark":       axis.HighWaterMark,
-			"high_watermark_label": axis.HighWaterMarkLabel,
-			"label":                axis.Label,
-			"low_watermark":        axis.LowWaterMark,
-			"low_watermark_label":  axis.LowWaterMarkLabel,
-			"max":                  axis.Max,
-			"mine":                 axis.Min,
+		return []*map[string]interface{}{
+			&map[string]interface{}{
+				"high_watermark":       axis.HighWatermark,
+				"high_watermark_label": axis.HighWatermarkLabel,
+				"label":                axis.Label,
+				"low_watermark":        axis.LowWatermark,
+				"low_watermark_label":  axis.LowWatermarkLabel,
+				"max_value":            axis.Max,
+				"min_value":            axis.Min,
+			},
 		}
 	}
 	return nil
@@ -915,7 +932,7 @@ func timechartUpdate(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return err
 	}
-	log.Printf("[DEBUG] Update Response: %v", chart)
+	log.Printf("[DEBUG] SignalFx: Update Time Chart Response: %v", chart)
 
 	// Since things worked, set the URL and move on
 	appURL, err := buildAppURL(config.CustomAppURL, CHART_APP_PATH+d.Id())
@@ -934,7 +951,7 @@ func timechartDelete(d *schema.ResourceData, meta interface{}) error {
 	path := fmt.Sprintf("%s/%s", CHART_API_PATH, d.Id())
 	url, err := buildURL(config.APIURL, path, map[string]string{})
 	if err != nil {
-		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
+		return fmt.Errorf("[DEBUG] SignalFx: Error constructing API URL: %s", err.Error())
 	}
 
 	return resourceDelete(url, config.AuthToken, d)
