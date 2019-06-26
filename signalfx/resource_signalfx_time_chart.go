@@ -114,6 +114,7 @@ func timeChartResource() *schema.Resource {
 			"unit_prefix": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
+				Default:     "Metric",
 				Description: "(Metric by default) Must be \"Metric\" or \"Binary\"",
 			},
 			"color_by": &schema.Schema{
@@ -136,6 +137,7 @@ func timeChartResource() *schema.Resource {
 			"disable_sampling": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
+				Default:     false,
 				Description: "(false by default) If false, samples a subset of the output MTS, which improves UI performance",
 			},
 			"time_range": &schema.Schema{
@@ -293,6 +295,7 @@ func timeChartResource() *schema.Resource {
 			"axes_precision": &schema.Schema{
 				Type:        schema.TypeInt,
 				Optional:    true,
+				Default:     3,
 				Description: "Force a specific number of significant digits in the y-axis",
 			},
 			"axes_include_zero": &schema.Schema{
@@ -633,7 +636,7 @@ func getTimeChartOptions(d *schema.ResourceData) *chart.Options {
 	}
 
 	if val, ok := d.GetOk("axes_precision"); ok {
-		options.AxisPrecision = val.(int32)
+		options.AxisPrecision = int32(val.(int))
 	}
 	if val, ok := d.GetOk("axes_include_zero"); ok {
 		options.IncludeZero = val.(bool)
@@ -644,13 +647,13 @@ func getTimeChartOptions(d *schema.ResourceData) *chart.Options {
 		if programOptions == nil {
 			programOptions = &chart.GeneralOptions{}
 		}
-		programOptions.MinimumResolution = val.(int32) * 1000
+		programOptions.MinimumResolution = int32(val.(int) * 1000)
 	}
 	if val, ok := d.GetOk("max_delay"); ok {
 		if programOptions == nil {
 			programOptions = &chart.GeneralOptions{}
 		}
-		programOptions.MaxDelay = val.(int32) * 1000
+		programOptions.MaxDelay = int32(val.(int) * 1000)
 	}
 	if val, ok := d.GetOk("disable_sampling"); ok {
 		if programOptions == nil {
@@ -824,10 +827,10 @@ func timechartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 	}
 
 	if options.ProgramOptions != nil {
-		if err := d.Set("minimum_resolution", options.ProgramOptions.MinimumResolution); err != nil {
+		if err := d.Set("minimum_resolution", options.ProgramOptions.MinimumResolution/1000); err != nil {
 			return err
 		}
-		if err := d.Set("max_delay", options.ProgramOptions.MaxDelay); err != nil {
+		if err := d.Set("max_delay", options.ProgramOptions.MaxDelay/1000); err != nil {
 			return err
 		}
 		if err := d.Set("disable_sampling", options.ProgramOptions.DisableSampling); err != nil {

@@ -13,64 +13,7 @@ import (
 )
 
 const newDashConfig = `
-resource "signalfx_time_chart" "mychart0" {
-    name = "CPU Total Idle"
-
-    program_text = <<-EOF
-        myfilters = filter("shc_name", "prod") and filter("role", "splunk_searchhead")
-        data("cpu.total.idle", filter=myfilters).publish(label="CPU Idle")
-        EOF
-
-    time_range = 900
-
-    plot_type = "LineChart"
-    show_data_markers = true
-
-    legend_options_fields = [
-			{
-				property = "collector"
-				enabled = false
-			}, {
-
-				property = "prefix"
-				enabled = false
-			}, {
-				property = "hostname"
-				enabled = false
-			}
-		]
-    viz_options {
-        label = "CPU Idle"
-        axis = "left"
-        color = "orange"
-    }
-
-    axis_left {
-        label = "CPU Total Idle"
-        low_watermark = 1000
-    }
-}
-
-resource "signalfx_list_chart" "mylistchart0" {
-    name = "CPU Total Idle - List"
-
-    program_text = <<-EOF
-    myfilters = filter("cluster_name", "prod") and filter("role", "search")
-    data("cpu.total.idle", filter=myfilters).publish()
-    EOF
-
-    description = "Very cool List Chart"
-
-    color_by = "Metric"
-    max_delay = 2
-    disable_sampling = true
-    refresh_interval = 1
-    legend_fields_to_hide = ["collector", "host"]
-    max_precision = 2
-    sort_by = "-value"
- }
-
- resource "signalfx_single_value_chart" "mysvchart0" {
+resource "signalfx_single_value_chart" "mysvchart0" {
     name = "CPU Total Idle - Single Value"
 
     program_text = <<-EOF
@@ -181,16 +124,6 @@ resource "signalfx_dashboard" "mydashboard0" {
       }
     }
     chart {
-        chart_id = "${signalfx_time_chart.mychart0.id}"
-        width = 12
-        height = 1
-    }
-		chart {
-        chart_id = "${signalfx_list_chart.mylistchart0.id}"
-        width = 12
-        height = 1
-    }
-    chart {
         chart_id = "${signalfx_single_value_chart.mysvchart0.id}"
         width = 12
         height = 1
@@ -270,6 +203,9 @@ func TestAccCreateDashboardGroup(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "chart.#", "5"),
 					// We're not testing each chart because they aren't stable, TODO?
 
+					// Dashboard Group
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboardgroup0", "description", "Cool dashboard group"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboardgroup0", "name", "My team dashboard group"),
 				),
 			},
 			// Update Everything

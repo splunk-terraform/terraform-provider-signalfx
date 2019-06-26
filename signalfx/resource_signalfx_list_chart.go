@@ -30,11 +30,13 @@ func listChartResource() *schema.Resource {
 			"unit_prefix": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
+				Default:     "Metric",
 				Description: "(Metric by default) Must be \"Metric\" or \"Binary\"",
 			},
 			"color_by": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
+				Default:     "Dimension",
 				Description: "(Metric by default) Must be \"Metric\" or \"Dimension\"",
 			},
 			"max_delay": &schema.Schema{
@@ -46,6 +48,7 @@ func listChartResource() *schema.Resource {
 			"disable_sampling": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
+				Default:     false,
 				Description: "(false by default) If false, samples a subset of the output MTS, which improves UI performance",
 			},
 			"sort_by": &schema.Schema{
@@ -60,10 +63,32 @@ func listChartResource() *schema.Resource {
 				Description: "How often (in seconds) to refresh the values of the list",
 			},
 			"legend_fields_to_hide": &schema.Schema{
-				Type:        schema.TypeSet,
-				Optional:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
-				Description: "List of properties that shouldn't be displayed in the chart legend (i.e. dimension names)",
+				Type:          schema.TypeSet,
+				Optional:      true,
+				ConflictsWith: []string{"legend_options_fields"},
+				Elem:          &schema.Schema{Type: schema.TypeString},
+				Description:   "List of properties that shouldn't be displayed in the chart legend (i.e. dimension names)",
+			},
+			"legend_options_fields": &schema.Schema{
+				Type: schema.TypeList,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"property": &schema.Schema{
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "The name of a property to hide or show in the data table.",
+						},
+						"enabled": &schema.Schema{
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Default:     true,
+							Description: "(true by default) Determines if this property is displayed in the data table.",
+						},
+					},
+				},
+				Optional:      true,
+				ConflictsWith: []string{"legend_fields_to_hide"},
+				Description:   "List of property and enabled flags to control the order and presence of datatable labels in a chart.",
 			},
 			"max_precision": &schema.Schema{
 				Type:        schema.TypeInt,
@@ -73,6 +98,7 @@ func listChartResource() *schema.Resource {
 			"secondary_visualization": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
+				Default:      "Sparkline",
 				Description:  "(false by default) What kind of secondary visualization to show (None, Radial, Linear, Sparkline)",
 				ValidateFunc: validateSecondaryVisualization,
 			},
