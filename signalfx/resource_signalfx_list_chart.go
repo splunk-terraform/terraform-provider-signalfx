@@ -257,8 +257,60 @@ func listchartCreate(d *schema.ResourceData, meta interface{}) error {
 	return listchartAPIToTF(d, chart)
 }
 
-func listchartAPIToTF(d *schema.ResourceData, chart *chart.Chart) error {
-	log.Printf("[DEBUG] SignalFx: Got List Chart to enState %v", chart)
+func listchartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
+	log.Printf("[DEBUG] SignalFx: Got List Chart to enState %v", c)
+
+	if err := d.Set("name", c.Name); err != nil {
+		return err
+	}
+	if err := d.Set("description", c.Description); err != nil {
+		return err
+	}
+	if err := d.Set("program_text", c.ProgramText); err != nil {
+		return err
+	}
+
+	options := c.Options
+	if err := d.Set("unit_prefix", options.UnitPrefix); err != nil {
+		return err
+	}
+	if err := d.Set("color_by", options.ColorBy); err != nil {
+		return err
+	}
+	if err := d.Set("refresh_interval", options.RefreshInterval/1000); err != nil {
+		return err
+	}
+	if err := d.Set("max_precision", options.MaximumPrecision); err != nil {
+		return err
+	}
+	if err := d.Set("secondary_visualization", options.SecondaryVisualization); err != nil {
+		return err
+	}
+	if err := d.Set("sort_by", options.SortBy); err != nil {
+		return err
+	}
+
+	if options.LegendOptions != nil && len(options.LegendOptions.Fields) > 0 {
+		fields := make([]map[string]interface{}, len(options.LegendOptions.Fields))
+		for i, lo := range options.LegendOptions.Fields {
+			fields[i] = map[string]interface{}{
+				"property": lo.Property,
+				"enabled":  lo.Enabled,
+			}
+		}
+		if err := d.Set("legend_options_fields", fields); err != nil {
+			return err
+		}
+	}
+
+	if options.ProgramOptions != nil {
+		if err := d.Set("max_delay", options.ProgramOptions.MaxDelay/1000); err != nil {
+			return err
+		}
+		if err := d.Set("disable_sampling", options.ProgramOptions.DisableSampling); err != nil {
+			return err
+		}
+	}
 
 	return nil
 }

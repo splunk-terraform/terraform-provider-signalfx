@@ -780,6 +780,9 @@ func timechartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 	if err := d.Set("stacked", options.Stacked); err != nil {
 		return err
 	}
+	if err := d.Set("unit_prefix", options.UnitPrefix); err != nil {
+		return err
+	}
 
 	if options.AreaChartOptions != nil {
 		if err := d.Set("show_data_markers", options.AreaChartOptions.ShowDataMarkers); err != nil {

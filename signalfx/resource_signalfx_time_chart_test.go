@@ -145,7 +145,7 @@ resource "signalfx_time_chart" "mychartXX" {
 }
 `
 
-func TestAccCreateTimeChart(t *testing.T) {
+func TestAccCreateUpdateTimeChart(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,

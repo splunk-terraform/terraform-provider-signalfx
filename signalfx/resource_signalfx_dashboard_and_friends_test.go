@@ -142,7 +142,7 @@ resource "signalfx_dashboard" "mydashboard0" {
 }
 `
 
-func TestAccCreateDashboardGroup(t *testing.T) {
+func TestAccCreateUpdateDashboardGroup(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,

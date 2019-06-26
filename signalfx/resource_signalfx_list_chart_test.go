@@ -66,7 +66,7 @@ resource "signalfx_list_chart" "mychartLX" {
 }
 `
 
-func TestAccCreateListChart(t *testing.T) {
+func TestAccCreateUpdateListChart(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
