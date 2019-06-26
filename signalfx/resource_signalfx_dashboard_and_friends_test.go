@@ -74,6 +74,7 @@ resource "signalfx_text_chart" "mynote0" {
 resource "signalfx_dashboard_group" "mydashboardgroup0" {
     name = "My team dashboard group"
     description = "Cool dashboard group"
+		// No teams test cuz there's no teams resource yet!
 }
 
 resource "signalfx_dashboard" "mydashboard0" {
@@ -200,12 +201,12 @@ func TestAccCreateDashboardGroup(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "selected_event_overlay.0.type", "detectorEvents"),
 
 					// Charts
-					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "chart.#", "5"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "chart.#", "3"),
 					// We're not testing each chart because they aren't stable, TODO?
 
 					// Dashboard Group
-					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboardgroup0", "description", "Cool dashboard group"),
-					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboardgroup0", "name", "My team dashboard group"),
+					resource.TestCheckResourceAttr("signalfx_dashboard_group.mydashboardgroup0", "description", "Cool dashboard group"),
+					resource.TestCheckResourceAttr("signalfx_dashboard_group.mydashboardgroup0", "name", "My team dashboard group"),
 				),
 			},
 			// Update Everything

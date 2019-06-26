@@ -273,9 +273,6 @@ func TestAccCreateUpdateDetector(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "show_data_markers", "true"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "show_event_lines", "true"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "disable_sampling", "true"),
-					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "tags.#", "2"),
-					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "tags.0", "a"),
-					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "tags.1", "b"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.#", "2"),
 					// Rule #1
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1162180415.description", "NEW maximum > 60 for 5m"),
