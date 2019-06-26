@@ -535,8 +535,7 @@ func detectorUpdate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 	d.SetId(det.Id)
-	v := detectorAPIToTF(d, det)
-	return v
+	return detectorAPIToTF(d, det)
 }
 
 func detectorDelete(d *schema.ResourceData, meta interface{}) error {
