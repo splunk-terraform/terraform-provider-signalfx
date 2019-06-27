@@ -26,26 +26,23 @@ func eventFeedChartResource() *schema.Resource {
 				Optional:    true,
 				Description: "Description of the chart (Optional)",
 			},
-			"viz_options": &schema.Schema{
-				Type:        schema.TypeSet,
-				Deprecated:  "signalfx_event_feed_chart.viz_options is being removed in the next release",
-				Optional:    true,
-				Description: "Plot-level customization options, associated with a publish statement",
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"label": &schema.Schema{
-							Type:        schema.TypeString,
-							Required:    true,
-							Description: "The label used in the publish statement that displays the plot (metric time series data) you want to customize",
-						},
-						"color": &schema.Schema{
-							Type:         schema.TypeString,
-							Optional:     true,
-							Description:  "Color to use",
-							ValidateFunc: validatePerSignalColor,
-						},
-					},
-				},
+			"time_range": &schema.Schema{
+				Type:          schema.TypeInt,
+				Optional:      true,
+				Description:   "Seconds to display in the visualization. This is a rolling range from the current time. Example: 8600 = `-1h`",
+				ConflictsWith: []string{"start_time", "end_time"},
+			},
+			"start_time": &schema.Schema{
+				Type:          schema.TypeInt,
+				Optional:      true,
+				Description:   "Seconds since epoch to start the visualization",
+				ConflictsWith: []string{"time_range"},
+			},
+			"end_time": &schema.Schema{
+				Type:          schema.TypeInt,
+				Optional:      true,
+				Description:   "Seconds since epoch to end the visualization",
+				ConflictsWith: []string{"time_range"},
 			},
 			"url": &schema.Schema{
 				Type:        schema.TypeString,
@@ -65,11 +62,29 @@ func eventFeedChartResource() *schema.Resource {
   Use Resource object to construct json payload in order to create an event feed chart
 */
 func getPayloadEventFeedChart(d *schema.ResourceData) *chart.CreateUpdateChartRequest {
+	var timeOptions *chart.TimeDisplayOptions
+	if val, ok := d.GetOk("time_range"); ok {
+		timeOptions = &chart.TimeDisplayOptions{
+			Range: int64(val.(int) * 1000),
+			Type:  "relative",
+		}
+	}
+	if val, ok := d.GetOk("start_time"); ok {
+		timeOptions = &chart.TimeDisplayOptions{
+			Start: int64(val.(int) * 1000),
+			Type:  "absolute",
+		}
+		if val, ok := d.GetOk("end_time"); ok {
+			timeOptions.End = int64(val.(int) * 1000)
+		}
+	}
+
 	return &chart.CreateUpdateChartRequest{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
 		ProgramText: d.Get("program_text").(string),
 		Options: &chart.Options{
+			Time: timeOptions,
 			Type: "Event",
 		},
 	}

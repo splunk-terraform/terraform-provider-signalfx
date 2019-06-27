@@ -221,8 +221,12 @@ func getSingleValueChartOptions(d *schema.ResourceData) *chart.Options {
 			options.SecondaryVisualization = secondaryVisualization
 		}
 	}
-	options.TimestampHidden = d.Get("is_timestamp_hidden").(bool)
-	options.ShowSparkLine = d.Get("show_spark_line").(bool)
+	if isTimestampHidden, ok := d.GetOk("is_timestamp_hidden"); ok {
+		options.TimestampHidden = isTimestampHidden.(bool)
+	}
+	if showSparkLine, ok := d.GetOk("show_spark_line"); ok {
+		options.ShowSparkLine = showSparkLine.(bool)
+	}
 
 	return options
 }

@@ -324,6 +324,12 @@ github.com/signalfx/signalfx-go v0.0.0-20190627012447-6414267874a3 h1:6iqad7taWM
 github.com/signalfx/signalfx-go v0.0.0-20190627012447-6414267874a3/go.mod h1:0Q0eueMWMC8r+jq+LJIGrspzvLF+hpWO9cggHlSpwVs=
 github.com/signalfx/signalfx-go v0.0.0-20190627164450-e79926af5e34 h1:Ph+9m11ONcDdUHbcSDB5hNVNZ4Edq298Hh6vJVlYRNc=
 github.com/signalfx/signalfx-go v0.0.0-20190627164450-e79926af5e34/go.mod h1:0Q0eueMWMC8r+jq+LJIGrspzvLF+hpWO9cggHlSpwVs=
+github.com/signalfx/signalfx-go v0.0.0-20190627200130-99c93bfe71a6 h1:IgjR1htm4n5ZIqCa5pK0HMS+H1Gz1VoG67wrWrXvttQ=
+github.com/signalfx/signalfx-go v0.0.0-20190627200130-99c93bfe71a6/go.mod h1:0Q0eueMWMC8r+jq+LJIGrspzvLF+hpWO9cggHlSpwVs=
+github.com/signalfx/signalfx-go v0.0.0-20190627203222-22ad41771175 h1:VowA15HHUwQXjNMNK0lDqwISMRnxqh5gH5sYEkT0T0c=
+github.com/signalfx/signalfx-go v0.0.0-20190627203222-22ad41771175/go.mod h1:0Q0eueMWMC8r+jq+LJIGrspzvLF+hpWO9cggHlSpwVs=
+github.com/signalfx/signalfx-go v0.0.0-20190627212220-0288248cbbb3 h1:Xops4sil25jo3TkA4xewOlatTpDM9qTsIsmno8Uus78=
+github.com/signalfx/signalfx-go v0.0.0-20190627212220-0288248cbbb3/go.mod h1:0Q0eueMWMC8r+jq+LJIGrspzvLF+hpWO9cggHlSpwVs=
 github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d/go.mod h1:OnSkiWE9lh6wB0YB77sQom3nweQdgAjqCqsofrRNTgc=
 github.com/smartystreets/assertions v0.0.0-20190116191733-b6c0e53d7304/go.mod h1:OnSkiWE9lh6wB0YB77sQom3nweQdgAjqCqsofrRNTgc=
 github.com/smartystreets/assertions v1.0.0/go.mod h1:kHHU4qYBaI3q23Pp3VPrmWhuIUrLW/7eUrw0BU5VaoM=
@@ -408,6 +414,9 @@ golang.org/x/tools v0.0.0-20190625160430-252024b82959/go.mod h1:/rFqwRUd4F7ZHNgw
 golang.org/x/tools v0.0.0-20190626181139-cf32dd832e4b/go.mod h1:/rFqwRUd4F7ZHNgwSSTFct+R/Kf4OFW1sUzUTQQTgfc=
 golang.org/x/tools v0.0.0-20190626234152-47ea21585cd7/go.mod h1:F+l5rz3/Uc0BJWNSxc0r6FcPZ3lxfduWytgpR5peIOQ=
 golang.org/x/tools v0.0.0-20190627151935-0707a68ae860/go.mod h1:/rFqwRUd4F7ZHNgwSSTFct+R/Kf4OFW1sUzUTQQTgfc=
+golang.org/x/tools v0.0.0-20190627185803-429858501117/go.mod h1:/rFqwRUd4F7ZHNgwSSTFct+R/Kf4OFW1sUzUTQQTgfc=
+golang.org/x/tools v0.0.0-20190627202423-aac0b97cf93b/go.mod h1:/rFqwRUd4F7ZHNgwSSTFct+R/Kf4OFW1sUzUTQQTgfc=
+golang.org/x/tools v0.0.0-20190627203933-19ff4fff8850/go.mod h1:/rFqwRUd4F7ZHNgwSSTFct+R/Kf4OFW1sUzUTQQTgfc=
 golang.org/x/tools/gopls v0.1.0/go.mod h1:p8Q0IUu6EEeGxqmoN/g6Et3gReLCGA7PtNRdyOxcWJE=
 google.golang.org/api v0.0.0-20171005000305-7a7376eff6a5 h1:PDkJGYjSvxJyevtZRGmBSO+HjbIKuqYEEc8gB51or4o=
 google.golang.org/api v0.0.0-20171005000305-7a7376eff6a5/go.mod h1:4mhQ8q/RsB7i+udVvVy5NUi08OU8ZlA0gRVgrF7VFY0=

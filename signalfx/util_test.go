@@ -44,6 +44,16 @@ func TestGetNameFromChartColorsByIndex(t *testing.T) {
 	assert.Error(t, err, "Expected error for missing color index")
 }
 
+func TestGetHexFromChartColorsByName(t *testing.T) {
+	name, err := getHexFromChartColorsByName("cerise")
+	assert.Equal(t, "#e9008a", name, "Expected color name")
+	assert.NoError(t, err, "Expected no error for known color")
+
+	name, err = getHexFromChartColorsByName("fart")
+	assert.Equal(t, "", name, "Expected empty string for missing index")
+	assert.Error(t, err, "Expected error for missing color index")
+}
+
 func TestGetNameFromPaletteColorsByIndex(t *testing.T) {
 	name, err := getNameFromPaletteColorsByIndex(2)
 	assert.Equal(t, "azure", name, "Expected color name")

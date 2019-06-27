@@ -17,6 +17,8 @@ resource "signalfx_event_feed_chart" "mychartEVX" {
   name = "Fart Event Feed"
   description = "Farts"
 	program_text = "A = events(eventType='Fart Testing').publish(label='A')"
+
+  time_range = 900
 }
 `
 
@@ -25,6 +27,8 @@ resource "signalfx_event_feed_chart" "mychartEVX" {
   name = "Fart Event Feed NEW"
   description = "Farts NEW"
 	program_text = "A = events(eventType='Fart Testing').publish(label='A')"
+
+  time_range = 900
 }
 `
 
@@ -42,6 +46,7 @@ func TestAccCreateUpdateEventFeedChart(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_event_feed_chart.mychartEVX", "name", "Fart Event Feed"),
 					resource.TestCheckResourceAttr("signalfx_event_feed_chart.mychartEVX", "description", "Farts"),
 					resource.TestCheckResourceAttr("signalfx_event_feed_chart.mychartEVX", "program_text", "A = events(eventType='Fart Testing').publish(label='A')"),
+					resource.TestCheckResourceAttr("signalfx_event_feed_chart.mychartEVX", "time_range", "900"),
 				),
 			},
 			// Update Everything

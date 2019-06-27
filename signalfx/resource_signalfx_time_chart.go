@@ -741,11 +741,11 @@ func timechartCreate(d *schema.ResourceData, meta interface{}) error {
 func timechartRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 
-	chart, err := config.Client.GetChart(d.Id())
+	c, err := config.Client.GetChart(d.Id())
 	if err != nil {
 		return err
 	}
-	return timechartAPIToTF(d, chart)
+	return timechartAPIToTF(d, c)
 }
 
 func timechartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
@@ -954,13 +954,8 @@ func timechartUpdate(d *schema.ResourceData, meta interface{}) error {
 
 func timechartDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	path := fmt.Sprintf("%s/%s", CHART_API_PATH, d.Id())
-	url, err := buildURL(config.APIURL, path, map[string]string{})
-	if err != nil {
-		return fmt.Errorf("[DEBUG] SignalFx: Error constructing API URL: %s", err.Error())
-	}
 
-	return resourceDelete(url, config.AuthToken, d)
+	return config.Client.DeleteChart(d.Id())
 }
 
 /*
