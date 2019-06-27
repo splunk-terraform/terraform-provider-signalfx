@@ -720,12 +720,12 @@ func timechartCreate(d *schema.ResourceData, meta interface{}) error {
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Create Time Chart Payload: %s", string(debugOutput))
 
-	chart, err := config.Client.CreateChart(payload)
+	c, err := config.Client.CreateChart(payload)
 	if err != nil {
 		return err
 	}
 	// Since things worked, set the URL and move on
-	appURL, err := buildAppURL(config.CustomAppURL, CHART_APP_PATH+d.Id())
+	appURL, err := buildAppURL(config.CustomAppURL, CHART_APP_PATH+c.Id)
 	if err != nil {
 		return err
 	}
@@ -733,9 +733,9 @@ func timechartCreate(d *schema.ResourceData, meta interface{}) error {
 	if err := d.Set("url", appURL); err != nil {
 		return err
 	}
-	d.SetId(chart.Id)
+	d.SetId(c.Id)
 
-	return timechartAPIToTF(d, chart)
+	return timechartAPIToTF(d, c)
 }
 
 func timechartRead(d *schema.ResourceData, meta interface{}) error {
@@ -934,22 +934,22 @@ func timechartUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 	payload := getPayloadTimeChart(d)
 
-	chart, err := config.Client.UpdateChart(d.Id(), payload)
+	c, err := config.Client.UpdateChart(d.Id(), payload)
 	if err != nil {
 		return err
 	}
-	log.Printf("[DEBUG] SignalFx: Update Time Chart Response: %v", chart)
+	log.Printf("[DEBUG] SignalFx: Update Time Chart Response: %v", c)
 
 	// Since things worked, set the URL and move on
-	appURL, err := buildAppURL(config.CustomAppURL, CHART_APP_PATH+d.Id())
+	appURL, err := buildAppURL(config.CustomAppURL, CHART_APP_PATH+c.Id)
 	if err != nil {
 		return err
 	}
 	if err := d.Set("url", appURL); err != nil {
 		return err
 	}
-	d.SetId(chart.Id)
-	return timechartAPIToTF(d, chart)
+	d.SetId(c.Id)
+	return timechartAPIToTF(d, c)
 }
 
 func timechartDelete(d *schema.ResourceData, meta interface{}) error {

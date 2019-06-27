@@ -61,12 +61,12 @@ func textchartCreate(d *schema.ResourceData, meta interface{}) error {
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Create Text Chart Payload: %s", string(debugOutput))
 
-	chart, err := config.Client.CreateChart(payload)
+	c, err := config.Client.CreateChart(payload)
 	if err != nil {
 		return err
 	}
 	// Since things worked, set the URL and move on
-	appURL, err := buildAppURL(config.CustomAppURL, CHART_APP_PATH+d.Id())
+	appURL, err := buildAppURL(config.CustomAppURL, CHART_APP_PATH+c.Id)
 	if err != nil {
 		return err
 	}
@@ -74,8 +74,8 @@ func textchartCreate(d *schema.ResourceData, meta interface{}) error {
 	if err := d.Set("url", appURL); err != nil {
 		return err
 	}
-	d.SetId(chart.Id)
-	return textchartAPIToTF(d, chart)
+	d.SetId(c.Id)
+	return textchartAPIToTF(d, c)
 }
 
 func textchartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
@@ -96,12 +96,12 @@ func textchartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 
 func textchartRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	chart, err := config.Client.GetChart(d.Id())
+	c, err := config.Client.GetChart(d.Id())
 	if err != nil {
 		return err
 	}
 
-	return textchartAPIToTF(d, chart)
+	return textchartAPIToTF(d, c)
 }
 
 func textchartUpdate(d *schema.ResourceData, meta interface{}) error {

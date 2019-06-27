@@ -1,0 +1,95 @@
+package signalfx
+
+import (
+	"fmt"
+	"os"
+	"testing"
+	"time"
+
+	"github.com/hashicorp/terraform/helper/resource"
+	"github.com/hashicorp/terraform/terraform"
+
+	sfx "github.com/signalfx/signalfx-go"
+)
+
+const newEventFeedChartConfig = `
+resource "signalfx_event_feed_chart" "mychartEVX" {
+  name = "Fart Event Feed"
+  description = "Farts"
+	program_text = "A = events(eventType='Fart Testing').publish(label='A')"
+}
+`
+
+const updatedEventFeedChartConfig = `
+resource "signalfx_event_feed_chart" "mychartEVX" {
+  name = "Fart Event Feed NEW"
+  description = "Farts NEW"
+	program_text = "A = events(eventType='Fart Testing').publish(label='A')"
+}
+`
+
+func TestAccCreateUpdateEventFeedChart(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccEventFeedChartDestroy,
+		Steps: []resource.TestStep{
+			// Create It
+			{
+				Config: newEventFeedChartConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckEventFeedChartResourceExists,
+					resource.TestCheckResourceAttr("signalfx_event_feed_chart.mychartEVX", "name", "Fart Event Feed"),
+					resource.TestCheckResourceAttr("signalfx_event_feed_chart.mychartEVX", "description", "Farts"),
+					resource.TestCheckResourceAttr("signalfx_event_feed_chart.mychartEVX", "program_text", "A = events(eventType='Fart Testing').publish(label='A')"),
+				),
+			},
+			// Update Everything
+			{
+				Config: updatedEventFeedChartConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckEventFeedChartResourceExists,
+					resource.TestCheckResourceAttr("signalfx_event_feed_chart.mychartEVX", "name", "Fart Event Feed NEW"),
+					resource.TestCheckResourceAttr("signalfx_event_feed_chart.mychartEVX", "description", "Farts NEW"),
+				),
+			},
+		},
+	})
+}
+
+func testAccCheckEventFeedChartResourceExists(s *terraform.State) error {
+	client, _ := sfx.NewClient(os.Getenv("SFX_AUTH_TOKEN"))
+
+	for _, rs := range s.RootModule().Resources {
+		switch rs.Type {
+		case "signalfx_event_feed_chart":
+			chart, err := client.GetChart(rs.Primary.ID)
+			if chart.Id != rs.Primary.ID || err != nil {
+				return fmt.Errorf("Error finding chart %s: %s", rs.Primary.ID, err)
+			}
+		default:
+			return fmt.Errorf("Unexpected resource of type: %s", rs.Type)
+		}
+	}
+	// Add some time to let the API quiesce. This may be removed in the future.
+	time.Sleep(time.Duration(2) * time.Second)
+
+	return nil
+}
+
+func testAccEventFeedChartDestroy(s *terraform.State) error {
+	client, _ := sfx.NewClient(os.Getenv("SFX_AUTH_TOKEN"))
+	for _, rs := range s.RootModule().Resources {
+		switch rs.Type {
+		case "signalfx_event_feed_chart":
+			chart, _ := client.GetChart(rs.Primary.ID)
+			if chart != nil {
+				return fmt.Errorf("Found deleted chart %s", rs.Primary.ID)
+			}
+		default:
+			return fmt.Errorf("Unexpected resource of type: %s", rs.Type)
+		}
+	}
+
+	return nil
+}

@@ -2,9 +2,10 @@ package signalfx
 
 import (
 	"encoding/json"
-	"fmt"
+	"log"
 
 	"github.com/hashicorp/terraform/helper/schema"
+	chart "github.com/signalfx/signalfx-go/chart"
 )
 
 func eventFeedChartResource() *schema.Resource {
@@ -24,12 +25,6 @@ func eventFeedChartResource() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Description of the chart (Optional)",
-			},
-			"synced": &schema.Schema{
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     true,
-				Description: "Whether the resource in the provider and SignalFx are identical or not. Used internally for syncing.",
 			},
 			"viz_options": &schema.Schema{
 				Type:        schema.TypeSet,
@@ -52,11 +47,6 @@ func eventFeedChartResource() *schema.Resource {
 					},
 				},
 			},
-			"last_updated": &schema.Schema{
-				Type:        schema.TypeFloat,
-				Computed:    true,
-				Description: "Latest timestamp the resource was updated",
-			},
 			"url": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -74,86 +64,85 @@ func eventFeedChartResource() *schema.Resource {
 /*
   Use Resource object to construct json payload in order to create an event feed chart
 */
-func getPayloadEventFeedChart(d *schema.ResourceData) ([]byte, error) {
-	payload := map[string]interface{}{
-		"name":        d.Get("name").(string),
-		"description": d.Get("description").(string),
-		"programText": d.Get("program_text").(string),
+func getPayloadEventFeedChart(d *schema.ResourceData) *chart.CreateUpdateChartRequest {
+	return &chart.CreateUpdateChartRequest{
+		Name:        d.Get("name").(string),
+		Description: d.Get("description").(string),
+		ProgramText: d.Get("program_text").(string),
+		Options: &chart.Options{
+			Type: "Event",
+		},
 	}
-
-	viz := getEventFeedOptions(d)
-	if len(viz) > 0 {
-		payload["options"] = viz
-	}
-
-	return json.Marshal(payload)
-}
-
-func getEventFeedOptions(d *schema.ResourceData) map[string]interface{} {
-	viz := make(map[string]interface{})
-	viz["type"] = "Event"
-
-	return viz
 }
 
 func eventFeedChartCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	payload, err := getPayloadEventFeedChart(d)
-	if err != nil {
-		return fmt.Errorf("Failed creating json payload: %s", err.Error())
-	}
+	payload := getPayloadEventFeedChart(d)
 
-	url, err := buildURL(config.APIURL, CHART_API_PATH, map[string]string{})
-	if err != nil {
-		return fmt.Errorf("[DEBUG] SignalFx: Error constructing API URL: %s", err.Error())
-	}
+	debugOutput, _ := json.Marshal(payload)
+	log.Printf("[DEBUG] SignalFx: Create Event Feed Chart Payload: %s", string(debugOutput))
 
-	err = resourceCreate(url, config.AuthToken, payload, d)
+	c, err := config.Client.CreateChart(payload)
 	if err != nil {
 		return err
 	}
 	// Since things worked, set the URL and move on
-	appURL, err := buildAppURL(config.CustomAppURL, CHART_APP_PATH+d.Id())
+	appURL, err := buildAppURL(config.CustomAppURL, CHART_APP_PATH+c.Id)
 	if err != nil {
 		return err
 	}
 	d.Set("url", appURL)
+	if err := d.Set("url", appURL); err != nil {
+		return err
+	}
+	d.SetId(c.Id)
+	return eventfeedchartAPIToTF(d, c)
+}
+
+func eventfeedchartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
+	log.Printf("[DEBUG] SignalFx: Got Event Feed Chart to enState %v", c)
+
+	if err := d.Set("name", c.Name); err != nil {
+		return err
+	}
+	if err := d.Set("description", c.Description); err != nil {
+		return err
+	}
+	if err := d.Set("program_text", c.ProgramText); err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func eventFeedChartRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	path := fmt.Sprintf("%s/%s", CHART_API_PATH, d.Id())
-	url, err := buildURL(config.APIURL, path, map[string]string{})
+	c, err := config.Client.GetChart(d.Id())
 	if err != nil {
-		return fmt.Errorf("[DEBUG] SignalFx: Error constructing API URL: %s", err.Error())
+		return err
 	}
 
-	return resourceRead(url, config.AuthToken, d)
+	return eventfeedchartAPIToTF(d, c)
 }
 
 func eventFeedChartUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	payload, err := getPayloadEventFeedChart(d)
-	if err != nil {
-		return fmt.Errorf("Failed creating json payload: %s", err.Error())
-	}
-	path := fmt.Sprintf("%s/%s", CHART_API_PATH, d.Id())
-	url, err := buildURL(config.APIURL, path, map[string]string{})
-	if err != nil {
-		return fmt.Errorf("[DEBYG] SignalFx: Error constructing API URL: %s", err.Error())
-	}
+	payload := getPayloadEventFeedChart(d)
+	debugOutput, _ := json.Marshal(payload)
+	log.Printf("[DEBUG] SignalFx: Update Event Feed Chart Payload: %s", string(debugOutput))
 
-	return resourceUpdate(url, config.AuthToken, payload, d)
+	c, err := config.Client.UpdateChart(d.Id(), payload)
+	if err != nil {
+		return err
+	}
+	log.Printf("[DEBUG] SignalFx: Update Event Feed Chart Response: %v", c)
+
+	d.SetId(c.Id)
+	return eventfeedchartAPIToTF(d, c)
 }
 
 func eventFeedChartDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	path := fmt.Sprintf("%s/%s", CHART_API_PATH, d.Id())
-	url, err := buildURL(config.APIURL, path, map[string]string{})
-	if err != nil {
-		return fmt.Errorf("[DEBUG] SignalFx: Error constructing API URL: %s", err.Error())
-	}
 
-	return resourceDelete(url, config.AuthToken, d)
+	return config.Client.DeleteChart(d.Id())
 }
