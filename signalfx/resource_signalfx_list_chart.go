@@ -2,7 +2,6 @@ package signalfx
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 
 	"github.com/hashicorp/terraform/helper/schema"
@@ -317,45 +316,32 @@ func listchartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 
 func listchartRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-
-	path := fmt.Sprintf("%s/%s", CHART_API_PATH, d.Id())
-	url, err := buildURL(config.APIURL, path, map[string]string{})
+	chart, err := config.Client.GetChart(d.Id())
 	if err != nil {
-		return fmt.Errorf("[DEBUG] SignalFx: Error constructing API URL: %s", err.Error())
+		return err
 	}
 
-	return resourceRead(url, config.AuthToken, d)
+	return listchartAPIToTF(d, chart)
 }
 
 func listchartUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 	payload := getPayloadListChart(d)
+	debugOutput, _ := json.Marshal(payload)
+	log.Printf("[DEBUG] SignalFx: Update List Chart Payload: %s", string(debugOutput))
 
-	chart, err := config.Client.UpdateChart(d.Id(), payload)
+	c, err := config.Client.UpdateChart(d.Id(), payload)
 	if err != nil {
 		return err
 	}
-	log.Printf("[DEBUG] SignalFx: Update List Chart Response: %v", chart)
+	log.Printf("[DEBUG] SignalFx: Update List Chart Response: %v", c)
 
-	// Since things worked, set the URL and move on
-	appURL, err := buildAppURL(config.CustomAppURL, CHART_APP_PATH+d.Id())
-	if err != nil {
-		return err
-	}
-	if err := d.Set("url", appURL); err != nil {
-		return err
-	}
-	d.SetId(chart.Id)
-	return listchartAPIToTF(d, chart)
+	d.SetId(c.Id)
+	return listchartAPIToTF(d, c)
 }
 
 func listchartDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	path := fmt.Sprintf("%s/%s", CHART_API_PATH, d.Id())
-	url, err := buildURL(config.APIURL, path, map[string]string{})
-	if err != nil {
-		return fmt.Errorf("[DEBUG] SignalFx: Error constructing API URL: %s", err.Error())
-	}
 
-	return resourceDelete(url, config.AuthToken, d)
+	return config.Client.DeleteChart(d.Id())
 }

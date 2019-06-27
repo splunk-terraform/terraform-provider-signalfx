@@ -152,30 +152,30 @@ func getNameFromPaletteColorsByIndex(index int) (string, error) {
 /*
 	Get Color Scale Options
 */
-func getColorScaleOptions(d *schema.ResourceData) []interface{} {
+func getColorScaleOptions(d *schema.ResourceData) []*chart.SecondaryVisualization {
 	colorScale := d.Get("color_scale").(*schema.Set).List()
 	return getColorScaleOptionsFromSlice(colorScale)
 }
 
-func getColorScaleOptionsFromSlice(colorScale []interface{}) []interface{} {
-	item := make([]interface{}, len(colorScale))
+func getColorScaleOptionsFromSlice(colorScale []interface{}) []*chart.SecondaryVisualization {
+	item := make([]*chart.SecondaryVisualization, len(colorScale))
 	if len(colorScale) == 0 {
 		return item
 	}
 	for i := range colorScale {
-		options := make(map[string]interface{})
+		options := &chart.SecondaryVisualization{}
 		scale := colorScale[i].(map[string]interface{})
 		if scale["gt"].(float64) != math.MaxFloat32 {
-			options["gt"] = scale["gt"].(float64)
+			options.Gt = float32(scale["gt"].(float64))
 		}
 		if scale["gte"].(float64) != math.MaxFloat32 {
-			options["gte"] = scale["gte"].(float64)
+			options.Gte = float32(scale["gte"].(float64))
 		}
 		if scale["lt"].(float64) != math.MaxFloat32 {
-			options["lt"] = scale["lt"].(float64)
+			options.Lt = float32(scale["lt"].(float64))
 		}
 		if scale["lte"].(float64) != math.MaxFloat32 {
-			options["lte"] = scale["lte"].(float64)
+			options.Lte = float32(scale["lte"].(float64))
 		}
 		paletteIndex := 0
 		for index, thing := range ChartColorsSlice {
@@ -184,7 +184,7 @@ func getColorScaleOptionsFromSlice(colorScale []interface{}) []interface{} {
 				break
 			}
 		}
-		options["paletteIndex"] = paletteIndex
+		options.PaletteIndex = int32(paletteIndex)
 		item[i] = options
 	}
 	return item

@@ -110,14 +110,14 @@ func textchartUpdate(d *schema.ResourceData, meta interface{}) error {
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Update Text Chart Payload: %s", string(debugOutput))
 
-	chart, err := config.Client.UpdateChart(d.Id(), payload)
+	c, err := config.Client.UpdateChart(d.Id(), payload)
 	if err != nil {
 		return err
 	}
-	log.Printf("[DEBUG] SignalFx: Update Text Chart Response: %v", chart)
+	log.Printf("[DEBUG] SignalFx: Update Text Chart Response: %v", c)
 
-	d.SetId(chart.Id)
-	return textchartAPIToTF(d, chart)
+	d.SetId(c.Id)
+	return textchartAPIToTF(d, c)
 }
 
 func textchartDelete(d *schema.ResourceData, meta interface{}) error {
