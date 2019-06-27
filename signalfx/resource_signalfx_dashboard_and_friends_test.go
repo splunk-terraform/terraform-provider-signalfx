@@ -113,6 +113,107 @@ resource "signalfx_dashboard" "mydashboard0" {
 }
 `
 
+const updatedDashConfig = `
+resource "signalfx_single_value_chart" "mysvchart0" {
+    name = "CPU Total Idle - Single Value"
+
+    program_text = <<-EOF
+        myfilters = filter("cluster_name", "prod") and filter("role", "search")
+        data("cpu.total.idle", filter=myfilters).publish()
+        EOF
+
+    description = "Very cool Single Value Chart"
+
+    color_by = "Dimension"
+
+    max_delay = 2
+    refresh_interval = 1
+    max_precision = 2
+    is_timestamp_hidden = true
+}
+
+resource "signalfx_heatmap_chart" "myheatmapchart0" {
+    name = "CPU Total Idle - Heatmap"
+
+    program_text = <<-EOF
+        myfilters = filter("cluster_name", "prod") and filter("role", "search")
+        data("cpu.total.idle", filter=myfilters).publish()
+        EOF
+
+    description = "Very cool Heatmap"
+
+    disable_sampling = true
+    sort_by = "+host"
+    group_by = ["hostname", "host"]
+    hide_timestamp = true
+}
+
+resource "signalfx_dashboard_group" "mydashboardgroup0" {
+    name = "My team dashboard group NEW"
+    description = "Cool dashboard group NEW"
+		// No teams test cuz there's no teams resource yet!
+}
+
+resource "signalfx_dashboard" "mydashboard0" {
+    name = "My Dashboard Test 1 NEW"
+		description = "Cool dashboard NEW"
+    dashboard_group = "${signalfx_dashboard_group.mydashboardgroup0.id}"
+
+    time_range = "-30m"
+
+		filter {
+        property = "collector"
+        values = ["cpu", "Diamond"]
+        negated = true
+        apply_if_exist = true
+    }
+		variable {
+	      property = "region"
+	      description = "a region"
+	      alias = "theregion"
+	      apply_if_exist = true
+	      values = ["uswest-1"]
+	      value_required = true
+	      values_suggested = ["uswest-1"]
+	      restricted_suggestions = true
+	      replace_only = true
+    }
+		event_overlay {
+      line = true
+      label = "a event overlabel"
+      color = "lilac"
+      signal = "overlabel"
+      type = "detectorEvents"
+
+      source {
+        property = "region"
+        values = ["uswest-1"]
+        negated = true
+      }
+    }
+		selected_event_overlay {
+      signal = "overlabel"
+      type = "detectorEvents"
+
+      source {
+        property = "region"
+        values = ["uswest-1"]
+        negated = true
+      }
+    }
+    chart {
+        chart_id = "${signalfx_single_value_chart.mysvchart0.id}"
+        width = 12
+        height = 1
+    }
+    chart {
+        chart_id = "${signalfx_heatmap_chart.myheatmapchart0.id}"
+        width = 12
+        height = 1
+    }
+}
+`
+
 func TestAccCreateUpdateDashboardGroup(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -181,10 +282,18 @@ func TestAccCreateUpdateDashboardGroup(t *testing.T) {
 				),
 			},
 			// Update Everything
-			// {
-			// 	Config: updatedDashConfig,
-			// 	Check:  testAccCheckDashboardGroupResourceExists,
-			// },
+			{
+				Config: updatedDashConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckDashboardGroupResourceExists,
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "name", "My Dashboard Test 1 NEW"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "description", "Cool dashboard NEW"),
+
+					// Dashboard Group
+					resource.TestCheckResourceAttr("signalfx_dashboard_group.mydashboardgroup0", "description", "Cool dashboard group NEW"),
+					resource.TestCheckResourceAttr("signalfx_dashboard_group.mydashboardgroup0", "name", "My team dashboard group NEW"),
+				),
+			},
 		},
 	})
 }
