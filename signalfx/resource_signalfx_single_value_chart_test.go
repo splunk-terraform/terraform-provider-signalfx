@@ -21,13 +21,22 @@ resource "signalfx_single_value_chart" "mychartSVX" {
   data('cpu.total.idle').publish(label='CPU Idle')
   EOF
 
-	color_by = "Metric"
+	color_by = "Scale"
+	color_scale {
+		gt = 40
+		color = "cerise"
+	}
+
+	color_scale {
+		lte = 40
+		color = "vivid_yellow"
+	}
 
   max_delay = 15
   refresh_interval = 1
   max_precision = 2
   unit_prefix = "Binary"
-  secondary_visualization = "Linear"
+  secondary_visualization = "Sparkline"
 	is_timestamp_hidden = true
 	show_spark_line = false
 }
@@ -42,13 +51,22 @@ resource "signalfx_single_value_chart" "mychartSVX" {
   data('cpu.total.idle').publish(label='CPU Idle')
   EOF
 
-	color_by = "Metric"
+	color_by = "Scale"
+	color_scale {
+		gt = 40
+		color = "cerise"
+	}
+
+	color_scale {
+		lte = 40
+		color = "vivid_yellow"
+	}
 
   max_delay = 15
   refresh_interval = 1
   max_precision = 2
   unit_prefix = "Binary"
-  secondary_visualization = "Linear"
+  secondary_visualization = "Sparkline"
 	is_timestamp_hidden = true
 	show_spark_line = false
 }
@@ -69,26 +87,30 @@ func TestAccCreateUpdateSingleValueChart(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_single_value_chart.mychartSVX", "description", "Farts"),
 					resource.TestCheckResourceAttr("signalfx_single_value_chart.mychartSVX", "program_text", "data('cpu.total.idle').publish(label='CPU Idle')\n"),
 					resource.TestCheckResourceAttr("signalfx_single_value_chart.mychartSVX", "unit_prefix", "Binary"),
-					resource.TestCheckResourceAttr("signalfx_single_value_chart.mychartSVX", "color_by", "Metric"),
+					resource.TestCheckResourceAttr("signalfx_single_value_chart.mychartSVX", "color_by", "Scale"),
 					resource.TestCheckResourceAttr("signalfx_single_value_chart.mychartSVX", "max_delay", "15"),
 					resource.TestCheckResourceAttr("signalfx_single_value_chart.mychartSVX", "refresh_interval", "1"),
 					resource.TestCheckResourceAttr("signalfx_single_value_chart.mychartSVX", "max_precision", "2"),
-					resource.TestCheckResourceAttr("signalfx_single_value_chart.mychartSVX", "secondary_visualization", "Linear"),
+					resource.TestCheckResourceAttr("signalfx_single_value_chart.mychartSVX", "secondary_visualization", "Sparkline"),
 					resource.TestCheckResourceAttr("signalfx_single_value_chart.mychartSVX", "is_timestamp_hidden", "true"),
 					resource.TestCheckResourceAttr("signalfx_single_value_chart.mychartSVX", "show_spark_line", "false"),
 
-					// resource.TestCheckResourceAttr("signalfx_single_value_chart.mychartSVX", "color_scale.#", "2"),
+					resource.TestCheckResourceAttr("signalfx_single_value_chart.mychartSVX", "color_scale.#", "2"),
+					resource.TestCheckResourceAttr("signalfx_single_value_chart.mychartSVX", "color_scale.690432474.color", "cerise"),
+					resource.TestCheckResourceAttr("signalfx_single_value_chart.mychartSVX", "color_scale.690432474.gt", "40"),
+					resource.TestCheckResourceAttr("signalfx_single_value_chart.mychartSVX", "color_scale.761948173.color", "vivid_yellow"),
+					resource.TestCheckResourceAttr("signalfx_single_value_chart.mychartSVX", "color_scale.761948173.lte", "40"),
 				),
 			},
 			// Update Everything
-			// {
-			// 	Config: updatedSingleValueChartConfig,
-			// 	Check: resource.ComposeTestCheckFunc(
-			// 		testAccCheckSingleValueChartResourceExists,
-			// 		resource.TestCheckResourceAttr("signalfx_single_value_chart.mychartSVX", "name", "CPU Total Idle - Single Value NEW"),
-			// 		resource.TestCheckResourceAttr("signalfx_single_value_chart.mychartSVX", "description", "Farts NEW"),
-			// 	),
-			// },
+			{
+				Config: updatedSingleValueChartConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSingleValueChartResourceExists,
+					resource.TestCheckResourceAttr("signalfx_single_value_chart.mychartSVX", "name", "CPU Total Idle - Single Value NEW"),
+					resource.TestCheckResourceAttr("signalfx_single_value_chart.mychartSVX", "description", "Farts NEW"),
+				),
+			},
 		},
 	})
 }

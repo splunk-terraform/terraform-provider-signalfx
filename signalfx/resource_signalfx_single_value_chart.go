@@ -30,6 +30,7 @@ func singleValueChartResource() *schema.Resource {
 			"unit_prefix": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
+				Default:     "Metric",
 				Description: "(Metric by default) Must be \"Metric\" or \"Binary\"",
 			},
 			"color_by": &schema.Schema{
@@ -69,6 +70,7 @@ func singleValueChartResource() *schema.Resource {
 			"secondary_visualization": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
+				Default:      "None",
 				Description:  "(false by default) What kind of secondary visualization to show (None, Radial, Linear, Sparkline)",
 				ValidateFunc: validateSecondaryVisualization,
 			},
@@ -188,13 +190,12 @@ func getSingleValueChartOptions(d *schema.ResourceData) *chart.Options {
 		options.UnitPrefix = val.(string)
 	}
 	if val, ok := d.GetOk("color_by"); ok {
+		options.ColorBy = val.(string)
 		if val == "Scale" {
 			if colorScaleOptions := getColorScaleOptions(d); len(colorScaleOptions) > 0 {
-				options.ColorBy = "Scale"
 				options.ColorScale2 = colorScaleOptions
 			}
-		} else {
-			options.ColorBy = val.(string)
+
 		}
 	}
 
@@ -284,6 +285,42 @@ func singlevaluechartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 	}
 	if err := d.Set("show_spark_line", options.ShowSparkLine); err != nil {
 		return err
+	}
+
+	if options.ColorBy == "Scale" && len(options.ColorScale2) > 0 {
+		scales := make([]map[string]interface{}, len(options.ColorScale2))
+		for i, cs := range options.ColorScale2 {
+			scale := map[string]interface{}{}
+			if cs.Gt == nil {
+				scale["gt"] = math.MaxFloat32
+			} else {
+				scale["gt"] = *cs.Gt
+			}
+			if cs.Gte == nil {
+				scale["gte"] = math.MaxFloat32
+			} else {
+				scale["gte"] = *cs.Gte
+			}
+			if cs.Lt == nil {
+				scale["lt"] = math.MaxFloat32
+			} else {
+				scale["lt"] = *cs.Lt
+			}
+			if cs.Lte == nil {
+				scale["lte"] = math.MaxFloat32
+			} else {
+				scale["lte"] = *cs.Lte
+			}
+			color, err := getNameFromChartColorsByIndex(int(cs.PaletteIndex))
+			if err != nil {
+				return err
+			}
+			scale["color"] = color
+			scales[i] = scale
+		}
+		if err := d.Set("color_scale", scales); err != nil {
+			return err
+		}
 	}
 
 	return nil

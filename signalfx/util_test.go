@@ -34,6 +34,16 @@ func TestSendRequestResponseNotFound(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+func TestGetNameFromChartColorsByIndex(t *testing.T) {
+	name, err := getNameFromChartColorsByIndex(4)
+	assert.Equal(t, "dark_orange", name, "Expected color name")
+	assert.NoError(t, err, "Expected no error for known color")
+
+	name, err = getNameFromChartColorsByIndex(44)
+	assert.Equal(t, "", name, "Expected empty string for missing index")
+	assert.Error(t, err, "Expected error for missing color index")
+}
+
 func TestGetNameFromPaletteColorsByIndex(t *testing.T) {
 	name, err := getNameFromPaletteColorsByIndex(2)
 	assert.Equal(t, "azure", name, "Expected color name")
