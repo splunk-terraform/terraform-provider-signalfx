@@ -10,10 +10,10 @@
 package dashboard
 
 type Dashboard struct {
-	AuthorizedWriters AuthorizedWriters `json:"authorizedWriters,omitempty"`
-	ChartDensity DashboardChartDensity `json:"chartDensity,omitempty"`
+	AuthorizedWriters *AuthorizedWriters     `json:"authorizedWriters,omitempty"`
+	ChartDensity      *DashboardChartDensity `json:"chartDensity,omitempty"`
 	// Array of chart objects associated with the dashboard. Each chart object must exist and be unique across all dashboards.
-	Charts []DashboardChart `json:"charts,omitempty"`
+	Charts []*DashboardChart `json:"charts,omitempty"`
 	// The dashboard creation date and time, in the form of a Unix time value (milliseconds since the Unix epoch 1970-01-01 00:00:00 UTC+0). The system sets this value, and you can't modify it.
 	Created int64 `json:"created,omitempty"`
 	// SignalFx-assigned user ID of the user that created the dashboard. If the system created this dashboard, the value is \"AAAAAAAAAA\". The system sets this value, and you can't modify it.
@@ -22,11 +22,9 @@ type Dashboard struct {
 	CustomProperties map[string]interface{} `json:"customProperties,omitempty"`
 	// Description of the dashboard. The system displays the value in the dashboard tab tooltip in the dashboard group in the web UI.
 	Description string `json:"description,omitempty"`
-	// Reserved for system use
-	DiscoveryOptions map[string]interface{} `json:"discoveryOptions,omitempty"`
 	// Array of event overlay definitions that you can apply to all of the charts of this dashboard. When you apply the overlays, the system displays all the active events that match the specified search term and any specified filter on all the charts in the dashboard. The display uses the color you specify for the overlay and, if selected, vertical lines that mark the event.<br> **Note:** The objects in this array correspond to the *suggested* event overlays specified in the web UI, and they're not automatically applied as active overlays. To set default active event overlays, use the `selectedEventOverlays` property instead.
-	EventOverlays []EventOverlayFilter `json:"eventOverlays,omitempty"`
-	Filters ChartsFilters `json:"filters,omitempty"`
+	EventOverlays []*ChartEventOverlay `json:"eventOverlays,omitempty"`
+	Filters       *ChartsFilters       `json:"filters,omitempty"`
 	// ID of an existing dashboard group to associate with this dashboard. If you don't specify a value, the system creates a new dashboard group and assigns its ID to this property during the create process.
 	GroupId string `json:"groupId,omitempty"`
 	// The dashboard's SignalFx-assigned ID. This value is \"read-only\" for a create request. The system assigns it and returns it to you in the response.
@@ -42,7 +40,7 @@ type Dashboard struct {
 	// A human-readable label for the dashboard. The web UI displays this label in the dashboard's group.
 	Name string `json:"name,omitempty"`
 	// Array of event overlays that are currently active for the charts in this dashboard. For each overlay, the system displays the active events that match the overlay search term and optional feature, using the the overlay's color and event line settings. To set options for inactive overlays so you can apply them at a later time, use the `eventOverlays` property instead.
-	SelectedEventOverlays []ChartEventOverlay `json:"selectedEventOverlays,omitempty"`
+	SelectedEventOverlays []*ChartEventOverlay `json:"selectedEventOverlays,omitempty"`
 	// Array of dashboard tags. Reserved for future use.
 	Tags []string `json:"tags,omitempty"`
 }

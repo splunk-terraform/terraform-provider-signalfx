@@ -12,13 +12,16 @@ package dashboard
 // The specification for a filter that appears in the web UI. The filter compares the value of a dimension or custom property to a value specified in this filter. You can specify the following in the filter:<br>   * A default value   * A list of suggested values to display in the web UI   * A flag that controls user input; if set to `true`, users are limited     to the default and suggested values. <br> You can also force users to choose this filter in order to see data in the dashboard's charts.
 type ChartsWebUiFilter struct {
 	// A label for the filter. The system displays this label in the area preceding the input textarea for the filter in the web UI. <br> **Note:** A good way to indicate that the string is a label is to append a space and a colon (\":\") to it.
-	Alias string `json:"alias,omitempty"`
+	Alias         string `json:"alias,omitempty"`
+	ApplyIfExists bool   `json:"applyIfExists,omitempty"`
+	Description   string `json:"description,omitempty"`
 	// Array of strings containing values to place at the top of the **Suggested Values** dropdown in web UI for the dashboard. If `ChartsWebUIFilter.restricted`  is `true`, the filter must use one of the values in this array; users only have a choice of selecting a value from this array.
 	PreferredSuggestions []string `json:"preferredSuggestions,omitempty"`
 	// Name of a custom property or dimension to filter against.<br> **Note:** If the dimension or custom property doesn't exist in any of the charts for the dashboard, the system doesn't display any data in the charts.
 	Property string `json:"property"`
 	// Flag that controls the display of chart data. If `true`, users must use this filter in order to see data; otherwise, users can delete the filter.
-	Required bool `json:"required,omitempty"`
+	Required    bool `json:"required,omitempty"`
+	ReplaceOnly bool `json:"replaceOnly,omitempty"`
 	// Flag that controls the values allowed in the filter. If `true`, the only allowable values are those specified in the `ChartsWebUIFilter.preferredSuggestsions` array; otherwise, any value is allowed.
 	Restricted bool `json:"restricted,omitempty"`
 	// A list of values to compare to the value of the dimension or custom property specified in `ChartsWebUIFilter.property`. If the list contains more than one value, the filter becomes a set of queries between the value of `property` and each element of `value`. The system joins these queries with an implicit OR.

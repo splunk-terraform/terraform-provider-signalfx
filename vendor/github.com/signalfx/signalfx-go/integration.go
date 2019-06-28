@@ -19,7 +19,7 @@ func (c *Client) DeleteIntegration(id string) error {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode != http.StatusNoContent {
 		message, _ := ioutil.ReadAll(resp.Body)
 		return fmt.Errorf("Unexpected status code: %d: %s", resp.StatusCode, message)
 	}

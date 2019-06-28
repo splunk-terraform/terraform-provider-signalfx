@@ -13,5 +13,5 @@ type SearchResult struct {
 	// The number of charts that match the specified query. This value may be different from the number of  objects in the `results` array property. The `limit` query parameter controls  the number of objects that the request actually returns, and the `offset` query parameter determines the position at which the request starts returning parameters.  These two factors can affect the actual number of returned objects.
 	Count int32 `json:"count,omitempty"`
 	// An array of chart objects returned by the request. The objects match the search criteria specified in the query parameters of the request.
-	Results []Chart `json:"results,omitempty"`
+	Results []*Chart `json:"results,omitempty"`
 }

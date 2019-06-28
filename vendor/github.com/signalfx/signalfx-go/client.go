@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"net/url"
 	"time"
+
+	"github.com/signalfx/signalfx-go/signalflow"
 )
 
 // DefaultAPIURL is the default URL for making API requests
@@ -82,4 +84,11 @@ func (c *Client) doRequest(method string, path string, params url.Values, body i
 	}
 
 	return c.httpClient.Do(req)
+}
+
+// SignalFlow creates and returns a SignalFlow client that can be used to
+// execute streaming jobs.
+func (c *Client) SignalFlow(options ...signalflow.ClientParam) (*signalflow.Client, error) {
+	options = append(options, signalflow.AccessToken(c.authToken))
+	return signalflow.NewClient(options...)
 }

@@ -9,19 +9,15 @@
 
 package dashboard
 
-import (
-	"github.com/signalfx/signalfx-go/chart"
-)
-
 type CreateUpdateDashboardRequest struct {
-	AuthorizedWriters AuthorizedWriters     `json:"authorizedWriters,omitempty"`
+	AuthorizedWriters *AuthorizedWriters    `json:"authorizedWriters,omitempty"`
 	ChartDensity      DashboardChartDensity `json:"chartDensity,omitempty"`
-	Charts            []chart.Chart         `json:"charts,omitempty"`
+	Charts            []*DashboardChart     `json:"charts,omitempty"`
 	// Description of the dashboard. The system displays the value in the dashboard tab tooltip in the dashboard group in the web UI.
 	Description string `json:"description,omitempty"`
 	// Array of event overlay definitions that you can apply to all of the charts of this dashboard. When you apply the overlays, the system displays all the active events that match the specified search term and any specified filter on all the charts in the dashboard. The display uses the color you specify for the overlay and, if selected, vertical lines that mark the event.<br> **Note:** The objects in this array correspond to the *suggested* event overlays specified in the web UI, and they're not automatically applied as active overlays. To set default active event overlays, use the `selectedEventOverlays` property instead.
-	EventOverlays []EventOverlayFilter `json:"eventOverlays,omitempty"`
-	Filters       ChartsFilters        `json:"filters,omitempty"`
+	EventOverlays []*ChartEventOverlay `json:"eventOverlays,omitempty"`
+	Filters       *ChartsFilters       `json:"filters,omitempty"`
 	// ID of an existing dashboard group to associate with this dashboard. If you don't specify a value, the system creates a new dashboard group and assigns its ID to this property during the create process.
 	GroupId string `json:"groupId,omitempty"`
 	// Milliseconds to wait for late-arriving datapoints before rejecting them for inclusion in the charts in this dashboard. This value *overrides* but doesn't *change* the max delay setting for individua charts in the dashboard. If you omit this property, the system uses individual chart settings.<br> For individual charts, you can force the system to calculate a sensible value by removing the chart's `maxDelayOverride` property. To force the system to do this for all charts in a dashboard, set `CreateDashboardBody.maxDelayOverride` to 0.
@@ -29,5 +25,7 @@ type CreateUpdateDashboardRequest struct {
 	// A human-readable label for the dashboard. The web UI displays this label in the dashboard's group.
 	Name string `json:"name,omitempty"`
 	// Array of event overlays that are currently active for the charts in this dashboard. For each overlay, the system displays the active events that match the overlay search term and optional feature, using the the overlay's color and event line settings. To set options for inactive overlays so you can apply them at a later time, use the `eventOverlays` property instead.
-	SelectedEventOverlays []ChartEventOverlay `json:"selectedEventOverlays,omitempty"`
+	SelectedEventOverlays []*ChartEventOverlay `json:"selectedEventOverlays,omitempty"`
+	// Array of dashboard tags. Reserved for future use.
+	Tags []string `json:"tags,omitempty"`
 }

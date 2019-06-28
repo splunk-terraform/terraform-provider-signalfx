@@ -4,10 +4,14 @@ Note: This library is experimental. Do not rely on it yet.
 
 This is a programmatic interface in Go for SignalFx's metadata and ingest APIs.
 
+# SignalFlow
+
+There is an **experimental** SignalFlow client in the `signalflow` directory.  An
+example of its use is in `signalflow/example`.
+
 # TODO
 
 * Finish generating models and fixing bugs therein (see Questions below)
-* Include APIs for metric reading (signalflow, etc!)
 
 # Example
 
@@ -20,7 +24,7 @@ import "github.com/signalfx/signalfx-go"
 // Instantiate your own client if you want to customize its options
 // or test with a RoundTripper
 httpClient := &http.Client{…}
-client, err := NewClient("your-token-here", HTTPClient(httpClient))
+client := signalfx.NewClient("your-token-here", HTTPClient(httpClient))
 ```
 
 # Questions

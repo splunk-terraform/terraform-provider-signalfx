@@ -57,11 +57,14 @@ github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/timestamp
-# github.com/google/go-cmp v0.2.0
+# github.com/google/go-cmp v0.3.0
 github.com/google/go-cmp/cmp
 github.com/google/go-cmp/cmp/internal/diff
+github.com/google/go-cmp/cmp/internal/flags
 github.com/google/go-cmp/cmp/internal/function
 github.com/google/go-cmp/cmp/internal/value
+# github.com/gorilla/websocket v1.4.0
+github.com/gorilla/websocket
 # github.com/hashicorp/errwrap v1.0.0
 github.com/hashicorp/errwrap
 # github.com/hashicorp/go-cleanhttp v0.5.0
@@ -166,12 +169,17 @@ github.com/posener/complete
 github.com/posener/complete/cmd/install
 github.com/posener/complete/cmd
 github.com/posener/complete/match
-# github.com/signalfx/signalfx-go v0.0.0-20190618170153-516f7eeb4993
+# github.com/signalfx/golib v2.4.0+incompatible
+github.com/signalfx/golib/pointer
+# github.com/signalfx/signalfx-go v0.0.0-20190627212220-0288248cbbb3
 github.com/signalfx/signalfx-go
-github.com/signalfx/signalfx-go/detector
 github.com/signalfx/signalfx-go/chart
 github.com/signalfx/signalfx-go/dashboard
 github.com/signalfx/signalfx-go/dashboard_group
+github.com/signalfx/signalfx-go/detector
+github.com/signalfx/signalfx-go/signalflow
+github.com/signalfx/signalfx-go/idtool
+github.com/signalfx/signalfx-go/signalflow/messages
 # github.com/stretchr/testify v1.3.0
 github.com/stretchr/testify/assert
 # github.com/ulikunitz/xz v0.5.5
@@ -187,7 +195,7 @@ github.com/zclconf/go-cty/cty/function/stdlib
 github.com/zclconf/go-cty/cty/set
 github.com/zclconf/go-cty/cty/gocty
 github.com/zclconf/go-cty/cty/json
-# golang.org/x/crypto v0.0.0-20190228161510-8dd112bcdc25
+# golang.org/x/crypto v0.0.0-20190621222207-cc06ce4a13d4
 golang.org/x/crypto/openpgp
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/openpgp/armor
@@ -197,7 +205,7 @@ golang.org/x/crypto/openpgp/s2k
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/cast5
 golang.org/x/crypto/openpgp/elgamal
-# golang.org/x/net v0.0.0-20190228165749-92fc7df08ae7
+# golang.org/x/net v0.0.0-20190620200207-3b0461eec859
 golang.org/x/net/context
 golang.org/x/net/html
 golang.org/x/net/http2
@@ -207,9 +215,9 @@ golang.org/x/net/http/httpguts
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
 golang.org/x/net/internal/timeseries
-# golang.org/x/sys v0.0.0-20190215142949-d0b11bdaac8a
+# golang.org/x/sys v0.0.0-20190626221950-04f50cda93cb
 golang.org/x/sys/unix
-# golang.org/x/text v0.3.0
+# golang.org/x/text v0.3.2
 golang.org/x/text/unicode/norm
 golang.org/x/text/transform
 golang.org/x/text/secure/bidirule

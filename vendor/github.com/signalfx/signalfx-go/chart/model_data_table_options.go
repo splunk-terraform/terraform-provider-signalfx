@@ -12,5 +12,5 @@ package chart
 // Sets options for the data table, including which properties are omitted.
 type DataTableOptions struct {
 	// An array of data table settings for properties in the chart. Each element of the array is an object containing a  property key name and a flag. If the flag for the object is set to `true`, the property is displayed; otherwise, it's hidden.
-	Fields []DataTableOptionsFields `json:"fields,omitempty"`
+	Fields []*DataTableOptionsFields `json:"fields,omitempty"`
 }
