@@ -13,33 +13,52 @@ import (
 )
 
 const newDashConfig = `
+resource "signalfx_time_chart" "mytimechart0" {
+    name = "CPU Total Idle"
+    description = "Very cool Time Chart"
+    program_text = <<-EOF
+        data("cpu.total.idle").publish(label="CPU Idle")
+        EOF
+}
+
+resource "signalfx_list_chart" "mylistchart0" {
+    name = "CPU Total Idle - List"
+    description = "Very cool List Chart"
+    program_text = <<-EOF
+    data("cpu.total.idle").publish()
+    EOF
+}
+
 resource "signalfx_single_value_chart" "mysvchart0" {
     name = "CPU Total Idle - Single Value"
-
-    program_text = <<-EOF
-        myfilters = filter("cluster_name", "prod") and filter("role", "search")
-        data("cpu.total.idle", filter=myfilters).publish()
-        EOF
-
     description = "Very cool Single Value Chart"
 
-    color_by = "Dimension"
-
-    max_delay = 2
-    refresh_interval = 1
-    max_precision = 2
-    is_timestamp_hidden = true
+    program_text = <<-EOF
+        data("cpu.total.idle").publish()
+        EOF
 }
 
 resource "signalfx_heatmap_chart" "myheatmapchart0" {
     name = "CPU Total Idle - Heatmap"
+    description = "Very cool Heatmap"
 
     program_text = <<-EOF
-        myfilters = filter("cluster_name", "prod") and filter("role", "search")
-        data("cpu.total.idle", filter=myfilters).publish()
+        data("cpu.total.idle").publish()
         EOF
+}
 
-    description = "Very cool Heatmap"
+resource "signalfx_text_chart" "mytextchart0" {
+    name = "Important Dashboard Note"
+    description = "Lorem ipsum dolor sit amet"
+    markdown = <<-EOF
+		**Farts
+		EOF
+}
+
+resource "signalfx_event_feed_chart" "myeventfeedchart0" {
+  name = "Fart Event Feed"
+  description = "Farts"
+	program_text = "A = events(eventType='Fart Testing').publish(label='A')"
 }
 
 resource "signalfx_dashboard_group" "mydashboardgroup0" {
@@ -95,6 +114,17 @@ resource "signalfx_dashboard" "mydashboard0" {
         negated = true
       }
     }
+
+		chart {
+        chart_id = "${signalfx_time_chart.mytimechart0.id}"
+        width = 12
+        height = 1
+    }
+		chart {
+        chart_id = "${signalfx_list_chart.mylistchart0.id}"
+        width = 12
+        height = 1
+    }
     chart {
         chart_id = "${signalfx_single_value_chart.mysvchart0.id}"
         width = 12
@@ -105,42 +135,66 @@ resource "signalfx_dashboard" "mydashboard0" {
         width = 12
         height = 1
     }
+		chart {
+        chart_id = "${signalfx_text_chart.mytextchart0.id}"
+        width = 12
+        height = 1
+    }
+		chart {
+        chart_id = "${signalfx_event_feed_chart.myeventfeedchart0.id}"
+        width = 12
+        height = 1
+    }
 }
 `
 
 const updatedDashConfig = `
+resource "signalfx_time_chart" "mytimechart0" {
+    name = "CPU Total Idle"
+    description = "Very cool Time Chart"
+    program_text = <<-EOF
+        data("cpu.total.idle").publish(label="CPU Idle")
+        EOF
+}
+
+resource "signalfx_list_chart" "mylistchart0" {
+    name = "CPU Total Idle - List"
+    description = "Very cool List Chart"
+    program_text = <<-EOF
+    data("cpu.total.idle").publish()
+    EOF
+}
+
 resource "signalfx_single_value_chart" "mysvchart0" {
     name = "CPU Total Idle - Single Value"
-
-    program_text = <<-EOF
-        myfilters = filter("cluster_name", "prod") and filter("role", "search")
-        data("cpu.total.idle", filter=myfilters).publish()
-        EOF
-
     description = "Very cool Single Value Chart"
 
-    color_by = "Dimension"
-
-    max_delay = 2
-    refresh_interval = 1
-    max_precision = 2
-    is_timestamp_hidden = true
+    program_text = <<-EOF
+        data("cpu.total.idle").publish()
+        EOF
 }
 
 resource "signalfx_heatmap_chart" "myheatmapchart0" {
     name = "CPU Total Idle - Heatmap"
-
-    program_text = <<-EOF
-        myfilters = filter("cluster_name", "prod") and filter("role", "search")
-        data("cpu.total.idle", filter=myfilters).publish()
-        EOF
-
     description = "Very cool Heatmap"
 
-    disable_sampling = true
-    sort_by = "+host"
-    group_by = ["hostname", "host"]
-    hide_timestamp = true
+    program_text = <<-EOF
+        data("cpu.total.idle").publish()
+        EOF
+}
+
+resource "signalfx_text_chart" "mytextchart0" {
+    name = "Important Dashboard Note"
+    description = "Lorem ipsum dolor sit amet"
+    markdown = <<-EOF
+		**Farts
+		EOF
+}
+
+resource "signalfx_event_feed_chart" "myeventfeedchart0" {
+  name = "Fart Event Feed"
+  description = "Farts"
+	program_text = "A = events(eventType='Fart Testing').publish(label='A')"
 }
 
 resource "signalfx_dashboard_group" "mydashboardgroup0" {
@@ -196,6 +250,17 @@ resource "signalfx_dashboard" "mydashboard0" {
         negated = true
       }
     }
+
+		chart {
+        chart_id = "${signalfx_time_chart.mytimechart0.id}"
+        width = 12
+        height = 1
+    }
+		chart {
+        chart_id = "${signalfx_list_chart.mylistchart0.id}"
+        width = 12
+        height = 1
+    }
     chart {
         chart_id = "${signalfx_single_value_chart.mysvchart0.id}"
         width = 12
@@ -203,6 +268,16 @@ resource "signalfx_dashboard" "mydashboard0" {
     }
     chart {
         chart_id = "${signalfx_heatmap_chart.myheatmapchart0.id}"
+        width = 12
+        height = 1
+    }
+		chart {
+        chart_id = "${signalfx_text_chart.mytextchart0.id}"
+        width = 12
+        height = 1
+    }
+		chart {
+        chart_id = "${signalfx_event_feed_chart.myeventfeedchart0.id}"
         width = 12
         height = 1
     }
@@ -268,7 +343,7 @@ func TestAccCreateUpdateDashboardGroup(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "selected_event_overlay.0.type", "detectorEvents"),
 
 					// Charts
-					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "chart.#", "2"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "chart.#", "6"),
 					// We're not testing each chart because they aren't stable, TODO?
 
 					// Dashboard Group
