@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/hashicorp/terraform/helper/hashcode"
 	"github.com/hashicorp/terraform/helper/resource"
@@ -190,7 +189,6 @@ resource "signalfx_detector" "application_delay" {
 		show_event_lines = true
 		disable_sampling = true
 		time_range = 3600
-		tags = [ "a", "b" ]
 
     program_text = <<-EOF
         signal = data('app.delay2').max()
@@ -313,7 +311,7 @@ func testAccCheckDetectorResourceExists(s *terraform.State) error {
 		}
 	}
 	// Add some time to let the API quiesce. This may be removed in the future.
-	time.Sleep(time.Duration(3) * time.Second)
+	// time.Sleep(time.Duration(3) * time.Second)
 
 	return nil
 }

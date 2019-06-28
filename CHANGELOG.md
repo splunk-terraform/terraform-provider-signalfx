@@ -2,7 +2,7 @@
 
 # 3.4.0 (Unreleased)
 
-NOTES:
+## Fixed
 
 * resource/dashboard: `tags` has been deprecated
 * resource/dashboard: `grid.start_row` has been deprecated
@@ -17,8 +17,9 @@ NOTES:
 
 ## Removed
 
-* There is no longer a `synced` attribute of any non-integration resources. This computed property reflected whether or not the `last_updated` property had changed on the API-side of SignalFx. It acted as a signal for the operator that the remote resource had changed without Terraform's knowledge. While useful in some situations this behavior is non-idiomatic in Terraform. This has the side effect of cleaning up plan/apply output for many users who didn't know what `synced` meant.
+* There is no longer a `synced` attribute of all non-integration resources. This computed property reflected whether or not the `last_updated` property had changed on the API-side of SignalFx. It acted as a signal for the operator that the remote resource had changed without Terraform's knowledge. While useful in some situations this behavior is non-idiomatic in Terraform. This has the side effect of cleaning up plan/apply output for many users who didn't know what `synced` meant.
 * The `last_updated` attribute was removed from all non-integration resources, as it was no longer needed when `sync` was removed.
+* The property `tags` has been removed from `signalfx_dashboard` and `signalfx_detector` to prevent race conditions. SignalFx's API currently contains some asynchronous behavior that causes this field to intermittently report the wrong value. Rather than impose delays it was decided this could be removed.
 
 ## Changed
 
