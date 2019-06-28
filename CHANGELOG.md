@@ -2,17 +2,20 @@
 
 NOTES:
 
-* Property `legend_fields_to_hide` has been deprecated from `signalfx_time_chart` and `signalfx_list_chart`. Please use `legend_options_fields` instead.
+* provider: This provider previously ignored the response body of API calls and wrote the state file without considering the document that was returned. It is considered idiomatic in Terraform to either read the response or issue a follow-up `GET` request to hydrate the state using the API's version of the document. This being absent allowed a number of oddities in this provider which have been fixed.
+* resource/signalfx_time_chart: Property `legend_fields_to_hide` has been deprecated. Please use `legend_options_fields` instead.
+* resource/signalfx_list_chart: Property `legend_fields_to_hide` has been deprecated. Please use `legend_options_fields` instead.
 
 FEATURES:
 
-* This provider now emits useful messages into debug logs in case they are needed. (They are for the author!)
+* provider: emits useful messages into debug logs in case they are needed. (They are for the author!)
+* provider: Added various utility methods for color name and index lookups
 * resource/signalfx_event_feed_chart: Add properties `time_range`, `start_time`, and `end_time`.
 * resource/signalfx_list_chart: now supports `legend_options_fields`.
-* Added various utility methods for color name and index lookups
 
 BUG FIXES:
 
+* provider: This provider previously ignored the response body of API calls and wrote the state file without considering the document that was returned. It is considered idiomatic in Terraform to either read the response or issue a follow-up `GET` request to hydrate the state using the API's version of the document. This being absent allowed a number of oddities in this provider which have been fixed.
 * resource/dashboard: `tags` has been deprecated
 * resource/dashboard: `grid.start_row` has been deprecated
 * resource/dashboard: `grid.start_column` has been deprecated
@@ -20,16 +23,16 @@ BUG FIXES:
 * resource/detector: `tags` has been deprecated
 * resource/event_feed_chart: `viz_options` has been deprecated
 * resource/time_chart: `tags` has been deprecated
-* This provider previously ignored the response body of API calls and wrote the state file without considering the document that was returned. It is considered idiomatic in Terraform to either read the response or issue a follow-up `GET` request to hydrate the state using the API's version of the document. This being absent allowed a number of oddities in this provider which have been fixed.
-* All resources lacked property acceptance tests that verified proper state function. These tests have now been added.
-* Many resource properties now include default values.
+* provider: All resources lacked property acceptance tests that verified proper state function. These tests have now been added.
+* provider: Many resource properties now include default values.
 
 BACKWARDS INCOMPATIBILITIES:
 
-* There is no longer a `synced` attribute of all non-integration resources. This computed property reflected whether or not the `last_updated` property had changed on the API-side of SignalFx. It acted as a signal for the operator that the remote resource had changed without Terraform's knowledge. While useful in some situations this behavior is non-idiomatic in Terraform. This has the side effect of cleaning up plan/apply output for many users who didn't know what `synced` meant.
-* The attribute `time_range` of various resources has changed from `String` to `Int`. Values like `1h` must now be expressed in seconds. For example `1h` should become `3600` as that's how many seconds are in an hour.
-* The `last_updated` attribute was removed from all non-integration resources, as it was no longer needed when `sync` was removed.
-* The property `tags` has been removed from `signalfx_dashboard` and `signalfx_detector` to prevent race conditions. SignalFx's API currently contains some asynchronous behavior that causes this field to intermittently report the wrong value. Rather than impose delays it was decided this could be removed.
+* provider: There is no longer a `synced` attribute of all non-integration resources. This computed property reflected whether or not the `last_updated` property had changed on the API-side of SignalFx. It acted as a signal for the operator that the remote resource had changed without Terraform's knowledge. While useful in some situations this behavior is non-idiomatic in Terraform. This has the side effect of cleaning up plan/apply output for many users who didn't know what `synced` meant.
+* provider: The attribute `time_range` of various resources has changed from `String` to `Int`. Values like `1h` must now be expressed in seconds. For example `1h` should become `3600` as that's how many seconds are in an hour.
+* provider: The `last_updated` attribute was removed from all non-integration resources, as it was no longer needed when `sync` was removed.
+* resource/signalfx_dashboard: The property `tags` has been removed from to prevent race conditions.
+* resource/signalfx_detector: The property `tags` has been removed from to prevent race conditions.
 * resource/signalfx_event_feed_chart: removed the `viz_options` block and it's constituent `label` and `color` since they didn't do anything.
 * resource/signalfx_heatmap_chart: no longer tries to do anything with `color_by` of `"Scale"` as the code that was there didn't send valid data.
 
