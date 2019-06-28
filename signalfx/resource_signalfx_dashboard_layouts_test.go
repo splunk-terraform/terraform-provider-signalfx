@@ -30,7 +30,6 @@ resource "signalfx_dashboard" "mydashboardLAYOUT1" {
         chart_ids = [ "${signalfx_time_chart.mytimechartLAYOUT1.id}" ]
         width = 3
         height = 1
-        start_row = 0
     }
 }
 `
@@ -58,6 +57,7 @@ resource "signalfx_dashboard" "mydashboardLAYOUT2" {
     column {
         chart_ids = [ "${signalfx_time_chart.mytimechartLAYOUT2.id}" ]
         width = 2
+        column = 4
     }
 }
 `
@@ -76,7 +76,10 @@ func TestAccCreateUpdateDashboardGridLayout(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboardLAYOUT1", "name", "My Dashboard Test 1"),
 
 					// Charts
-					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboardLAYOUT1", "chart.#", "1"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboardLAYOUT1", "grid.#", "1"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboardLAYOUT1", "grid.0.chart_ids.#", "1"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboardLAYOUT1", "grid.0.height", "1"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboardLAYOUT1", "grid.0.width", "3"),
 				),
 			},
 		},
@@ -97,7 +100,11 @@ func TestAccCreateUpdateDashboardColumnLayout(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboardLAYOUT2", "name", "My Dashboard Test 1"),
 
 					// Charts
-					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboardLAYOUT2", "chart.#", "1"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboardLAYOUT2", "column.#", "1"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboardLAYOUT2", "column.0.chart_ids.#", "1"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboardLAYOUT2", "column.0.column", "4"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboardLAYOUT2", "column.0.height", "1"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboardLAYOUT2", "column.0.width", "2"),
 				),
 			},
 		},

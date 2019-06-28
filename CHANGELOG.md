@@ -32,6 +32,11 @@ BACKWARDS INCOMPATIBILITIES:
 * provider: The attribute `time_range` of various resources has changed from `String` to `Int`. Values like `1h` must now be expressed in seconds. For example `1h` should become `3600` as that's how many seconds are in an hour.
 * provider: The `last_updated` attribute was removed from all non-integration resources, as it was no longer needed when `sync` was removed.
 * resource/signalfx_dashboard: The property `tags` has been removed from to prevent race conditions.
+* resource/signalfx_dashboard: You may no longer mix `grid`, `column` and `chart` in a dashboard.
+* resource/signalfx_dashboard: If you use `grid` or `column` you can only use them one time.
+* resource/signalfx_dashboard: `grid.start_row` has been removed
+* resource/signalfx_dashboard: `grid.start_column` has been removed
+* resource/signalfx_dashboard: `column.start_row` has been removed
 * resource/signalfx_detector: The property `tags` has been removed from to prevent race conditions.
 * resource/signalfx_event_feed_chart: removed the `viz_options` block and it's constituent `label` and `color` since they didn't do anything.
 * resource/signalfx_heatmap_chart: no longer tries to do anything with `color_by` of `"Scale"` as the code that was there didn't send valid data.

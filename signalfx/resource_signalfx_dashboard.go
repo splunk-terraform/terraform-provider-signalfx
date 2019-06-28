@@ -103,7 +103,8 @@ func dashboardResource() *schema.Resource {
 				},
 			},
 			"grid": &schema.Schema{
-				Type:          schema.TypeSet,
+				Type:          schema.TypeList,
+				MaxItems:      1,
 				Optional:      true,
 				ConflictsWith: []string{"column", "chart"},
 				Description:   "Grid dashboard layout. Charts listed will be placed in a grid by row with the same width and height. If a chart can't fit in a row, it will be placed automatically in the next row",
@@ -114,20 +115,6 @@ func dashboardResource() *schema.Resource {
 							Required:    true,
 							Elem:        &schema.Schema{Type: schema.TypeString},
 							Description: "Charts to use for the grid",
-						},
-						"start_row": &schema.Schema{
-							Type:        schema.TypeInt,
-							Deprecated:  "signalfx_dashboard.grid.start_row is being removed in the next release",
-							Optional:    true,
-							Description: "Starting row number for the grid",
-							Default:     0,
-						},
-						"start_column": &schema.Schema{
-							Type:        schema.TypeInt,
-							Deprecated:  "signalfx_dashboard.grid.start_column is being removed in the next release",
-							Optional:    true,
-							Description: "Starting column number for the grid",
-							Default:     0,
 						},
 						"width": &schema.Schema{
 							Type:        schema.TypeInt,
@@ -145,7 +132,8 @@ func dashboardResource() *schema.Resource {
 				},
 			},
 			"column": &schema.Schema{
-				Type:          schema.TypeSet,
+				Type:          schema.TypeList,
+				MaxItems:      1,
 				Optional:      true,
 				ConflictsWith: []string{"grid", "chart"},
 				Description:   "Column layout. Charts listed, will be placed in a single column with the same width and height",
@@ -161,13 +149,6 @@ func dashboardResource() *schema.Resource {
 							Type:        schema.TypeInt,
 							Optional:    true,
 							Description: "Column number for the layout",
-							Default:     0,
-						},
-						"start_row": &schema.Schema{
-							Type:        schema.TypeInt,
-							Deprecated:  "signalfx_dashboard.column.start_row is being removed in the next release",
-							Optional:    true,
-							Description: "Starting row number for the column",
 							Default:     0,
 						},
 						"width": &schema.Schema{
@@ -501,12 +482,12 @@ func getDashboardCharts(d *schema.ResourceData) []*dashboard.DashboardChart {
 }
 
 func getDashboardColumns(d *schema.ResourceData) []*dashboard.DashboardChart {
-	columns := d.Get("column").(*schema.Set).List()
+	columns := d.Get("column").([]interface{})
 	charts := make([]*dashboard.DashboardChart, 0)
 	for _, column := range columns {
 		column := column.(map[string]interface{})
 
-		currentRow := column["start_row"].(int)
+		currentRow := 0
 		columnNumber := column["column"].(int)
 		for _, chartID := range column["chart_ids"].([]interface{}) {
 			item := &dashboard.DashboardChart{
@@ -525,14 +506,14 @@ func getDashboardColumns(d *schema.ResourceData) []*dashboard.DashboardChart {
 }
 
 func getDashboardGrids(d *schema.ResourceData) []*dashboard.DashboardChart {
-	grids := d.Get("grid").(*schema.Set).List()
+	grids := d.Get("grid").([]interface{})
 	charts := make([]*dashboard.DashboardChart, 0)
 	for _, grid := range grids {
 		grid := grid.(map[string]interface{})
 
 		width := grid["width"].(int)
-		currentRow := grid["start_row"].(int)
-		currentColumn := grid["start_column"].(int)
+		currentRow := 0
+		currentColumn := 0
 		for _, chartID := range grid["chart_ids"].([]interface{}) {
 			if currentColumn+width > 12 {
 				currentRow++
@@ -727,18 +708,60 @@ func dashboardAPIToTF(d *schema.ResourceData, dash *dashboard.Dashboard) error {
 		return err
 	}
 	// Charts
-	charts := make([]map[string]interface{}, len(dash.Charts))
-	for i, c := range dash.Charts {
-		chart := make(map[string]interface{})
-		chart["chart_id"] = c.ChartId
-		chart["height"] = c.Height
-		chart["width"] = c.Width
-		chart["row"] = c.Row
-		chart["column"] = c.Column
-		charts[i] = chart
-	}
-	if err := d.Set("chart", charts); err != nil {
-		return err
+	// If the user used a grid, put it back into the state file that way
+	if _, ok := d.GetOk("grid"); ok {
+		chartIds := make([]string, len(dash.Charts))
+		grid := make(map[string]interface{})
+		for i, c := range dash.Charts {
+			if i == 0 {
+				// These are all the same, so use the first chart to set the
+				// grid's width and height per chart
+				grid["width"] = c.Width
+				grid["height"] = c.Height
+			}
+			chartIds[i] = c.ChartId
+		}
+		grid["chart_ids"] = chartIds
+		if err := d.Set("grid", []interface{}{grid}); err != nil {
+			return err
+		}
+	} else if _, ok := d.GetOkExists("column"); ok {
+		chartIds := make([]string, len(dash.Charts))
+		column := make(map[string]interface{})
+		maxColumn := 1
+		for i, c := range dash.Charts {
+			if int(c.Column) > maxColumn {
+				// Find our widest column, store it for later
+				maxColumn = int(c.Column)
+			}
+			if i == 0 {
+				// These are all the same, so use the first chart to set the
+				// grid's width and height per chart
+				column["width"] = c.Width
+				column["height"] = c.Height
+
+			}
+			chartIds[i] = c.ChartId
+		}
+		column["column"] = maxColumn
+		column["chart_ids"] = chartIds
+		if err := d.Set("column", []interface{}{column}); err != nil {
+			return err
+		}
+	} else {
+		charts := make([]map[string]interface{}, len(dash.Charts))
+		for i, c := range dash.Charts {
+			chart := make(map[string]interface{})
+			chart["chart_id"] = c.ChartId
+			chart["height"] = c.Height
+			chart["width"] = c.Width
+			chart["row"] = c.Row
+			chart["column"] = c.Column
+			charts[i] = chart
+		}
+		if err := d.Set("chart", charts); err != nil {
+			return err
+		}
 	}
 
 	// Filters
