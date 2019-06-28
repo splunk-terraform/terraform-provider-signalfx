@@ -104,7 +104,6 @@ The following arguments are supported in the resource block:
       * `property` - The name of a dimension to filter against.
       * `values` - A list of values to be used with the `property`, they will be combined via `OR`.
       * `negated` - (Optional) If true,  only data that does not match the specified value of the specified property appear in the event overlay. Defaults to `false`.
-* `synced` - (Optional) Whether the resource in the provider and SignalFx are identical or not. Used internally for syncing, you do not need to specify it. Whenever you see a change to this field in the plan, it means that your resource has been changed from the UI and Terraform is now going to re-sync it back to what's in your configuration.
 * `tags` - (Optional) Tags associated with the dashboard.
 
 
