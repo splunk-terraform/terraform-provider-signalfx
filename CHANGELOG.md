@@ -1,13 +1,14 @@
 # 4.0.0 (Unreleased)
 
-## Added
+FEATURES:
 
 * This provider now emits useful messages into debug logs in case they are needed. (They are for the author!)
 * `signalfx_event_feed_chart` now has properties `time_range`, `start_time`, and `end_time`.
 * `signalfx_list_chart` now supports `legend_options_fields`.
 * Added various utility methods for color name and index lookups
+* The attribute `time_range` of various resources has changed from `String` to `Int`. Values like `1h` must now be expressed in seconds. For example `1h` should become `3600` as that's how many seconds are in an hour.
 
-## Fixed
+BUG FIXES:
 
 * resource/dashboard: `tags` has been deprecated
 * resource/dashboard: `grid.start_row` has been deprecated
@@ -20,17 +21,13 @@
 * All resources lacked property acceptance tests that verified proper state function. These tests have now been added.
 * Many resource properties now include default values.
 
-## Removed
+BACKWARDS INCOMPATIBILITIES:
 
 * There is no longer a `synced` attribute of all non-integration resources. This computed property reflected whether or not the `last_updated` property had changed on the API-side of SignalFx. It acted as a signal for the operator that the remote resource had changed without Terraform's knowledge. While useful in some situations this behavior is non-idiomatic in Terraform. This has the side effect of cleaning up plan/apply output for many users who didn't know what `synced` meant.
 * The `last_updated` attribute was removed from all non-integration resources, as it was no longer needed when `sync` was removed.
 * The property `tags` has been removed from `signalfx_dashboard` and `signalfx_detector` to prevent race conditions. SignalFx's API currently contains some asynchronous behavior that causes this field to intermittently report the wrong value. Rather than impose delays it was decided this could be removed.
 * `signalfx_event_feed_chart` no longer has the `viz_options` block and it's constituent `label` and `color` since they didn't do anything.
 * `signalfx_heatmap_chart` no longer tries to do anything with `color_by` of `"Scale"` as the code that was there didn't send valid data.
-
-## Changed
-
-* The attribute `time_range` of various resources has changed from `String` to `Int`. Values like `1h` must now be expressed in seconds. For example `1h` should become `3600` as that's how many seconds are in an hour.
 
 # 3.3.0 (2019-06-28)
 
