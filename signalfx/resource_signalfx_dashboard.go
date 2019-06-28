@@ -66,9 +66,10 @@ func dashboardResource() *schema.Resource {
 			// 	Description: "Tags associated with the dashboard",
 			// },
 			"chart": &schema.Schema{
-				Type:        schema.TypeSet,
-				Optional:    true,
-				Description: "Chart ID and layout information for the charts in the dashboard",
+				Type:          schema.TypeSet,
+				Optional:      true,
+				ConflictsWith: []string{"column", "grid"},
+				Description:   "Chart ID and layout information for the charts in the dashboard",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"chart_id": &schema.Schema{
@@ -102,9 +103,10 @@ func dashboardResource() *schema.Resource {
 				},
 			},
 			"grid": &schema.Schema{
-				Type:        schema.TypeSet,
-				Optional:    true,
-				Description: "Grid dashboard layout. Charts listed will be placed in a grid by row with the same width and height. If a chart can't fit in a row, it will be placed automatically in the next row",
+				Type:          schema.TypeSet,
+				Optional:      true,
+				ConflictsWith: []string{"column", "chart"},
+				Description:   "Grid dashboard layout. Charts listed will be placed in a grid by row with the same width and height. If a chart can't fit in a row, it will be placed automatically in the next row",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"chart_ids": &schema.Schema{
@@ -143,9 +145,10 @@ func dashboardResource() *schema.Resource {
 				},
 			},
 			"column": &schema.Schema{
-				Type:        schema.TypeSet,
-				Optional:    true,
-				Description: "Column layout. Charts listed, will be placed in a single column with the same width and height",
+				Type:          schema.TypeSet,
+				Optional:      true,
+				ConflictsWith: []string{"grid", "chart"},
+				Description:   "Column layout. Charts listed, will be placed in a single column with the same width and height",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"chart_ids": &schema.Schema{
@@ -467,12 +470,13 @@ func getDashboardTime(d *schema.ResourceData) *dashboard.ChartsFiltersTime {
 			End:   "Now",
 		}
 	} else {
-		timeFilter = &dashboard.ChartsFiltersTime{}
 		if val, ok := d.GetOk("start_time"); ok {
-			timeFilter.Start = strconv.Itoa(val.(int) * 1000)
-		}
-		if val, ok := d.GetOk("end_time"); ok {
-			timeFilter.End = strconv.Itoa(val.(int) * 1000)
+			timeFilter = &dashboard.ChartsFiltersTime{
+				Start: strconv.Itoa(val.(int) * 1000),
+			}
+			if val, ok := d.GetOk("end_time"); ok {
+				timeFilter.End = strconv.Itoa(val.(int) * 1000)
+			}
 		}
 	}
 	return timeFilter
@@ -526,21 +530,21 @@ func getDashboardGrids(d *schema.ResourceData) []*dashboard.DashboardChart {
 	for _, grid := range grids {
 		grid := grid.(map[string]interface{})
 
-		width := grid["width"].(int32)
-		currentRow := grid["start_row"].(int32)
-		currentColumn := grid["start_column"].(int32)
+		width := grid["width"].(int)
+		currentRow := grid["start_row"].(int)
+		currentColumn := grid["start_column"].(int)
 		for _, chartID := range grid["chart_ids"].([]interface{}) {
 			if currentColumn+width > 12 {
 				currentRow++
-				currentColumn = grid["start_column"].(int32)
+				currentColumn = grid["start_column"].(int)
 			}
 
 			item := &dashboard.DashboardChart{
 				ChartId: chartID.(string),
-				Column:  currentColumn,
-				Height:  grid["height"].(int32),
-				Row:     currentRow,
-				Width:   grid["width"].(int32),
+				Column:  int32(currentColumn),
+				Height:  int32(grid["height"].(int)),
+				Row:     int32(currentRow),
+				Width:   int32(grid["width"].(int)),
 			}
 			currentColumn += width
 			charts = append(charts, item)
