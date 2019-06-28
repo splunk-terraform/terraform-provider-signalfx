@@ -1,5 +1,9 @@
 # 4.0.0 (Unreleased)
 
+NOTES:
+
+* Property `legend_fields_to_hide` has been deprecated from `signalfx_time_chart` and `signalfx_list_chart`. Please use `legend_options_fields` instead.
+
 FEATURES:
 
 * This provider now emits useful messages into debug logs in case they are needed. (They are for the author!)

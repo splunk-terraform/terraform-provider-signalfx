@@ -64,6 +64,7 @@ func listChartResource() *schema.Resource {
 			"legend_fields_to_hide": &schema.Schema{
 				Type:          schema.TypeSet,
 				Optional:      true,
+				Deprecated:    "Please use legend_options_fields",
 				ConflictsWith: []string{"legend_options_fields"},
 				Elem:          &schema.Schema{Type: schema.TypeString},
 				Description:   "List of properties that shouldn't be displayed in the chart legend (i.e. dimension names)",
