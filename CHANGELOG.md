@@ -1,12 +1,16 @@
 # 4.0.0 (Unreleased)
 
-## Added
+# 3.4.0 (Unreleased)
 
-## Fixed
+NOTES:
 
-## Removed
-
-## Changed
+* resource/dashboard: `tags` has been deprecated
+* resource/dashboard: `grid.start_row` has been deprecated
+* resource/dashboard: `grid.start_column` has been deprecated
+* resource/dashboard: `column.start_row` has been deprecated
+* resource/detector: `tags` has been deprecated
+* resource/event_feed_chart: `viz_options` has been deprecated
+* resource/time_chart: `tags` has been deprecated
 
 # 3.3.0 (2019-06-28)
 

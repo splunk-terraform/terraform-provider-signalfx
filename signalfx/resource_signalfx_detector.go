@@ -85,6 +85,7 @@ func detectorResource() *schema.Resource {
 			},
 			"tags": &schema.Schema{
 				Type:        schema.TypeList,
+				Deprecated:  "signalfx_detector.tags is being removed in the next release",
 				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "Tags associated with the detector",
