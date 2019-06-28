@@ -32,6 +32,7 @@ func heatmapChartResource() *schema.Resource {
 			"unit_prefix": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
+				Default:     "Metric",
 				Description: "(Metric by default) Must be \"Metric\" or \"Binary\"",
 			},
 			"minimum_resolution": &schema.Schema{
@@ -170,10 +171,18 @@ func getPayloadHeatmapChart(d *schema.ResourceData) *chart.CreateUpdateChartRequ
 }
 
 func getHeatmapColorRangeOptions(d *schema.ResourceData) *chart.HeatmapColorRangeOptions {
-	item := &chart.HeatmapColorRangeOptions{}
 	colorRange := d.Get("color_range").(*schema.Set).List()
+
+	var item *chart.HeatmapColorRangeOptions
+
 	for _, options := range colorRange {
 		options := options.(map[string]interface{})
+
+		// Don't make an empty color range.
+		if options["color"].(string) == "" {
+			return item
+		}
+		item = &chart.HeatmapColorRangeOptions{}
 
 		if val, ok := options["min_value"]; ok {
 			if val.(float64) != -math.MaxFloat32 {
@@ -212,7 +221,7 @@ func getHeatmapOptionsChart(d *schema.ResourceData) *chart.Options {
 
 	var groupBy []string
 	if val, ok := d.GetOk("group_by"); ok {
-		groupBy := []string{}
+		groupBy = []string{}
 		for _, g := range val.([]interface{}) {
 			groupBy = append(groupBy, g.(string))
 		}

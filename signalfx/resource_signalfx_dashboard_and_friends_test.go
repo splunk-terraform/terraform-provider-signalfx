@@ -40,11 +40,6 @@ resource "signalfx_heatmap_chart" "myheatmapchart0" {
         EOF
 
     description = "Very cool Heatmap"
-
-    disable_sampling = true
-    sort_by = "+host"
-    group_by = ["hostname", "host"]
-    hide_timestamp = true
 }
 
 resource "signalfx_dashboard_group" "mydashboardgroup0" {
