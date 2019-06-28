@@ -434,7 +434,6 @@ func getPayloadDashboard(d *schema.ResourceData) (*dashboard.CreateUpdateDashboa
 	dashboardCharts = append(dashboardCharts, gridCharts...)
 	if len(dashboardCharts) > 0 {
 		cudr.Charts = dashboardCharts
-		// payload["charts"] = dashboard_charts
 	}
 
 	if chartsResolution, ok := d.GetOk("charts_resolution"); ok {
