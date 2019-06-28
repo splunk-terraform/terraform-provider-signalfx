@@ -432,7 +432,8 @@ func detectorRead(d *schema.ResourceData, meta interface{}) error {
 }
 
 func detectorAPIToTF(d *schema.ResourceData, det *detector.Detector) error {
-	log.Printf("[DEBUG] SignalFx: Got Detector to enState: %v", det)
+	debugOutput, _ := json.Marshal(det)
+	log.Printf("[DEBUG] SignalFx: Got Detector to enState: %s", string(debugOutput))
 
 	if err := d.Set("name", det.Name); err != nil {
 		return err

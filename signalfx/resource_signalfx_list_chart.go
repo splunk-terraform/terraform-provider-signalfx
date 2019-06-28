@@ -258,7 +258,8 @@ func listchartCreate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func listchartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
-	log.Printf("[DEBUG] SignalFx: Got List Chart to enState %v", c)
+	debugOutput, _ := json.Marshal(c)
+	log.Printf("[DEBUG] SignalFx: Got List Chart to enState: %s", string(debugOutput))
 
 	if err := d.Set("name", c.Name); err != nil {
 		return err

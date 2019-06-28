@@ -711,7 +711,8 @@ func dashboardRead(d *schema.ResourceData, meta interface{}) error {
 }
 
 func dashboardAPIToTF(d *schema.ResourceData, dash *dashboard.Dashboard) error {
-	log.Printf("[DEBUG] SignalFx: Got Dashboard to enState %v", dash)
+	debugOutput, _ := json.Marshal(dash)
+	log.Printf("[DEBUG] SignalFx: Got Dashboard Group to enState: %s", string(debugOutput))
 
 	if err := d.Set("name", dash.Name); err != nil {
 		return err

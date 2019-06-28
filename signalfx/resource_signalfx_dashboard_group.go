@@ -70,7 +70,8 @@ func dashboardgroupCreate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func dashboardGroupAPIToTF(d *schema.ResourceData, dg *dashboard_group.DashboardGroup) error {
-	log.Printf("[DEBUG] SignalFx: Got Dashboard Group to enState: %v", dg)
+	debugOutput, _ := json.Marshal(dg)
+	log.Printf("[DEBUG] SignalFx: Got Dashboard Group to enState: %s", string(debugOutput))
 
 	if err := d.Set("name", dg.Name); err != nil {
 		return err

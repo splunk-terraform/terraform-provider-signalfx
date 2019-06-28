@@ -256,7 +256,8 @@ func singlevaluechartCreate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func singlevaluechartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
-	log.Printf("[DEBUG] SignalFx: Got Single Value Chart to enState %v", c)
+	debugOutput, _ := json.Marshal(c)
+	log.Printf("[DEBUG] SignalFx: Got Single Value Chart to enState: %s", string(debugOutput))
 
 	if err := d.Set("name", c.Name); err != nil {
 		return err
