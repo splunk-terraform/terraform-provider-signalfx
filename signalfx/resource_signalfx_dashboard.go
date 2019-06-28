@@ -66,6 +66,7 @@ func dashboardResource() *schema.Resource {
 			"tags": &schema.Schema{
 				Type:        schema.TypeList,
 				Optional:    true,
+				Deprecated:  "signalfx_dashboard.tags is being removed in the next release",
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "Tags associated with the dashboard",
 			},
@@ -119,12 +120,14 @@ func dashboardResource() *schema.Resource {
 						},
 						"start_row": &schema.Schema{
 							Type:        schema.TypeInt,
+							Deprecated:  "signalfx_dashboard.grid.start_row is being removed in the next release",
 							Optional:    true,
 							Description: "Starting row number for the grid",
 							Default:     0,
 						},
 						"start_column": &schema.Schema{
 							Type:        schema.TypeInt,
+							Deprecated:  "signalfx_dashboard.grid.start_column is being removed in the next release",
 							Optional:    true,
 							Description: "Starting column number for the grid",
 							Default:     0,
@@ -164,6 +167,7 @@ func dashboardResource() *schema.Resource {
 						},
 						"start_row": &schema.Schema{
 							Type:        schema.TypeInt,
+							Deprecated:  "signalfx_dashboard.column.start_row is being removed in the next release",
 							Optional:    true,
 							Description: "Starting row number for the column",
 							Default:     0,

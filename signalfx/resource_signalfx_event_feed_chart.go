@@ -33,6 +33,7 @@ func eventFeedChartResource() *schema.Resource {
 			},
 			"viz_options": &schema.Schema{
 				Type:        schema.TypeSet,
+				Deprecated:  "signalfx_event_feed_chart.viz_options is being removed in the next release",
 				Optional:    true,
 				Description: "Plot-level customization options, associated with a publish statement",
 				Elem: &schema.Resource{
