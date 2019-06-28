@@ -11,6 +11,18 @@ NOTES:
 * resource/detector: `tags` has been deprecated
 * resource/event_feed_chart: `viz_options` has been deprecated
 * resource/time_chart: `tags` has been deprecated
+* This provider previously ignored the response body of API calls and wrote the state file without considering the document that was returned. It is considered idiomatic in Terraform to either read the response or issue a follow-up `GET` request to hydrate the state using the API's version of the document. This being absent allowed a number of oddities in this provider which have been fixed.
+* All resources lacked property acceptance tests that verified proper state function. These tests have now been added.
+* Many resource properties now include default values.
+
+## Removed
+
+* There is no longer a `synced` attribute of any non-integration resources. This computed property reflected whether or not the `last_updated` property had changed on the API-side of SignalFx. It acted as a signal for the operator that the remote resource had changed without Terraform's knowledge. While useful in some situations this behavior is non-idiomatic in Terraform. This has the side effect of cleaning up plan/apply output for many users who didn't know what `synced` meant.
+* The `last_updated` attribute was removed from all non-integration resources, as it was no longer needed when `sync` was removed.
+
+## Changed
+
+* The attribute `time_range` of various resources has changed from `String` to `Int`. Values like `1h` must now be expressed in seconds. For example `1h` should become `3600` as that's how many seconds are in an hour.
 
 # 3.3.0 (2019-06-28)
 
@@ -26,14 +38,8 @@ NOTES:
 
 * [Adjusted](https://github.com/signalfx/terraform-provider-signalfx/pull/28) confusing docs for dashboard event overlays. Thanks to [detouched](https://github.com/detouched) for flagging!
 
-## Removed
-
-* There is no longer a `synced` attribute of `signalfx_detector`.
-
 ## Changed
 
-* The resource `signalfx_detector` has been rewritten to use [signalfx-go](https://github.com/signalfx/signalfx-go). The acceptance tests have been beefed up to spot any regressions.
-  * The attribute `time_range` of Detectors has changed from `String` to `Int`. Values like `1h` must now be expressed in seconds. For example `1h` should become `3600` as that's how many seconds are in an hour.
 * Added Go module vendor directory per [HashiCorp guidelines](https://github.com/signalfx/terraform-provider-signalfx/issues/37)
 
 # 3.2.0 (2019-05-24)

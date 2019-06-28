@@ -59,13 +59,12 @@ func dashboardResource() *schema.Resource {
 				Description:   "Seconds since epoch to end the visualization",
 				ConflictsWith: []string{"time_range"},
 			},
-			"tags": &schema.Schema{
-				Type:        schema.TypeList,
-				Optional:    true,
-				Deprecated:  "signalfx_dashboard.tags is being removed in the next release",
-				Elem:        &schema.Schema{Type: schema.TypeString},
-				Description: "Tags associated with the dashboard",
-			},
+			// "tags": &schema.Schema{
+			// 	Type:        schema.TypeList,
+			// 	Optional:    true,
+			// 	Elem:        &schema.Schema{Type: schema.TypeString},
+			// 	Description: "Tags associated with the dashboard",
+			// },
 			"chart": &schema.Schema{
 				Type:        schema.TypeSet,
 				Optional:    true,
@@ -449,13 +448,13 @@ func getPayloadDashboard(d *schema.ResourceData) (*dashboard.CreateUpdateDashboa
 			cudr.ChartDensity = dashboard.DEFAULT
 		}
 	}
-	if val, ok := d.GetOk("tags"); ok {
-		tags := []string{}
-		for _, tag := range val.([]interface{}) {
-			tags = append(tags, tag.(string))
-		}
-		cudr.Tags = tags
-	}
+	// if val, ok := d.GetOk("tags"); ok {
+	// 	tags := []string{}
+	// 	for _, tag := range val.([]interface{}) {
+	// 		tags = append(tags, tag.(string))
+	// 	}
+	// 	cudr.Tags = tags
+	// }
 
 	return cudr, nil
 }
@@ -864,9 +863,9 @@ func dashboardAPIToTF(d *schema.ResourceData, dash *dashboard.Dashboard) error {
 		}
 	}
 
-	if err := d.Set("tags", dash.Tags); err != nil {
-		return err
-	}
+	// if err := d.Set("tags", dash.Tags); err != nil {
+	// 	return err
+	// }
 
 	return nil
 }
