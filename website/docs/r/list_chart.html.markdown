@@ -35,19 +35,19 @@ resource "signalfx_list_chart" "mylistchart0" {
     legend_options_fields = [
       {
         property = "cluster_name"
-        present = true
+        enabled = true
       },
       {
         property = "role"
-        present = true
+        enabled = true
       },
       {
         property = "collector"
-        present = false
+        enabled = false
       },
       {
         property = "host"
-        present = false
+        enabled = false
       }
     ]
     max_precision = 2
@@ -67,9 +67,10 @@ The following arguments are supported in the resource block:
 * `max_delay` - (Optional) How long (in seconds) to wait for late datapoints.
 * `disable_sampling` - (Optional) If `false`, samples a subset of the output MTS, which improves UI performance. `false` by default.
 * `refresh_interval` - (Optional) How often (in seconds) to refresh the values of the list.
-* `legend_fields_to_hide` - (Optional) List of properties that should not be displayed in the chart legend (i.e. dimension names). All the properties are visible by default.
+* `legend_fields_to_hide` - (Optional) List of properties that should not be displayed in the chart legend (i.e. dimension names). All the properties are visible by default. Deprecated, please use `legend_options_fields`.
 * `legend_options_fields` - (Optional) List of property names and enabled flags that should be displayed in the data table for the chart, in the order provided. This option cannot be used with `legend_fields_to_hide`.
     * `property` The name of the property to display. Note the special values of `sf_metric` which shows the label of the time series `publish()` and `sf_originatingMetric` that shows the name of the metric for the time series being displayed.
+    * `enabled` True or False depending on if you want the property to be shown or hidden.
 * `max_precision` - (Optional) Maximum number of digits to display when rounding values up or down.
 * `secondary_visualization` - (Optional) The type of secondary visualization. Can be `None`, `Radial`, `Linear`, or `Sparkline`. If unset, the SignalFx default is used (`Sparkline`).
 * `sort_by` - (Optional) The property to use when sorting the elements. Use `value` if you want to sort by value. Must be prepended with `+` for ascending or `-` for descending (e.g. `-foo`). Note there are some special values for some of the options provided in the UX: `"value"` for Value, `"sf_originatingMetric"` for Metric, and `"sf_metric"` for plot.

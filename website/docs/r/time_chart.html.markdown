@@ -28,28 +28,26 @@ resource "signalfx_time_chart" "mychart0" {
     plot_type = "LineChart"
     show_data_markers = true
 
-    legend_fields_to_hide = ["collector", "prefix", "hostname"]
-    // Or… if you want to control order/etc
     legend_options_fields = [
       {
         property = "shc_name"
-        present = true
+        enabled = true
       },
       {
         property = "role"
-        present = true
+        enabled = true
       },
       {
         property = "collector"
-        present = false
+        enabled = false
       },
       {
         property = "prefix"
-        present = false
+        enabled = false
       },
       {
         property = "hostname"
-        present = false
+        enabled = false
       }
     ]
     viz_options {
@@ -110,6 +108,7 @@ The following arguments are supported in the resource block:
 * `legend_fields_to_hide` - (Optional) List of properties that should not be displayed in the chart legend (i.e. dimension names). All the properties are visible by default.
 * `legend_options_fields` - (Optional) List of property names and enabled flags that should be displayed in the data table for the chart, in the order provided. This option cannot be used with `legend_fields_to_hide`.
     * `property` The name of the property to display. Note the special values of `sf_metric` which shows the label of the time series `publish()` and `sf_originatingMetric` that shows the name of the metric for the time series being displayed.
+    * `enabled` True or False depending on if you want the property to be shown or hidden.
 * `on_chart_legend_dimension` - (Optional) Dimensions to show in the on-chart legend. On-chart legend is off unless a dimension is specified. Allowed: `"metric"`, `"plot_label"` and any dimension.
 * `show_event_lines` - (Optional) Whether vertical highlight lines should be drawn in the visualizations at times when events occurred. `false` by default.
 * `show_data_markers` - (Optional) Show markers (circles) for each datapoint used to draw line or area charts. `false` by default.
