@@ -2,6 +2,7 @@
 
 NOTES:
 
+* provider: Now emits useful messages into debug logs in case they are needed. (They are for the author!)
 * provider: This provider previously ignored the response body of API calls and wrote the state file without considering the document that was returned. It is considered idiomatic in Terraform to either read the response or issue a follow-up `GET` request to hydrate the state using the API's version of the document. This being absent allowed a number of oddities in this provider which have been fixed.
 * resource/signalfx_time_chart: Property `legend_fields_to_hide` has been deprecated. Please use `legend_options_fields` instead.
 * resource/signalfx_list_chart: Property `legend_fields_to_hide` has been deprecated. Please use `legend_options_fields` instead.
@@ -15,7 +16,6 @@ FEATURES:
 
 BUG FIXES:
 
-* provider: This provider previously ignored the response body of API calls and wrote the state file without considering the document that was returned. It is considered idiomatic in Terraform to either read the response or issue a follow-up `GET` request to hydrate the state using the API's version of the document. This being absent allowed a number of oddities in this provider which have been fixed.
 * resource/dashboard: `tags` has been deprecated
 * resource/dashboard: `grid.start_row` has been deprecated
 * resource/dashboard: `grid.start_column` has been deprecated

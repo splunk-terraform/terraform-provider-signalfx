@@ -36,7 +36,7 @@ func singleValueChartResource() *schema.Resource {
 			"color_by": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
-				Default:     "Dimension",
+				Default:     "Metric",
 				Description: "(Metric by default) Must be \"Metric\", \"Dimension\", or \"Scale\". \"Scale\" maps to Color by Value in the UI",
 			},
 			"max_delay": &schema.Schema{
