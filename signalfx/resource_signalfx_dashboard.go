@@ -610,7 +610,6 @@ func getDashboardEventOverlayFilters(sources []interface{}) []*dashboard.EventOv
 	for j, source := range sources {
 		source := source.(map[string]interface{})
 
-		log.Printf("[DEBUG] SignalFx: %v", source)
 		tfValues := source["values"].(*schema.Set).List()
 		values := make([]string, len(tfValues))
 		for i, v := range tfValues {
@@ -693,7 +692,7 @@ func dashboardRead(d *schema.ResourceData, meta interface{}) error {
 
 func dashboardAPIToTF(d *schema.ResourceData, dash *dashboard.Dashboard) error {
 	debugOutput, _ := json.Marshal(dash)
-	log.Printf("[DEBUG] SignalFx: Got Dashboard Group to enState: %s", string(debugOutput))
+	log.Printf("[DEBUG] SignalFx: Got Dashboard to enState: %s", string(debugOutput))
 
 	if err := d.Set("name", dash.Name); err != nil {
 		return err
@@ -707,9 +706,26 @@ func dashboardAPIToTF(d *schema.ResourceData, dash *dashboard.Dashboard) error {
 	if err := d.Set("charts_resolution", dash.ChartDensity); err != nil {
 		return err
 	}
+
+	layoutType := "charts"
+	if gridTF, ok := d.GetOk("grid"); ok {
+		if gridList, tok := gridTF.([]interface{}); tok {
+			if len(gridList) > 0 {
+				layoutType = "grid"
+			}
+		}
+	} else if colTF, ok := d.GetOk("column"); ok {
+		if colList, tok := colTF.([]interface{}); tok {
+			if len(colList) > 0 {
+				layoutType = "column"
+			}
+		}
+	}
+
 	// Charts
 	// If the user used a grid, put it back into the state file that way
-	if _, ok := d.GetOk("grid"); ok {
+	switch layoutType {
+	case "grid":
 		chartIds := make([]string, len(dash.Charts))
 		grid := make(map[string]interface{})
 		for i, c := range dash.Charts {
@@ -725,7 +741,7 @@ func dashboardAPIToTF(d *schema.ResourceData, dash *dashboard.Dashboard) error {
 		if err := d.Set("grid", []interface{}{grid}); err != nil {
 			return err
 		}
-	} else if _, ok := d.GetOkExists("column"); ok {
+	case "column":
 		chartIds := make([]string, len(dash.Charts))
 		column := make(map[string]interface{})
 		maxColumn := 1
@@ -748,7 +764,7 @@ func dashboardAPIToTF(d *schema.ResourceData, dash *dashboard.Dashboard) error {
 		if err := d.Set("column", []interface{}{column}); err != nil {
 			return err
 		}
-	} else {
+	default:
 		charts := make([]map[string]interface{}, len(dash.Charts))
 		for i, c := range dash.Charts {
 			chart := make(map[string]interface{})
