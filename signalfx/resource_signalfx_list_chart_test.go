@@ -29,12 +29,10 @@ resource "signalfx_list_chart" "mychartLX" {
   unit_prefix = "Binary"
   secondary_visualization = "Linear"
 
-  legend_options_fields = [
-    {
-      property = "collector"
-      enabled = false
-    }
-  ]
+	legend_options_fields {
+		property = "collector"
+		enabled  = false
+	}
 }
 `
 
@@ -56,12 +54,10 @@ resource "signalfx_list_chart" "mychartLX" {
   unit_prefix = "Binary"
   secondary_visualization = "Linear"
 
-  legend_options_fields = [
-    {
-      property = "collector"
-      enabled = false
-    }
-  ]
+	legend_options_fields {
+		property = "collector"
+		enabled  = false
+	}
 }
 `
 
