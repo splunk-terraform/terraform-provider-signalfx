@@ -21,13 +21,11 @@ require (
 	github.com/signalfx/golib v2.4.0+incompatible // indirect
 	github.com/signalfx/signalfx-go v0.0.0-20190627212220-0288248cbbb3
 	github.com/smartystreets/assertions v1.0.0 // indirect
-	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/stretchr/testify v1.3.0
 	github.com/zclconf/go-cty v0.0.0-20190212192503-19dda139b164 // indirect
 	golang.org/x/crypto v0.0.0-20190621222207-cc06ce4a13d4 // indirect
 	golang.org/x/net v0.0.0-20190620200207-3b0461eec859 // indirect
+	golang.org/x/sync v0.0.0-20190423024810-112230192c58 // indirect
 	golang.org/x/sys v0.0.0-20190626221950-04f50cda93cb // indirect
 	golang.org/x/text v0.3.2 // indirect
-	golang.org/x/tools v0.0.0-20190627203933-19ff4fff8850 // indirect
-	golang.org/x/tools/gopls v0.1.0 // indirect
 )
