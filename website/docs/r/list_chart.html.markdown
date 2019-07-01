@@ -72,4 +72,4 @@ The following arguments are supported in the resource block:
     * `property` The name of the property to display. Note the special values of `sf_metric` which shows the label of the time series `publish()` and `sf_originatingMetric` that shows the name of the metric for the time series being displayed.
 * `max_precision` - (Optional) Maximum number of digits to display when rounding values up or down.
 * `secondary_visualization` - (Optional) The type of secondary visualization. Can be `None`, `Radial`, `Linear`, or `Sparkline`. If unset, the SignalFx default is used (`Sparkline`).
-* `sort_by` - (Optional) The property to use when sorting the elements. Use `value` if you want to sort by value. Must be prepended with `+` for ascending or `-` for descending (e.g. `-foo`).
+* `sort_by` - (Optional) The property to use when sorting the elements. Use `value` if you want to sort by value. Must be prepended with `+` for ascending or `-` for descending (e.g. `-foo`). Note there are some special values for some of the options provided in the UX: `"value"` for Value, `"sf_originatingMetric"` for Metric, and `"sf_metric"` for plot.
