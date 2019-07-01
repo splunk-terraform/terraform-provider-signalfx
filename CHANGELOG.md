@@ -17,15 +17,17 @@ FEATURES:
 
 BUG FIXES:
 
+* provider: All resources lacked property acceptance tests that verified proper state function. These tests have now been added.
+* provider: Many resource properties now include default values.
 * resource/dashboard: `tags` has been deprecated
 * resource/dashboard: `grid.start_row` has been deprecated
 * resource/dashboard: `grid.start_column` has been deprecated
 * resource/dashboard: `column.start_row` has been deprecated
 * resource/detector: `tags` has been deprecated
 * resource/event_feed_chart: `viz_options` has been deprecated
+* resource/list_chart: Improved docs and examples for `legend_options_fields`. [#65](https://github.com/signalfx/terraform-provider-signalfx/pull/65)
 * resource/time_chart: `tags` has been deprecated
-* provider: All resources lacked property acceptance tests that verified proper state function. These tests have now been added.
-* provider: Many resource properties now include default values.
+* resource/time_chart: Improved docs and examples for `legend_options_fields`. [#65](https://github.com/signalfx/terraform-provider-signalfx/pull/65)
 
 IMPROVEMENTS:
 
