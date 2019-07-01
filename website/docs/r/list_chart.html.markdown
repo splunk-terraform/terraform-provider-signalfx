@@ -30,26 +30,28 @@ resource "signalfx_list_chart" "mylistchart0" {
     max_delay = 2
     disable_sampling = true
     refresh_interval = 1
-    legend_fields_to_hide = ["collector", "host"]
-    // Or… if you want to control order/etc
-    legend_options_fields = [
-      {
-        property = "cluster_name"
-        enabled = true
-      },
-      {
-        property = "role"
-        enabled = true
-      },
-      {
-        property = "collector"
-        enabled = false
-      },
-      {
-        property = "host"
-        enabled = false
-      }
-    ]
+
+    legend_options_fields {
+      property = "collector"
+      enabled  = false
+    }
+
+    legend_options_fields {
+      property = "cluster_name"
+      enabled = true
+    }
+    legend_options_fields {
+      property = "role"
+      enabled = true
+    }
+    legend_options_fields {
+      property = "collector"
+      enabled = false
+    }
+    legend_options_fields {
+      property = "host"
+      enabled = false
+    }
     max_precision = 2
     sort_by = "-value"
  }
