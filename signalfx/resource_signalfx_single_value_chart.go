@@ -2,10 +2,11 @@ package signalfx
 
 import (
 	"encoding/json"
-	"fmt"
+	"log"
 	"math"
 
 	"github.com/hashicorp/terraform/helper/schema"
+	chart "github.com/signalfx/signalfx-go/chart"
 )
 
 func singleValueChartResource() *schema.Resource {
@@ -29,11 +30,13 @@ func singleValueChartResource() *schema.Resource {
 			"unit_prefix": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
+				Default:     "Metric",
 				Description: "(Metric by default) Must be \"Metric\" or \"Binary\"",
 			},
 			"color_by": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
+				Default:     "Metric",
 				Description: "(Metric by default) Must be \"Metric\", \"Dimension\", or \"Scale\". \"Scale\" maps to Color by Value in the UI",
 			},
 			"max_delay": &schema.Schema{
@@ -67,6 +70,7 @@ func singleValueChartResource() *schema.Resource {
 			"secondary_visualization": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
+				Default:      "None",
 				Description:  "(false by default) What kind of secondary visualization to show (None, Radial, Linear, Sparkline)",
 				ValidateFunc: validateSecondaryVisualization,
 			},
@@ -145,17 +149,6 @@ func singleValueChartResource() *schema.Resource {
 					},
 				},
 			},
-			"synced": &schema.Schema{
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     true,
-				Description: "Whether the resource in the provider and SignalFx are identical or not. Used internally for syncing.",
-			},
-			"last_updated": &schema.Schema{
-				Type:        schema.TypeFloat,
-				Computed:    true,
-				Description: "Latest timestamp the resource was updated",
-			},
 			"url": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -173,77 +166,79 @@ func singleValueChartResource() *schema.Resource {
 /*
   Use Resource object to construct json payload in order to create a single value chart
 */
-func getPayloadSingleValueChart(d *schema.ResourceData) ([]byte, error) {
-	payload := map[string]interface{}{
-		"name":        d.Get("name").(string),
-		"description": d.Get("description").(string),
-		"programText": d.Get("program_text").(string),
+func getPayloadSingleValueChart(d *schema.ResourceData) *chart.CreateUpdateChartRequest {
+	payload := &chart.CreateUpdateChartRequest{
+		Name:        d.Get("name").(string),
+		Description: d.Get("description").(string),
+		ProgramText: d.Get("program_text").(string),
 	}
 
 	viz := getSingleValueChartOptions(d)
 	if vizOptions := getPerSignalVizOptions(d); len(vizOptions) > 0 {
-		viz["publishLabelOptions"] = vizOptions
+		viz.PublishLabelOptions = vizOptions
 	}
-	if len(viz) > 0 {
-		payload["options"] = viz
-	}
+	payload.Options = viz
 
-	return json.Marshal(payload)
+	return payload
 }
 
-func getSingleValueChartOptions(d *schema.ResourceData) map[string]interface{} {
-	viz := make(map[string]interface{})
-	viz["type"] = "SingleValue"
+func getSingleValueChartOptions(d *schema.ResourceData) *chart.Options {
+	options := &chart.Options{
+		Type: "SingleValue",
+	}
 	if val, ok := d.GetOk("unit_prefix"); ok {
-		viz["unitPrefix"] = val.(string)
+		options.UnitPrefix = val.(string)
 	}
 	if val, ok := d.GetOk("color_by"); ok {
+		options.ColorBy = val.(string)
 		if val == "Scale" {
 			if colorScaleOptions := getColorScaleOptions(d); len(colorScaleOptions) > 0 {
-				viz["colorBy"] = "Scale"
-				viz["colorScale2"] = colorScaleOptions
+				options.ColorScale2 = colorScaleOptions
 			}
-		} else {
-			viz["colorBy"] = val.(string)
+
 		}
 	}
 
-	programOptions := make(map[string]interface{})
+	var programOptions *chart.GeneralOptions
 	if val, ok := d.GetOk("max_delay"); ok {
-		programOptions["maxDelay"] = val.(int) * 1000
-		viz["programOptions"] = programOptions
+		if programOptions == nil {
+			programOptions = &chart.GeneralOptions{}
+		}
+		programOptions.MaxDelay = int32(val.(int) * 1000)
 	}
+	options.ProgramOptions = programOptions
 
 	if refreshInterval, ok := d.GetOk("refresh_interval"); ok {
-		viz["refreshInterval"] = refreshInterval.(int) * 1000
+		options.RefreshInterval = int32(refreshInterval.(int) * 1000)
 	}
 	if maxPrecision, ok := d.GetOk("max_precision"); ok {
-		viz["maximumPrecision"] = maxPrecision.(int)
+		options.MaximumPrecision = int32(maxPrecision.(int))
 	}
+
 	if val, ok := d.GetOk("secondary_visualization"); ok {
 		secondaryVisualization := val.(string)
 		if secondaryVisualization != "" {
-			viz["secondaryVisualization"] = secondaryVisualization
+			options.SecondaryVisualization = secondaryVisualization
 		}
 	}
-	viz["timestampHidden"] = d.Get("is_timestamp_hidden").(bool)
-	viz["showSparkLine"] = d.Get("show_spark_line").(bool)
+	if isTimestampHidden, ok := d.GetOk("is_timestamp_hidden"); ok {
+		options.TimestampHidden = isTimestampHidden.(bool)
+	}
+	if showSparkLine, ok := d.GetOk("show_spark_line"); ok {
+		options.ShowSparkLine = showSparkLine.(bool)
+	}
 
-	return viz
+	return options
 }
 
 func singlevaluechartCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	payload, err := getPayloadSingleValueChart(d)
-	if err != nil {
-		return fmt.Errorf("Failed creating json payload: %s", err.Error())
-	}
-	url, err := buildURL(config.APIURL, CHART_API_PATH, map[string]string{})
-	if err != nil {
-		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
-	}
+	payload := getPayloadSingleValueChart(d)
 
-	err = resourceCreate(url, config.AuthToken, payload, d)
+	debugOutput, _ := json.Marshal(payload)
+	log.Printf("[DEBUG] SignalFx: Create List Chart Payload: %s", string(debugOutput))
+
+	chart, err := config.Client.CreateChart(payload)
 	if err != nil {
 		return err
 	}
@@ -253,42 +248,117 @@ func singlevaluechartCreate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 	d.Set("url", appURL)
+	if err := d.Set("url", appURL); err != nil {
+		return err
+	}
+	d.SetId(chart.Id)
+	return singlevaluechartAPIToTF(d, chart)
+}
+
+func singlevaluechartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
+	debugOutput, _ := json.Marshal(c)
+	log.Printf("[DEBUG] SignalFx: Got Single Value Chart to enState: %s", string(debugOutput))
+
+	if err := d.Set("name", c.Name); err != nil {
+		return err
+	}
+	if err := d.Set("description", c.Description); err != nil {
+		return err
+	}
+	if err := d.Set("program_text", c.ProgramText); err != nil {
+		return err
+	}
+
+	options := c.Options
+	if err := d.Set("unit_prefix", options.UnitPrefix); err != nil {
+		return err
+	}
+	if err := d.Set("color_by", options.ColorBy); err != nil {
+		return err
+	}
+	if err := d.Set("refresh_interval", options.RefreshInterval/1000); err != nil {
+		return err
+	}
+	if err := d.Set("max_precision", options.MaximumPrecision); err != nil {
+		return err
+	}
+	if err := d.Set("secondary_visualization", options.SecondaryVisualization); err != nil {
+		return err
+	}
+	if err := d.Set("is_timestamp_hidden", options.TimestampHidden); err != nil {
+		return err
+	}
+	if err := d.Set("show_spark_line", options.ShowSparkLine); err != nil {
+		return err
+	}
+
+	if options.ColorBy == "Scale" && len(options.ColorScale2) > 0 {
+		scales := make([]map[string]interface{}, len(options.ColorScale2))
+		for i, cs := range options.ColorScale2 {
+			scale := map[string]interface{}{}
+			if cs.Gt == nil {
+				scale["gt"] = math.MaxFloat32
+			} else {
+				scale["gt"] = *cs.Gt
+			}
+			if cs.Gte == nil {
+				scale["gte"] = math.MaxFloat32
+			} else {
+				scale["gte"] = *cs.Gte
+			}
+			if cs.Lt == nil {
+				scale["lt"] = math.MaxFloat32
+			} else {
+				scale["lt"] = *cs.Lt
+			}
+			if cs.Lte == nil {
+				scale["lte"] = math.MaxFloat32
+			} else {
+				scale["lte"] = *cs.Lte
+			}
+			color, err := getNameFromChartColorsByIndex(int(cs.PaletteIndex))
+			if err != nil {
+				return err
+			}
+			scale["color"] = color
+			scales[i] = scale
+		}
+		if err := d.Set("color_scale", scales); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
 func singlevaluechartRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	path := fmt.Sprintf("%s/%s", CHART_API_PATH, d.Id())
-	url, err := buildURL(config.APIURL, path, map[string]string{})
+	c, err := config.Client.GetChart(d.Id())
 	if err != nil {
-		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
+		return err
 	}
 
-	return resourceRead(url, config.AuthToken, d)
+	return singlevaluechartAPIToTF(d, c)
 }
 
 func singlevaluechartUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	payload, err := getPayloadSingleValueChart(d)
-	if err != nil {
-		return fmt.Errorf("Failed creating json payload: %s", err.Error())
-	}
-	path := fmt.Sprintf("%s/%s", CHART_API_PATH, d.Id())
-	url, err := buildURL(config.APIURL, path, map[string]string{})
-	if err != nil {
-		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
-	}
+	payload := getPayloadSingleValueChart(d)
+	debugOutput, _ := json.Marshal(payload)
+	log.Printf("[DEBUG] SignalFx: Update Single Value Chart Payload: %s", string(debugOutput))
 
-	return resourceUpdate(url, config.AuthToken, payload, d)
+	c, err := config.Client.UpdateChart(d.Id(), payload)
+	if err != nil {
+		return err
+	}
+	log.Printf("[DEBUG] SignalFx: Update Single Value Chart Response: %v", c)
+
+	d.SetId(c.Id)
+	return singlevaluechartAPIToTF(d, c)
 }
 
 func singlevaluechartDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	path := fmt.Sprintf("%s/%s", CHART_API_PATH, d.Id())
-	url, err := buildURL(config.APIURL, path, map[string]string{})
-	if err != nil {
-		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
-	}
 
-	return resourceDelete(url, config.AuthToken, d)
+	return config.Client.DeleteChart(d.Id())
 }

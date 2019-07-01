@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
+	chart "github.com/signalfx/signalfx-go/chart"
 )
 
 const (
@@ -106,6 +107,17 @@ func sendRequest(method string, url string, token string, payload []byte) (int, 
 	return resp.StatusCode, body, nil
 }
 
+func flattenStringSliceToSet(slice []string) *schema.Set {
+	if len(slice) < 1 {
+		return nil
+	}
+	values := make([]interface{}, len(slice))
+	for i, v := range slice {
+		values[i] = v
+	}
+	return schema.NewSet(schema.HashString, values)
+}
+
 /*
   Validates max_delay field; it must be between 0 and 900 seconds (15m in).
 */
@@ -128,33 +140,64 @@ func validateSortBy(v interface{}, k string) (we []string, errors []error) {
 	return
 }
 
+func getNameFromPaletteColorsByIndex(index int) (string, error) {
+	for k, v := range PaletteColors {
+		if v == index {
+			return k, nil
+		}
+	}
+	return "", fmt.Errorf("Unknown color index %d", index)
+}
+
+func getNameFromChartColorsByIndex(index int) (string, error) {
+	for i, v := range ChartColorsSlice {
+		if i == index {
+			return v.name, nil
+		}
+	}
+	return "", fmt.Errorf("Unknown color index %d", index)
+}
+
+func getHexFromChartColorsByName(name string) (string, error) {
+	for _, v := range ChartColorsSlice {
+		if v.name == name {
+			return v.hex, nil
+		}
+	}
+	return "", fmt.Errorf("Unknown color name %s", name)
+}
+
 /*
 	Get Color Scale Options
 */
-func getColorScaleOptions(d *schema.ResourceData) []interface{} {
+func getColorScaleOptions(d *schema.ResourceData) []*chart.SecondaryVisualization {
 	colorScale := d.Get("color_scale").(*schema.Set).List()
 	return getColorScaleOptionsFromSlice(colorScale)
 }
 
-func getColorScaleOptionsFromSlice(colorScale []interface{}) []interface{} {
-	item := make([]interface{}, len(colorScale))
+func getColorScaleOptionsFromSlice(colorScale []interface{}) []*chart.SecondaryVisualization {
+	item := make([]*chart.SecondaryVisualization, len(colorScale))
 	if len(colorScale) == 0 {
 		return item
 	}
 	for i := range colorScale {
-		options := make(map[string]interface{})
+		options := &chart.SecondaryVisualization{}
 		scale := colorScale[i].(map[string]interface{})
 		if scale["gt"].(float64) != math.MaxFloat32 {
-			options["gt"] = scale["gt"].(float64)
+			gt := float32(scale["gt"].(float64))
+			options.Gt = &gt
 		}
 		if scale["gte"].(float64) != math.MaxFloat32 {
-			options["gte"] = scale["gte"].(float64)
+			gte := float32(scale["gte"].(float64))
+			options.Gte = &gte
 		}
 		if scale["lt"].(float64) != math.MaxFloat32 {
-			options["lt"] = scale["lt"].(float64)
+			lt := float32(scale["lt"].(float64))
+			options.Lt = &lt
 		}
 		if scale["lte"].(float64) != math.MaxFloat32 {
-			options["lte"] = scale["lte"].(float64)
+			lte := float32(scale["lte"].(float64))
+			options.Lte = &lte
 		}
 		paletteIndex := 0
 		for index, thing := range ChartColorsSlice {
@@ -163,7 +206,7 @@ func getColorScaleOptionsFromSlice(colorScale []interface{}) []interface{} {
 				break
 			}
 		}
-		options["paletteIndex"] = paletteIndex
+		options.PaletteIndex = int32(paletteIndex)
 		item[i] = options
 	}
 	return item
@@ -260,11 +303,12 @@ func resourceDelete(url string, sfxToken string, d *schema.ResourceData) error {
 /*
 	Util method to get Legend Chart Options.
 */
-func getLegendOptions(d *schema.ResourceData) map[string]interface{} {
+func getLegendOptions(d *schema.ResourceData) *chart.DataTableOptions {
+	var options *chart.DataTableOptions
 	if properties, ok := d.GetOk("legend_fields_to_hide"); ok {
 		properties := properties.(*schema.Set).List()
-		legendOptions := make(map[string]interface{})
-		properties_opts := make([]map[string]interface{}, len(properties))
+
+		propertiesOpts := make([]*chart.DataTableOptionsFields, len(properties))
 		for i, property := range properties {
 			property := property.(string)
 			if property == "metric" {
@@ -272,29 +316,39 @@ func getLegendOptions(d *schema.ResourceData) map[string]interface{} {
 			} else if property == "plot_label" || property == "Plot Label" {
 				property = "sf_metric"
 			}
-			item := make(map[string]interface{})
-			item["property"] = property
-			item["enabled"] = false
-			properties_opts[i] = item
+			item := &chart.DataTableOptionsFields{
+				Property: property,
+				Enabled:  false,
+			}
+			propertiesOpts[i] = item
 		}
-		if len(properties_opts) > 0 {
-			legendOptions["fields"] = properties_opts
-			return legendOptions
+		if len(propertiesOpts) > 0 {
+			options = &chart.DataTableOptions{
+				Fields: propertiesOpts,
+			}
 		}
 	}
-	return nil
+	return options
 }
 
 /*
 	Util method to get Legend Chart Options for fields
 */
-func getLegendFieldOptions(d *schema.ResourceData) map[string]interface{} {
+func getLegendFieldOptions(d *schema.ResourceData) *chart.DataTableOptions {
 	if fields, ok := d.GetOk("legend_options_fields"); ok {
 		fields := fields.([]interface{})
 		if len(fields) > 0 {
-			legendOptions := make(map[string]interface{})
-			legendOptions["fields"] = fields
-			return legendOptions
+			legendOptions := make([]*chart.DataTableOptionsFields, len(fields))
+			for i, f := range fields {
+				f := f.(map[string]interface{})
+				legendOptions[i] = &chart.DataTableOptionsFields{
+					Property: f["property"].(string),
+					Enabled:  f["enabled"].(bool),
+				}
+			}
+			return &chart.DataTableOptions{
+				Fields: legendOptions,
+			}
 		}
 	}
 	return nil

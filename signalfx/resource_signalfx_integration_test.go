@@ -5,7 +5,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
 	"github.com/stretchr/testify/assert"
 
@@ -74,25 +73,25 @@ resource "signalfx_integration" "slack_myteam" {
 }
 `
 
-func TestAccCreateIntegration(t *testing.T) {
-	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccIntegrationDestroy,
-		Steps: []resource.TestStep{
-			// Create It
-			{
-				Config: newIntegrationConfig,
-				Check:  testAccCheckIntegrationResourceExists,
-			},
-			// Update It
-			{
-				Config: updatedIntegrationConfig,
-				Check:  testAccCheckIntegrationResourceExists,
-			},
-		},
-	})
-}
+// func TestAccCreateIntegration(t *testing.T) {
+// 	resource.Test(t, resource.TestCase{
+// 		PreCheck:     func() { testAccPreCheck(t) },
+// 		Providers:    testAccProviders,
+// 		CheckDestroy: testAccIntegrationDestroy,
+// 		Steps: []resource.TestStep{
+// 			// Create It
+// 			{
+// 				Config: newIntegrationConfig,
+// 				Check:  testAccCheckIntegrationResourceExists,
+// 			},
+// 			// Update It
+// 			{
+// 				Config: updatedIntegrationConfig,
+// 				Check:  testAccCheckIntegrationResourceExists,
+// 			},
+// 		},
+// 	})
+// }
 
 func testAccCheckIntegrationResourceExists(s *terraform.State) error {
 	client, _ := sfx.NewClient(os.Getenv("SFX_AUTH_TOKEN"))

@@ -4,27 +4,22 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log"
 	"sort"
 	"strings"
 
 	"github.com/hashicorp/terraform/helper/hashcode"
 	"github.com/hashicorp/terraform/helper/schema"
+	detector "github.com/signalfx/signalfx-go/detector"
 )
 
 const (
-	DETECTOR_API_PATH = "/v2/detector"
-	DETECTOR_APP_PATH = "/detector/"
+	DetectorAppPath = "/detector/"
 )
 
 func detectorResource() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
-			"synced": &schema.Schema{
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     true,
-				Description: "Whether the resource in the provider and SignalFx are identical or not. Used internally for syncing.",
-			},
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
@@ -65,10 +60,9 @@ func detectorResource() *schema.Resource {
 				Description: "(false by default) When false, samples a subset of the output MTS in the visualization.",
 			},
 			"time_range": &schema.Schema{
-				Type:          schema.TypeString,
+				Type:          schema.TypeInt,
 				Optional:      true,
-				ValidateFunc:  validateSignalfxRelativeTime,
-				Description:   "From when to display data. SignalFx time syntax (e.g. -5m, -1h)",
+				Description:   "Seconds to display in the visualization. This is a rolling range from the current time. Example: 8600 = `-1h`",
 				ConflictsWith: []string{"start_time", "end_time"},
 			},
 			"start_time": &schema.Schema{
@@ -83,13 +77,12 @@ func detectorResource() *schema.Resource {
 				ConflictsWith: []string{"time_range"},
 				Description:   "Seconds since epoch. Used for visualization",
 			},
-			"tags": &schema.Schema{
-				Type:        schema.TypeList,
-				Deprecated:  "signalfx_detector.tags is being removed in the next release",
-				Optional:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
-				Description: "Tags associated with the detector",
-			},
+			// "tags": &schema.Schema{
+			// 	Type:        schema.TypeList,
+			// 	Optional:    true,
+			// 	Elem:        &schema.Schema{Type: schema.TypeString},
+			// 	Description: "Tags associated with the detector",
+			// },
 			"teams": &schema.Schema{
 				Type:        schema.TypeList,
 				Optional:    true,
@@ -154,11 +147,6 @@ func detectorResource() *schema.Resource {
 				},
 				Set: resourceRuleHash,
 			},
-			"last_updated": &schema.Schema{
-				Type:        schema.TypeFloat,
-				Computed:    true,
-				Description: "Latest timestamp the resource was updated",
-			},
 			"url": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -176,101 +164,123 @@ func detectorResource() *schema.Resource {
 /*
   Use Resource object to construct json payload in order to create a detector
 */
-func getPayloadDetector(d *schema.ResourceData) ([]byte, error) {
+func getPayloadDetector(d *schema.ResourceData) (*detector.CreateUpdateDetectorRequest, error) {
 
-	tf_rules := d.Get("rule").(*schema.Set).List()
-	rules_list := make([]map[string]interface{}, len(tf_rules))
-
-	for i, tf_rule := range tf_rules {
-		tf_rule := tf_rule.(map[string]interface{})
-		item := make(map[string]interface{})
-
-		item["description"] = tf_rule["description"].(string)
-		item["severity"] = tf_rule["severity"].(string)
-		item["detectLabel"] = tf_rule["detect_label"].(string)
-		item["disabled"] = tf_rule["disabled"].(bool)
-
-		if val, ok := tf_rule["parameterized_body"]; ok {
-			item["parameterizedBody"] = val.(string)
+	tfRules := d.Get("rule").(*schema.Set).List()
+	rulesList := make([]detector.Rule, len(tfRules))
+	for i, tfRule := range tfRules {
+		tfRule := tfRule.(map[string]interface{})
+		rule := detector.Rule{
+			Description: tfRule["description"].(string),
+			DetectLabel: tfRule["detect_label"].(string),
+			Disabled:    tfRule["disabled"].(bool),
 		}
 
-		if val, ok := tf_rule["parameterized_subject"]; ok {
-			item["parameterizedSubject"] = val.(string)
+		tfSev := tfRule["severity"].(string)
+		sev := detector.INFO
+		switch tfSev {
+		case "Critical":
+			sev = detector.CRITICAL
+		case "Warning":
+			sev = detector.WARNING
+		case "Major":
+			sev = detector.MAJOR
+		case "Minor":
+			sev = detector.MINOR
+		case "Info":
+			sev = detector.INFO
+		}
+		rule.Severity = sev
+
+		if val, ok := tfRule["parameterized_body"]; ok {
+			rule.ParameterizedBody = val.(string)
 		}
 
-		if val, ok := tf_rule["runbook_url"]; ok {
-			item["runbookUrl"] = val.(string)
+		if val, ok := tfRule["parameterized_subject"]; ok {
+			rule.ParameterizedSubject = val.(string)
 		}
 
-		if val, ok := tf_rule["tip"]; ok {
-			item["tip"] = val.(string)
+		if val, ok := tfRule["runbook_url"]; ok {
+			rule.RunbookUrl = val.(string)
 		}
 
-		if notifications, ok := tf_rule["notifications"]; ok {
+		if val, ok := tfRule["tip"]; ok {
+			rule.Tip = val.(string)
+		}
+
+		if notifications, ok := tfRule["notifications"]; ok {
 			notify := getNotifications(notifications.([]interface{}))
-			item["notifications"] = notify
+			rule.Notifications = notify
 		}
-
-		rules_list[i] = item
+		rulesList[i] = rule
 	}
 
-	payload := map[string]interface{}{
-		"name":        d.Get("name").(string),
-		"description": d.Get("description").(string),
-		"programText": d.Get("program_text").(string),
-		"maxDelay":    nil,
-		"rules":       rules_list,
+	cudr := &detector.CreateUpdateDetectorRequest{
+		Name:        d.Get("name").(string),
+		Description: d.Get("description").(string),
+		ProgramText: d.Get("program_text").(string),
+		Rules:       rulesList,
 	}
 
 	if val, ok := d.GetOk("max_delay"); ok {
-		payload["maxDelay"] = val.(int) * 1000
+		cudr.MaxDelay = int32(val.(int) * 1000)
 	}
 
-	if viz := getVisualizationOptionsDetector(d); len(viz) > 0 {
-		payload["visualizationOptions"] = viz
-	}
+	cudr.VisualizationOptions = getVisualizationOptionsDetector(d)
 
 	if val, ok := d.GetOk("teams"); ok {
-		payload["teams"] = val.([]interface{})
+		teams := []string{}
+		for _, t := range val.([]interface{}) {
+			teams = append(teams, t.(string))
+		}
+		cudr.Teams = teams
 	}
 
-	if val, ok := d.GetOk("tags"); ok {
-		payload["tags"] = val.([]interface{})
-	}
-
-	return json.Marshal(payload)
+	// if val, ok := d.GetOk("tags"); ok {
+	// 	tags := []string{}
+	// 	for _, t := range val.([]interface{}) {
+	// 		tags = append(tags, t.(string))
+	// 	}
+	// 	cudr.Tags = tags
+	// }
+	return cudr, nil
 }
 
-func getVisualizationOptionsDetector(d *schema.ResourceData) map[string]interface{} {
-	viz := make(map[string]interface{})
+func getVisualizationOptionsDetector(d *schema.ResourceData) *detector.Visualization {
+	viz := detector.Visualization{}
+
 	if val, ok := d.GetOk("show_data_markers"); ok {
-		viz["showDataMarkers"] = val.(bool)
+		viz.ShowDataMarkers = val.(bool)
 	}
 	if val, ok := d.GetOk("show_event_lines"); ok {
-		viz["showEventLines"] = val.(bool)
+		viz.ShowEventLines = val.(bool)
 	}
 	if val, ok := d.GetOk("disable_sampling"); ok {
-		viz["disableSampling"] = val.(bool)
+		viz.DisableSampling = val.(bool)
 	}
 
-	timeMap := make(map[string]interface{})
 	if val, ok := d.GetOk("time_range"); ok {
-		if ms, err := fromRangeToMilliSeconds(val.(string)); err == nil {
-			timeMap["range"] = ms
-			timeMap["type"] = "relative"
-		}
+		tr := &detector.Time{}
+		tr.Range = int32(val.(int)) * 1000
+		tr.Type = "relative"
+		viz.Time = tr
 	}
 	if val, ok := d.GetOk("start_time"); ok {
-		timeMap["type"] = "absolute"
-		timeMap["start"] = val.(int) * 1000
+		tr := &detector.Time{}
+		tr.Type = "absolute"
+		tr.Start = val.(int32) * 1000
 		if val, ok := d.GetOk("end_time"); ok {
-			timeMap["end"] = val.(int) * 1000
+			tr.End = val.(int32) * 1000
 		}
+		viz.Time = tr
 	}
-	if len(timeMap) > 0 {
-		viz["time"] = timeMap
+
+	if (detector.Visualization{}) == viz {
+		// Return a nil ptr so we don't serialize nothing
+		return nil
 	}
-	return viz
+
+	return &viz
 }
 
 /*
@@ -309,39 +319,196 @@ func getNotifications(tf_notifications []interface{}) []map[string]interface{} {
 	return notifications_list
 }
 
+func getNotifyStringFromAPI(notification map[string]interface{}) (string, error) {
+	nt, ok := notification["type"].(string)
+	if !ok {
+		return "", fmt.Errorf("Missing type field in notification body")
+	}
+	switch nt {
+	case "Email":
+		email, ok := notification["email"].(string)
+		if !ok {
+			return "", fmt.Errorf("Missing email field from Email body")
+		}
+		return fmt.Sprintf("%s,%s", nt, email), nil
+	case "Opsgenie":
+		cred, ok := notification["credentialId"].(string)
+		if !ok {
+			return "", fmt.Errorf("Missing credentialId field from notification body")
+		}
+		credName, ok := notification["credentialName"].(string)
+		if !ok {
+			return "", fmt.Errorf("Missing credentialName field from notification body")
+		}
+		respName, ok := notification["responderName"].(string)
+		if !ok {
+			return "", fmt.Errorf("Missing responderName field from notification body")
+		}
+		respId, ok := notification["responderId"].(string)
+		if !ok {
+			return "", fmt.Errorf("Missing responderId field from notification body")
+		}
+		respType, ok := notification["responderType"].(string)
+		if !ok {
+			return "", fmt.Errorf("Missing responderType field from notification body")
+		}
+		return fmt.Sprintf("%s,%s,%s,%s,%s,%s", nt, cred, credName, respName, respId, respType), nil
+
+	case "PagerDuty":
+		cred, ok := notification["credentialId"].(string)
+		if !ok {
+			return "", fmt.Errorf("Missing credentialId field from notification body")
+		}
+		return fmt.Sprintf("%s,%s", nt, cred), nil
+	case "Slack":
+		cred, ok := notification["credentialId"].(string)
+		if !ok {
+			return "", fmt.Errorf("Missing credentialId field from notification body")
+		}
+		channel, ok := notification["channel"].(string)
+		if !ok {
+			return "", fmt.Errorf("Missing channel field from notification body")
+		}
+		return fmt.Sprintf("%s,%s,%s", nt, cred, channel), nil
+	case "Team", "TeamEmail":
+		team, ok := notification["team"].(string)
+		if !ok {
+			return "", fmt.Errorf("Missing team field from notification body")
+		}
+		return fmt.Sprintf("%s,%s", nt, team), nil
+	case "Webhook":
+		cred, ok := notification["credentialId"].(string)
+		if !ok {
+			return "", fmt.Errorf("Missing credentialId field from notification body")
+		}
+		secret, ok := notification["secret"].(string)
+		if !ok {
+			return "", fmt.Errorf("Missing secret field from notification body")
+		}
+		url, ok := notification["url"].(string)
+		if !ok {
+			return "", fmt.Errorf("Missing url field from notification body")
+		}
+		return fmt.Sprintf("%s,%s,%s,%s", nt, cred, secret, url), nil
+	}
+
+	return "", nil
+}
+
 func detectorCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 	payload, err := getPayloadDetector(d)
 	if err != nil {
 		return fmt.Errorf("Failed creating json payload: %s", err.Error())
 	}
-	url, err := buildURL(config.APIURL, DETECTOR_API_PATH, map[string]string{})
-	if err != nil {
-		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
-	}
 
-	err = resourceCreate(url, config.AuthToken, payload, d)
+	debugOutput, _ := json.Marshal(payload)
+	log.Printf("[DEBUG] SignalFx: Create Detector Payload: %s", string(debugOutput))
+
+	det, err := config.Client.CreateDetector(payload)
 	if err != nil {
 		return err
 	}
 	// Since things worked, set the URL and move on
-	appURL, err := buildAppURL(config.CustomAppURL, DETECTOR_APP_PATH+d.Id())
+	appURL, err := buildAppURL(config.CustomAppURL, DetectorAppPath+det.Id)
 	if err != nil {
 		return err
 	}
-	d.Set("url", appURL)
-	return nil
+	if err := d.Set("url", appURL); err != nil {
+		return err
+	}
+	d.SetId(det.Id)
+
+	return detectorAPIToTF(d, det)
 }
 
 func detectorRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	path := fmt.Sprintf("%s/%s", DETECTOR_API_PATH, d.Id())
-	url, err := buildURL(config.APIURL, path, map[string]string{})
+	det, err := config.Client.GetDetector(d.Id())
 	if err != nil {
-		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
+		return err
+	}
+	return detectorAPIToTF(d, det)
+}
+
+func detectorAPIToTF(d *schema.ResourceData, det *detector.Detector) error {
+	debugOutput, _ := json.Marshal(det)
+	log.Printf("[DEBUG] SignalFx: Got Detector to enState: %s", string(debugOutput))
+
+	if err := d.Set("name", det.Name); err != nil {
+		return err
+	}
+	if err := d.Set("description", det.Description); err != nil {
+		return err
+	}
+	if err := d.Set("program_text", det.ProgramText); err != nil {
+		return err
+	}
+	// We divide by 1000 because the API uses millis, but this provider uses
+	// seconds
+	if err := d.Set("max_delay", det.MaxDelay/1000); err != nil {
+		return err
+	}
+	if err := d.Set("teams", det.Teams); err != nil {
+		return err
+	}
+	// if err := d.Set("tags", det.Tags); err != nil {
+	// 	return err
+	// }
+	viz := det.VisualizationOptions
+	if viz != nil {
+		if err := d.Set("show_data_markers", viz.ShowDataMarkers); err != nil {
+			return err
+		}
+		if err := d.Set("show_event_lines", viz.ShowEventLines); err != nil {
+			return err
+		}
+		if err := d.Set("disable_sampling", viz.DisableSampling); err != nil {
+			return err
+		}
+
+		tr := viz.Time
+		// We divide by 1000 because the API uses millis, but this provider uses
+		// seconds
+		if err := d.Set("time_range", tr.Range/1000); err != nil {
+			return err
+		}
+		if err := d.Set("start_time", tr.Start); err != nil {
+			return err
+		}
+		if err := d.Set("end_time", tr.End); err != nil {
+			return err
+		}
 	}
 
-	return resourceRead(url, config.AuthToken, d)
+	rules := make([]map[string]interface{}, len(det.Rules))
+	for i, r := range det.Rules {
+		rule := make(map[string]interface{})
+		rule["severity"] = r.Severity
+		rule["detect_label"] = r.DetectLabel
+		rule["description"] = r.Description
+
+		notifications := make([]string, len(r.Notifications))
+		for i, not := range r.Notifications {
+			tfNot, err := getNotifyStringFromAPI(not)
+			if err != nil {
+				return err
+			}
+			notifications[i] = tfNot
+		}
+		rule["notifications"] = notifications
+		rule["disabled"] = r.Disabled
+		rule["parameterized_body"] = r.ParameterizedBody
+		rule["parameterized_subject"] = r.ParameterizedSubject
+		rule["runbook_url"] = r.RunbookUrl
+		rule["tip"] = r.Tip
+		rules[i] = rule
+	}
+	if err := d.Set("rule", rules); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func detectorUpdate(d *schema.ResourceData, meta interface{}) error {
@@ -350,24 +517,31 @@ func detectorUpdate(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return fmt.Errorf("Failed creating json payload: %s", err.Error())
 	}
-	path := fmt.Sprintf("%s/%s", DETECTOR_API_PATH, d.Id())
-	url, err := buildURL(config.APIURL, path, map[string]string{})
-	if err != nil {
-		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
-	}
 
-	return resourceUpdate(url, config.AuthToken, payload, d)
+	debugOutput, _ := json.Marshal(payload)
+	log.Printf("[DEBUG] SignalFx: Update Detector Payload: %s", string(debugOutput))
+
+	det, err := config.Client.UpdateDetector(d.Id(), payload)
+	if err != nil {
+		return err
+	}
+	log.Printf("[DEBUG] SignalFx: Update Detector Response: %v", det)
+	// Since things worked, set the URL and move on
+	appURL, err := buildAppURL(config.CustomAppURL, DetectorAppPath+det.Id)
+	if err != nil {
+		return err
+	}
+	if err := d.Set("url", appURL); err != nil {
+		return err
+	}
+	d.SetId(det.Id)
+	return detectorAPIToTF(d, det)
 }
 
 func detectorDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	path := fmt.Sprintf("%s/%s", DETECTOR_API_PATH, d.Id())
-	url, err := buildURL(config.APIURL, path, map[string]string{})
-	if err != nil {
-		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
-	}
 
-	return resourceDelete(url, config.AuthToken, d)
+	return config.Client.DeleteDetector(d.Id())
 }
 
 /*

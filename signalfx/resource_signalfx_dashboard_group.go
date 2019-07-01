@@ -2,27 +2,15 @@ package signalfx
 
 import (
 	"encoding/json"
-	"fmt"
+	"log"
 
 	"github.com/hashicorp/terraform/helper/schema"
+	dashboard_group "github.com/signalfx/signalfx-go/dashboard_group"
 )
-
-const DASHBOARD_GROUP_API_PATH = "/v2/dashboardgroup"
 
 func dashboardGroupResource() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
-			"synced": &schema.Schema{
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     true,
-				Description: "Whether the resource in the provider and SignalFx are identical or not. Used internally for syncing.",
-			},
-			"last_updated": &schema.Schema{
-				Type:        schema.TypeFloat,
-				Computed:    true,
-				Description: "Latest timestamp the resource was updated",
-			},
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
@@ -51,69 +39,81 @@ func dashboardGroupResource() *schema.Resource {
 /*
   Use Resource object to construct json payload in order to create a dasboard group
 */
-func getPayloadDashboardGroup(d *schema.ResourceData) ([]byte, error) {
-	payload := map[string]interface{}{
-		"name":        d.Get("name").(string),
-		"description": d.Get("description").(string),
-		// We are not keeping track of this because it's already done in the dashboard resource.
-		"dashboards": make([]string, 0),
+func getPayloadDashboardGroup(d *schema.ResourceData) *dashboard_group.CreateUpdateDashboardGroupRequest {
+	cudgr := &dashboard_group.CreateUpdateDashboardGroupRequest{
+		Name:        d.Get("name").(string),
+		Description: d.Get("description").(string),
 	}
 
 	if val, ok := d.GetOk("teams"); ok {
-		payload["teams"] = val.([]interface{})
+		teams := []string{}
+		for _, t := range val.([]interface{}) {
+			teams = append(teams, t.(string))
+		}
+		cudgr.Teams = teams
 	}
 
-	return json.Marshal(payload)
+	return cudgr
 }
 
 func dashboardgroupCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	payload, err := getPayloadDashboardGroup(d)
+	payload := getPayloadDashboardGroup(d)
+
+	dg, err := config.Client.CreateDashboardGroup(payload)
 	if err != nil {
-		return fmt.Errorf("Failed creating json payload: %s", err.Error())
+		return err
+	}
+	d.SetId(dg.Id)
+
+	return dashboardGroupAPIToTF(d, dg)
+}
+
+func dashboardGroupAPIToTF(d *schema.ResourceData, dg *dashboard_group.DashboardGroup) error {
+	debugOutput, _ := json.Marshal(dg)
+	log.Printf("[DEBUG] SignalFx: Got Dashboard Group to enState: %s", string(debugOutput))
+
+	if err := d.Set("name", dg.Name); err != nil {
+		return err
+	}
+	if err := d.Set("description", dg.Description); err != nil {
+		return err
+	}
+	if err := d.Set("teams", dg.Teams); err != nil {
+		return err
 	}
 
-	url, err := buildURL(config.APIURL, DASHBOARD_GROUP_API_PATH, map[string]string{"empty": "true"})
-	if err != nil {
-		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
-	}
-
-	return resourceCreate(url, config.AuthToken, payload, d)
+	return nil
 }
 
 func dashboardgroupRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	path := fmt.Sprintf("%s/%s", DASHBOARD_GROUP_API_PATH, d.Id())
-	url, err := buildURL(config.APIURL, path, map[string]string{})
+	dg, err := config.Client.GetDashboardGroup(d.Id())
 	if err != nil {
-		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
+		return err
 	}
 
-	return resourceRead(url, config.AuthToken, d)
+	return dashboardGroupAPIToTF(d, dg)
 }
 
 func dashboardgroupUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	payload, err := getPayloadDashboardGroup(d)
-	if err != nil {
-		return fmt.Errorf("Failed creating json payload: %s", err.Error())
-	}
-	path := fmt.Sprintf("%s/%s", DASHBOARD_GROUP_API_PATH, d.Id())
-	url, err := buildURL(config.APIURL, path, map[string]string{})
-	if err != nil {
-		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
-	}
+	payload := getPayloadDashboardGroup(d)
+	debugOutput, _ := json.Marshal(payload)
+	log.Printf("[DEBUG] SignalFx: Update Dashboard Group Payload: %s", string(debugOutput))
 
-	return resourceUpdate(url, config.AuthToken, payload, d)
+	dg, err := config.Client.UpdateDashboardGroup(d.Id(), payload)
+	if err != nil {
+		return err
+	}
+	log.Printf("[DEBUG] SignalFx: Update Dashboard Group Response: %v", dg)
+
+	d.SetId(dg.Id)
+	return dashboardGroupAPIToTF(d, dg)
 }
 
 func dashboardgroupDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	path := fmt.Sprintf("%s/%s", DASHBOARD_GROUP_API_PATH, d.Id())
-	url, err := buildURL(config.APIURL, path, map[string]string{})
-	if err != nil {
-		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
-	}
 
-	return resourceDelete(url, config.AuthToken, d)
+	return config.Client.DeleteDashboardGroup(d.Id())
 }

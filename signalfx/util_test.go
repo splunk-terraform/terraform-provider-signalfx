@@ -34,6 +34,36 @@ func TestSendRequestResponseNotFound(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+func TestGetNameFromChartColorsByIndex(t *testing.T) {
+	name, err := getNameFromChartColorsByIndex(4)
+	assert.Equal(t, "dark_orange", name, "Expected color name")
+	assert.NoError(t, err, "Expected no error for known color")
+
+	name, err = getNameFromChartColorsByIndex(44)
+	assert.Equal(t, "", name, "Expected empty string for missing index")
+	assert.Error(t, err, "Expected error for missing color index")
+}
+
+func TestGetHexFromChartColorsByName(t *testing.T) {
+	name, err := getHexFromChartColorsByName("cerise")
+	assert.Equal(t, "#e9008a", name, "Expected color name")
+	assert.NoError(t, err, "Expected no error for known color")
+
+	name, err = getHexFromChartColorsByName("fart")
+	assert.Equal(t, "", name, "Expected empty string for missing index")
+	assert.Error(t, err, "Expected error for missing color index")
+}
+
+func TestGetNameFromPaletteColorsByIndex(t *testing.T) {
+	name, err := getNameFromPaletteColorsByIndex(2)
+	assert.Equal(t, "azure", name, "Expected color name")
+	assert.NoError(t, err, "Expected no error for known color")
+
+	name, err = getNameFromPaletteColorsByIndex(44)
+	assert.Equal(t, "", name, "Expected empty string for missing index")
+	assert.Error(t, err, "Expected error for missing color index")
+}
+
 func TestSendRequestFail(t *testing.T) {
 	// Client will fail to send due to invalid URL
 	status_code, body, err := sendRequest("GET", "", "token", nil)
@@ -67,7 +97,7 @@ func TestValidateSignalfxRelativeTimeNotAllowed(t *testing.T) {
 	assert.Equal(t, 1, len(errors))
 }
 
-func TestConversionSignalfxrealtiveTimeIntoMs(t *testing.T) {
+func TestConversionSignalfxRelativeTimeIntoMs(t *testing.T) {
 	ms, err := fromRangeToMilliSeconds("-15m")
 	assert.Equal(t, 900000, ms)
 	assert.Nil(t, err)

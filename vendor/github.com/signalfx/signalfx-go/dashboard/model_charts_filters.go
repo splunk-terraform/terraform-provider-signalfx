@@ -12,8 +12,8 @@ package dashboard
 // Specifies the properties of filters to apply to the dashboard.<br> Filters give you fine-grained control over the data displayed in the charts in the dashboard. You can specify *ad hoc* filters or save them as variables for repeated use of the filter criteria. <br> You can also use filters to apply a custom time window to all of the charts in the dashboard.
 type ChartsFilters struct {
 	// List of filter objects to apply to the charts in the dashboard. Each object specifies a single filter for a default or user-defined dimension or custom property.
-	Sources []ChartsSingleFilter `json:"sources,omitempty"`
-	Time ChartsFiltersTime `json:"time,omitempty"`
+	Sources []*ChartsSingleFilter `json:"sources,omitempty"`
+	Time    *ChartsFiltersTime    `json:"time,omitempty"`
 	// Array of web UI-oriented filters that appear at the top of the dashboard. For each filter you can specify a name and a label for the dimension or custom property to filter against, a list of suggested comparison values to display in the web UI, and other properties that control the web UI display. To see a more detailed description of the options, see the property descriptions for the `ChartsWebUIFilter` model.
-	Variables []ChartsWebUiFilter `json:"variables,omitempty"`
+	Variables []*ChartsWebUiFilter `json:"variables,omitempty"`
 }

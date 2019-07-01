@@ -12,131 +12,110 @@ import (
 )
 
 const newDashConfig = `
-resource "signalfx_time_chart" "mychart0" {
+resource "signalfx_time_chart" "mytimechart0" {
     name = "CPU Total Idle"
-
+    description = "Very cool Time Chart"
     program_text = <<-EOF
-        myfilters = filter("shc_name", "prod") and filter("role", "splunk_searchhead")
-        data("cpu.total.idle", filter=myfilters).publish(label="CPU Idle")
+        data("cpu.total.idle").publish(label="CPU Idle")
         EOF
-
-    time_range = "-15m"
-
-    plot_type = "LineChart"
-    show_data_markers = true
-
-    legend_fields_to_hide = ["collector", "prefix", "hostname"]
-    viz_options {
-        label = "CPU Idle"
-        axis = "left"
-        color = "orange"
-    }
-
-    axis_left {
-        label = "CPU Total Idle"
-        low_watermark = 1000
-    }
 }
 
 resource "signalfx_list_chart" "mylistchart0" {
     name = "CPU Total Idle - List"
-
-    program_text = <<-EOF
-    myfilters = filter("cluster_name", "prod") and filter("role", "search")
-    data("cpu.total.idle", filter=myfilters).publish()
-    EOF
-
     description = "Very cool List Chart"
-
-    color_by = "Metric"
-    max_delay = 2
-    disable_sampling = true
-    refresh_interval = 1
-    legend_fields_to_hide = ["collector", "host"]
-    max_precision = 2
-    sort_by = "-value"
- }
-
- resource "signalfx_single_value_chart" "mysvchart0" {
-    name = "CPU Total Idle - Single Value"
-
     program_text = <<-EOF
-        myfilters = filter("cluster_name", "prod") and filter("role", "search")
-        data("cpu.total.idle", filter=myfilters).publish()
-        EOF
+    data("cpu.total.idle").publish()
+    EOF
+}
 
+resource "signalfx_single_value_chart" "mysvchart0" {
+    name = "CPU Total Idle - Single Value"
     description = "Very cool Single Value Chart"
 
-    color_by = "Dimension"
-
-    max_delay = 2
-    refresh_interval = 1
-    max_precision = 2
-    is_timestamp_hidden = true
+    program_text = <<-EOF
+        data("cpu.total.idle").publish()
+        EOF
 }
 
 resource "signalfx_heatmap_chart" "myheatmapchart0" {
     name = "CPU Total Idle - Heatmap"
-
-    program_text = <<-EOF
-        myfilters = filter("cluster_name", "prod") and filter("role", "search")
-        data("cpu.total.idle", filter=myfilters).publish()
-        EOF
-
     description = "Very cool Heatmap"
 
-    disable_sampling = true
-    sort_by = "+host"
-    group_by = ["hostname", "host"]
-    hide_timestamp = true
+    program_text = <<-EOF
+        data("cpu.total.idle").publish()
+        EOF
 }
 
-resource "signalfx_text_chart" "mynote0" {
+resource "signalfx_text_chart" "mytextchart0" {
     name = "Important Dashboard Note"
-    description = "Lorem ipsum dolor sit amet, laudem tibique iracundia at mea. Nam posse dolores ex, nec cu adhuc putent honestatis"
-
+    description = "Lorem ipsum dolor sit amet"
     markdown = <<-EOF
-    1. First ordered list item
-    2. Another item
-      * Unordered sub-list.
-    1. Actual numbers don't matter, just that it's a number
-      1. Ordered sub-list
-    4. And another item.
+		**Farts
+		EOF
+}
 
-       You can have properly indented paragraphs within list items. Notice the blank line above, and the leading spaces (at least one, but we'll use three here to also align the raw Markdown).
-
-       To have a line break without a paragraph, you will need to use two trailing spaces.⋅⋅
-       Note that this line is separate, but within the same paragraph.⋅⋅
-       (This is contrary to the typical GFM line break behaviour, where trailing spaces are not required.)
-
-    * Unordered list can use asterisks
-    - Or minuses
-    + Or pluses
-    EOF
+resource "signalfx_event_feed_chart" "myeventfeedchart0" {
+  name = "Fart Event Feed"
+  description = "Farts"
+	program_text = "A = events(eventType='Fart Testing').publish(label='A')"
 }
 
 resource "signalfx_dashboard_group" "mydashboardgroup0" {
     name = "My team dashboard group"
     description = "Cool dashboard group"
+		// No teams test cuz there's no teams resource yet!
 }
 
 resource "signalfx_dashboard" "mydashboard0" {
     name = "My Dashboard Test 1"
+		description = "Cool dashboard"
     dashboard_group = "${signalfx_dashboard_group.mydashboardgroup0.id}"
 
     time_range = "-30m"
 
-    filter {
+		filter {
         property = "collector"
         values = ["cpu", "Diamond"]
+        negated = true
+        apply_if_exist = true
     }
-    variable {
+		variable {
+	      property = "region"
+	      description = "a region"
+	      alias = "theregion"
+	      apply_if_exist = true
+	      values = ["uswest-1"]
+	      value_required = true
+	      values_suggested = ["uswest-1"]
+	      restricted_suggestions = true
+	      replace_only = true
+    }
+		event_overlay {
+      line = true
+      label = "a event overlabel"
+      color = "lilac"
+      signal = "overlabel"
+      type = "detectorEvents"
+
+      source {
         property = "region"
-        alias = "region"
-        values = ["uswest-1-"]
+        values = ["uswest-1"]
+        negated = true
+      }
     }
-    chart {
-        chart_id = "${signalfx_time_chart.mychart0.id}"
+		selected_event_overlay {
+      signal = "overlabel"
+      type = "detectorEvents"
+
+      source {
+        property = "region"
+        values = ["uswest-1"]
+        negated = true
+      }
+    }
+
+		chart {
+        chart_id = "${signalfx_time_chart.mytimechart0.id}"
         width = 12
         height = 1
     }
@@ -155,8 +134,13 @@ resource "signalfx_dashboard" "mydashboard0" {
         width = 12
         height = 1
     }
-    chart {
-        chart_id = "${signalfx_text_chart.mynote0.id}"
+		chart {
+        chart_id = "${signalfx_text_chart.mytextchart0.id}"
+        width = 12
+        height = 1
+    }
+		chart {
+        chart_id = "${signalfx_event_feed_chart.myeventfeedchart0.id}"
         width = 12
         height = 1
     }
@@ -164,142 +148,110 @@ resource "signalfx_dashboard" "mydashboard0" {
 `
 
 const updatedDashConfig = `
-resource "signalfx_time_chart" "mychart0" {
-    name = "CPU Total Idle NEW"
-
+resource "signalfx_time_chart" "mytimechart0" {
+    name = "CPU Total Idle"
+    description = "Very cool Time Chart"
     program_text = <<-EOF
-        myfilters = filter("shc_name", "prod") and filter("role", "splunk_searchhead")
-        data("cpu.total.idle", filter=myfilters).publish(label="CPU Idle")
+        data("cpu.total.idle").publish(label="CPU Idle")
         EOF
-
-    time_range = "-15m"
-
-    plot_type = "LineChart"
-    show_data_markers = true
-
-    legend_fields_to_hide = ["collector", "prefix", "hostname"]
-    viz_options {
-        label = "CPU Idle"
-        axis = "left"
-        color = "orange"
-    }
-
-    axis_left {
-        label = "CPU Total Idle"
-        low_watermark = 1000
-    }
 }
 
 resource "signalfx_list_chart" "mylistchart0" {
-    name = "CPU Total Idle - List NEW"
-
-    program_text = <<-EOF
-    myfilters = filter("cluster_name", "prod") and filter("role", "search")
-    data("cpu.total.idle", filter=myfilters).publish()
-    EOF
-
+    name = "CPU Total Idle - List"
     description = "Very cool List Chart"
-
-    color_by = "Metric"
-    max_delay = 2
-    disable_sampling = true
-    refresh_interval = 1
-    legend_fields_to_hide = ["collector", "host"]
-    max_precision = 2
-    sort_by = "-value"
+    program_text = <<-EOF
+    data("cpu.total.idle").publish()
+    EOF
 }
 
 resource "signalfx_single_value_chart" "mysvchart0" {
-    name = "CPU Total Idle - Single Value NEW"
-
-    program_text = <<-EOF
-        myfilters = filter("cluster_name", "prod") and filter("role", "search")
-        data("cpu.total.idle", filter=myfilters).publish()
-        EOF
-
+    name = "CPU Total Idle - Single Value"
     description = "Very cool Single Value Chart"
 
-    color_by = "Dimension"
-
-    max_delay = 2
-    refresh_interval = 1
-    max_precision = 2
-    is_timestamp_hidden = true
+    program_text = <<-EOF
+        data("cpu.total.idle").publish()
+        EOF
 }
 
 resource "signalfx_heatmap_chart" "myheatmapchart0" {
-     name = "CPU Total Idle - Heatmap NEW"
+    name = "CPU Total Idle - Heatmap"
+    description = "Very cool Heatmap"
 
-     program_text = <<-EOF
-         myfilters = filter("cluster_name", "prod") and filter("role", "search")
-         data("cpu.total.idle", filter=myfilters).publish()
-         EOF
-
-     description = "Very cool Heatmap"
-
-     disable_sampling = true
-     sort_by = "+host"
-     group_by = ["hostname", "host"]
-     hide_timestamp = true
+    program_text = <<-EOF
+        data("cpu.total.idle").publish()
+        EOF
 }
 
-resource "signalfx_text_chart" "mynote0" {
-    name = "Important Dashboard Note NEW"
-    description = "Lorem ipsum dolor sit amet, laudem tibique iracundia at mea. Nam posse dolores ex, nec cu adhuc putent honestatis"
-
+resource "signalfx_text_chart" "mytextchart0" {
+    name = "Important Dashboard Note"
+    description = "Lorem ipsum dolor sit amet"
     markdown = <<-EOF
-    1. First ordered list item
-    2. Another item
-      * Unordered sub-list.
-    1. Actual numbers don't matter, just that it's a number
-      1. Ordered sub-list
-    4. And another item.
-
-       You can have properly indented paragraphs within list items. Notice the blank line above, and the leading spaces (at least one, but we'll use three here to also align the raw Markdown).
-
-       To have a line break without a paragraph, you will need to use two trailing spaces.⋅⋅
-       Note that this line is separate, but within the same paragraph.⋅⋅
-       (This is contrary to the typical GFM line break behaviour, where trailing spaces are not required.)
-
-    * Unordered list can use asterisks
-    - Or minuses
-    + Or pluses
-    EOF
+		**Farts
+		EOF
 }
 
-resource "signalfx_event_feed_chart" "myeventfeed0" {
-	name = "Interesting Events"
-	description = "Lorem ipsum dolor sit fartet"
+resource "signalfx_event_feed_chart" "myeventfeedchart0" {
+  name = "Fart Event Feed"
+  description = "Farts"
 	program_text = "A = events(eventType='Fart Testing').publish(label='A')"
-
-	viz_options {
-			label = "A"
-			color = "orange"
-	}
 }
 
 resource "signalfx_dashboard_group" "mydashboardgroup0" {
     name = "My team dashboard group NEW"
-    description = "Cool dashboard group "
+    description = "Cool dashboard group NEW"
+		// No teams test cuz there's no teams resource yet!
 }
 
 resource "signalfx_dashboard" "mydashboard0" {
     name = "My Dashboard Test 1 NEW"
+		description = "Cool dashboard NEW"
     dashboard_group = "${signalfx_dashboard_group.mydashboardgroup0.id}"
 
     time_range = "-30m"
 
-    filter {
+		filter {
         property = "collector"
         values = ["cpu", "Diamond"]
+        negated = true
+        apply_if_exist = true
     }
-    variable {
+		variable {
+	      property = "region"
+	      description = "a region"
+	      alias = "theregion"
+	      apply_if_exist = true
+	      values = ["uswest-1"]
+	      value_required = true
+	      values_suggested = ["uswest-1"]
+	      restricted_suggestions = true
+	      replace_only = true
+    }
+		event_overlay {
+      line = true
+      label = "a event overlabel"
+      color = "lilac"
+      signal = "overlabel"
+      type = "detectorEvents"
+
+      source {
         property = "region"
-        alias = "region"
-        values = ["uswest-1-"]
+        values = ["uswest-1"]
+        negated = true
+      }
     }
-    chart {
-        chart_id = "${signalfx_time_chart.mychart0.id}"
+		selected_event_overlay {
+      signal = "overlabel"
+      type = "detectorEvents"
+
+      source {
+        property = "region"
+        values = ["uswest-1"]
+        negated = true
+      }
+    }
+
+		chart {
+        chart_id = "${signalfx_time_chart.mytimechart0.id}"
         width = 12
         height = 1
     }
@@ -318,15 +270,20 @@ resource "signalfx_dashboard" "mydashboard0" {
         width = 12
         height = 1
     }
-    chart {
-        chart_id = "${signalfx_text_chart.mynote0.id}"
+		chart {
+        chart_id = "${signalfx_text_chart.mytextchart0.id}"
+        width = 12
+        height = 1
+    }
+		chart {
+        chart_id = "${signalfx_event_feed_chart.myeventfeedchart0.id}"
         width = 12
         height = 1
     }
 }
 `
 
-func TestAccCreateDashboardGroup(t *testing.T) {
+func TestAccCreateUpdateDashboardGroup(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
@@ -335,12 +292,76 @@ func TestAccCreateDashboardGroup(t *testing.T) {
 			// Create It
 			{
 				Config: newDashConfig,
-				Check:  testAccCheckDashboardGroupResourceExists,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckDashboardGroupResourceExists,
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "name", "My Dashboard Test 1"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "description", "Cool dashboard"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "charts_resolution", "DEFAULT"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "time_range", "-30m"),
+					// resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "tags.#", "0"),
+					// Filters
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "filter.#", "1"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "filter.1325118228.apply_if_exist", "true"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "filter.1325118228.negated", "true"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "filter.1325118228.property", "collector"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "filter.1325118228.values.#", "2"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "filter.1325118228.values.3211103030", "cpu"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "filter.1325118228.values.3846648755", "Diamond"),
+					// Variables
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "variable.#", "1"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "variable.3642329230.property", "region"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "variable.3642329230.description", "a region"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "variable.3642329230.alias", "theregion"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "variable.3642329230.apply_if_exist", "true"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "variable.3642329230.replace_only", "true"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "variable.3642329230.restricted_suggestions", "true"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "variable.3642329230.values.#", "1"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "variable.3642329230.values.318300922", "uswest-1"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "variable.3642329230.values_suggested.#", "1"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "event_overlay.#", "1"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "event_overlay.0.color", "lilac"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "event_overlay.0.label", "a event overlabel"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "event_overlay.0.line", "true"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "event_overlay.0.signal", "overlabel"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "event_overlay.0.source.#", "1"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "event_overlay.0.source.0.negated", "true"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "event_overlay.0.source.0.property", "region"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "event_overlay.0.source.0.values.#", "1"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "event_overlay.0.source.0.values.318300922", "uswest-1"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "event_overlay.0.type", "detectorEvents"),
+
+					// Selected Event Overlays
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "selected_event_overlay.#", "1"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "selected_event_overlay.0.signal", "overlabel"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "selected_event_overlay.0.signal", "overlabel"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "selected_event_overlay.0.source.#", "1"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "selected_event_overlay.0.source.0.negated", "true"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "selected_event_overlay.0.source.0.property", "region"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "selected_event_overlay.0.source.0.values.#", "1"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "selected_event_overlay.0.source.0.values.318300922", "uswest-1"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "selected_event_overlay.0.type", "detectorEvents"),
+
+					// Charts
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "chart.#", "6"),
+					// We're not testing each chart because they aren't stable, TODO?
+
+					// Dashboard Group
+					resource.TestCheckResourceAttr("signalfx_dashboard_group.mydashboardgroup0", "description", "Cool dashboard group"),
+					resource.TestCheckResourceAttr("signalfx_dashboard_group.mydashboardgroup0", "name", "My team dashboard group"),
+				),
 			},
 			// Update Everything
 			{
 				Config: updatedDashConfig,
-				Check:  testAccCheckDashboardGroupResourceExists,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckDashboardGroupResourceExists,
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "name", "My Dashboard Test 1 NEW"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "description", "Cool dashboard NEW"),
+
+					// Dashboard Group
+					resource.TestCheckResourceAttr("signalfx_dashboard_group.mydashboardgroup0", "description", "Cool dashboard group NEW"),
+					resource.TestCheckResourceAttr("signalfx_dashboard_group.mydashboardgroup0", "name", "My team dashboard group NEW"),
+				),
 			},
 		},
 	})
@@ -376,6 +397,8 @@ func testAccCheckDashboardGroupResourceExists(s *terraform.State) error {
 			return fmt.Errorf("Unexpected resource of type: %s", rs.Type)
 		}
 	}
+	// Add some time to let the API quiesce. This may be removed in the future.
+	// time.Sleep(time.Duration(2) * time.Second)
 
 	return nil
 }
@@ -386,17 +409,17 @@ func testAccDashboardGroupDestroy(s *terraform.State) error {
 		switch rs.Type {
 		case "signalfx_time_chart", "signalfx_list_chart", "signalfx_single_value_chart", "signalfx_heatmap_chart", "signalfx_text_chart", "signalfx_event_feed_chart":
 			chart, _ := client.GetChart(rs.Primary.ID)
-			if chart.Id != "" {
+			if chart != nil {
 				return fmt.Errorf("Found deleted chart %s", rs.Primary.ID)
 			}
 		case "signalfx_dashboard":
 			dash, _ := client.GetDashboard(rs.Primary.ID)
-			if dash.Id != "" {
+			if dash != nil {
 				return fmt.Errorf("Found deleted dashboard %s", rs.Primary.ID)
 			}
 		case "signalfx_dashboard_group":
 			dashgroup, _ := client.GetDashboardGroup(rs.Primary.ID)
-			if dashgroup.Id != "" {
+			if dashgroup != nil {
 				return fmt.Errorf("Found deleted dashboard group %s", rs.Primary.ID)
 			}
 		default:

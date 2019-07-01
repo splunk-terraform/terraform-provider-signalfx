@@ -2,9 +2,10 @@ package signalfx
 
 import (
 	"encoding/json"
-	"fmt"
+	"log"
 
 	"github.com/hashicorp/terraform/helper/schema"
+	chart "github.com/signalfx/signalfx-go/chart"
 )
 
 func listChartResource() *schema.Resource {
@@ -28,11 +29,13 @@ func listChartResource() *schema.Resource {
 			"unit_prefix": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
+				Default:     "Metric",
 				Description: "(Metric by default) Must be \"Metric\" or \"Binary\"",
 			},
 			"color_by": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
+				Default:     "Dimension",
 				Description: "(Metric by default) Must be \"Metric\" or \"Dimension\"",
 			},
 			"max_delay": &schema.Schema{
@@ -44,6 +47,7 @@ func listChartResource() *schema.Resource {
 			"disable_sampling": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
+				Default:     false,
 				Description: "(false by default) If false, samples a subset of the output MTS, which improves UI performance",
 			},
 			"sort_by": &schema.Schema{
@@ -58,10 +62,33 @@ func listChartResource() *schema.Resource {
 				Description: "How often (in seconds) to refresh the values of the list",
 			},
 			"legend_fields_to_hide": &schema.Schema{
-				Type:        schema.TypeSet,
-				Optional:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
-				Description: "List of properties that shouldn't be displayed in the chart legend (i.e. dimension names)",
+				Type:          schema.TypeSet,
+				Optional:      true,
+				Deprecated:    "Please use legend_options_fields",
+				ConflictsWith: []string{"legend_options_fields"},
+				Elem:          &schema.Schema{Type: schema.TypeString},
+				Description:   "List of properties that shouldn't be displayed in the chart legend (i.e. dimension names)",
+			},
+			"legend_options_fields": &schema.Schema{
+				Type: schema.TypeList,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"property": &schema.Schema{
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "The name of a property to hide or show in the data table.",
+						},
+						"enabled": &schema.Schema{
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Default:     true,
+							Description: "(true by default) Determines if this property is displayed in the data table.",
+						},
+					},
+				},
+				Optional:      true,
+				ConflictsWith: []string{"legend_fields_to_hide"},
+				Description:   "List of property and enabled flags to control the order and presence of datatable labels in a chart.",
 			},
 			"max_precision": &schema.Schema{
 				Type:        schema.TypeInt,
@@ -71,6 +98,7 @@ func listChartResource() *schema.Resource {
 			"secondary_visualization": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
+				Default:      "Sparkline",
 				Description:  "(false by default) What kind of secondary visualization to show (None, Radial, Linear, Sparkline)",
 				ValidateFunc: validateSecondaryVisualization,
 			},
@@ -110,12 +138,6 @@ func listChartResource() *schema.Resource {
 					},
 				},
 			},
-			"synced": &schema.Schema{
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     true,
-				Description: "Whether the resource in the provider and SignalFx are identical or not. Used internally for syncing.",
-			},
 			"last_updated": &schema.Schema{
 				Type:        schema.TypeFloat,
 				Computed:    true,
@@ -138,132 +160,190 @@ func listChartResource() *schema.Resource {
 /*
   Use Resource object to construct json payload in order to create a list chart
 */
-func getPayloadListChart(d *schema.ResourceData) ([]byte, error) {
-	payload := map[string]interface{}{
-		"name":        d.Get("name").(string),
-		"description": d.Get("description").(string),
-		"programText": d.Get("program_text").(string),
+func getPayloadListChart(d *schema.ResourceData) *chart.CreateUpdateChartRequest {
+	payload := &chart.CreateUpdateChartRequest{
+		Name:        d.Get("name").(string),
+		Description: d.Get("description").(string),
+		ProgramText: d.Get("program_text").(string),
 	}
 
 	viz := getListChartOptions(d)
 	// There are two ways to maniplate the legend. The first is keyed from
 	// `legend_fields_to_hide`. Anything in this is marked as hidden. Unspecified
 	// fields default to showing up in SFx's UI.
-	if legendOptions := getLegendOptions(d); len(legendOptions) > 0 {
-		viz["legendOptions"] = legendOptions
+	if legendOptions := getLegendOptions(d); legendOptions != nil {
+		viz.LegendOptions = legendOptions
 		// Alternatively, the `legend_options_fields` provides finer control,
 		// allowing ordering and on/off toggles. This is preferred, but we keep
 		// `legend_fields_to_hide` for convenience.
-	} else if legendOptions := getLegendFieldOptions(d); len(legendOptions) > 0 {
-		viz["legendOptions"] = legendOptions
+	} else if legendOptions := getLegendFieldOptions(d); legendOptions != nil {
+		viz.LegendOptions = legendOptions
 	}
 
 	if vizOptions := getPerSignalVizOptions(d); len(vizOptions) > 0 {
-		viz["publishLabelOptions"] = vizOptions
+		viz.PublishLabelOptions = vizOptions
 	}
-	if len(viz) > 0 {
-		payload["options"] = viz
-	}
+	payload.Options = viz
 
-	return json.Marshal(payload)
+	return payload
 }
 
-func getListChartOptions(d *schema.ResourceData) map[string]interface{} {
-	viz := make(map[string]interface{})
-	viz["type"] = "List"
+func getListChartOptions(d *schema.ResourceData) *chart.Options {
+	options := &chart.Options{
+		Type: "List",
+	}
 	if val, ok := d.GetOk("unit_prefix"); ok {
-		viz["unitPrefix"] = val.(string)
+		options.UnitPrefix = val.(string)
 	}
 	if val, ok := d.GetOk("color_by"); ok {
-		viz["colorBy"] = val.(string)
+		options.ColorBy = val.(string)
 	}
 
-	programOptions := make(map[string]interface{})
+	var programOptions *chart.GeneralOptions
 	if val, ok := d.GetOk("max_delay"); ok {
-		programOptions["maxDelay"] = val.(int) * 1000
+		if programOptions == nil {
+			programOptions = &chart.GeneralOptions{}
+		}
+		programOptions.MaxDelay = int32(val.(int) * 1000)
 	}
-	programOptions["disableSampling"] = d.Get("disable_sampling").(bool)
-	viz["programOptions"] = programOptions
+	if val, ok := d.GetOk("disable_sampling"); ok {
+		if programOptions == nil {
+			programOptions = &chart.GeneralOptions{}
+		}
+		programOptions.DisableSampling = val.(bool)
+	}
+	options.ProgramOptions = programOptions
 
 	if sortBy, ok := d.GetOk("sort_by"); ok {
-		viz["sortBy"] = sortBy.(string)
+		options.SortBy = sortBy.(string)
 	}
 	if refreshInterval, ok := d.GetOk("refresh_interval"); ok {
-		viz["refreshInterval"] = refreshInterval.(int) * 1000
+		options.RefreshInterval = int32(refreshInterval.(int) * 1000)
 	}
 	if maxPrecision, ok := d.GetOk("max_precision"); ok {
-		viz["maximumPrecision"] = maxPrecision.(int)
+		options.MaximumPrecision = int32(maxPrecision.(int))
 	}
 	if val, ok := d.GetOk("secondary_visualization"); ok {
 		secondaryVisualization := val.(string)
 		if secondaryVisualization != "" {
-			viz["secondaryVisualization"] = secondaryVisualization
+			options.SecondaryVisualization = secondaryVisualization
 		}
 	}
 
-	return viz
+	return options
 }
 
 func listchartCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	payload, err := getPayloadListChart(d)
-	if err != nil {
-		return fmt.Errorf("Failed creating json payload: %s", err.Error())
-	}
+	payload := getPayloadListChart(d)
 
-	url, err := buildURL(config.APIURL, CHART_API_PATH, map[string]string{})
-	if err != nil {
-		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
-	}
+	debugOutput, _ := json.Marshal(payload)
+	log.Printf("[DEBUG] SignalFx: Create List Chart Payload: %s", string(debugOutput))
 
-	err = resourceCreate(url, config.AuthToken, payload, d)
+	c, err := config.Client.CreateChart(payload)
 	if err != nil {
 		return err
 	}
 	// Since things worked, set the URL and move on
-	appURL, err := buildAppURL(config.CustomAppURL, CHART_APP_PATH+d.Id())
+	appURL, err := buildAppURL(config.CustomAppURL, CHART_APP_PATH+c.Id)
 	if err != nil {
 		return err
 	}
 	d.Set("url", appURL)
+	if err := d.Set("url", appURL); err != nil {
+		return err
+	}
+	d.SetId(c.Id)
+	return listchartAPIToTF(d, c)
+}
+
+func listchartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
+	debugOutput, _ := json.Marshal(c)
+	log.Printf("[DEBUG] SignalFx: Got List Chart to enState: %s", string(debugOutput))
+
+	if err := d.Set("name", c.Name); err != nil {
+		return err
+	}
+	if err := d.Set("description", c.Description); err != nil {
+		return err
+	}
+	if err := d.Set("program_text", c.ProgramText); err != nil {
+		return err
+	}
+
+	options := c.Options
+	if err := d.Set("unit_prefix", options.UnitPrefix); err != nil {
+		return err
+	}
+	if err := d.Set("color_by", options.ColorBy); err != nil {
+		return err
+	}
+	if err := d.Set("refresh_interval", options.RefreshInterval/1000); err != nil {
+		return err
+	}
+	if err := d.Set("max_precision", options.MaximumPrecision); err != nil {
+		return err
+	}
+	if err := d.Set("secondary_visualization", options.SecondaryVisualization); err != nil {
+		return err
+	}
+	if err := d.Set("sort_by", options.SortBy); err != nil {
+		return err
+	}
+
+	if options.LegendOptions != nil && len(options.LegendOptions.Fields) > 0 {
+		fields := make([]map[string]interface{}, len(options.LegendOptions.Fields))
+		for i, lo := range options.LegendOptions.Fields {
+			fields[i] = map[string]interface{}{
+				"property": lo.Property,
+				"enabled":  lo.Enabled,
+			}
+		}
+		if err := d.Set("legend_options_fields", fields); err != nil {
+			return err
+		}
+	}
+
+	if options.ProgramOptions != nil {
+		if err := d.Set("max_delay", options.ProgramOptions.MaxDelay/1000); err != nil {
+			return err
+		}
+		if err := d.Set("disable_sampling", options.ProgramOptions.DisableSampling); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
 func listchartRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-
-	path := fmt.Sprintf("%s/%s", CHART_API_PATH, d.Id())
-	url, err := buildURL(config.APIURL, path, map[string]string{})
+	chart, err := config.Client.GetChart(d.Id())
 	if err != nil {
-		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
+		return err
 	}
 
-	return resourceRead(url, config.AuthToken, d)
+	return listchartAPIToTF(d, chart)
 }
 
 func listchartUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	payload, err := getPayloadListChart(d)
-	if err != nil {
-		return fmt.Errorf("Failed creating json payload: %s", err.Error())
-	}
+	payload := getPayloadListChart(d)
+	debugOutput, _ := json.Marshal(payload)
+	log.Printf("[DEBUG] SignalFx: Update List Chart Payload: %s", string(debugOutput))
 
-	path := fmt.Sprintf("%s/%s", CHART_API_PATH, d.Id())
-	url, err := buildURL(config.APIURL, path, map[string]string{})
+	c, err := config.Client.UpdateChart(d.Id(), payload)
 	if err != nil {
-		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
+		return err
 	}
+	log.Printf("[DEBUG] SignalFx: Update List Chart Response: %v", c)
 
-	return resourceUpdate(url, config.AuthToken, payload, d)
+	d.SetId(c.Id)
+	return listchartAPIToTF(d, c)
 }
 
 func listchartDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	path := fmt.Sprintf("%s/%s", CHART_API_PATH, d.Id())
-	url, err := buildURL(config.APIURL, path, map[string]string{})
-	if err != nil {
-		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
-	}
 
-	return resourceDelete(url, config.AuthToken, d)
+	return config.Client.DeleteChart(d.Id())
 }

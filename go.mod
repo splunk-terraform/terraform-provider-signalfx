@@ -6,6 +6,7 @@ require (
 	github.com/apparentlymart/go-cidr v1.0.0 // indirect
 	github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d
 	github.com/blang/semver v3.5.1+incompatible // indirect
+	github.com/gopherjs/gopherjs v0.0.0-20190430165422-3e4dfb77656c // indirect
 	github.com/hashicorp/go-getter v1.1.0 // indirect
 	github.com/hashicorp/go-hclog v0.7.0 // indirect
 	github.com/hashicorp/go-plugin v0.0.0-20190220160451-3f118e8ee104 // indirect
@@ -17,10 +18,14 @@ require (
 	github.com/mitchellh/copystructure v1.0.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/hashstructure v1.0.0 // indirect
-	github.com/signalfx/signalfx-go v0.0.0-20190528160746-d657bfe21d9e
-	github.com/stretchr/objx v0.2.0 // indirect
+	github.com/signalfx/golib v2.4.0+incompatible // indirect
+	github.com/signalfx/signalfx-go v0.0.0-20190627212220-0288248cbbb3
+	github.com/smartystreets/assertions v1.0.0 // indirect
 	github.com/stretchr/testify v1.3.0
 	github.com/zclconf/go-cty v0.0.0-20190212192503-19dda139b164 // indirect
-	golang.org/x/crypto v0.0.0-20190228161510-8dd112bcdc25 // indirect
-	golang.org/x/net v0.0.0-20190228165749-92fc7df08ae7 // indirect
+	golang.org/x/crypto v0.0.0-20190621222207-cc06ce4a13d4 // indirect
+	golang.org/x/net v0.0.0-20190620200207-3b0461eec859 // indirect
+	golang.org/x/sync v0.0.0-20190423024810-112230192c58 // indirect
+	golang.org/x/sys v0.0.0-20190626221950-04f50cda93cb // indirect
+	golang.org/x/text v0.3.2 // indirect
 )

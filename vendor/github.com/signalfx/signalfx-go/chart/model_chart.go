@@ -23,8 +23,8 @@ type Chart struct {
 	// The SignalFx user ID of the last person who updated the chart. If the last update was done by the system, the value is the string literal \"AAAAAAAAAA\".
 	LastUpdatedBy string `json:"lastUpdatedBy,omitempty"`
 	// The displayed name of the chart in the dashboard
-	Name    string  `json:"name,omitempty"`
-	Options Options `json:"options,omitempty"`
+	Name    string   `json:"name,omitempty"`
+	Options *Options `json:"options,omitempty"`
 	// Specifies one or more SignalFlow packages to import for use with the SignalFlow program specified in the `programText` option. This option must be set to `signalfx`.
 	PackageSpecifications string `json:"packageSpecifications,omitempty"`
 	// The SignalFlow program that provides data for the chart.  If you use more than one line of SignalFlow, separate the lines with  semicolons (\";\") or newline characters (\"\\n\"). See the  [Charts Overview](https://developers.signalfx.com/v2/reference.html#charts-overview-1) for more information.\"

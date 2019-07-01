@@ -26,4 +26,5 @@ type Rule struct {
 	// URL that you can refer to with the SignalFx `{{runbookURL}}` variable in the `parameterizedBody` or `parameterizedSubject` field.
 	RunbookUrl string   `json:"runbookUrl,omitempty"`
 	Severity   Severity `json:"severity,omitempty"`
+	Tip        string   `json:"tip,omitempty"`
 }

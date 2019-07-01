@@ -15,19 +15,19 @@ const newIntegrationSlackConfig = `
 resource "signalfx_slack_integration" "slack_myteam" {
     name = "Slack - My Team"
     enabled = true
-    webhook_url = "http://example.com"
+    webhook_url = "https://example.com"
 }
 `
 
 const updatedIntegrationSlackConfig = `
 resource "signalfx_slack_integration" "slack_myteam" {
-    name = "Slack - My Team"
+    name = "Slack - My Team NEW"
     enabled = true
-    webhook_url = "http://example.com"
+    webhook_url = "https://example.com"
 }
 `
 
-func TestAccCreateIntegrationSlack(t *testing.T) {
+func TestAccCreateUpdateIntegrationSlack(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
@@ -36,12 +36,22 @@ func TestAccCreateIntegrationSlack(t *testing.T) {
 			// Create It
 			{
 				Config: newIntegrationSlackConfig,
-				Check:  testAccCheckIntegrationSlackResourceExists,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckIntegrationSlackResourceExists,
+					resource.TestCheckResourceAttr("signalfx_slack_integration.slack_myteam", "name", "Slack - My Team"),
+					resource.TestCheckResourceAttr("signalfx_slack_integration.slack_myteam", "webhook_url", "https://example.com"),
+					resource.TestCheckResourceAttr("signalfx_slack_integration.slack_myteam", "enabled", "true"),
+				),
 			},
 			// Update It
 			{
 				Config: updatedIntegrationSlackConfig,
-				Check:  testAccCheckIntegrationSlackResourceExists,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckIntegrationSlackResourceExists,
+					resource.TestCheckResourceAttr("signalfx_slack_integration.slack_myteam", "name", "Slack - My Team NEW"),
+					resource.TestCheckResourceAttr("signalfx_slack_integration.slack_myteam", "webhook_url", "https://example.com"),
+					resource.TestCheckResourceAttr("signalfx_slack_integration.slack_myteam", "enabled", "true"),
+				),
 			},
 		},
 	})

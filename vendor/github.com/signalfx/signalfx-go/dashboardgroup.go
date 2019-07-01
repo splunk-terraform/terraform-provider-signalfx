@@ -3,7 +3,8 @@ package signalfx
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
+	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -29,6 +30,11 @@ func (c *Client) CreateDashboardGroup(dashboardGroupRequest *dashboard_group.Cre
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode != http.StatusOK {
+		message, _ := ioutil.ReadAll(resp.Body)
+		return nil, fmt.Errorf("Unexpected status code: %d: %s", resp.StatusCode, message)
+	}
+
 	finalDashboardGroup := &dashboard_group.DashboardGroup{}
 
 	err = json.NewDecoder(resp.Body).Decode(finalDashboardGroup)
@@ -45,8 +51,9 @@ func (c *Client) DeleteDashboardGroup(id string) error {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return errors.New("Unexpected status code: " + resp.Status)
+	if resp.StatusCode != http.StatusNoContent {
+		message, _ := ioutil.ReadAll(resp.Body)
+		return fmt.Errorf("Unexpected status code: %d: %s", resp.StatusCode, message)
 	}
 
 	return nil
@@ -60,6 +67,11 @@ func (c *Client) GetDashboardGroup(id string) (*dashboard_group.DashboardGroup, 
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		message, _ := ioutil.ReadAll(resp.Body)
+		return nil, fmt.Errorf("Unexpected status code: %d: %s", resp.StatusCode, message)
+	}
 
 	finalDashboardGroup := &dashboard_group.DashboardGroup{}
 
@@ -80,6 +92,11 @@ func (c *Client) UpdateDashboardGroup(id string, dashboardGroupRequest *dashboar
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		message, _ := ioutil.ReadAll(resp.Body)
+		return nil, fmt.Errorf("Unexpected status code: %d: %s", resp.StatusCode, message)
+	}
 
 	finalDashboardGroup := &dashboard_group.DashboardGroup{}
 

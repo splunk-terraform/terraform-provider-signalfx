@@ -3,10 +3,12 @@ package signalfx
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"math"
 	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
+	chart "github.com/signalfx/signalfx-go/chart"
 )
 
 func heatmapChartResource() *schema.Resource {
@@ -30,6 +32,7 @@ func heatmapChartResource() *schema.Resource {
 			"unit_prefix": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
+				Default:     "Metric",
 				Description: "(Metric by default) Must be \"Metric\" or \"Binary\"",
 			},
 			"minimum_resolution": &schema.Schema{
@@ -138,17 +141,6 @@ func heatmapChartResource() *schema.Resource {
 				Default:     false,
 				Description: "(false by default) Whether to show the timestamp in the chart",
 			},
-			"synced": &schema.Schema{
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     true,
-				Description: "Whether the resource in the provider and SignalFx are identical or not. Used internally for syncing.",
-			},
-			"last_updated": &schema.Schema{
-				Type:        schema.TypeFloat,
-				Computed:    true,
-				Description: "Latest timestamp the resource was updated",
-			},
 			"url": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -166,41 +158,46 @@ func heatmapChartResource() *schema.Resource {
 /*
   Use Resource object to construct json payload in order to create an Heatmap chart
 */
-func getPayloadHeatmapChart(d *schema.ResourceData) ([]byte, error) {
-	payload := map[string]interface{}{
-		"name":        d.Get("name").(string),
-		"description": d.Get("description").(string),
-		"programText": d.Get("program_text").(string),
+func getPayloadHeatmapChart(d *schema.ResourceData) *chart.CreateUpdateChartRequest {
+	payload := &chart.CreateUpdateChartRequest{
+		Name:        d.Get("name").(string),
+		Description: d.Get("description").(string),
+		ProgramText: d.Get("program_text").(string),
 	}
 
-	viz := getHeatmapOptionsChart(d)
-	if len(viz) > 0 {
-		payload["options"] = viz
-	}
+	payload.Options = getHeatmapOptionsChart(d)
 
-	return json.Marshal(payload)
+	return payload
 }
 
-func getHeatmapColorRangeOptions(d *schema.ResourceData) map[string]interface{} {
-	item := make(map[string]interface{})
+func getHeatmapColorRangeOptions(d *schema.ResourceData) *chart.HeatmapColorRangeOptions {
 	colorRange := d.Get("color_range").(*schema.Set).List()
+
+	var item *chart.HeatmapColorRangeOptions
+
 	for _, options := range colorRange {
 		options := options.(map[string]interface{})
 
+		// Don't make an empty color range.
+		if options["color"].(string) == "" {
+			return item
+		}
+		item = &chart.HeatmapColorRangeOptions{}
+
 		if val, ok := options["min_value"]; ok {
 			if val.(float64) != -math.MaxFloat32 {
-				item["min"] = val.(float64)
+				item.Min = val.(float64)
 			}
 		}
 		if val, ok := options["max_value"]; ok {
 			if val.(float64) != math.MaxFloat32 {
-				item["max"] = val.(float64)
+				item.Max = val.(float64)
 			}
 		}
 		color := options["color"].(string)
 		for _, colorStruct := range ChartColorsSlice {
 			if color == colorStruct.name {
-				item["color"] = colorStruct.name
+				item.Color = colorStruct.name
 				break
 			}
 		}
@@ -208,115 +205,182 @@ func getHeatmapColorRangeOptions(d *schema.ResourceData) map[string]interface{} 
 	return item
 }
 
-func getHeatmapOptionsChart(d *schema.ResourceData) map[string]interface{} {
-	viz := make(map[string]interface{})
-	viz["type"] = "Heatmap"
+func getHeatmapOptionsChart(d *schema.ResourceData) *chart.Options {
+	options := &chart.Options{
+		Type: "Heatmap",
+	}
 	if val, ok := d.GetOk("unit_prefix"); ok {
-		viz["unitPrefix"] = val.(string)
+		options.UnitPrefix = val.(string)
+	}
+	if refreshInterval, ok := d.GetOk("refresh_interval"); ok {
+		options.RefreshInterval = int32(refreshInterval.(int) * 1000)
+	}
+	if timestampHidden, ok := d.GetOk("hide_timestamp"); ok {
+		options.TimestampHidden = timestampHidden.(bool)
 	}
 
-	programOptions := make(map[string]interface{})
+	var groupBy []string
+	if val, ok := d.GetOk("group_by"); ok {
+		groupBy = []string{}
+		for _, g := range val.([]interface{}) {
+			groupBy = append(groupBy, g.(string))
+		}
+	}
+	options.GroupBy = groupBy
+
+	var programOptions *chart.GeneralOptions
 	if val, ok := d.GetOk("minimum_resolution"); ok {
-		programOptions["minimumResolution"] = val.(int) * 1000
+		if programOptions == nil {
+			programOptions = &chart.GeneralOptions{}
+		}
+		programOptions.MinimumResolution = int32(val.(int) * 1000)
 	}
 	if val, ok := d.GetOk("max_delay"); ok {
-		programOptions["maxDelay"] = val.(int) * 1000
+		if programOptions == nil {
+			programOptions = &chart.GeneralOptions{}
+		}
+		programOptions.MaxDelay = int32(val.(int) * 1000)
 	}
-
-	programOptions["disableSampling"] = d.Get("disable_sampling").(bool)
-	viz["programOptions"] = programOptions
-
-	if refreshInterval, ok := d.GetOk("refresh_interval"); ok {
-		viz["refreshInterval"] = refreshInterval.(int) * 1000
+	if val, ok := d.GetOk("disable_sampling"); ok {
+		if programOptions == nil {
+			programOptions = &chart.GeneralOptions{}
+		}
+		programOptions.DisableSampling = val.(bool)
 	}
-	if groupByOptions, ok := d.GetOk("group_by"); ok {
-		viz["groupBy"] = groupByOptions.([]interface{})
-	}
+	options.ProgramOptions = programOptions
 
 	if sortProperty, ok := d.GetOk("sort_by"); ok {
 		sortBy := sortProperty.(string)
-		viz["sortProperty"] = sortBy[1:]
+		options.SortProperty = sortBy[1:]
 		if strings.HasPrefix(sortBy, "+") {
-			viz["sortDirection"] = "Ascending"
+			options.SortDirection = "Ascending"
 		} else {
-			viz["sortDirection"] = "Descending"
+			options.SortDirection = "Descending"
 		}
 	}
 
-	if colorRangeOptions := getHeatmapColorRangeOptions(d); len(colorRangeOptions) > 0 {
-		viz["colorBy"] = "Range"
-		viz["colorRange"] = colorRangeOptions
-	} else if colorScaleOptions := getColorScaleOptions(d); len(colorScaleOptions) > 0 {
-		viz["colorBy"] = "Scale"
-		viz["colorScale2"] = colorScaleOptions
+	if colorRangeOptions := getHeatmapColorRangeOptions(d); colorRangeOptions != nil {
+		options.ColorBy = "Range"
+		options.ColorRange = colorRangeOptions
 	}
 
-	viz["timestampHidden"] = d.Get("hide_timestamp").(bool)
-
-	return viz
+	return options
 }
 
 func heatmapchartCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	payload, err := getPayloadHeatmapChart(d)
-	if err != nil {
-		return fmt.Errorf("Failed creating json payload: %s", err.Error())
-	}
+	payload := getPayloadHeatmapChart(d)
 
-	url, err := buildURL(config.APIURL, CHART_API_PATH, map[string]string{})
-	if err != nil {
-		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
-	}
+	debugOutput, _ := json.Marshal(payload)
+	log.Printf("[DEBUG] SignalFx: Create Heatmap Chart Payload: %s", string(debugOutput))
 
-	err = resourceCreate(url, config.AuthToken, payload, d)
+	c, err := config.Client.CreateChart(payload)
 	if err != nil {
 		return err
 	}
 	// Since things worked, set the URL and move on
-	appURL, err := buildAppURL(config.CustomAppURL, CHART_APP_PATH+d.Id())
+	appURL, err := buildAppURL(config.CustomAppURL, CHART_APP_PATH+c.Id)
 	if err != nil {
 		return err
 	}
 	d.Set("url", appURL)
+	if err := d.Set("url", appURL); err != nil {
+		return err
+	}
+	d.SetId(c.Id)
+
+	return heatmapchartAPIToTF(d, c)
+}
+
+func heatmapchartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
+	debugOutput, _ := json.Marshal(c)
+	log.Printf("[DEBUG] SignalFx: Got Heatmap Chart to enState: %s", string(debugOutput))
+
+	if err := d.Set("name", c.Name); err != nil {
+		return err
+	}
+	if err := d.Set("description", c.Description); err != nil {
+		return err
+	}
+	if err := d.Set("program_text", c.ProgramText); err != nil {
+		return err
+	}
+
+	options := c.Options
+	if err := d.Set("unit_prefix", options.UnitPrefix); err != nil {
+		return err
+	}
+	if err := d.Set("refresh_interval", options.RefreshInterval/1000); err != nil {
+		return err
+	}
+	if err := d.Set("group_by", options.GroupBy); err != nil {
+		return err
+	}
+	if err := d.Set("hide_timestamp", options.TimestampHidden); err != nil {
+		return err
+	}
+	if options.ColorRange != nil {
+		colorRange := make([]map[string]interface{}, 1)
+		colorRange[0] = map[string]interface{}{
+			"min_value": options.ColorRange.Min,
+			"max_value": options.ColorRange.Max,
+			"color":     options.ColorRange.Color,
+		}
+		if err := d.Set("color_range", colorRange); err != nil {
+			return err
+		}
+	}
+
+	if options.ProgramOptions != nil {
+		if err := d.Set("minimum_resolution", options.ProgramOptions.MinimumResolution/1000); err != nil {
+			return err
+		}
+		if err := d.Set("max_delay", options.ProgramOptions.MaxDelay/1000); err != nil {
+			return err
+		}
+		if err := d.Set("disable_sampling", options.ProgramOptions.DisableSampling); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
 func heatmapchartRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	path := fmt.Sprintf("%s/%s", CHART_API_PATH, d.Id())
-	url, err := buildURL(config.APIURL, path, map[string]string{})
+	c, err := config.Client.GetChart(d.Id())
 	if err != nil {
-		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
+		return err
 	}
-
-	return resourceRead(url, config.AuthToken, d)
+	return heatmapchartAPIToTF(d, c)
 }
 
 func heatmapchartUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	payload, err := getPayloadHeatmapChart(d)
-	if err != nil {
-		return fmt.Errorf("Failed creating json payload: %s", err.Error())
-	}
+	payload := getPayloadHeatmapChart(d)
 
-	path := fmt.Sprintf("%s/%s", CHART_API_PATH, d.Id())
-	url, err := buildURL(config.APIURL, path, map[string]string{})
+	c, err := config.Client.UpdateChart(d.Id(), payload)
 	if err != nil {
-		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
+		return err
 	}
+	log.Printf("[DEBUG] SignalFx: Update Heatmap Chart Response: %v", c)
 
-	return resourceUpdate(url, config.AuthToken, payload, d)
+	// Since things worked, set the URL and move on
+	appURL, err := buildAppURL(config.CustomAppURL, CHART_APP_PATH+c.Id)
+	if err != nil {
+		return err
+	}
+	if err := d.Set("url", appURL); err != nil {
+		return err
+	}
+	d.SetId(c.Id)
+	return heatmapchartAPIToTF(d, c)
 }
 
 func heatmapchartDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	path := fmt.Sprintf("%s/%s", CHART_API_PATH, d.Id())
-	url, err := buildURL(config.APIURL, path, map[string]string{})
-	if err != nil {
-		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
-	}
 
-	return resourceDelete(url, config.AuthToken, d)
+	return config.Client.DeleteChart(d.Id())
 }
 
 /*

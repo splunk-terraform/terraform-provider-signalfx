@@ -2,9 +2,10 @@ package signalfx
 
 import (
 	"encoding/json"
-	"fmt"
+	"log"
 
 	"github.com/hashicorp/terraform/helper/schema"
+	chart "github.com/signalfx/signalfx-go/chart"
 )
 
 func textChartResource() *schema.Resource {
@@ -25,17 +26,6 @@ func textChartResource() *schema.Resource {
 				Required:    true,
 				Description: "Markdown text to display. More info at: https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet",
 			},
-			"synced": &schema.Schema{
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     true,
-				Description: "Whether the resource in the provider and SignalFx are identical or not. Used internally for syncing.",
-			},
-			"last_updated": &schema.Schema{
-				Type:        schema.TypeFloat,
-				Computed:    true,
-				Description: "Latest timestamp the resource was updated",
-			},
 			"url": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -53,88 +43,86 @@ func textChartResource() *schema.Resource {
 /*
   Use Resource object to construct json payload in order to create a text chart
 */
-func getPayloadTextChart(d *schema.ResourceData) ([]byte, error) {
-	payload := map[string]interface{}{
-		"name":        d.Get("name").(string),
-		"description": d.Get("description").(string),
+func getPayloadTextChart(d *schema.ResourceData) *chart.CreateUpdateChartRequest {
+	return &chart.CreateUpdateChartRequest{
+		Name:        d.Get("name").(string),
+		Description: d.Get("description").(string),
+		Options: &chart.Options{
+			Type:     "Text",
+			Markdown: d.Get("markdown").(string),
+		},
 	}
-
-	viz := getTextChartOptions(d)
-	if len(viz) > 0 {
-		payload["options"] = viz
-	}
-
-	return json.Marshal(payload)
-}
-
-func getTextChartOptions(d *schema.ResourceData) map[string]interface{} {
-	viz := make(map[string]interface{})
-	viz["type"] = "Text"
-	if val, ok := d.GetOk("markdown"); ok {
-		viz["markdown"] = val.(string)
-	}
-
-	return viz
 }
 
 func textchartCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	payload, err := getPayloadTextChart(d)
-	if err != nil {
-		return fmt.Errorf("Failed creating json payload: %s", err.Error())
-	}
+	payload := getPayloadTextChart(d)
 
-	url, err := buildURL(config.APIURL, CHART_API_PATH, map[string]string{})
-	if err != nil {
-		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
-	}
+	debugOutput, _ := json.Marshal(payload)
+	log.Printf("[DEBUG] SignalFx: Create Text Chart Payload: %s", string(debugOutput))
 
-	err = resourceCreate(url, config.AuthToken, payload, d)
+	c, err := config.Client.CreateChart(payload)
 	if err != nil {
 		return err
 	}
 	// Since things worked, set the URL and move on
-	appURL, err := buildAppURL(config.CustomAppURL, CHART_APP_PATH+d.Id())
+	appURL, err := buildAppURL(config.CustomAppURL, CHART_APP_PATH+c.Id)
 	if err != nil {
 		return err
 	}
 	d.Set("url", appURL)
+	if err := d.Set("url", appURL); err != nil {
+		return err
+	}
+	d.SetId(c.Id)
+	return textchartAPIToTF(d, c)
+}
+
+func textchartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
+	debugOutput, _ := json.Marshal(c)
+	log.Printf("[DEBUG] SignalFx: Got Text Chart to enState: %s", string(debugOutput))
+
+	if err := d.Set("name", c.Name); err != nil {
+		return err
+	}
+	if err := d.Set("description", c.Description); err != nil {
+		return err
+	}
+	if err := d.Set("markdown", c.Options.Markdown); err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func textchartRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	path := fmt.Sprintf("%s/%s", CHART_API_PATH, d.Id())
-	url, err := buildURL(config.APIURL, path, map[string]string{})
+	c, err := config.Client.GetChart(d.Id())
 	if err != nil {
-		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
+		return err
 	}
 
-	return resourceRead(url, config.AuthToken, d)
+	return textchartAPIToTF(d, c)
 }
 
 func textchartUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	payload, err := getPayloadTextChart(d)
-	if err != nil {
-		return fmt.Errorf("Failed creating json payload: %s", err.Error())
-	}
-	path := fmt.Sprintf("%s/%s", CHART_API_PATH, d.Id())
-	url, err := buildURL(config.APIURL, path, map[string]string{})
-	if err != nil {
-		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
-	}
+	payload := getPayloadTextChart(d)
+	debugOutput, _ := json.Marshal(payload)
+	log.Printf("[DEBUG] SignalFx: Update Text Chart Payload: %s", string(debugOutput))
 
-	return resourceUpdate(url, config.AuthToken, payload, d)
+	c, err := config.Client.UpdateChart(d.Id(), payload)
+	if err != nil {
+		return err
+	}
+	log.Printf("[DEBUG] SignalFx: Update Text Chart Response: %v", c)
+
+	d.SetId(c.Id)
+	return textchartAPIToTF(d, c)
 }
 
 func textchartDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	path := fmt.Sprintf("%s/%s", CHART_API_PATH, d.Id())
-	url, err := buildURL(config.APIURL, path, map[string]string{})
-	if err != nil {
-		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
-	}
 
-	return resourceDelete(url, config.AuthToken, d)
+	return config.Client.DeleteChart(d.Id())
 }

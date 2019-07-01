@@ -67,7 +67,7 @@ func integrationPagerDutyCreate(d *schema.ResourceData, meta interface{}) error 
 	}
 	url, err := buildURL(config.APIURL, INTEGRATION_API_PATH, map[string]string{})
 	if err != nil {
-		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
+		return fmt.Errorf("[DEBUG] SignalFx: Error constructing API URL: %s", err.Error())
 	}
 
 	return resourceCreate(url, config.AuthToken, payload, d)
@@ -82,7 +82,7 @@ func integrationPagerDutyUpdate(d *schema.ResourceData, meta interface{}) error 
 	path := fmt.Sprintf("%s/%s", INTEGRATION_API_PATH, d.Id())
 	url, err := buildURL(config.APIURL, path, map[string]string{})
 	if err != nil {
-		return fmt.Errorf("[SignalFx] Error constructing API URL: %s", err.Error())
+		return fmt.Errorf("[DEBUG] SignalFx: Error constructing API URL: %s", err.Error())
 	}
 
 	return resourceUpdate(url, config.AuthToken, payload, d)
