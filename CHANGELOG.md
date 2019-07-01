@@ -27,6 +27,10 @@ BUG FIXES:
 * provider: All resources lacked property acceptance tests that verified proper state function. These tests have now been added.
 * provider: Many resource properties now include default values.
 
+IMPROVEMENTS:
+
+* resource/list_chart: Parameters for `sort_by` have had documentation improved. [#64](https://github.com/signalfx/terraform-provider-signalfx/pull/64)
+
 BACKWARDS INCOMPATIBILITIES:
 
 * provider: There is no longer a `synced` attribute of all non-integration resources. This computed property reflected whether or not the `last_updated` property had changed on the API-side of SignalFx. It acted as a signal for the operator that the remote resource had changed without Terraform's knowledge. While useful in some situations this behavior is non-idiomatic in Terraform. This has the side effect of cleaning up plan/apply output for many users who didn't know what `synced` meant.
