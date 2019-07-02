@@ -16,5 +16,5 @@ type EventOverlayFilter struct {
 	// The custom property or dimension name that provides the value to test in the filter.<br> If the name you specify isn't defined in one or more of the events associated with the dashboard, the filter never matches anything. If the `NOT` property for this filter is set to `true` and the filter never matches, all event overlays are suppressed.
 	Property string `json:"property"`
 	// An array of values to test against the specified property. If any of the values match, the system includes the event.<br> **Note:** You must specify at least one element.
-	Value []string `json:"value"`
+	Value StringOrSlice `json:"value"`
 }

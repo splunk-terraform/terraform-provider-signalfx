@@ -36,12 +36,10 @@ resource "signalfx_time_chart" "mychartXX" {
 		stacked = false
 		axes_precision = 4
 
-    legend_options_fields = [
-			{
-				property = "collector"
-				enabled = false
-			}
-		]
+		legend_options_fields {
+			property = "collector"
+			enabled  = false
+		}
     viz_options {
         label = "CPU Idle"
         axis = "left"
@@ -102,12 +100,10 @@ resource "signalfx_time_chart" "mychartXX" {
 		stacked = false
 		axes_precision = 4
 
-    legend_options_fields = [
-			{
-				property = "collector"
-				enabled = false
-			}
-		]
+		legend_options_fields {
+			property = "collector"
+			enabled  = false
+		}
     viz_options {
         label = "CPU Idle"
         axis = "left"

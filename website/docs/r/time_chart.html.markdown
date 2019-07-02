@@ -28,28 +28,26 @@ resource "signalfx_time_chart" "mychart0" {
     plot_type = "LineChart"
     show_data_markers = true
 
-    legend_options_fields = [
-      {
-        property = "shc_name"
-        enabled = true
-      },
-      {
-        property = "role"
-        enabled = true
-      },
-      {
-        property = "collector"
-        enabled = false
-      },
-      {
-        property = "prefix"
-        enabled = false
-      },
-      {
-        property = "hostname"
-        enabled = false
-      }
-    ]
+    legend_options_fields {
+      property = "shc_name"
+      enabled = true
+    }
+    legend_options_fields {
+      property = "role"
+      enabled = true
+    }
+    legend_options_fields {
+      property = "collector"
+      enabled = false
+    }
+    legend_options_fields {
+      property = "prefix"
+      enabled = false
+    }
+    legend_options_fields {
+      property = "hostname"
+      enabled = false
+    }
     viz_options {
         label = "CPU Idle"
         axis = "left"
