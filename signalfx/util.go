@@ -167,6 +167,15 @@ func getHexFromChartColorsByName(name string) (string, error) {
 	return "", fmt.Errorf("Unknown color name %s", name)
 }
 
+func getNameFromChartColorsByHex(hex string) (string, error) {
+	for _, v := range ChartColorsSlice {
+		if v.hex == hex {
+			return v.name, nil
+		}
+	}
+	return "", fmt.Errorf("Unknown color hex %s", hex)
+}
+
 /*
 	Get Color Scale Options
 */
