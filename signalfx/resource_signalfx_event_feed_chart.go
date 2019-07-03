@@ -55,6 +55,10 @@ func eventFeedChartResource() *schema.Resource {
 		Read:   eventFeedChartRead,
 		Update: eventFeedChartUpdate,
 		Delete: eventFeedChartDelete,
+
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 	}
 }
 

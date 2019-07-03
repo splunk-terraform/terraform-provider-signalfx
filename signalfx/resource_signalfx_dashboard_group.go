@@ -33,6 +33,10 @@ func dashboardGroupResource() *schema.Resource {
 		Read:   dashboardgroupRead,
 		Update: dashboardgroupUpdate,
 		Delete: dashboardgroupDelete,
+
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 	}
 }
 

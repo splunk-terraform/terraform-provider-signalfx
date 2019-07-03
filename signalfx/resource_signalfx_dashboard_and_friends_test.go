@@ -296,7 +296,7 @@ func TestAccCreateUpdateDashboardGroup(t *testing.T) {
 					testAccCheckDashboardGroupResourceExists,
 					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "name", "My Dashboard Test 1"),
 					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "description", "Cool dashboard"),
-					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "charts_resolution", "DEFAULT"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "charts_resolution", "default"),
 					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "time_range", "-30m"),
 					// resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "tags.#", "0"),
 					// Filters

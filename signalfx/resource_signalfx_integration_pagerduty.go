@@ -46,6 +46,10 @@ func integrationPagerDutyResource() *schema.Resource {
 		Read:   integrationRead,
 		Update: integrationPagerDutyUpdate,
 		Delete: integrationDelete,
+
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 	}
 }
 

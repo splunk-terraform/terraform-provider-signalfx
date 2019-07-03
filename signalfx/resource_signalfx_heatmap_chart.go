@@ -152,6 +152,10 @@ func heatmapChartResource() *schema.Resource {
 		Read:   heatmapchartRead,
 		Update: heatmapchartUpdate,
 		Delete: heatmapchartDelete,
+
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 	}
 }
 
@@ -320,11 +324,22 @@ func heatmapchartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 		return err
 	}
 	if options.ColorRange != nil {
+
+		var color = options.ColorRange.Color
+		// Convert hex values back to values we accept
+		if strings.HasPrefix(color, "#") {
+			var err error
+			color, err = getNameFromChartColorsByHex(options.ColorRange.Color)
+			if err != nil {
+				return err
+			}
+		}
+
 		colorRange := make([]map[string]interface{}, 1)
 		colorRange[0] = map[string]interface{}{
 			"min_value": options.ColorRange.Min,
 			"max_value": options.ColorRange.Max,
-			"color":     options.ColorRange.Color,
+			"color":     color,
 		}
 		if err := d.Set("color_range", colorRange); err != nil {
 			return err
