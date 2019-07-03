@@ -375,7 +375,7 @@ func timeChartResource() *schema.Resource {
 				ValidateFunc: validatePlotTypeTimeChart,
 			},
 			"histogram_options": &schema.Schema{
-				Type:        schema.TypeSet,
+				Type:        schema.TypeList,
 				Optional:    true,
 				Description: "Options specific to Histogram charts",
 				Elem: &schema.Resource{
@@ -448,6 +448,10 @@ func timeChartResource() *schema.Resource {
 		Read:   timechartRead,
 		Update: timechartUpdate,
 		Delete: timechartDelete,
+
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 	}
 }
 
@@ -801,7 +805,7 @@ func timechartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 		}
 	}
 	if options.HistogramChartOptions != nil {
-		color, err := getNameFromPaletteColorsByIndex(int(options.HistogramChartOptions.ColorThemeIndex))
+		color, err := getNameFromFullPaletteColorsByIndex(int(options.HistogramChartOptions.ColorThemeIndex))
 		if err != nil {
 			return err
 		}

@@ -74,6 +74,16 @@ func TestGetNameFromPaletteColorsByIndex(t *testing.T) {
 	assert.Error(t, err, "Expected error for missing color index")
 }
 
+func TestGetNameFromFullPaletteColorsByIndex(t *testing.T) {
+	name, err := getNameFromFullPaletteColorsByIndex(16)
+	assert.Equal(t, "red", name, "Expected color name")
+	assert.NoError(t, err, "Expected no error for known color")
+
+	name, err = getNameFromPaletteColorsByIndex(44)
+	assert.Equal(t, "", name, "Expected empty string for missing index")
+	assert.Error(t, err, "Expected error for missing color index")
+}
+
 func TestSendRequestFail(t *testing.T) {
 	// Client will fail to send due to invalid URL
 	status_code, body, err := sendRequest("GET", "", "token", nil)

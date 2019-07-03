@@ -325,11 +325,10 @@ func heatmapchartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 	}
 	if options.ColorRange != nil {
 
-		var color string
-		var err error
-		// Handle getting back a named or a hex color
-		color, _ = getHexFromChartColorsByName(options.ColorRange.Color)
-		if color == "" {
+		var color = options.ColorRange.Color
+		// Convert hex values back to values we accept
+		if strings.HasPrefix(color, "#") {
+			var err error
 			color, err = getNameFromChartColorsByHex(options.ColorRange.Color)
 			if err != nil {
 				return err

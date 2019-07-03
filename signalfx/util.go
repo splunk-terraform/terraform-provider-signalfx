@@ -149,6 +149,15 @@ func getNameFromPaletteColorsByIndex(index int) (string, error) {
 	return "", fmt.Errorf("Unknown color index %d", index)
 }
 
+func getNameFromFullPaletteColorsByIndex(index int) (string, error) {
+	for k, v := range FullPaletteColors {
+		if v == index {
+			return k, nil
+		}
+	}
+	return "", fmt.Errorf("Unknown color index %d", index)
+}
+
 func getNameFromChartColorsByIndex(index int) (string, error) {
 	for i, v := range ChartColorsSlice {
 		if i == index {

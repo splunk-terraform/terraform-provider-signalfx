@@ -37,6 +37,10 @@ func textChartResource() *schema.Resource {
 		Read:   textchartRead,
 		Update: textchartUpdate,
 		Delete: textchartDelete,
+
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 	}
 }
 

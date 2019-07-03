@@ -36,7 +36,7 @@ func dashboardResource() *schema.Resource {
 			"charts_resolution": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
-				Default:      dashboard.DEFAULT,
+				Default:      strings.ToLower(string(dashboard.DEFAULT)),
 				Description:  "Specifies the chart data display resolution for charts in this dashboard. Value can be one of \"default\", \"low\", \"high\", or \"highest\". default by default",
 				ValidateFunc: validateChartsResolution,
 			},
