@@ -21,6 +21,7 @@ BUG FIXES:
 
 * provider: All resources lacked property acceptance tests that verified proper state function. These tests have now been added.
 * provider: Many resource properties now include default values.
+* provider: Documentation for `value_unit` has been improved with valid values. [#53](https://github.com/signalfx/terraform-provider-signalfx/issues/53)
 * resource/dashboard: `tags` has been deprecated
 * resource/dashboard: `grid.start_row` has been deprecated
 * resource/dashboard: `grid.start_column` has been deprecated
@@ -28,6 +29,7 @@ BUG FIXES:
 * resource/detector: `tags` has been deprecated
 * resource/event_feed_chart: `viz_options` has been deprecated
 * resource/list_chart: Improved docs and examples for `legend_options_fields`. [#65](https://github.com/signalfx/terraform-provider-signalfx/pull/65)
+* resource/list_chart: Documented `viz_options` and it's sub-properties. [#57](https://github.com/signalfx/terraform-provider-signalfx/issues/57)
 * resource/time_chart: `tags` has been deprecated
 * resource/time_chart: Improved docs and examples for `legend_options_fields`. [#65](https://github.com/signalfx/terraform-provider-signalfx/pull/65)
 
