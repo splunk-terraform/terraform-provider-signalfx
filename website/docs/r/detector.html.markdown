@@ -74,6 +74,22 @@ notifications = ["PagerDuty,credentialId"]
 notifications = ["Slack,channel"]
 ```
 
+### Team
+
+Sends [notifications to a team](https://docs.signalfx.com/en/latest/managing/teams/team-notifications.html).
+
+```
+notifications = ["Team,teamId"]
+```
+
+### Team
+
+Sends an email to every member of a team.
+
+```
+notifications = ["TeamEmail,teamId"]
+```
+
 ### Webhook
 
 ```
