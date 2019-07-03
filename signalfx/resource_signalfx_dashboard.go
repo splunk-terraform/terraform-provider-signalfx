@@ -378,6 +378,10 @@ func dashboardResource() *schema.Resource {
 		Read:   dashboardRead,
 		Update: dashboardUpdate,
 		Delete: dashboardDelete,
+
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 	}
 }
 
@@ -703,7 +707,7 @@ func dashboardAPIToTF(d *schema.ResourceData, dash *dashboard.Dashboard) error {
 	if err := d.Set("description", dash.Description); err != nil {
 		return err
 	}
-	if err := d.Set("charts_resolution", dash.ChartDensity); err != nil {
+	if err := d.Set("charts_resolution", strings.ToLower(string(*dash.ChartDensity))); err != nil {
 		return err
 	}
 
