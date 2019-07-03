@@ -134,6 +134,11 @@ func timeChartResource() *schema.Resource {
 				Description:  "How long (in seconds) to wait for late datapoints",
 				ValidateFunc: validateMaxDelayValue,
 			},
+			"timezone": &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The property value is a string that denotes the geographic region associated with the time zone, (e.g. Australia/Sydney)",
+			},
 			"disable_sampling": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
@@ -656,6 +661,9 @@ func getTimeChartOptions(d *schema.ResourceData) *chart.Options {
 			programOptions = &chart.GeneralOptions{}
 		}
 		programOptions.MaxDelay = int32(val.(int) * 1000)
+	}
+	if val, ok := d.GetOk("timezone"); ok {
+		programOptions["timezone"] = val.(string)
 	}
 	if val, ok := d.GetOk("disable_sampling"); ok {
 		if programOptions == nil {
