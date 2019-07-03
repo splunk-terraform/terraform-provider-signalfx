@@ -48,6 +48,11 @@ The following arguments are supported in the resource block:
     * `lt` - (Optional) Indicates the upper threshold non-inculsive value for this range.
     * `lte` - (Optional) Indicates the upper threshold inclusive value for this range.
     * `color` - (Required) The color range to use. Must be either gray, blue, navy, orange, yellow, magenta, purple, violet, lilac, green, aquamarine.
+* `viz_options` - (Optional) Plot-level customization options, associated with a publish statement.
+    * `label` - (Required) Label used in the publish statement that displays the plot (metric time series data) you want to customize.
+    * `color` - (Optional) Color to use : gray, blue, azure, navy, brown, orange, yellow, iris, magenta, pink, purple, violet, lilac, emerald, green, aquamarine.
+    * `value_unit` - (Optional) A unit to attach to this plot. Units support automatic scaling (eg thousands of bytes will be displayed as kilobytes). Values values are `Bit, Kilobit, Megabit, Gigabit, Terabit, Petabit, Exabit, Zettabit, Yottabit, Byte, Kibibyte, Mebibyte, Gigibyte, Tebibyte, Pebibyte, Exbibyte, Zebibyte, Yobibyte, Nanosecond, Microsecond, Millisecond, Second, Minute, Hour, Day, Week`.
+    * `value_prefix`, `value_suffix` - (Optional) Arbitrary prefix/suffix to display with the value of this plot.
 * `unit_prefix` - (Optional) Must be `"Metric"` or `"Binary"`. `"Metric"` by default.
 * `max_delay` - (Optional) How long (in seconds) to wait for late datapoints
 * `refresh_interval` - (Optional) How often (in seconds) to refresh the value.
