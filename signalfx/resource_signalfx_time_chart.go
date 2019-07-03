@@ -137,6 +137,7 @@ func timeChartResource() *schema.Resource {
 			"timezone": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
+				Default:     "UTC",
 				Description: "The property value is a string that denotes the geographic region associated with the time zone, (e.g. Australia/Sydney)",
 			},
 			"disable_sampling": &schema.Schema{
@@ -650,25 +651,19 @@ func getTimeChartOptions(d *schema.ResourceData) *chart.Options {
 	}
 
 	var programOptions *chart.GeneralOptions
+	if programOptions != (&chart.GeneralOptions{}) {
+		programOptions = &chart.GeneralOptions{}
+	}
 	if val, ok := d.GetOk("minimum_resolution"); ok {
-		if programOptions == nil {
-			programOptions = &chart.GeneralOptions{}
-		}
 		programOptions.MinimumResolution = int32(val.(int) * 1000)
 	}
 	if val, ok := d.GetOk("max_delay"); ok {
-		if programOptions == nil {
-			programOptions = &chart.GeneralOptions{}
-		}
 		programOptions.MaxDelay = int32(val.(int) * 1000)
 	}
 	if val, ok := d.GetOk("timezone"); ok {
-		programOptions["timezone"] = val.(string)
+		programOptions.Timezone = val.(string)
 	}
 	if val, ok := d.GetOk("disable_sampling"); ok {
-		if programOptions == nil {
-			programOptions = &chart.GeneralOptions{}
-		}
 		programOptions.DisableSampling = val.(bool)
 	}
 	options.ProgramOptions = programOptions
@@ -848,6 +843,9 @@ func timechartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 			return err
 		}
 		if err := d.Set("disable_sampling", options.ProgramOptions.DisableSampling); err != nil {
+			return err
+		}
+		if err := d.Set("timezone", options.ProgramOptions.Timezone); err != nil {
 			return err
 		}
 	}
