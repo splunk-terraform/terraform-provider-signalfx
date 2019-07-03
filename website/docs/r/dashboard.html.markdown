@@ -104,7 +104,6 @@ The following arguments are supported in the resource block:
       * `property` - The name of a dimension to filter against.
       * `values` - A list of values to be used with the `property`, they will be combined via `OR`.
       * `negated` - (Optional) If true,  only data that does not match the specified value of the specified property appear in the event overlay. Defaults to `false`.
-* `tags` - (Optional) Tags associated with the dashboard.
 
 
 ## Dashboard Layout Information

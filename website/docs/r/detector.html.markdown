@@ -92,7 +92,6 @@ notifications = ["Webhook,secret,url"]
 * `time_range` - (Optional) From when to display data. SignalFx time syntax (e.g. `"-5m"`, `"-1h"`). Conflicts with `start_time` and `end_time`.
 * `start_time` - (Optional) Seconds since epoch. Used for visualization. Conflicts with `time_range`.
 * `end_time` - (Optional) Seconds since epoch. Used for visualization. Conflicts with `time_range`.
-* `tags` - (Optional) Tags associated with the detector.
 * `teams` - (Optional) Team IDs to associcate the detector to.
 * `rule` - (Required) Set of rules used for alerting.
     * `detect_label` - (Required) A detect label which matches a detect label within `program_text`.
