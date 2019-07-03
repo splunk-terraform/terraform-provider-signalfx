@@ -56,7 +56,7 @@ The following arguments are supported in the resource block:
 * `end_time` - (Optional) Seconds since epoch. Used for visualization. You must specify time_span_type = `"absolute"` too.
 * `filter` - (Optional) Filter to apply to the charts when displaying the dashboard.
     * `property` - (Required) A metric time series dimension or property name.
-    * `not` - (Optional) Whether this filter should be a not filter. `false` by default.
+    * `negated` - (Optional) Whether this filter should be a not filter. `false` by default.
     * `values` - (Required) List of of strings (which will be treated as an OR filter on the property).
     * `apply_if_exist` - (Optional) If true, this filter will also match data that doesn't have this property at all.
 * `variable` - (Optional) Dashboard variable to apply to each chart in the dashboard.
