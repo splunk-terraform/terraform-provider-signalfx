@@ -158,6 +158,10 @@ func detectorResource() *schema.Resource {
 		Read:   detectorRead,
 		Update: detectorUpdate,
 		Delete: detectorDelete,
+
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 	}
 }
 
