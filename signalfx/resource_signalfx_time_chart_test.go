@@ -29,6 +29,7 @@ resource "signalfx_time_chart" "mychartXX" {
 		minimum_resolution = 30
 		max_delay = 15
 		disable_sampling = true
+		timezone = "Europe/Paris"
 
     plot_type = "LineChart"
     show_data_markers = true
@@ -93,6 +94,7 @@ resource "signalfx_time_chart" "mychartXX" {
 		minimum_resolution = 30
 		max_delay = 15
 		disable_sampling = true
+		timezone = "Europe/Paris"
 
     plot_type = "LineChart"
     show_data_markers = true
@@ -160,6 +162,7 @@ func TestAccCreateUpdateTimeChart(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_time_chart.mychartXX", "minimum_resolution", "30"),
 					resource.TestCheckResourceAttr("signalfx_time_chart.mychartXX", "max_delay", "15"),
 					resource.TestCheckResourceAttr("signalfx_time_chart.mychartXX", "disable_sampling", "true"),
+					resource.TestCheckResourceAttr("signalfx_time_chart.mychartXX", "timezone", "Europe/Paris"),
 					resource.TestCheckResourceAttr("signalfx_time_chart.mychartXX", "time_range", "900"),
 					resource.TestCheckResourceAttr("signalfx_time_chart.mychartXX", "show_data_markers", "true"),
 					resource.TestCheckResourceAttr("signalfx_time_chart.mychartXX", "show_event_lines", "true"),
