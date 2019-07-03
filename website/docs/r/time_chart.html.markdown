@@ -69,6 +69,7 @@ The following arguments are supported in the resource block:
 * `program_text` - (Required) Signalflow program text for the chart. More info at <https://developers.signalfx.com/docs/signalflow-overview>.
 * `plot_type` - (Optional) The default plot display style for the visualization. Must be `"LineChart"`, `"AreaChart"`, `"ColumnChart"`, or `"Histogram"`. Default: `"LineChart"`.
 * `description` - (Optional) Description of the chart.
+* `axes_precision` - (Optional) Specifies the digits SignalFx displays for values plotted on the chart. Defaults to `3`.
 * `unit_prefix` - (Optional) Must be `"Metric"` or `"Binary`". `"Metric"` by default.
 * `color_by` - (Optional) Must be `"Dimension"` or `"Metric"`. `"Dimension"` by default.
 * `minimum_resolution` - (Optional) The minimum resolution (in seconds) to use for computing the underlying program.
