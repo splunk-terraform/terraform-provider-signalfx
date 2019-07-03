@@ -46,6 +46,10 @@ func integrationSlackResource() *schema.Resource {
 		Read:   integrationRead,
 		Update: integrationSlackUpdate,
 		Delete: integrationDelete,
+
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 	}
 }
 

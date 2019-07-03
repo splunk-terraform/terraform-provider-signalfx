@@ -73,6 +73,10 @@ func integrationGCPResource() *schema.Resource {
 		Read:   integrationRead,
 		Update: integrationGCPUpdate,
 		Delete: integrationDelete,
+
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 	}
 }
 

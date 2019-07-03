@@ -154,6 +154,10 @@ func listChartResource() *schema.Resource {
 		Read:   listchartRead,
 		Update: listchartUpdate,
 		Delete: listchartDelete,
+
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 	}
 }
 
