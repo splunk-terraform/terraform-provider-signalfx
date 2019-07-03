@@ -812,7 +812,7 @@ func timechartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 		histOptions := map[string]interface{}{
 			"color_theme": color,
 		}
-		if err := d.Set("histogram_options", histOptions); err != nil {
+		if err := d.Set("histogram_options", []interface{}{histOptions}); err != nil {
 			return err
 		}
 	}
