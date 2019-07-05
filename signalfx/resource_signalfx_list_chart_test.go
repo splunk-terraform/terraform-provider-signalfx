@@ -20,14 +20,24 @@ resource "signalfx_list_chart" "mychartLX" {
   data('cpu.total.idle').publish(label='CPU Idle')
   EOF
 
-  color_by = "Metric"
   max_delay = 15
   disable_sampling = true
   refresh_interval = 1
   max_precision = 2
   sort_by = "-value"
   unit_prefix = "Binary"
-  secondary_visualization = "Linear"
+  secondary_visualization = "Sparkline"
+
+	color_by = "Scale"
+	color_scale {
+		gt = 40
+		color = "cerise"
+	}
+
+	color_scale {
+		lte = 40
+		color = "vivid_yellow"
+	}
 
 	legend_options_fields {
 		property = "collector"
@@ -45,14 +55,24 @@ resource "signalfx_list_chart" "mychartLX" {
   data('cpu.total.idle').publish(label='CPU Idle')
   EOF
 
-  color_by = "Metric"
   max_delay = 15
   disable_sampling = true
   refresh_interval = 1
   max_precision = 2
   sort_by = "-value"
   unit_prefix = "Binary"
-  secondary_visualization = "Linear"
+	secondary_visualization = "Sparkline"
+
+	color_by = "Scale"
+	color_scale {
+		gt = 40
+		color = "cerise"
+	}
+
+	color_scale {
+		lte = 40
+		color = "vivid_yellow"
+	}
 
 	legend_options_fields {
 		property = "collector"
@@ -76,12 +96,12 @@ func TestAccCreateUpdateListChart(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_list_chart.mychartLX", "description", "Farts"),
 					resource.TestCheckResourceAttr("signalfx_list_chart.mychartLX", "program_text", "data('cpu.total.idle').publish(label='CPU Idle')\n"),
 					resource.TestCheckResourceAttr("signalfx_list_chart.mychartLX", "unit_prefix", "Binary"),
-					resource.TestCheckResourceAttr("signalfx_list_chart.mychartLX", "color_by", "Metric"),
+					resource.TestCheckResourceAttr("signalfx_list_chart.mychartLX", "color_by", "Scale"),
 					resource.TestCheckResourceAttr("signalfx_list_chart.mychartLX", "max_delay", "15"),
 					resource.TestCheckResourceAttr("signalfx_list_chart.mychartLX", "disable_sampling", "true"),
 					resource.TestCheckResourceAttr("signalfx_list_chart.mychartLX", "refresh_interval", "1"),
 					resource.TestCheckResourceAttr("signalfx_list_chart.mychartLX", "max_precision", "2"),
-					resource.TestCheckResourceAttr("signalfx_list_chart.mychartLX", "secondary_visualization", "Linear"),
+					resource.TestCheckResourceAttr("signalfx_list_chart.mychartLX", "secondary_visualization", "Sparkline"),
 					resource.TestCheckResourceAttr("signalfx_list_chart.mychartLX", "sort_by", "-value"),
 
 					// Legend Options
