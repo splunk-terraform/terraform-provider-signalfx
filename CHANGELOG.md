@@ -35,6 +35,7 @@ BUG FIXES:
 
 IMPROVEMENTS:
 
+* provider: Most resources now implement an `Exists` function which verifies the asset exists and adjusts the plan accordingly. [#75](https://github.com/signalfx/terraform-provider-signalfx/pull/75)
 * resource/list_chart: Parameters for `sort_by` have had documentation improved. [#64](https://github.com/signalfx/terraform-provider-signalfx/pull/64)
 * resource/time_chart: `axes_precision` property now has documentation. [#55](https://github.com/signalfx/terraform-provider-signalfx/issues/55)
 * resource/dashboard: Corrected name of `filter.negated` which was incorrectly documented as `not`. [#52](https://github.com/signalfx/terraform-provider-signalfx/issues/52)
