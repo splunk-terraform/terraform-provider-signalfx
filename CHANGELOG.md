@@ -15,7 +15,7 @@ FEATURES:
 * provider: Added various utility methods for color name and index lookups
 * resource/event_feed_chart: Add properties `time_range`, `start_time`, and `end_time`.
 * resource/list_chart: now supports `legend_options_fields`.
-* resource/list_chart: now support `color_scale` and it's sub-fields
+* resource/list_chart: now support `color_scale` and it's sub-fields [#76](https://github.com/signalfx/terraform-provider-signalfx/pull/76)
 * resource/time_chart: now supports `timezone`, thanks [zimingw](https://github.com/zimingw). [#60](https://github.com/signalfx/terraform-provider-signalfx/pull/60) and [#68](https://github.com/signalfx/terraform-provider-signalfx/pull/68)
 
 
