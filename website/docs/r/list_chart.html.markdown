@@ -80,4 +80,10 @@ The following arguments are supported in the resource block:
     * `enabled` True or False depending on if you want the property to be shown or hidden.
 * `max_precision` - (Optional) Maximum number of digits to display when rounding values up or down.
 * `secondary_visualization` - (Optional) The type of secondary visualization. Can be `None`, `Radial`, `Linear`, or `Sparkline`. If unset, the SignalFx default is used (`Sparkline`).
+* `color_scale` - (Optional. `color_by` must be `"Scale"`) Single color range including both the color to display for that range and the borders of the range. Example: `[{ gt = 60, color = "blue" }, { lte = 60, color = "yellow" }]`. Look at this [link](https://docs.signalfx.com/en/latest/charts/chart-options-tab.html).
+    * `gt` - (Optional) Indicates the lower threshold non-inclusive value for this range.
+    * `gte` - (Optional) Indicates the lower threshold inclusive value for this range.
+    * `lt` - (Optional) Indicates the upper threshold non-inculsive value for this range.
+    * `lte` - (Optional) Indicates the upper threshold inclusive value for this range.
+    * `color` - (Required) The color range to use. Must be either gray, blue, navy, orange, yellow, magenta, purple, violet, lilac, green, aquamarine.
 * `sort_by` - (Optional) The property to use when sorting the elements. Use `value` if you want to sort by value. Must be prepended with `+` for ascending or `-` for descending (e.g. `-foo`). Note there are some special values for some of the options provided in the UX: `"value"` for Value, `"sf_originatingMetric"` for Metric, and `"sf_metric"` for plot.
