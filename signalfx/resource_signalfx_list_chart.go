@@ -3,6 +3,7 @@ package signalfx
 import (
 	"encoding/json"
 	"log"
+	"math"
 
 	"github.com/hashicorp/terraform/helper/schema"
 	chart "github.com/signalfx/signalfx-go/chart"
@@ -101,6 +102,45 @@ func listChartResource() *schema.Resource {
 				Default:      "Sparkline",
 				Description:  "(false by default) What kind of secondary visualization to show (None, Radial, Linear, Sparkline)",
 				ValidateFunc: validateSecondaryVisualization,
+			},
+			"color_scale": &schema.Schema{
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Description: "Single color range including both the color to display for that range and the borders of the range",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"color": &schema.Schema{
+							Type:         schema.TypeString,
+							Required:     true,
+							Description:  "The color to use. Must be either \"gray\", \"blue\", \"navy\", \"orange\", \"yellow\", \"magenta\", \"purple\", \"violet\", \"lilac\", \"green\", \"aquamarine\"",
+							ValidateFunc: validateHeatmapChartColor,
+						},
+						"gt": &schema.Schema{
+							Type:        schema.TypeFloat,
+							Optional:    true,
+							Default:     math.MaxFloat32,
+							Description: "Indicates the lower threshold non-inclusive value for this range",
+						},
+						"gte": &schema.Schema{
+							Type:        schema.TypeFloat,
+							Optional:    true,
+							Default:     math.MaxFloat32,
+							Description: "Indicates the lower threshold inclusive value for this range",
+						},
+						"lt": &schema.Schema{
+							Type:        schema.TypeFloat,
+							Optional:    true,
+							Default:     math.MaxFloat32,
+							Description: "Indicates the upper threshold non-inculsive value for this range",
+						},
+						"lte": &schema.Schema{
+							Type:        schema.TypeFloat,
+							Optional:    true,
+							Default:     math.MaxFloat32,
+							Description: "Indicates the upper threshold inclusive value for this range",
+						},
+					},
+				},
 			},
 			"viz_options": &schema.Schema{
 				Type:        schema.TypeSet,
@@ -201,6 +241,12 @@ func getListChartOptions(d *schema.ResourceData) *chart.Options {
 	}
 	if val, ok := d.GetOk("color_by"); ok {
 		options.ColorBy = val.(string)
+		if val == "Scale" {
+			if colorScaleOptions := getColorScaleOptions(d); len(colorScaleOptions) > 0 {
+				options.ColorScale2 = colorScaleOptions
+			}
+
+		}
 	}
 
 	var programOptions *chart.GeneralOptions
