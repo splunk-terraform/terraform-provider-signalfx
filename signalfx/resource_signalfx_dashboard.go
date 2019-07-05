@@ -378,7 +378,7 @@ func dashboardResource() *schema.Resource {
 		Read:   dashboardRead,
 		Update: dashboardUpdate,
 		Delete: dashboardDelete,
-
+		Exists: dashboardExists,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -682,6 +682,18 @@ func dashboardCreate(d *schema.ResourceData, meta interface{}) error {
 	d.SetId(dash.Id)
 
 	return dashboardAPIToTF(d, dash)
+}
+
+func dashboardExists(d *schema.ResourceData, meta interface{}) (bool, error) {
+	config := meta.(*signalfxConfig)
+	_, err := config.Client.GetDashboard(d.Id())
+	if err != nil {
+		if strings.Contains(err.Error(), "Bad status 404") {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
 }
 
 func dashboardRead(d *schema.ResourceData, meta interface{}) error {

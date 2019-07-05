@@ -158,7 +158,7 @@ func detectorResource() *schema.Resource {
 		Read:   detectorRead,
 		Update: detectorUpdate,
 		Delete: detectorDelete,
-
+		Exists: detectorExists,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -426,10 +426,25 @@ func detectorCreate(d *schema.ResourceData, meta interface{}) error {
 	return detectorAPIToTF(d, det)
 }
 
+func detectorExists(d *schema.ResourceData, meta interface{}) (bool, error) {
+	config := meta.(*signalfxConfig)
+	_, err := config.Client.GetDetector(d.Id())
+	if err != nil {
+		if strings.Contains(err.Error(), "Bad status 404") {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
+}
+
 func detectorRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 	det, err := config.Client.GetDetector(d.Id())
 	if err != nil {
+		if strings.HasPrefix(err.Error(), "Bad status 404") {
+			d.SetId("")
+		}
 		return err
 	}
 	return detectorAPIToTF(d, det)
