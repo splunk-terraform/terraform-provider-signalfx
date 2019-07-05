@@ -9,22 +9,18 @@
 
 package team
 
-import (
-	"github.com/signalfx/signalfx-go/notification"
-)
-
 // Specifies the notification targets to which SignalFx sends alerts when you specify the team as an alert recipient
 type NotificationLists struct {
 	// List of notification destinations to use for **undefined** alerts category.
-	Default []*notification.Notification `json:"default,omitempty"`
+	Default []*Notification `json:"default,omitempty"`
 	// List of notification destinations to use for **critical** alerts
-	Critical []*notification.Notification `json:"critical,omitempty"`
+	Critical []*Notification `json:"critical,omitempty"`
 	// List of notification destinations to use for **warning** alerts
-	Warning []*notification.Notification `json:"warning,omitempty"`
+	Warning []*Notification `json:"warning,omitempty"`
 	// List of notification destinations to use for **major** alerts
-	Major []*notification.Notification `json:"major,omitempty"`
+	Major []*Notification `json:"major,omitempty"`
 	// List of notification destinations to use for **minor** alerts
-	Minor []*notification.Notification `json:"minor,omitempty"`
+	Minor []*Notification `json:"minor,omitempty"`
 	// List of notification destinations to use for **information** alerts.
-	Info []*notification.Notification `json:"info,omitempty"`
+	Info []*Notification `json:"info,omitempty"`
 }

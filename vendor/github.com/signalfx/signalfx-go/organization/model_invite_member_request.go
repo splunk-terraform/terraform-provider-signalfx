@@ -9,7 +9,7 @@
 
 package organization
 
-type CreateUpdateMemberRequest struct {
+type InviteMemberRequest struct {
 	// Users's email address. SignalFx sends a special \"join\" link to the address; this is the only way that the user can join the organization.
 	Email string `json:"email,omitempty"`
 	// Users's full name

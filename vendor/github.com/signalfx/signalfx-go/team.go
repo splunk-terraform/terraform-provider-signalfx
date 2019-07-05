@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -29,11 +27,6 @@ func (c *Client) CreateTeam(t *team.CreateUpdateTeamRequest) (*team.Team, error)
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		message, _ := ioutil.ReadAll(resp.Body)
-		return nil, fmt.Errorf("Unexpected status code: %d: %s", resp.StatusCode, message)
-	}
-
 	finalTeam := &team.Team{}
 
 	err = json.NewDecoder(resp.Body).Decode(finalTeam)
@@ -50,7 +43,7 @@ func (c *Client) DeleteTeam(id string) error {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusNoContent {
+	if resp.StatusCode != http.StatusOK {
 		return errors.New("Unexpected status code: " + resp.Status)
 	}
 
@@ -65,10 +58,6 @@ func (c *Client) GetTeam(id string) (*team.Team, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		message, _ := ioutil.ReadAll(resp.Body)
-		return nil, fmt.Errorf("Unexpected status code: %d: %s", resp.StatusCode, message)
-	}
 
 	finalTeam := &team.Team{}
 
@@ -89,10 +78,6 @@ func (c *Client) UpdateTeam(id string, t *team.CreateUpdateTeamRequest) (*team.T
 		return nil, err
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		message, _ := ioutil.ReadAll(resp.Body)
-		return nil, fmt.Errorf("Unexpected status code: %d: %s", resp.StatusCode, message)
-	}
 
 	finalTeam := &team.Team{}
 

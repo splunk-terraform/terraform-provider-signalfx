@@ -8,7 +8,7 @@ type DashboardConfig struct {
 	// String that provides a description override for a mirrored dashboard
 	DescriptionOverride string `json:"descriptionOverride,omitempty"`
 	// Filter and dashboard variable overrides for the mirrored dashboard
-	FiltersOverride *Filters `json:"filtersOverride,omitempty"`
+	FiltersOverride Filters `json:"filters,omitempty"`
 	// String that overrides the name of the dashboard specified in dashboardId. This property is primarily intended to provide a unique name for a mirrored dashboard.
 	NameOverride string `json:"nameOverride,omitempty"`
 }
