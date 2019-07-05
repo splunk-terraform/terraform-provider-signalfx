@@ -23,7 +23,7 @@ func TestValidatePollRateNotAllowed(t *testing.T) {
 	assert.Equal(t, 1, len(errors))
 }
 
-func TestExpandServicesSucess(t *testing.T) {
+func TestExpandServicesSuccess(t *testing.T) {
 	values := []interface{}{"compute", "appengine"}
 	expected := []string{"compute", "appengine"}
 	result := expandServices(values)

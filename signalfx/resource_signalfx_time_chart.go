@@ -448,7 +448,7 @@ func timeChartResource() *schema.Resource {
 		Read:   timechartRead,
 		Update: timechartUpdate,
 		Delete: timechartDelete,
-
+		Exists: chartExists,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},

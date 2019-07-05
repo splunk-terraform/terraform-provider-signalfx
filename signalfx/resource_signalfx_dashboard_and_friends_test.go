@@ -298,7 +298,6 @@ func TestAccCreateUpdateDashboardGroup(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "description", "Cool dashboard"),
 					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "charts_resolution", "default"),
 					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "time_range", "-30m"),
-					// resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "tags.#", "0"),
 					// Filters
 					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "filter.#", "1"),
 					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "filter.1325118228.apply_if_exist", "true"),
@@ -397,9 +396,6 @@ func testAccCheckDashboardGroupResourceExists(s *terraform.State) error {
 			return fmt.Errorf("Unexpected resource of type: %s", rs.Type)
 		}
 	}
-	// Add some time to let the API quiesce. This may be removed in the future.
-	// time.Sleep(time.Duration(2) * time.Second)
-
 	return nil
 }
 

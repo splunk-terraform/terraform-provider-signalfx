@@ -244,9 +244,6 @@ func testAccCheckTimeChartResourceExists(s *terraform.State) error {
 			return fmt.Errorf("Unexpected resource of type: %s", rs.Type)
 		}
 	}
-	// Add some time to let the API quiesce. This may be removed in the future.
-	// time.Sleep(time.Duration(2) * time.Second)
-
 	return nil
 }
 

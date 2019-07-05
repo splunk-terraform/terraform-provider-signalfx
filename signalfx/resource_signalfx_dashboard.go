@@ -59,12 +59,6 @@ func dashboardResource() *schema.Resource {
 				Description:   "Seconds since epoch to end the visualization",
 				ConflictsWith: []string{"time_range"},
 			},
-			// "tags": &schema.Schema{
-			// 	Type:        schema.TypeList,
-			// 	Optional:    true,
-			// 	Elem:        &schema.Schema{Type: schema.TypeString},
-			// 	Description: "Tags associated with the dashboard",
-			// },
 			"chart": &schema.Schema{
 				Type:          schema.TypeSet,
 				Optional:      true,
@@ -378,7 +372,7 @@ func dashboardResource() *schema.Resource {
 		Read:   dashboardRead,
 		Update: dashboardUpdate,
 		Delete: dashboardDelete,
-
+		Exists: dashboardExists,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -436,13 +430,6 @@ func getPayloadDashboard(d *schema.ResourceData) (*dashboard.CreateUpdateDashboa
 			cudr.ChartDensity = dashboard.DEFAULT
 		}
 	}
-	// if val, ok := d.GetOk("tags"); ok {
-	// 	tags := []string{}
-	// 	for _, tag := range val.([]interface{}) {
-	// 		tags = append(tags, tag.(string))
-	// 	}
-	// 	cudr.Tags = tags
-	// }
 
 	return cudr, nil
 }
@@ -684,6 +671,18 @@ func dashboardCreate(d *schema.ResourceData, meta interface{}) error {
 	return dashboardAPIToTF(d, dash)
 }
 
+func dashboardExists(d *schema.ResourceData, meta interface{}) (bool, error) {
+	config := meta.(*signalfxConfig)
+	_, err := config.Client.GetDashboard(d.Id())
+	if err != nil {
+		if strings.Contains(err.Error(), "Bad status 404") {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
+}
+
 func dashboardRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 	dash, err := config.Client.GetDashboard(d.Id())
@@ -910,10 +909,6 @@ func dashboardAPIToTF(d *schema.ResourceData, dash *dashboard.Dashboard) error {
 			return err
 		}
 	}
-
-	// if err := d.Set("tags", dash.Tags); err != nil {
-	// 	return err
-	// }
 
 	return nil
 }

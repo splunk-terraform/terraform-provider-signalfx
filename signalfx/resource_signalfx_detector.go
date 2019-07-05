@@ -77,12 +77,6 @@ func detectorResource() *schema.Resource {
 				ConflictsWith: []string{"time_range"},
 				Description:   "Seconds since epoch. Used for visualization",
 			},
-			// "tags": &schema.Schema{
-			// 	Type:        schema.TypeList,
-			// 	Optional:    true,
-			// 	Elem:        &schema.Schema{Type: schema.TypeString},
-			// 	Description: "Tags associated with the detector",
-			// },
 			"teams": &schema.Schema{
 				Type:        schema.TypeList,
 				Optional:    true,
@@ -158,7 +152,7 @@ func detectorResource() *schema.Resource {
 		Read:   detectorRead,
 		Update: detectorUpdate,
 		Delete: detectorDelete,
-
+		Exists: detectorExists,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -240,13 +234,6 @@ func getPayloadDetector(d *schema.ResourceData) (*detector.CreateUpdateDetectorR
 		cudr.Teams = teams
 	}
 
-	// if val, ok := d.GetOk("tags"); ok {
-	// 	tags := []string{}
-	// 	for _, t := range val.([]interface{}) {
-	// 		tags = append(tags, t.(string))
-	// 	}
-	// 	cudr.Tags = tags
-	// }
 	return cudr, nil
 }
 
@@ -426,10 +413,25 @@ func detectorCreate(d *schema.ResourceData, meta interface{}) error {
 	return detectorAPIToTF(d, det)
 }
 
+func detectorExists(d *schema.ResourceData, meta interface{}) (bool, error) {
+	config := meta.(*signalfxConfig)
+	_, err := config.Client.GetDetector(d.Id())
+	if err != nil {
+		if strings.Contains(err.Error(), "Bad status 404") {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
+}
+
 func detectorRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 	det, err := config.Client.GetDetector(d.Id())
 	if err != nil {
+		if strings.HasPrefix(err.Error(), "Bad status 404") {
+			d.SetId("")
+		}
 		return err
 	}
 	return detectorAPIToTF(d, det)
@@ -456,9 +458,6 @@ func detectorAPIToTF(d *schema.ResourceData, det *detector.Detector) error {
 	if err := d.Set("teams", det.Teams); err != nil {
 		return err
 	}
-	// if err := d.Set("tags", det.Tags); err != nil {
-	// 	return err
-	// }
 	viz := det.VisualizationOptions
 	if viz != nil {
 		if err := d.Set("show_data_markers", viz.ShowDataMarkers); err != nil {
