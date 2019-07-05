@@ -84,7 +84,7 @@ func buildAppURL(appURL string, fragment string) (string, error) {
 
 func chartExists(d *schema.ResourceData, meta interface{}) (bool, error) {
 	config := meta.(*signalfxConfig)
-	_, err := config.Client.GetDashboard(d.Id())
+	_, err := config.Client.GetChart(d.Id())
 	if err != nil {
 		if strings.Contains(err.Error(), "Bad status 404") {
 			return false, nil
