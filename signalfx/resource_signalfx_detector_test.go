@@ -50,6 +50,27 @@ func TestNotifyStringFromAPI(t *testing.T) {
 			"secret":       "YYY",
 			"url":          "http://www.example.com",
 		},
+		{
+			"type":         "BigPanda",
+			"credentialId": "XXX",
+		},
+		{
+			"type":         "Office365",
+			"credentialId": "XXX",
+		},
+		{
+			"type":         "ServiceNow",
+			"credentialId": "XXX",
+		},
+		{
+			"type":         "VictorOps",
+			"credentialId": "XXX",
+			"routingKey":   "YYY",
+		},
+		{
+			"type":         "XMatters",
+			"credentialId": "XXX",
+		},
 	}
 
 	expected := []string{
@@ -60,6 +81,11 @@ func TestNotifyStringFromAPI(t *testing.T) {
 		"Team,ABC123",
 		"TeamEmail,ABC123",
 		"Webhook,XXX,YYY,http://www.example.com",
+		"BigPanda,XXX",
+		"Office365,XXX",
+		"ServiceNow,XXX",
+		"VictorOps,XXX,YYY",
+		"XMatters,XXX",
 	}
 
 	for i, v := range values {
@@ -75,6 +101,14 @@ func TestGetNotifications(t *testing.T) {
 		"PagerDuty,credId",
 		"Webhook,test,https://foo.bar.com?user=test&action=alert",
 		"Opsgenie,credId,credName,respName,respId,respType",
+		"Slack,credId,#channel",
+		"Team,teamId",
+		"TeamEmail,teamId",
+		"BigPanda,credId",
+		"Office365,credId",
+		"ServiceNow,credId",
+		"VictorOps,credId,routingKey",
+		"XMatters,credId",
 	}
 
 	expected := []map[string]interface{}{
@@ -98,6 +132,40 @@ func TestGetNotifications(t *testing.T) {
 			"responderName":  "respName",
 			"responderId":    "respId",
 			"responderType":  "respType",
+		},
+		map[string]interface{}{
+			"type":         "Slack",
+			"credentialId": "credId",
+			"channel":      "#channel",
+		},
+		map[string]interface{}{
+			"type": "Team",
+			"team": "teamId",
+		},
+		map[string]interface{}{
+			"type": "TeamEmail",
+			"team": "teamId",
+		},
+		map[string]interface{}{
+			"type":         "BigPanda",
+			"credentialId": "credId",
+		},
+		map[string]interface{}{
+			"type":         "Office365",
+			"credentialId": "credId",
+		},
+		map[string]interface{}{
+			"type":         "ServiceNow",
+			"credentialId": "credId",
+		},
+		map[string]interface{}{
+			"type":         "VictorOps",
+			"credentialId": "credId",
+			"routingKey":   "routingKey",
+		},
+		map[string]interface{}{
+			"type":         "XMatters",
+			"credentialId": "credId",
 		},
 	}
 	assert.Equal(t, expected, getNotifications(values))

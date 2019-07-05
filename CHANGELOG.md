@@ -13,6 +13,7 @@ FEATURES:
 
 * provider: emits useful messages into debug logs in case they are needed. (They are for the author!)
 * provider: Added various utility methods for color name and index lookups
+* resources/detector: Added support for BigPanda, Office365, ServiceNow, xMatters and VictorOps notification types [#49](https://github.com/signalfx/terraform-provider-signalfx/issues/49)
 * resource/event_feed_chart: Add properties `time_range`, `start_time`, and `end_time`.
 * resource/list_chart: now supports `legend_options_fields`.
 * resource/list_chart: now support `color_scale` and it's sub-fields [#76](https://github.com/signalfx/terraform-provider-signalfx/pull/76)

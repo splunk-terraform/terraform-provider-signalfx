@@ -284,24 +284,28 @@ func getNotifications(tf_notifications []interface{}) []map[string]interface{} {
 		item := make(map[string]interface{})
 		item["type"] = vars[0]
 
-		if vars[0] == "Email" {
+		switch vars[0] {
+		case "Email":
 			item["email"] = vars[1]
-		} else if vars[0] == "PagerDuty" {
+		case "PagerDuty", "BigPanda", "Office365", "ServiceNow", "XMatters":
 			item["credentialId"] = vars[1]
-		} else if vars[0] == "Slack" {
+		case "Slack":
 			item["credentialId"] = vars[1]
 			item["channel"] = vars[2]
-		} else if vars[0] == "Webhook" {
+		case "Webhook":
 			item["secret"] = vars[1]
 			item["url"] = vars[2]
-		} else if vars[0] == "Team" || vars[0] == "TeamEmail" {
+		case "Team", "TeamEmail":
 			item["team"] = vars[1]
-		} else if vars[0] == "Opsgenie" {
+		case "Opsgenie":
 			item["credentialId"] = vars[1]
 			item["credentialName"] = vars[2]
 			item["responderName"] = vars[3]
 			item["responderId"] = vars[4]
 			item["responderType"] = vars[5]
+		case "VictorOps":
+			item["credentialId"] = vars[1]
+			item["routingKey"] = vars[2]
 		}
 
 		notifications_list[i] = item
@@ -345,7 +349,7 @@ func getNotifyStringFromAPI(notification map[string]interface{}) (string, error)
 		}
 		return fmt.Sprintf("%s,%s,%s,%s,%s,%s", nt, cred, credName, respName, respId, respType), nil
 
-	case "PagerDuty":
+	case "PagerDuty", "BigPanda", "Office365", "ServiceNow", "XMatters":
 		cred, ok := notification["credentialId"].(string)
 		if !ok {
 			return "", fmt.Errorf("Missing credentialId field from notification body")
@@ -367,6 +371,16 @@ func getNotifyStringFromAPI(notification map[string]interface{}) (string, error)
 			return "", fmt.Errorf("Missing team field from notification body")
 		}
 		return fmt.Sprintf("%s,%s", nt, team), nil
+	case "VictorOps":
+		cred, ok := notification["credentialId"].(string)
+		if !ok {
+			return "", fmt.Errorf("Missing credentialId field from notification body")
+		}
+		routing, ok := notification["routingKey"].(string)
+		if !ok {
+			return "", fmt.Errorf("Missing routing key from notification body")
+		}
+		return fmt.Sprintf("%s,%s,%s", nt, cred, routing), nil
 	case "Webhook":
 		cred, ok := notification["credentialId"].(string)
 		if !ok {
