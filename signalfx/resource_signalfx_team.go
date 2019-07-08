@@ -10,7 +10,7 @@ import (
 	team "github.com/signalfx/signalfx-go/team"
 )
 
-func teamResource() *schema.Resource {
+func integrationTeam() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
 			"name": &schema.Schema{
@@ -25,43 +25,43 @@ func teamResource() *schema.Resource {
 			},
 			"members": &schema.Schema{
 				Type:        schema.TypeSet,
-				Required:    true,
+				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "Members of team team",
 			},
 			"notifications_critical": &schema.Schema{
 				Type:        schema.TypeSet,
-				Required:    true,
+				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "List of notification destinations to use for the critical alerts category.",
 			},
 			"notifications_default": &schema.Schema{
 				Type:        schema.TypeSet,
-				Required:    true,
+				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "List of notification destinations to use for the default alerts category.",
 			},
 			"notifications_info": &schema.Schema{
 				Type:        schema.TypeSet,
-				Required:    true,
+				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "List of notification destinations to use for the info alerts category.",
 			},
 			"notifications_major": &schema.Schema{
 				Type:        schema.TypeSet,
-				Required:    true,
+				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "List of notification destinations to use for the major alerts category.",
 			},
 			"notifications_minor": &schema.Schema{
 				Type:        schema.TypeSet,
-				Required:    true,
+				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "List of notification destinations to use for the minor alerts category.",
 			},
 			"notifications_warning": &schema.Schema{
 				Type:        schema.TypeSet,
-				Required:    true,
+				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "List of notification destinations to use for the warning alerts category.",
 			},
