@@ -327,6 +327,8 @@ github.com/signalfx/signalfx-go v0.0.0-20190708155851-a48314057cfc h1:XXPKWMRLiP
 github.com/signalfx/signalfx-go v0.0.0-20190708155851-a48314057cfc/go.mod h1:0Q0eueMWMC8r+jq+LJIGrspzvLF+hpWO9cggHlSpwVs=
 github.com/signalfx/signalfx-go v0.0.0-20190708182206-440677994b14 h1:8i3brHMmp6kanIIPPyBFjWevJ6bby6NdHwvR69799zk=
 github.com/signalfx/signalfx-go v0.0.0-20190708182206-440677994b14/go.mod h1:0Q0eueMWMC8r+jq+LJIGrspzvLF+hpWO9cggHlSpwVs=
+github.com/signalfx/signalfx-go v0.0.0-20190708184651-fe6d71244493 h1:xoqAAEQlL5ywz40O1KAAdyIH8qJNAkACkaaC5rPnK/Y=
+github.com/signalfx/signalfx-go v0.0.0-20190708184651-fe6d71244493/go.mod h1:0Q0eueMWMC8r+jq+LJIGrspzvLF+hpWO9cggHlSpwVs=
 github.com/sirupsen/logrus v1.1.1/go.mod h1:zrgwTnHtNr00buQ1vSptGe8m1f/BbgsPukg8qsT7A+A=
 github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d/go.mod h1:OnSkiWE9lh6wB0YB77sQom3nweQdgAjqCqsofrRNTgc=
 github.com/smartystreets/assertions v1.0.0 h1:UVQPSSmc3qtTi+zPPkCXvZX9VvW/xT/NsRvKfwY81a8=
