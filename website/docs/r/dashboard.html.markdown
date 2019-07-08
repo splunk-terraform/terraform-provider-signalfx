@@ -77,14 +77,11 @@ The following arguments are supported in the resource block:
     * `column` - (Optional) The column to show the chart in (zero-based); this value always represents the leftmost column of the chart (between `0` and `11`).
 * `grid` - (Optional) Grid dashboard layout. Charts listed will be placed in a grid by row with the same width and height. If a chart cannot fit in a row, it will be placed automatically in the next row.
     * `chart_ids` - (Required) List of IDs of the charts to display.
-    * `start_row` - (Optional) Starting row number for the grid.
-    * `start_column` - (Optional) Starting column number for the grid.
     * `width` - (Optional) How many columns (out of a total of 12) every chart should take up (between `1` and `12`). `12` by default.
     * `height` - (Optional) How many rows every chart should take up (greater than or equal to `1`). `1` by default.
 * `column` - (Optional) Column layout. Charts listed will be placed in a single column with the same width and height.
     * `chart_ids` - (Required) List of IDs of the charts to display.
     * `column` - (Optional) Column number for the layout.
-    * `start_row` - (Optional) Starting row number for the grid.
     * `width` - (Optional) How many columns (out of a total of `12`) every chart should take up (between `1` and `12`). `12` by default.
     * `height` - (Optional) How many rows every chart should take up (greater than or equal to 1). 1 by default.
 * `event_overlay` - (Optional) Specify a list of event overlays to include in the dashboard. Note: These overlays correspond to the *suggested* event overlays specified in the web UI, and they're not automatically applied as active overlays. To set default active event overlays, use the `selected_event_overlay` property instead.
@@ -117,7 +114,7 @@ The are a bunch of use cases where this layout makes things too verbose and hard
 
 ### Grid
 
-The dashboard is divided into equal-sized charts (defined by `width` and `height`). The charts are placed in the grid one after another starting from a row (called `start_row`) and a column (or `start_column`). If a chart does not fit in the same row (because the total width > max allowed by the dashboard), this and the next ones will be place in the next row(s).
+The dashboard is divided into equal-sized charts (defined by `width` and `height`). If a chart does not fit in the same row (because the total width > max allowed by the dashboard), this and the next ones will be place in the next row(s).
 
 ```terraform
 resource "signalfx_dashboard" "grid_example" {
@@ -133,7 +130,6 @@ resource "signalfx_dashboard" "grid_example" {
                 signalfx_time_chart.cpu_idle.*.id)}"]
         width = 3
         height = 1
-        start_row = 0
     }
 }
 ```
@@ -141,7 +137,7 @@ resource "signalfx_dashboard" "grid_example" {
 
 ### Column
 
-The dashboard is divided into equal-sized charts (defined by `width` and `height`). The charts are placed in the grid by column (column number is called `column`) starting from a row you specify (called `start_row`).
+The dashboard is divided into equal-sized charts (defined by `width` and `height`). The charts are placed in the grid by column (column number is called `column`).
 
 ```terraform
 resource "signalfx_dashboard" "load" {
