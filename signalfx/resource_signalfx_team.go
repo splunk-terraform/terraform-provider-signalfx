@@ -10,7 +10,11 @@ import (
 	team "github.com/signalfx/signalfx-go/team"
 )
 
-func integrationTeam() *schema.Resource {
+const (
+	TeamAppPath = "/detector/"
+)
+
+func teamResource() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
 			"name": &schema.Schema{
@@ -84,7 +88,7 @@ func integrationTeam() *schema.Resource {
 }
 
 /*
-  Use Resource object to construct json payload in order to create a text chart
+  Use Resource object to construct json payload in order to create a team
 */
 func getPayloadTeam(d *schema.ResourceData) (*team.CreateUpdateTeamRequest, error) {
 	t := &team.CreateUpdateTeamRequest{
@@ -291,7 +295,7 @@ func teamCreate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 	// Since things worked, set the URL and move on
-	appURL, err := buildAppURL(config.CustomAppURL, CHART_APP_PATH+c.Id)
+	appURL, err := buildAppURL(config.CustomAppURL, TeamAppPath+c.Id)
 	if err != nil {
 		return err
 	}
@@ -367,7 +371,6 @@ func teamAPIToTF(d *schema.ResourceData, t *team.Team) error {
 		}
 		d.Set("notifications_warning", nots)
 	}
-	log.Printf("[DEBUG] SignalFx: STATE %v", d)
 	return nil
 }
 

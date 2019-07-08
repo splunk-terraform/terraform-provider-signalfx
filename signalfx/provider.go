@@ -84,7 +84,8 @@ func Provider() terraform.ResourceProvider {
 			"signalfx_gcp_integration":       integrationGCPResource(),
 			"signalfx_pagerduty_integration": integrationPagerDutyResource(),
 			"signalfx_slack_integration":     integrationSlackResource(),
-			"signalfx_team":                  integrationTeam(),
+			"signalfx_member":                memberResource(),
+			"signalfx_team":                  teamResource(),
 		},
 		ConfigureFunc: signalfxConfigure,
 	}
