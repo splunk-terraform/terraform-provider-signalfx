@@ -1,4 +1,4 @@
-module github.com/signalfx/terraform-provider-signalfx
+module github.com/terraform-providers/terraform-provider-signalfx
 
 go 1.12
 
