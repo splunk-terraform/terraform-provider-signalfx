@@ -49,9 +49,9 @@ func memberResource() *schema.Resource {
 /*
   Use Resource object to construct json payload in order to create a member
 */
-func getPayloadMember(d *schema.ResourceData) (*organization.InviteMemberRequest, error) {
+func getPayloadMember(d *schema.ResourceData) (*organization.CreateUpdateMemberRequest, error) {
 
-	imr := &organization.InviteMemberRequest{
+	imr := &organization.CreateUpdateMemberRequest{
 		FullName: d.Get("full_name").(string),
 		Email:    d.Get("email").(string),
 	}

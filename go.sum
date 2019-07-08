@@ -325,8 +325,8 @@ github.com/signalfx/golib v2.4.0+incompatible h1:VtCORl7AdhkCIy3rS0m3WLpcNmqGcWo
 github.com/signalfx/golib v2.4.0+incompatible/go.mod h1:nWYefOwlUKWm/SpN/LgVSBnyH1T9NpT1ANlmgRIi1Cs=
 github.com/signalfx/signalfx-go v0.0.0-20190708155851-a48314057cfc h1:XXPKWMRLiPVGvTV3JscHQV/5bmXd125P1egUA8yS/ng=
 github.com/signalfx/signalfx-go v0.0.0-20190708155851-a48314057cfc/go.mod h1:0Q0eueMWMC8r+jq+LJIGrspzvLF+hpWO9cggHlSpwVs=
-github.com/signalfx/signalfx-go v1.5.1 h1:bsxqPwDiYrREOYoORu6OLPhi604voYaJGFsU63rgVI0=
-github.com/signalfx/signalfx-go v1.5.1/go.mod h1:0Q0eueMWMC8r+jq+LJIGrspzvLF+hpWO9cggHlSpwVs=
+github.com/signalfx/signalfx-go v0.0.0-20190708182206-440677994b14 h1:8i3brHMmp6kanIIPPyBFjWevJ6bby6NdHwvR69799zk=
+github.com/signalfx/signalfx-go v0.0.0-20190708182206-440677994b14/go.mod h1:0Q0eueMWMC8r+jq+LJIGrspzvLF+hpWO9cggHlSpwVs=
 github.com/sirupsen/logrus v1.1.1/go.mod h1:zrgwTnHtNr00buQ1vSptGe8m1f/BbgsPukg8qsT7A+A=
 github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d/go.mod h1:OnSkiWE9lh6wB0YB77sQom3nweQdgAjqCqsofrRNTgc=
 github.com/smartystreets/assertions v1.0.0 h1:UVQPSSmc3qtTi+zPPkCXvZX9VvW/xT/NsRvKfwY81a8=
