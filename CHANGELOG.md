@@ -1,4 +1,4 @@
-# 4.0.0 (Unreleased)
+## 4.0.0 (Unreleased)
 
 NOTES:
 
@@ -54,7 +54,7 @@ BACKWARDS INCOMPATIBILITIES:
 * resource/signalfx_event_feed_chart: removed the `viz_options` block and it's constituent `label` and `color` since they didn't do anything.
 * resource/signalfx_heatmap_chart: no longer tries to do anything with `color_by` of `"Scale"` as the code that was there didn't send valid data.
 
-# 3.3.0 (2019-06-28)
+## 3.3.0 (2019-06-28)
 
 ## Added
 
@@ -72,7 +72,7 @@ BACKWARDS INCOMPATIBILITIES:
 
 * Added Go module vendor directory per [HashiCorp guidelines](https://github.com/signalfx/terraform-provider-signalfx/issues/37)
 
-# 3.2.0 (2019-05-24)
+## 3.2.0 (2019-05-24)
 
 ## Added
 * Start of [acceptance tests](https://github.com/signalfx/terraform-provider-signalfx/pull/24) (dashboards, charts, dashboard groups)
@@ -100,7 +100,7 @@ Please open issues if you have comments, and feel free to use this resource. A f
 * Bumped terraform dependency version
 * Adjusted some tests to deal with having `SFX_AUTH_TOKEN` set when running acceptance tests.
 
-# 3.1.0 (2019-05-21)
+## 3.1.0 (2019-05-21)
 
 * Any use of a resource's `resource_url` should be replaced with `url`, most likely as an output value. See the Removed section below for more.
 
@@ -125,7 +125,7 @@ The following new options were added to the provider's configuration:
 
 * The attribute `resource_url` has been removed from resources. This means that the provider will not output a URL after an `apply`, since the `url` resource is "computed" in Terraform parlance. You can, however, find the URL for any asset with `terraform show <asset name>`. For example, `terraform state show signalfx_dashboard.mydashboard1`.
 
-# 3.0.0 (2019-03-18)
+## 3.0.0 (2019-03-18)
 
 We're jumping to a 3.0.0 version number after forking from [Yelp's SignalForm](https://github.com/Yelp/terraform-provider-signalform/), incorporating [Stripe's fork](https://github.com/stripe/terraform-provider-signalform/), and renaming to `terraform-provider-signalfx`.
 
