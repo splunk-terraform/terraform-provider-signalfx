@@ -46,13 +46,7 @@ variable "clusters" {
 
 ## Notification Format
 
-As SignalFx supports different notification mechanisms a comma-delimited string is used to provide inputs. If you'd like to specify multiple notifications, then each should be a member in the list, like so:
-
-```
-notifications = ["Email,foo-alerts@example.com", "Slack,credentialId,channel"]
-```
-
-This will likely be changed in a future iteration of the provider. See [SignalFX Docs](https://developers.signalfx.com/detectors_reference.html#operation/Create%20Single%20Detector) for more information. For now, here are some example of how to configure each notification type:
+As SignalFx supports different notification mechanisms a comma-delimited string is used to provide inputs. This will likely be changed in a future iteration of the provider. For now, here are some example of how to configure each notification type:
 
 ### Email
 
@@ -62,10 +56,10 @@ notifications = ["Email,foo-alerts@bar.com"]
 
 ### Opsgenie
 
-Note that the `credentialId` is the SignalFx-provided ID shown after setting up your Opsgenie integration. `Team` here is hardcoded as the `responderType` as that is the only acceptable type as per the API docs.
+Note that the `credentialId` is the SignalFx-provided ID shown after setting up your Opsgenie integration.
 
 ```
-notifications = ["Opsgenie,credentialId,responderName,responderId,Team"]
+notifications = ["Opsgenie,credentialId,credentialName,responderName,responderId,responderType"]
 ```
 
 ### PagerDuty
@@ -75,8 +69,6 @@ notifications = ["PagerDuty,credentialId"]
 ```
 
 ### Slack
-
-Exclude the `#` on the channel name!
 
 ```
 notifications = ["Slack,credentialId,channel"]
@@ -101,7 +93,7 @@ notifications = ["TeamEmail,teamId"]
 ### Webhook
 
 ```
-notifications = ["Webhook,credentialId,secret,url"]
+notifications = ["Webhook,secret,url"]
 ```
 
 ## Argument Reference

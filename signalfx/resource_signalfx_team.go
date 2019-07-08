@@ -101,12 +101,47 @@ func getPayloadTeam(d *schema.ResourceData) (*team.CreateUpdateTeamRequest, erro
 	}
 	t.Members = members
 
-	if val, ok := d.GetOk("notifications_default"); ok {
-		defaults, err := getNotificationList(val.(*schema.Set).List())
+	if val, ok := d.GetOk("notifications_critical"); ok {
+		nots, err := getNotificationList(val.(*schema.Set).List())
 		if err != nil {
 			return t, err
 		}
-		t.NotificationLists.Default = defaults
+		t.NotificationLists.Critical = nots
+	}
+	if val, ok := d.GetOk("notifications_default"); ok {
+		nots, err := getNotificationList(val.(*schema.Set).List())
+		if err != nil {
+			return t, err
+		}
+		t.NotificationLists.Default = nots
+	}
+	if val, ok := d.GetOk("notifications_info"); ok {
+		nots, err := getNotificationList(val.(*schema.Set).List())
+		if err != nil {
+			return t, err
+		}
+		t.NotificationLists.Info = nots
+	}
+	if val, ok := d.GetOk("notifications_major"); ok {
+		nots, err := getNotificationList(val.(*schema.Set).List())
+		if err != nil {
+			return t, err
+		}
+		t.NotificationLists.Major = nots
+	}
+	if val, ok := d.GetOk("notifications_minor"); ok {
+		nots, err := getNotificationList(val.(*schema.Set).List())
+		if err != nil {
+			return t, err
+		}
+		t.NotificationLists.Minor = nots
+	}
+	if val, ok := d.GetOk("notifications_warning"); ok {
+		nots, err := getNotificationList(val.(*schema.Set).List())
+		if err != nil {
+			return t, err
+		}
+		t.NotificationLists.Warning = nots
 	}
 
 	return t, nil
@@ -187,10 +222,9 @@ func getNotificationObject(item map[string]interface{}) (*team.Notification, err
 		}
 	case "Webhook":
 		nValue = &team.WebhookNotification{
-			Type:         t,
-			CredentialId: item["credentialId"].(string),
-			Secret:       item["secret"].(string),
-			Url:          item["url"].(string),
+			Type:   t,
+			Secret: item["secret"].(string),
+			Url:    item["url"].(string),
 		}
 	case "XMatters":
 		nValue = &team.XMattersNotification{
@@ -234,7 +268,7 @@ func getNotificationStringFromAPI(notification *team.Notification) (string, erro
 		return fmt.Sprintf("%s,%s,%s", notification.Type, von.CredentialId, von.RoutingKey), nil
 	case *team.WebhookNotification:
 		whn := notification.Value.(*team.WebhookNotification)
-		return fmt.Sprintf("%s,%s,%s,%s", notification.Type, whn.CredentialId, whn.Secret, whn.Url), nil
+		return fmt.Sprintf("%s,%s,%s", notification.Type, whn.Secret, whn.Url), nil
 	case *team.XMattersNotification:
 		return fmt.Sprintf("%s,%s", notification.Type, notification.Value.(*team.XMattersNotification).CredentialId), nil
 	default:
@@ -295,6 +329,7 @@ func teamAPIToTF(d *schema.ResourceData, t *team.Team) error {
 		if err != nil {
 			return err
 		}
+		log.Printf("[DEBUG] SignalFx: CRITICAL %v", nots)
 		d.Set("notifications_critical", nots)
 	}
 	if len(t.NotificationLists.Default) > 0 {
@@ -332,7 +367,7 @@ func teamAPIToTF(d *schema.ResourceData, t *team.Team) error {
 		}
 		d.Set("notifications_warning", nots)
 	}
-
+	log.Printf("[DEBUG] SignalFx: STATE %v", d)
 	return nil
 }
 
