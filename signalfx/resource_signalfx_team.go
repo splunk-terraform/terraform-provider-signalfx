@@ -34,37 +34,37 @@ func teamResource() *schema.Resource {
 				Description: "Members of team team",
 			},
 			"notifications_critical": &schema.Schema{
-				Type:        schema.TypeSet,
+				Type:        schema.TypeList,
 				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "List of notification destinations to use for the critical alerts category.",
 			},
 			"notifications_default": &schema.Schema{
-				Type:        schema.TypeSet,
+				Type:        schema.TypeList,
 				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "List of notification destinations to use for the default alerts category.",
 			},
 			"notifications_info": &schema.Schema{
-				Type:        schema.TypeSet,
+				Type:        schema.TypeList,
 				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "List of notification destinations to use for the info alerts category.",
 			},
 			"notifications_major": &schema.Schema{
-				Type:        schema.TypeSet,
+				Type:        schema.TypeList,
 				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "List of notification destinations to use for the major alerts category.",
 			},
 			"notifications_minor": &schema.Schema{
-				Type:        schema.TypeSet,
+				Type:        schema.TypeList,
 				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "List of notification destinations to use for the minor alerts category.",
 			},
 			"notifications_warning": &schema.Schema{
-				Type:        schema.TypeSet,
+				Type:        schema.TypeList,
 				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "List of notification destinations to use for the warning alerts category.",
@@ -106,42 +106,42 @@ func getPayloadTeam(d *schema.ResourceData) (*team.CreateUpdateTeamRequest, erro
 	t.Members = members
 
 	if val, ok := d.GetOk("notifications_critical"); ok {
-		nots, err := getNotificationList(val.(*schema.Set).List())
+		nots, err := getNotificationList(val.([]interface{}))
 		if err != nil {
 			return t, err
 		}
 		t.NotificationLists.Critical = nots
 	}
 	if val, ok := d.GetOk("notifications_default"); ok {
-		nots, err := getNotificationList(val.(*schema.Set).List())
+		nots, err := getNotificationList(val.([]interface{}))
 		if err != nil {
 			return t, err
 		}
 		t.NotificationLists.Default = nots
 	}
 	if val, ok := d.GetOk("notifications_info"); ok {
-		nots, err := getNotificationList(val.(*schema.Set).List())
+		nots, err := getNotificationList(val.([]interface{}))
 		if err != nil {
 			return t, err
 		}
 		t.NotificationLists.Info = nots
 	}
 	if val, ok := d.GetOk("notifications_major"); ok {
-		nots, err := getNotificationList(val.(*schema.Set).List())
+		nots, err := getNotificationList(val.([]interface{}))
 		if err != nil {
 			return t, err
 		}
 		t.NotificationLists.Major = nots
 	}
 	if val, ok := d.GetOk("notifications_minor"); ok {
-		nots, err := getNotificationList(val.(*schema.Set).List())
+		nots, err := getNotificationList(val.([]interface{}))
 		if err != nil {
 			return t, err
 		}
 		t.NotificationLists.Minor = nots
 	}
 	if val, ok := d.GetOk("notifications_warning"); ok {
-		nots, err := getNotificationList(val.(*schema.Set).List())
+		nots, err := getNotificationList(val.([]interface{}))
 		if err != nil {
 			return t, err
 		}
@@ -329,7 +329,7 @@ func teamAPIToTF(d *schema.ResourceData, t *team.Team) error {
 	}
 
 	if len(t.NotificationLists.Critical) > 0 {
-		nots, err := getNotificationSetFromAPI(t.NotificationLists.Critical)
+		nots, err := getNotificationsFromAPI(t.NotificationLists.Critical)
 		if err != nil {
 			return err
 		}
@@ -337,35 +337,35 @@ func teamAPIToTF(d *schema.ResourceData, t *team.Team) error {
 		d.Set("notifications_critical", nots)
 	}
 	if len(t.NotificationLists.Default) > 0 {
-		nots, err := getNotificationSetFromAPI(t.NotificationLists.Default)
+		nots, err := getNotificationsFromAPI(t.NotificationLists.Default)
 		if err != nil {
 			return err
 		}
 		d.Set("notifications_default", nots)
 	}
 	if len(t.NotificationLists.Info) > 0 {
-		nots, err := getNotificationSetFromAPI(t.NotificationLists.Info)
+		nots, err := getNotificationsFromAPI(t.NotificationLists.Info)
 		if err != nil {
 			return err
 		}
 		d.Set("notifications_info", nots)
 	}
 	if len(t.NotificationLists.Major) > 0 {
-		nots, err := getNotificationSetFromAPI(t.NotificationLists.Major)
+		nots, err := getNotificationsFromAPI(t.NotificationLists.Major)
 		if err != nil {
 			return err
 		}
 		d.Set("notifications_major", nots)
 	}
 	if len(t.NotificationLists.Minor) > 0 {
-		nots, err := getNotificationSetFromAPI(t.NotificationLists.Minor)
+		nots, err := getNotificationsFromAPI(t.NotificationLists.Minor)
 		if err != nil {
 			return err
 		}
 		d.Set("notifications_minor", nots)
 	}
 	if len(t.NotificationLists.Warning) > 0 {
-		nots, err := getNotificationSetFromAPI(t.NotificationLists.Warning)
+		nots, err := getNotificationsFromAPI(t.NotificationLists.Warning)
 		if err != nil {
 			return err
 		}
@@ -374,8 +374,8 @@ func teamAPIToTF(d *schema.ResourceData, t *team.Team) error {
 	return nil
 }
 
-func getNotificationSetFromAPI(nots []*team.Notification) (*schema.Set, error) {
-	results := make([]interface{}, len(nots))
+func getNotificationsFromAPI(nots []*team.Notification) ([]string, error) {
+	results := make([]string, len(nots))
 	for i, not := range nots {
 		s, err := getNotificationStringFromAPI(not)
 		if err != nil {
@@ -383,7 +383,7 @@ func getNotificationSetFromAPI(nots []*team.Notification) (*schema.Set, error) {
 		}
 		results[i] = s
 	}
-	return schema.NewSet(schema.HashString, results), nil
+	return results, nil
 }
 
 func teamRead(d *schema.ResourceData, meta interface{}) error {
