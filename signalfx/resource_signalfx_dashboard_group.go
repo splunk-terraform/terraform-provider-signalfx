@@ -151,7 +151,7 @@ func getPayloadDashboardGroup(d *schema.ResourceData) *dashboard_group.CreateUpd
 	// this as a mirror if one of the configs has one of the mirrored fields set.
 	hasMirrors := false
 
-	if dashes, ok := d.GetOk("dashboards"); ok {
+	if dashes, ok := d.GetOk("dashboard"); ok {
 		dashboards := dashes.([]interface{})
 		dashConfigs := make([]*dashboard_group.DashboardConfig, len(dashboards))
 		for i, d := range dashboards {
@@ -166,7 +166,7 @@ func getPayloadDashboardGroup(d *schema.ResourceData) *dashboard_group.CreateUpd
 				hasMirrors = true
 			}
 			if nameOver, ok := dash["name_override"]; ok && nameOver != "" {
-				dcon.DescriptionOverride = nameOver.(string)
+				dcon.NameOverride = nameOver.(string)
 				hasMirrors = true
 			}
 
@@ -174,7 +174,7 @@ func getPayloadDashboardGroup(d *schema.ResourceData) *dashboard_group.CreateUpd
 
 			if filterOver, ok := dash["filter_override"]; ok {
 				hasMirrors = true
-				tfFilters := filterOver.([]interface{})
+				tfFilters := filterOver.(*schema.Set).List()
 				filters := make([]*dashboard_group.Filter, len(tfFilters))
 				for i, f := range tfFilters {
 					f := f.(map[string]interface{})
@@ -198,7 +198,7 @@ func getPayloadDashboardGroup(d *schema.ResourceData) *dashboard_group.CreateUpd
 
 			if variableOver, ok := dash["variable_override"]; ok {
 				hasMirrors = true
-				tfVars := variableOver.([]interface{})
+				tfVars := variableOver.(*schema.Set).List()
 				vars := make([]*dashboard_group.WebUiFilter, len(tfVars))
 				for i, v := range tfVars {
 					v := v.(map[string]interface{})
@@ -250,7 +250,7 @@ func dashboardgroupCreate(d *schema.ResourceData, meta interface{}) error {
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Dashboard Group Create Payload: %s", debugOutput)
 
-	dg, err := config.Client.CreateDashboardGroup(payload)
+	dg, err := config.Client.CreateDashboardGroup(payload, true)
 	if err != nil {
 		return err
 	}
@@ -283,6 +283,7 @@ func dashboardGroupAPIToTF(d *schema.ResourceData, dg *dashboard_group.Dashboard
 				continue
 			} else {
 				// A real mirror, change the flag so we know to add it
+				hasMirrors = true
 			}
 
 			dConf := make(map[string]interface{})
@@ -348,6 +349,7 @@ func dashboardgroupUpdate(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return err
 	}
+
 	log.Printf("[DEBUG] SignalFx: Update Dashboard Group Response: %v", dg)
 
 	d.SetId(dg.Id)
