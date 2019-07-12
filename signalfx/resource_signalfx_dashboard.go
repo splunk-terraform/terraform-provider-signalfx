@@ -8,7 +8,8 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
-	dashboard "github.com/signalfx/signalfx-go/dashboard"
+	"github.com/signalfx/signalfx-go/dashboard"
+	"github.com/signalfx/signalfx-go/util"
 )
 
 const (
@@ -438,16 +439,16 @@ func getDashboardTime(d *schema.ResourceData) *dashboard.ChartsFiltersTime {
 	var timeFilter *dashboard.ChartsFiltersTime
 	if val, ok := d.GetOk("time_range"); ok {
 		timeFilter = &dashboard.ChartsFiltersTime{
-			Start: val.(string),
+			Start: util.StringOrInteger(val.(string)),
 			End:   "Now",
 		}
 	} else {
 		if val, ok := d.GetOk("start_time"); ok {
 			timeFilter = &dashboard.ChartsFiltersTime{
-				Start: strconv.Itoa(val.(int) * 1000),
+				Start: util.StringOrInteger(strconv.Itoa(val.(int) * 1000)),
 			}
 			if val, ok := d.GetOk("end_time"); ok {
-				timeFilter.End = strconv.Itoa(val.(int) * 1000)
+				timeFilter.End = util.StringOrInteger(strconv.Itoa(val.(int) * 1000))
 			}
 		}
 	}
@@ -804,13 +805,13 @@ func dashboardAPIToTF(d *schema.ResourceData, dash *dashboard.Dashboard) error {
 		// Map Time to fields
 		if filters.Time != nil {
 			timeFilter := filters.Time
-			if strings.ToUpper(timeFilter.End) == "NOW" {
+			if strings.ToUpper(string(timeFilter.End)) == "NOW" {
 				if err := d.Set("time_range", timeFilter.Start); err != nil {
 					return err
 				}
 			} else {
 				if timeFilter.Start != "" {
-					start, err := strconv.Atoi(timeFilter.Start)
+					start, err := strconv.Atoi(string(timeFilter.Start))
 					if err != nil {
 						return fmt.Errorf("Unable to convert start time %s to integer: %s", timeFilter.Start, err)
 					}
@@ -819,7 +820,7 @@ func dashboardAPIToTF(d *schema.ResourceData, dash *dashboard.Dashboard) error {
 					}
 				}
 				if timeFilter.End != "" {
-					end, err := strconv.Atoi(timeFilter.End)
+					end, err := strconv.Atoi(string(timeFilter.End))
 					if err != nil {
 						return fmt.Errorf("Unable to convert end time %s to integer: %s", timeFilter.End, err)
 					}

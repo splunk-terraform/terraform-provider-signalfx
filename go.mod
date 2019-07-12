@@ -11,7 +11,7 @@ require (
 	github.com/hashicorp/terraform v0.12.3
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/signalfx/golib v2.4.0+incompatible // indirect
-	github.com/signalfx/signalfx-go v1.0.1-0.20190711193607-d56f055738c7
+	github.com/signalfx/signalfx-go v1.0.1-0.20190712163147-be7838d7440e
 	github.com/smartystreets/assertions v1.0.0 // indirect
 	github.com/stretchr/testify v1.3.0
 	golang.org/x/crypto v0.0.0-20190621222207-cc06ce4a13d4 // indirect
