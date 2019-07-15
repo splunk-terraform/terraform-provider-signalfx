@@ -18,13 +18,18 @@ const DashboardGroupAPIURL = "/v2/dashboardgroup"
 // TODO Clone dashboard to group
 
 // CreateDashboardGroup creates a dashboard.
-func (c *Client) CreateDashboardGroup(dashboardGroupRequest *dashboard_group.CreateUpdateDashboardGroupRequest) (*dashboard_group.DashboardGroup, error) {
+func (c *Client) CreateDashboardGroup(dashboardGroupRequest *dashboard_group.CreateUpdateDashboardGroupRequest, skipImplicitDashboard bool) (*dashboard_group.DashboardGroup, error) {
 	payload, err := json.Marshal(dashboardGroupRequest)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := c.doRequest("POST", DashboardGroupAPIURL, nil, bytes.NewReader(payload))
+	params := url.Values{}
+	if skipImplicitDashboard {
+		params.Add("empty", "true")
+	}
+
+	resp, err := c.doRequest("POST", DashboardGroupAPIURL, params, bytes.NewReader(payload))
 	if err != nil {
 		return nil, err
 	}

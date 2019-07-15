@@ -9,10 +9,12 @@
 
 package dashboard
 
+import "github.com/signalfx/signalfx-go/util"
+
 // Time range to show in all of the charts in the dashboard. The specifications in this object override those in each individual chart. If you don't specify values, the system defaults to using the individual time setting for each chart.
 type ChartsFiltersTime struct {
 	// The end of the time range to show for all charts in the dashboard. If you don't specify a value for this property, the system defaults to the value for each chart's `end` property.<br> **Note:** The specified type for `end` is `string`, but the system also accepts a 64-bit signed integer that represents a time in Unix time format (milliseconds since the Unix epoch UTC+0)
-	End string `json:"end,omitempty"`
+	End util.StringOrInteger `json:"end,omitempty"`
 	// The start of the time range to show for all charts in the dashboard. If you don't specify a value for this property, the system defaults to the value for each chart's `start` property.<br> **Note:** The specified type for `start` is `string`, but the system also accepts a 64-bit signed integer that represents a time in Unix time format (milliseconds since the Unix epoch UTC+0)
-	Start string `json:"start,omitempty"`
+	Start util.StringOrInteger `json:"start,omitempty"`
 }

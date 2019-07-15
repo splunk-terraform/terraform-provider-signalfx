@@ -13,5 +13,5 @@ type SearchResult struct {
 	// Number of dashboard group objects that matched the provided search criteria.<br> **Note:** This value is a count of the total number of objects in the result set. The number of objects that the system returns is affected by the `limit` and `offset` query parameters. In summary:<br>   * `count`: Size of result set   * number of returned objects:       * (`limit` - `offset`) >= `count`: `count`       * (`limit` - `offset`) < `count`: `limit` - `offset`
 	Count int32 `json:"count,omitempty"`
 	// Array of dashboard group objects that the system returns as the result of the request. These objects represent dashboard groups that match the search query. The number and location of the objects within the result set depend on the query parameters you specify in the request. To learn more, see the top-level description of the API and the description of the `count` response property.
-	Results []DashboardGroup `json:"results,omitempty"`
+	Results []*DashboardGroup `json:"results,omitempty"`
 }
