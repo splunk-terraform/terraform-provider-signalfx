@@ -1,4 +1,14 @@
-# 1.1.0, in progress
+# 1.2.0, In Progress
+
+## Added
+
+## Updated
+
+## Bugfixes
+
+## Removed
+
+# 1.1.0, 2019-07-15
 
 ## Added
 * Added `DashboardConfigs` to `CreateUpdateDashboardRequest`
@@ -14,7 +24,7 @@
 
 ## Removed
 
-# 1.0.0, in progress
+# 1.0.0, Forgot the date
 
 Tagged!
 
