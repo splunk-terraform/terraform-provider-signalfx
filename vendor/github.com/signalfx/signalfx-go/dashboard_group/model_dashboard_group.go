@@ -14,7 +14,8 @@ type DashboardGroup struct {
 	// The dashboard group creation date and time, in the form of a Unix time value (milliseconds since the Unix epoch 1970-01-01 00:00:00 UTC+0). The system sets this value, and you can't modify it.
 	Created int64 `json:"created,omitempty"`
 	// SignalFx-assigned user ID of the user that created the dashboard group. If the system created this dashboard group, the value is \"AAAAAAAAAA\". The system sets this value, and you can't modify it.
-	Creator string `json:"creator,omitempty"`
+	Creator          string             `json:"creator,omitempty"`
+	DashboardConfigs []*DashboardConfig `json:"dashboardConfigs,omitempty"`
 	// Array of dashboard IDs. The system adds the specified dashboards to the dashboard group you're creating. If you omit the property, the system creates a new dashboard and assigns it to the new dashboard group.
 	Dashboards []string `json:"dashboards,omitempty"`
 	// Description of the dashboard group. This value appears in the tooltip for the dashboard group on the Dashboards page in the web UI.

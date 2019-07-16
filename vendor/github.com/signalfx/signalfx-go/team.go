@@ -4,41 +4,21 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
+
+	"github.com/signalfx/signalfx-go/team"
 )
 
 // TeamAPIURL is the base URL for interacting with teams.
 const TeamAPIURL = "/v2/team"
 
-// TODO Update team members
-
-// Team is a team.
-type Team struct {
-	Description       string   `json:"description,omitempty"`
-	ID                string   `json:"id,omitempty"`
-	Members           []string `json:"members,omitempty"`
-	Name              string   `json:"name,omitempty"`
-	NotificationLists struct {
-		Critical []string `json:"critical,omitempty"`
-		Default  []string `json:"default,omitempty"`
-		Info     []string `json:"info,omitempty"`
-		Major    []string `json:"major,omitempty"`
-		Minor    []string `json:"minor,omitempty"`
-		Warning  []string `json:"warning,omitempty"`
-	} `json:"notificationLists,omitempty"`
-}
-
-// TeamSearch is the result of a query for Team
-type TeamSearch struct {
-	Count   int64 `json:"count,omitempty"`
-	Results []Team
-}
-
 // CreateTeam creates a team.
-func (c *Client) CreateTeam(team *Team) (*Team, error) {
-	payload, err := json.Marshal(team)
+func (c *Client) CreateTeam(t *team.CreateUpdateTeamRequest) (*team.Team, error) {
+	payload, err := json.Marshal(t)
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +29,12 @@ func (c *Client) CreateTeam(team *Team) (*Team, error) {
 	}
 	defer resp.Body.Close()
 
-	finalTeam := &Team{}
+	if resp.StatusCode != http.StatusOK {
+		message, _ := ioutil.ReadAll(resp.Body)
+		return nil, fmt.Errorf("Unexpected status code: %d: %s", resp.StatusCode, message)
+	}
+
+	finalTeam := &team.Team{}
 
 	err = json.NewDecoder(resp.Body).Decode(finalTeam)
 
@@ -65,7 +50,7 @@ func (c *Client) DeleteTeam(id string) error {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode != http.StatusNoContent {
 		return errors.New("Unexpected status code: " + resp.Status)
 	}
 
@@ -73,15 +58,19 @@ func (c *Client) DeleteTeam(id string) error {
 }
 
 // GetTeam gets a team.
-func (c *Client) GetTeam(id string) (*Team, error) {
+func (c *Client) GetTeam(id string) (*team.Team, error) {
 	resp, err := c.doRequest("GET", TeamAPIURL+"/"+id, nil, nil)
 
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		message, _ := ioutil.ReadAll(resp.Body)
+		return nil, fmt.Errorf("Unexpected status code: %d: %s", resp.StatusCode, message)
+	}
 
-	finalTeam := &Team{}
+	finalTeam := &team.Team{}
 
 	err = json.NewDecoder(resp.Body).Decode(finalTeam)
 
@@ -89,8 +78,8 @@ func (c *Client) GetTeam(id string) (*Team, error) {
 }
 
 // UpdateTeam updates a team.
-func (c *Client) UpdateTeam(id string, team *Team) (*Team, error) {
-	payload, err := json.Marshal(team)
+func (c *Client) UpdateTeam(id string, t *team.CreateUpdateTeamRequest) (*team.Team, error) {
+	payload, err := json.Marshal(t)
 	if err != nil {
 		return nil, err
 	}
@@ -100,8 +89,12 @@ func (c *Client) UpdateTeam(id string, team *Team) (*Team, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		message, _ := ioutil.ReadAll(resp.Body)
+		return nil, fmt.Errorf("Unexpected status code: %d: %s", resp.StatusCode, message)
+	}
 
-	finalTeam := &Team{}
+	finalTeam := &team.Team{}
 
 	err = json.NewDecoder(resp.Body).Decode(finalTeam)
 
@@ -109,7 +102,7 @@ func (c *Client) UpdateTeam(id string, team *Team) (*Team, error) {
 }
 
 // SearchTeam searches for teams, given a query string in `name`.
-func (c *Client) SearchTeam(limit int, name string, offset int, tags string) (*TeamSearch, error) {
+func (c *Client) SearchTeam(limit int, name string, offset int, tags string) (*team.SearchResults, error) {
 	params := url.Values{}
 	params.Add("limit", strconv.Itoa(limit))
 	params.Add("name", name)
@@ -123,7 +116,7 @@ func (c *Client) SearchTeam(limit int, name string, offset int, tags string) (*T
 	}
 	defer resp.Body.Close()
 
-	finalTeams := &TeamSearch{}
+	finalTeams := &team.SearchResults{}
 
 	err = json.NewDecoder(resp.Body).Decode(finalTeams)
 

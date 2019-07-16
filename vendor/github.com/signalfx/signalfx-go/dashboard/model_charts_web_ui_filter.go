@@ -9,6 +9,8 @@
 
 package dashboard
 
+import "github.com/signalfx/signalfx-go/util"
+
 // The specification for a filter that appears in the web UI. The filter compares the value of a dimension or custom property to a value specified in this filter. You can specify the following in the filter:<br>   * A default value   * A list of suggested values to display in the web UI   * A flag that controls user input; if set to `true`, users are limited     to the default and suggested values. <br> You can also force users to choose this filter in order to see data in the dashboard's charts.
 type ChartsWebUiFilter struct {
 	// A label for the filter. The system displays this label in the area preceding the input textarea for the filter in the web UI. <br> **Note:** A good way to indicate that the string is a label is to append a space and a colon (\":\") to it.
@@ -25,5 +27,5 @@ type ChartsWebUiFilter struct {
 	// Flag that controls the values allowed in the filter. If `true`, the only allowable values are those specified in the `ChartsWebUIFilter.preferredSuggestsions` array; otherwise, any value is allowed.
 	Restricted bool `json:"restricted,omitempty"`
 	// A list of values to compare to the value of the dimension or custom property specified in `ChartsWebUIFilter.property`. If the list contains more than one value, the filter becomes a set of queries between the value of `property` and each element of `value`. The system joins these queries with an implicit OR.
-	Value []string `json:"value"`
+	Value util.StringOrSlice `json:"value"`
 }

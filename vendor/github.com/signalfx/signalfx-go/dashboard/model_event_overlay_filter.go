@@ -9,6 +9,8 @@
 
 package dashboard
 
+import "github.com/signalfx/signalfx-go/util"
+
 // Object containing a filter to apply to event overlays, in the form of a comparison expression. Each term in the expression tries to match the values of a dimension or custom property to criteria you specify. Based on the match results, you can include or exclude an event.
 type EventOverlayFilter struct {
 	// Controls the action of the filter. If set to `true`, then the system only selects events that *don't* match the filter.
@@ -16,5 +18,5 @@ type EventOverlayFilter struct {
 	// The custom property or dimension name that provides the value to test in the filter.<br> If the name you specify isn't defined in one or more of the events associated with the dashboard, the filter never matches anything. If the `NOT` property for this filter is set to `true` and the filter never matches, all event overlays are suppressed.
 	Property string `json:"property"`
 	// An array of values to test against the specified property. If any of the values match, the system includes the event.<br> **Note:** You must specify at least one element.
-	Value StringOrSlice `json:"value"`
+	Value util.StringOrSlice `json:"value"`
 }

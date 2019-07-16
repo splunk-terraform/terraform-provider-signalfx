@@ -12,7 +12,8 @@ package dashboard_group
 type CreateUpdateDashboardGroupRequest struct {
 	AuthorizedWriters AuthorizedWriters `json:"authorizedWriters,omitempty"`
 	// Array of dashboard IDs. The system adds the specified dashboards to the dashboard group you're creating. If you omit the property, the system creates a new dashboard and assigns it to the new dashboard group.
-	Dashboards []string `json:"dashboards,omitempty"`
+	Dashboards       []string           `json:"dashboards,omitempty"`
+	DashboardConfigs []*DashboardConfig `json:"dashboardConfigs,omitempty"`
 	// Description of the dashboard group. This value appears in the tooltip for the dashboard group on the Dashboards page in the web UI.
 	Description string `json:"description,omitempty"`
 	// Name of the dashboard group. This value identifies the dashboard group in the web UI. It appears on the dashboards page and in the catalog. It also appears at the top left corner of the screen whenever you're viewing a dashboard that the group contains.
