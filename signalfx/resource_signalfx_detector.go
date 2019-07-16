@@ -62,7 +62,7 @@ func detectorResource() *schema.Resource {
 			"time_range": &schema.Schema{
 				Type:          schema.TypeInt,
 				Optional:      true,
-				Description:   "Seconds to display in the visualization. This is a rolling range from the current time. Example: 8600 = `-1h`",
+				Description:   "Seconds to display in the visualization. This is a rolling range from the current time. Example: 3600 = `-1h`",
 				ConflictsWith: []string{"start_time", "end_time"},
 			},
 			"start_time": &schema.Schema{
@@ -148,6 +148,15 @@ func detectorResource() *schema.Resource {
 			},
 		},
 
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Type:    timeRangeV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: timeRangeStateUpgradeV0,
+				Version: 0,
+			},
+		},
+
 		Create: detectorCreate,
 		Read:   detectorRead,
 		Update: detectorUpdate,
@@ -157,6 +166,31 @@ func detectorResource() *schema.Resource {
 			State: schema.ImportStatePassthrough,
 		},
 	}
+}
+
+func timeRangeV0() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"time_range": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+		},
+	}
+}
+
+func timeRangeStateUpgradeV0(rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
+
+	log.Printf("[DEBUG] SignalFx: Upgrading Detector State %v", rawState["time_range"])
+	if tr, ok := rawState["time_range"].(string); ok {
+		millis, err := fromRangeToMilliSeconds(tr)
+		if err != nil {
+			return rawState, err
+		}
+		rawState["time_range"] = millis / 1000
+	}
+
+	return rawState, nil
 }
 
 /*

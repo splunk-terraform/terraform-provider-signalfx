@@ -444,6 +444,15 @@ func timeChartResource() *schema.Resource {
 			},
 		},
 
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Type:    timeRangeV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: timeRangeStateUpgradeV0,
+				Version: 0,
+			},
+		},
+
 		Create: timechartCreate,
 		Read:   timechartRead,
 		Update: timechartUpdate,

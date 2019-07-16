@@ -8,6 +8,10 @@ BUG FIXES:
 
 * Bump [signalfx-go](https://github.com/signalfx/signalfx-go) dependency to [v1.1.0](https://github.com/signalfx/signalfx-go/blob/master/CHANGELOG.md#110-2019-07-15) which fixes a regression in creating "empty" dashboards with any new dashboard group. [#14](https://github.com/terraform-providers/terraform-provider-signalfx/issues/14)
 
+IMPROVEMENTS
+
+* provider - Resources that used `time_range` and still have strings in their state will now be upgraded instead of generating an error.
+
 ## 4.0.0 (July 08, 2019)
 
 NOTES:
