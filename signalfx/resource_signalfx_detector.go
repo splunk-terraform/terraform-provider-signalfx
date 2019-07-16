@@ -255,7 +255,8 @@ func getPayloadDetector(d *schema.ResourceData) (*detector.CreateUpdateDetectorR
 	}
 
 	if val, ok := d.GetOk("max_delay"); ok {
-		cudr.MaxDelay = int32(val.(int) * 1000)
+		maxDelay := int32(val.(int) * 1000)
+		cudr.MaxDelay = &maxDelay
 	}
 
 	cudr.VisualizationOptions = getVisualizationOptionsDetector(d)
@@ -286,16 +287,19 @@ func getVisualizationOptionsDetector(d *schema.ResourceData) *detector.Visualiza
 
 	if val, ok := d.GetOk("time_range"); ok {
 		tr := &detector.Time{}
-		tr.Range = int32(val.(int)) * 1000
+		r := int32(val.(int)) * 1000
+		tr.Range = &r
 		tr.Type = "relative"
 		viz.Time = tr
 	}
 	if val, ok := d.GetOk("start_time"); ok {
 		tr := &detector.Time{}
 		tr.Type = "absolute"
-		tr.Start = val.(int32) * 1000
+		start := val.(int32) * 1000
+		tr.Start = &start
 		if val, ok := d.GetOk("end_time"); ok {
-			tr.End = val.(int32) * 1000
+			end := val.(int32) * 1000
+			tr.End = &end
 		}
 		viz.Time = tr
 	}
@@ -500,8 +504,10 @@ func detectorAPIToTF(d *schema.ResourceData, det *detector.Detector) error {
 	}
 	// We divide by 1000 because the API uses millis, but this provider uses
 	// seconds
-	if err := d.Set("max_delay", det.MaxDelay/1000); err != nil {
-		return err
+	if det.MaxDelay != nil {
+		if err := d.Set("max_delay", *det.MaxDelay/1000); err != nil {
+			return err
+		}
 	}
 	if err := d.Set("teams", det.Teams); err != nil {
 		return err
@@ -521,8 +527,10 @@ func detectorAPIToTF(d *schema.ResourceData, det *detector.Detector) error {
 		tr := viz.Time
 		// We divide by 1000 because the API uses millis, but this provider uses
 		// seconds
-		if err := d.Set("time_range", tr.Range/1000); err != nil {
-			return err
+		if tr.Range != nil {
+			if err := d.Set("time_range", *tr.Range/1000); err != nil {
+				return err
+			}
 		}
 		if err := d.Set("start_time", tr.Start); err != nil {
 			return err

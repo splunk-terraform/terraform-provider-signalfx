@@ -11,17 +11,17 @@ package chart
 
 type Axes struct {
 	// A point on the Y axis at which the chart displays a horizontal line, indicating the max Y value of interest. Points with a Y value that exceeds the high water mark still appear.<br> **Notes:**   * SignalFx only uses this value for time series charts.   * Value must be less than or equal to `options.axes.max` and greater than     `options.axes.lowWaterMark` for the corresponding axis.
-	HighWatermark float32 `json:"highWatermark,omitempty"`
+	HighWatermark *float32 `json:"highWatermark,omitempty"`
 	// A label that's displayed beside the horizontal line indicating the high water mark.<br> **Notes:**   * SignalFx only uses this value for time series charts.   * If `options.axes.highWaterMark` isn't specified, this label is ignored.
 	HighWatermarkLabel string `json:"highWatermarkLabel,omitempty"`
 	// Label that's displayed for the Y axis of the chart. It appears to the left of axis values on the left axis and to the right of axis values on the right axis.<br> **Note:** SignalFx only uses this value for time series charts.
 	Label string `json:"label,omitempty"`
 	// A point on the Y axis at which the chart displays a horizontal line, indicating the minimum Y value of interest. Points with a Y value that is less than the low water mark still appear.<br> **Notes:**   * SignalFx only uses this value for time series charts.   * Value must be greater than or equal to `options.axes.min` and less than     `options.axes.highWaterMark` for the corresponding axis.
-	LowWatermark float32 `json:"lowWatermark,omitempty"`
+	LowWatermark *float32 `json:"lowWatermark,omitempty"`
 	// A label that's displayed beside the horizontal line indicating the low water mark.<br> **Notes:**   * SignalFx only uses this value for time series charts.   * If `options.axes.lowWaterMark` isn't specified, this label is ignored.
 	LowWatermarkLabel string `json:"lowWatermarkLabel,omitempty"`
 	// Specifies the largest data value to display on the chart. Overrides options.includeZero if the properties are set to incompatible values.<br> **Notes:**   * This value is only used if `options.type` is set to TimeSeriesChart.   * The value must be greater than the value of `options.axes.min` for the same `options.axes` element.
-	Max float32 `json:"max,omitempty"`
+	Max *float32 `json:"max,omitempty"`
 	// Specifies the smallest data value to display on the chart. Overrides options.includeZero if the properties are set to incompatible values.<br> **Notes:**   * This value is only used if `options.type` is set to TimeSeriesChart.   * The value must be less than the value of `options.axes.max` for the same `options.axes` element.\"
-	Min float32 `json:"min,omitempty"`
+	Min *float32 `json:"min,omitempty"`
 }

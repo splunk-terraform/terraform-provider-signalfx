@@ -208,15 +208,18 @@ func getSingleValueChartOptions(d *schema.ResourceData) *chart.Options {
 		if programOptions == nil {
 			programOptions = &chart.GeneralOptions{}
 		}
-		programOptions.MaxDelay = int32(val.(int) * 1000)
+		md := int32(val.(int) * 1000)
+		programOptions.MaxDelay = &md
 	}
 	options.ProgramOptions = programOptions
 
 	if refreshInterval, ok := d.GetOk("refresh_interval"); ok {
-		options.RefreshInterval = int32(refreshInterval.(int) * 1000)
+		ri := int32(refreshInterval.(int) * 1000)
+		options.RefreshInterval = &ri
 	}
 	if maxPrecision, ok := d.GetOk("max_precision"); ok {
-		options.MaximumPrecision = int32(maxPrecision.(int))
+		mp := int32(maxPrecision.(int))
+		options.MaximumPrecision = &mp
 	}
 
 	if val, ok := d.GetOk("secondary_visualization"); ok {
@@ -280,8 +283,10 @@ func singlevaluechartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 	if err := d.Set("color_by", options.ColorBy); err != nil {
 		return err
 	}
-	if err := d.Set("refresh_interval", options.RefreshInterval/1000); err != nil {
-		return err
+	if options.RefreshInterval != nil {
+		if err := d.Set("refresh_interval", *options.RefreshInterval/1000); err != nil {
+			return err
+		}
 	}
 	if err := d.Set("max_precision", options.MaximumPrecision); err != nil {
 		return err
@@ -320,11 +325,13 @@ func singlevaluechartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 			} else {
 				scale["lte"] = *cs.Lte
 			}
-			color, err := getNameFromChartColorsByIndex(int(cs.PaletteIndex))
-			if err != nil {
-				return err
+			if cs.PaletteIndex != nil {
+				color, err := getNameFromChartColorsByIndex(int(*cs.PaletteIndex))
+				if err != nil {
+					return err
+				}
+				scale["color"] = color
 			}
-			scale["color"] = color
 			scales[i] = scale
 		}
 		if err := d.Set("color_scale", scales); err != nil {

@@ -36,7 +36,7 @@ type Dashboard struct {
 	// Flag that controls modification of the dashboard. If `true`, users can't modify the dashboard. If `false`, users that have authorization to access the dashboard can edit it.
 	Locked bool `json:"locked,omitempty"`
 	// Milliseconds to wait for late-arriving datapoints before rejecting them for inclusion in the charts in this dashboard. This value *overrides* but doesn't *change* the max delay setting for individua charts in the dashboard. If you omit this property, the system uses individual chart settings.<br> For individual charts, you can force the system to calculate a sensible value by removing the chart's `maxDelayOverride` property. To force the system to do this for all charts in a dashboard, set `CreateDashboardBody.maxDelayOverride` to 0.
-	MaxDelayOverride int32 `json:"maxDelayOverride,omitempty"`
+	MaxDelayOverride *int32 `json:"maxDelayOverride,omitempty"`
 	// A human-readable label for the dashboard. The web UI displays this label in the dashboard's group.
 	Name string `json:"name,omitempty"`
 	// Array of event overlays that are currently active for the charts in this dashboard. For each overlay, the system displays the active events that match the overlay search term and optional feature, using the the overlay's color and event line settings. To set options for inactive overlays so you can apply them at a later time, use the `eventOverlays` property instead.

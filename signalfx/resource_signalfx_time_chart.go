@@ -409,8 +409,9 @@ func timeChartResource() *schema.Resource {
 						"axis": &schema.Schema{
 							Type:         schema.TypeString,
 							Optional:     true,
+							Default:      "left",
 							ValidateFunc: validateAxisTimeChart,
-							Description:  "The Y-axis associated with values for this plot. Must be either \"right\" or \"left\"",
+							Description:  "The Y-axis associated with values for this plot. Must be either \"right\" or \"left\". Defaults to \"left\".",
 						},
 						"plot_type": &schema.Schema{
 							Type:         schema.TypeString,
@@ -528,7 +529,8 @@ func getPerSignalVizOptions(d *schema.ResourceData) []*chart.PublishLabelOptions
 		}
 		if val, ok := v["color"].(string); ok {
 			if elem, ok := PaletteColors[val]; ok {
-				item.PaletteIndex = int32(elem)
+				i := int32(elem)
+				item.PaletteIndex = &i
 			}
 		}
 		if val, ok := v["plot_type"].(string); ok && val != "" {
@@ -583,7 +585,8 @@ func getSingleAxisOptions(axisOpt map[string]interface{}) *chart.Axes {
 			if axis == nil {
 				axis = &chart.Axes{}
 			}
-			axis.Min = float32(val.(float64))
+			min := float32(val.(float64))
+			axis.Min = &min
 		}
 	}
 	if val, ok := axisOpt["max_value"]; ok {
@@ -591,7 +594,8 @@ func getSingleAxisOptions(axisOpt map[string]interface{}) *chart.Axes {
 			if axis == nil {
 				axis = &chart.Axes{}
 			}
-			axis.Max = float32(val.(float64))
+			max := float32(val.(float64))
+			axis.Max = &max
 		}
 	}
 	if val, ok := axisOpt["label"]; ok {
@@ -608,7 +612,8 @@ func getSingleAxisOptions(axisOpt map[string]interface{}) *chart.Axes {
 			if axis == nil {
 				axis = &chart.Axes{}
 			}
-			axis.HighWatermark = float32(val.(float64))
+			hwm := float32(val.(float64))
+			axis.HighWatermark = &hwm
 		}
 	}
 	if val, ok := axisOpt["high_watermark_label"]; ok {
@@ -625,7 +630,8 @@ func getSingleAxisOptions(axisOpt map[string]interface{}) *chart.Axes {
 			if axis == nil {
 				axis = &chart.Axes{}
 			}
-			axis.LowWatermark = float32(val.(float64))
+			lwm := float32(val.(float64))
+			axis.LowWatermark = &lwm
 		}
 	}
 	if val, ok := axisOpt["low_watermark_label"]; ok {
@@ -657,7 +663,8 @@ func getTimeChartOptions(d *schema.ResourceData) *chart.Options {
 	}
 
 	if val, ok := d.GetOk("axes_precision"); ok {
-		options.AxisPrecision = int32(val.(int))
+		ap := int32(val.(int))
+		options.AxisPrecision = &ap
 	}
 	if val, ok := d.GetOk("axes_include_zero"); ok {
 		options.IncludeZero = val.(bool)
@@ -668,10 +675,12 @@ func getTimeChartOptions(d *schema.ResourceData) *chart.Options {
 		programOptions = &chart.GeneralOptions{}
 	}
 	if val, ok := d.GetOk("minimum_resolution"); ok {
-		programOptions.MinimumResolution = int32(val.(int) * 1000)
+		mr := int32(val.(int) * 1000)
+		programOptions.MinimumResolution = &mr
 	}
 	if val, ok := d.GetOk("max_delay"); ok {
-		programOptions.MaxDelay = int32(val.(int) * 1000)
+		md := int32(val.(int) * 1000)
+		programOptions.MaxDelay = &md
 	}
 	if val, ok := d.GetOk("timezone"); ok {
 		programOptions.Timezone = val.(string)
@@ -683,18 +692,21 @@ func getTimeChartOptions(d *schema.ResourceData) *chart.Options {
 
 	var timeOptions *chart.TimeDisplayOptions
 	if val, ok := d.GetOk("time_range"); ok {
+		r := int64(val.(int) * 1000)
 		timeOptions = &chart.TimeDisplayOptions{
-			Range: int64(val.(int) * 1000),
+			Range: &r,
 			Type:  "relative",
 		}
 	}
 	if val, ok := d.GetOk("start_time"); ok {
+		start := int64(val.(int) * 1000)
 		timeOptions = &chart.TimeDisplayOptions{
-			Start: int64(val.(int) * 1000),
+			Start: &start,
 			Type:  "absolute",
 		}
 		if val, ok := d.GetOk("end_time"); ok {
-			timeOptions.End = int64(val.(int) * 1000)
+			end := int64(val.(int) * 1000)
+			timeOptions.End = &end
 		}
 	}
 	options.Time = timeOptions
@@ -713,8 +725,9 @@ func getTimeChartOptions(d *schema.ResourceData) *chart.Options {
 				hOptions := histogramOptions.(*schema.Set).List()[0].(map[string]interface{})
 				if colorTheme, ok := hOptions["color_theme"].(string); ok {
 					if elem, ok := FullPaletteColors[colorTheme]; ok {
+						i := int32(elem)
 						options.HistogramChartOptions = &chart.HistogramChartOptions{
-							ColorThemeIndex: int32(elem),
+							ColorThemeIndex: &i,
 						}
 					}
 				}
@@ -814,15 +827,17 @@ func timechartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 		}
 	}
 	if options.HistogramChartOptions != nil {
-		color, err := getNameFromFullPaletteColorsByIndex(int(options.HistogramChartOptions.ColorThemeIndex))
-		if err != nil {
-			return err
-		}
-		histOptions := map[string]interface{}{
-			"color_theme": color,
-		}
-		if err := d.Set("histogram_options", []interface{}{histOptions}); err != nil {
-			return err
+		if options.HistogramChartOptions.ColorThemeIndex != nil {
+			color, err := getNameFromFullPaletteColorsByIndex(int(*options.HistogramChartOptions.ColorThemeIndex))
+			if err != nil {
+				return err
+			}
+			histOptions := map[string]interface{}{
+				"color_theme": color,
+			}
+			if err := d.Set("histogram_options", []interface{}{histOptions}); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -849,11 +864,15 @@ func timechartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 	}
 
 	if options.ProgramOptions != nil {
-		if err := d.Set("minimum_resolution", options.ProgramOptions.MinimumResolution/1000); err != nil {
-			return err
+		if options.ProgramOptions.MinimumResolution != nil {
+			if err := d.Set("minimum_resolution", *options.ProgramOptions.MinimumResolution/1000); err != nil {
+				return err
+			}
 		}
-		if err := d.Set("max_delay", options.ProgramOptions.MaxDelay/1000); err != nil {
-			return err
+		if options.ProgramOptions.MaxDelay != nil {
+			if err := d.Set("max_delay", *options.ProgramOptions.MaxDelay/1000); err != nil {
+				return err
+			}
 		}
 		if err := d.Set("disable_sampling", options.ProgramOptions.DisableSampling); err != nil {
 			return err
@@ -865,15 +884,21 @@ func timechartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 
 	if options.Time != nil {
 		if options.Time.Type == "relative" {
-			if err := d.Set("time_range", options.Time.Range/1000); err != nil {
-				return err
+			if options.Time.Range != nil {
+				if err := d.Set("time_range", *options.Time.Range/1000); err != nil {
+					return err
+				}
 			}
 		} else {
-			if err := d.Set("start_time", options.Time.Start/1000); err != nil {
-				return err
+			if options.Time.Start != nil {
+				if err := d.Set("start_time", *options.Time.Start/1000); err != nil {
+					return err
+				}
 			}
-			if err := d.Set("end_time", options.Time.End/1000); err != nil {
-				return err
+			if options.Time.End != nil {
+				if err := d.Set("end_time", *options.Time.End/1000); err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -932,9 +957,15 @@ func axisToMap(axis *chart.Axes) []*map[string]interface{} {
 }
 
 func publishLabelOptionsToMap(options *chart.PublishLabelOptions) (map[string]interface{}, error) {
-	color, err := getNameFromPaletteColorsByIndex(int(options.PaletteIndex))
-	if err != nil {
-		return map[string]interface{}{}, err
+	color := ""
+	if options.PaletteIndex != nil {
+		// We might not have a color, so tread lightly
+		c, err := getNameFromPaletteColorsByIndex(int(*options.PaletteIndex))
+		if err != nil {
+			return map[string]interface{}{}, err
+		}
+		// Ok, we can set the color now
+		color = c
 	}
 	axis := "left"
 	if options.YAxis == 1 {

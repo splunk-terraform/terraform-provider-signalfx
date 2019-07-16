@@ -68,18 +68,21 @@ func eventFeedChartResource() *schema.Resource {
 func getPayloadEventFeedChart(d *schema.ResourceData) *chart.CreateUpdateChartRequest {
 	var timeOptions *chart.TimeDisplayOptions
 	if val, ok := d.GetOk("time_range"); ok {
+		r := int64(val.(int) * 1000)
 		timeOptions = &chart.TimeDisplayOptions{
-			Range: int64(val.(int) * 1000),
+			Range: &r,
 			Type:  "relative",
 		}
 	}
 	if val, ok := d.GetOk("start_time"); ok {
+		start := int64(val.(int) * 1000)
 		timeOptions = &chart.TimeDisplayOptions{
-			Start: int64(val.(int) * 1000),
+			Start: &start,
 			Type:  "absolute",
 		}
 		if val, ok := d.GetOk("end_time"); ok {
-			timeOptions.End = int64(val.(int) * 1000)
+			end := int64(val.(int) * 1000)
+			timeOptions.End = &end
 		}
 	}
 

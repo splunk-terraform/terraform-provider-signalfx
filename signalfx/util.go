@@ -229,14 +229,17 @@ func getColorScaleOptionsFromSlice(colorScale []interface{}) []*chart.SecondaryV
 			lte := float32(scale["lte"].(float64))
 			options.Lte = &lte
 		}
-		paletteIndex := 0
+		var paletteIndex *int32
 		for index, thing := range ChartColorsSlice {
 			if scale["color"] == thing.name {
-				paletteIndex = index
+				i := int32(index)
+				paletteIndex = &i
 				break
 			}
 		}
-		options.PaletteIndex = int32(paletteIndex)
+		if paletteIndex != nil {
+			options.PaletteIndex = paletteIndex
+		}
 		item[i] = options
 	}
 	return item
