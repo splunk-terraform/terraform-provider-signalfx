@@ -217,7 +217,8 @@ func getHeatmapOptionsChart(d *schema.ResourceData) *chart.Options {
 		options.UnitPrefix = val.(string)
 	}
 	if refreshInterval, ok := d.GetOk("refresh_interval"); ok {
-		options.RefreshInterval = int32(refreshInterval.(int) * 1000)
+		ri := int32(refreshInterval.(int) * 1000)
+		options.RefreshInterval = &ri
 	}
 	if timestampHidden, ok := d.GetOk("hide_timestamp"); ok {
 		options.TimestampHidden = timestampHidden.(bool)
@@ -237,13 +238,15 @@ func getHeatmapOptionsChart(d *schema.ResourceData) *chart.Options {
 		if programOptions == nil {
 			programOptions = &chart.GeneralOptions{}
 		}
-		programOptions.MinimumResolution = int32(val.(int) * 1000)
+		mr := int32(val.(int) * 1000)
+		programOptions.MinimumResolution = &mr
 	}
 	if val, ok := d.GetOk("max_delay"); ok {
 		if programOptions == nil {
 			programOptions = &chart.GeneralOptions{}
 		}
-		programOptions.MaxDelay = int32(val.(int) * 1000)
+		md := int32(val.(int) * 1000)
+		programOptions.MaxDelay = &md
 	}
 	if val, ok := d.GetOk("disable_sampling"); ok {
 		if programOptions == nil {
@@ -314,8 +317,10 @@ func heatmapchartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 	if err := d.Set("unit_prefix", options.UnitPrefix); err != nil {
 		return err
 	}
-	if err := d.Set("refresh_interval", options.RefreshInterval/1000); err != nil {
-		return err
+	if options.RefreshInterval != nil {
+		if err := d.Set("refresh_interval", *options.RefreshInterval/1000); err != nil {
+			return err
+		}
 	}
 	if err := d.Set("group_by", options.GroupBy); err != nil {
 		return err
@@ -347,11 +352,15 @@ func heatmapchartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 	}
 
 	if options.ProgramOptions != nil {
-		if err := d.Set("minimum_resolution", options.ProgramOptions.MinimumResolution/1000); err != nil {
-			return err
+		if options.ProgramOptions.MinimumResolution != nil {
+			if err := d.Set("minimum_resolution", *options.ProgramOptions.MinimumResolution/1000); err != nil {
+				return err
+			}
 		}
-		if err := d.Set("max_delay", options.ProgramOptions.MaxDelay/1000); err != nil {
-			return err
+		if options.ProgramOptions.MaxDelay != nil {
+			if err := d.Set("max_delay", *options.ProgramOptions.MaxDelay/1000); err != nil {
+				return err
+			}
 		}
 		if err := d.Set("disable_sampling", options.ProgramOptions.DisableSampling); err != nil {
 			return err

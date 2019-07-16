@@ -11,8 +11,8 @@ package dashboard_group
 
 type CloneDashboardGroupRequest struct {
 	// Updated description of the cloned dashboard. If you omit this property, the system uses the description of the source dashboard
-	Description string `json:"description,omitempty"`
-	Filters Filters `json:"filters,omitempty"`
+	Description string   `json:"description,omitempty"`
+	Filters     *Filters `json:"filters,omitempty"`
 	// A human-readable label for the dashboard. The web UI displays this label in the dashboard's group.
 	Name string `json:"name,omitempty"`
 	// The ID of the dashboard to clone into the dashboard group whose ID is specified in the `{id}` path parameter

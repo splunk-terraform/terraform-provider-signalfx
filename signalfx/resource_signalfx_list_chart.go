@@ -254,7 +254,8 @@ func getListChartOptions(d *schema.ResourceData) *chart.Options {
 		if programOptions == nil {
 			programOptions = &chart.GeneralOptions{}
 		}
-		programOptions.MaxDelay = int32(val.(int) * 1000)
+		md := int32(val.(int) * 1000)
+		programOptions.MaxDelay = &md
 	}
 	if val, ok := d.GetOk("disable_sampling"); ok {
 		if programOptions == nil {
@@ -268,10 +269,12 @@ func getListChartOptions(d *schema.ResourceData) *chart.Options {
 		options.SortBy = sortBy.(string)
 	}
 	if refreshInterval, ok := d.GetOk("refresh_interval"); ok {
-		options.RefreshInterval = int32(refreshInterval.(int) * 1000)
+		ri := int32(refreshInterval.(int) * 1000)
+		options.RefreshInterval = &ri
 	}
 	if maxPrecision, ok := d.GetOk("max_precision"); ok {
-		options.MaximumPrecision = int32(maxPrecision.(int))
+		mp := int32(maxPrecision.(int))
+		options.MaximumPrecision = &mp
 	}
 	if val, ok := d.GetOk("secondary_visualization"); ok {
 		secondaryVisualization := val.(string)
@@ -328,8 +331,10 @@ func listchartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 	if err := d.Set("color_by", options.ColorBy); err != nil {
 		return err
 	}
-	if err := d.Set("refresh_interval", options.RefreshInterval/1000); err != nil {
-		return err
+	if options.RefreshInterval != nil {
+		if err := d.Set("refresh_interval", *options.RefreshInterval/1000); err != nil {
+			return err
+		}
 	}
 	if err := d.Set("max_precision", options.MaximumPrecision); err != nil {
 		return err
@@ -355,8 +360,10 @@ func listchartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 	}
 
 	if options.ProgramOptions != nil {
-		if err := d.Set("max_delay", options.ProgramOptions.MaxDelay/1000); err != nil {
-			return err
+		if options.ProgramOptions.MaxDelay != nil {
+			if err := d.Set("max_delay", *options.ProgramOptions.MaxDelay/1000); err != nil {
+				return err
+			}
 		}
 		if err := d.Set("disable_sampling", options.ProgramOptions.DisableSampling); err != nil {
 			return err

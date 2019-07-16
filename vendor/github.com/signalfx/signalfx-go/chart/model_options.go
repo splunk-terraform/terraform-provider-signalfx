@@ -14,7 +14,7 @@ type Options struct {
 	// *These options are only used for time series charts.*<br> Axis options for the left and right side of a time series chart. The object in the first element specifies options for the left side of the chart, and the object in the second element corresponds to the right side of the chart. Other elements are ignored.
 	Axes []*Axes `json:"axes,omitempty"`
 	// Specifies the digits SignalFx displays for values plotted on the chart. Choose a value that is sensible for the data; that is, ensure that the variations in the data are discernible using the specified precision. For example, if the data values usually fluctuate between 100000 and 100010, using a precision of 3 would result in a value of 100000 for every data point. Setting the precision to 6 would distinguish between 100001 and 100002.<br>**Note:** SignalFx only uses this value for time series charts.
-	AxisPrecision int32 `json:"axisPrecision,omitempty"`
+	AxisPrecision *int32 `json:"axisPrecision,omitempty"`
 	// Specifies how to apply a color scheme to the values in the chart. If you want to apply color in a text chart, use HTML within the `markdown` property. The values you can use depend on the type of chart you specify in `options.type` -- <br>   * \"Text\" -- The property is ignored.   * \"Heatmap\" -- The `Range` and `Scale` enumerated types are allowed; the default is `Range`.   * \"List\" -- The `Dimension`, `Metric`, and `Scale` enumerated types are allowed; the default is `Metric`.   * \"SingleValue\" -- The `Dimension`, `Metric`, and `Scale` enumerated types are allowed; the default is `Metric`.   * \"TimeSeriesChart\" -- The `Dimension` and `Metric` enumerated types are allowed; the default is `Dimension`.
 	ColorBy    string                    `json:"colorBy,omitempty"`
 	ColorRange *HeatmapColorRangeOptions `json:"colorRange,omitempty"`
@@ -34,13 +34,13 @@ type Options struct {
 	// The contents of a text chart, using GitHub-Flavored Markdown (**GFM**) or HTML.<br> **Note** Only available if `options.type` is set to `Text`.
 	Markdown string `json:"markdown,omitempty"`
 	// Indicates the number of significant digits to the right of the decimal point to use for plotted datapoints. The integer part of the datapoint is used, regardless of the specified precision. Choose a value so that variations in the data are visible for the specified precision. For example, if data values are in the range 0.001 to 0.01, set `maximumPrecision` to 4. If you don't specify a value, SignalFx adjusts the precision to fit the available display area.<br> **Note** Only available if `options.type` is `List` or `SingleValue`.
-	MaximumPrecision     int32           `json:"maximumPrecision,omitempty"`
+	MaximumPrecision     *int32          `json:"maximumPrecision,omitempty"`
 	OnChartLegendOptions *LegendOptions  `json:"onChartLegendOptions,omitempty"`
 	ProgramOptions       *GeneralOptions `json:"programOptions,omitempty"`
 	// An array of objects that contain general options for a specific SignalFlow statement applied to the chart. The order of elements in the list is retained, but has no effect. SignalFx uses label values to  map options to specific `publish() statements` in the SignalFlow statement. Heatmaps do not support full `publishLabelOptions` elements; the description of each property shows its supported chart types.<br> **Note** Available if `options.type` is one of `TimeSeriesChart`, `List`, `SingleValue`, or `Heatmap`.
 	PublishLabelOptions []*PublishLabelOptions `json:"publishLabelOptions,omitempty"`
 	// Specifies how often, in milliseconds, SignalFx should refresh the chart with data. If SignalFx can detect the resolution of the data, the default is 10,000 (10 seconds); otherwise, the default is 3,600,000 (1 hour).<br> **Note** This option is only available if `options.type` is `List` or `SingleValue`.
-	RefreshInterval int32 `json:"refreshInterval,omitempty"`
+	RefreshInterval *int32 `json:"refreshInterval,omitempty"`
 	// Specifies the secondary visualization to use with `List` or `SingleValue` charts. See the [Charts Overview](https://developers.signalfx.com/reference#charts-overview-1) section for examples of the available visualizations.<br> **Note** This option is only available if `option.type` is `List` or `SingleValue`.
 	SecondaryVisualization string `json:"secondaryVisualization,omitempty"`
 	// If `true`, SignalFx displays a vertical line on the chart at the point that an event occurs.<br> **Note** This option is only available if `options.type` is `TimeSeriesChart`.

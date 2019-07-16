@@ -584,7 +584,8 @@ func getDashboardEventOverlays(overlays []interface{}) []*dashboard.ChartEventOv
 
 		if val, ok := overlay["color"].(string); ok {
 			if elem, ok := PaletteColors[val]; ok {
-				item.EventColorIndex = int32(elem)
+				i := int32(elem)
+				item.EventColorIndex = &i
 			}
 		}
 
@@ -859,11 +860,14 @@ func dashboardAPIToTF(d *schema.ResourceData, dash *dashboard.Dashboard) error {
 			evOverlay := make(map[string]interface{})
 			evOverlay["line"] = v.EventLine
 			evOverlay["label"] = v.Label
-			colorName, err := getNameFromPaletteColorsByIndex(int(v.EventColorIndex))
-			if err != nil {
-				return fmt.Errorf("Unknown event overlay color: %d", v.EventColorIndex)
+
+			if v.EventColorIndex != nil {
+				colorName, err := getNameFromPaletteColorsByIndex(int(*v.EventColorIndex))
+				if err != nil {
+					return fmt.Errorf("Unknown event overlay color: %d", v.EventColorIndex)
+				}
+				evOverlay["color"] = colorName
 			}
-			evOverlay["color"] = colorName
 			evOverlay["signal"] = v.EventSignal.EventSearchText
 			evOverlay["type"] = v.EventSignal.EventType
 			evOverlays[i] = evOverlay

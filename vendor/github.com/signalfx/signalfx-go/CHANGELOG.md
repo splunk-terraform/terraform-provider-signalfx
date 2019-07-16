@@ -1,4 +1,4 @@
-# 1.2.0, In Progress
+# 1.3.0, Forgot the date
 
 ## Added
 
@@ -7,6 +7,13 @@
 ## Bugfixes
 
 ## Removed
+
+
+# 1.2.0, 2019-07-16
+
+## Updated
+
+* Many numeric properties have been adjusted to pointers to play better with Go's JSON (un)marshaling.
 
 # 1.1.0, 2019-07-15
 

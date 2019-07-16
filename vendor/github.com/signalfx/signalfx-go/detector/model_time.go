@@ -12,11 +12,11 @@ package detector
 // Options for the time displayed in the detector visualization.
 type Time struct {
 	// The timestamp of the last time to display in the visualization specified in milliseconds since midnight UTC on January 1, 1970
-	End int32 `json:"end,omitempty"`
+	End *int32 `json:"end,omitempty"`
 	// The number of milliseconds to display in the chart. The range used is a rolling range with the current time at the right border of the chart display. Use 0 to indicate using the default behavior; this corresponds to -15m for most metrics and -1h for AWS metrics listed here, GCP metrics listed here, and Azure metrics listed here.
-	Range int32 `json:"range,omitempty"`
+	Range *int32 `json:"range,omitempty"`
 	// The timestamp of the first time to display in the visualization specified in milliseconds since midnight UTC on January 1, 1970
-	Start int32 `json:"start,omitempty"`
+	Start *int32 `json:"start,omitempty"`
 	// Indicates whether to use an explicit time range or to always show a relative time of the last N milliseconds. If not specified, relative will be used.
 	Type string `json:"type,omitempty"`
 }

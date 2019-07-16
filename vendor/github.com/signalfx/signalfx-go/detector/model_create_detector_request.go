@@ -16,7 +16,7 @@ type CreateUpdateDetectorRequest struct {
 	// Description of the detector. It appears in the Detector window displayed from the web UI Actions menu
 	Description string `json:"description,omitempty"`
 	// The number of milliseconds to wait for late datapoints before rejecting them for inclusion in the detector analysis. The default is to detect and apply a sensible value automatically (this option can also be explicitly chosen by setting the property to 0).
-	MaxDelay int32 `json:"maxDelay,omitempty"`
+	MaxDelay *int32 `json:"maxDelay,omitempty"`
 	// The displayed name of the detector in the dashboard
 	Name string `json:"name,omitempty"`
 	// The SignalFlow program that populates the detector. The program must include one or more detect functions and each detect function must be modified by a publish stream method with a label that's unique across the program. If you wish to support custom notification messages that include input data you must use variables to assign the detect conditions . If more than one line of SignalFlow is included, each line should be separated by either semicolons (\";\") or new line characters (\"\\n\"). See the [Detectors Overview](https://developers.signalfx.com/v2/reference.html#detectors-overview) for more information.
