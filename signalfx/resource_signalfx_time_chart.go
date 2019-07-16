@@ -149,7 +149,7 @@ func timeChartResource() *schema.Resource {
 			"time_range": &schema.Schema{
 				Type:          schema.TypeInt,
 				Optional:      true,
-				Description:   "Seconds to display in the visualization. This is a rolling range from the current time. Example: 8600 = `-1h`",
+				Description:   "Seconds to display in the visualization. This is a rolling range from the current time. Example: 3600 = `-1h`",
 				ConflictsWith: []string{"start_time", "end_time"},
 			},
 			"start_time": &schema.Schema{
@@ -441,6 +441,15 @@ func timeChartResource() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "URL of the chart",
+			},
+		},
+
+		SchemaVersion: 1,
+		StateUpgraders: []schema.StateUpgrader{
+			{
+				Type:    timeRangeV0().CoreConfigSchema().ImpliedType(),
+				Upgrade: timeRangeStateUpgradeV0,
+				Version: 0,
 			},
 		},
 

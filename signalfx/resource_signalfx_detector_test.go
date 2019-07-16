@@ -3,6 +3,7 @@ package signalfx
 import (
 	"fmt"
 	"os"
+	"reflect"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/hashcode"
@@ -396,4 +397,28 @@ func testAccDetectorDestroy(s *terraform.State) error {
 	}
 
 	return nil
+}
+
+func testTimeRangeStateDataV0() map[string]interface{} {
+	return map[string]interface{}{
+		"time_range": "-1h",
+	}
+}
+
+func testTimeRangeStateDataV1() map[string]interface{} {
+	return map[string]interface{}{
+		"time_range": 3600,
+	}
+}
+
+func TestTimeRangeStateUpgradeV0(t *testing.T) {
+	expected := testTimeRangeStateDataV1()
+	actual, err := timeRangeStateUpgradeV0(testTimeRangeStateDataV0(), nil)
+	if err != nil {
+		t.Fatalf("error migrating state: %s", err)
+	}
+
+	if !reflect.DeepEqual(expected, actual) {
+		t.Fatalf("\n\nexpected:\n\n%#v\n\ngot:\n\n%#v\n\n", expected, actual)
+	}
 }
