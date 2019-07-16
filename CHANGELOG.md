@@ -7,6 +7,7 @@ FEATURES:
 BUG FIXES:
 
 * Bump [signalfx-go](https://github.com/signalfx/signalfx-go) dependency to [v1.1.0](https://github.com/signalfx/signalfx-go/blob/master/CHANGELOG.md#110-2019-07-15) which fixes a regression in creating "empty" dashboards with any new dashboard group. [#14](https://github.com/terraform-providers/terraform-provider-signalfx/issues/14)
+* resource/dashboard: Fix a crash when using `grid` with a new dashboard. [#20](https://github.com/terraform-providers/terraform-provider-signalfx/issues/20)
 
 IMPROVEMENTS
 

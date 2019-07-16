@@ -509,7 +509,7 @@ func getDashboardGrids(d *schema.ResourceData) []*dashboard.DashboardChart {
 		for _, chartID := range grid["chart_ids"].([]interface{}) {
 			if currentColumn+width > 12 {
 				currentRow++
-				currentColumn = grid["start_column"].(int)
+				currentColumn = 0
 			}
 
 			item := &dashboard.DashboardChart{
