@@ -564,83 +564,43 @@ func getAxesOptions(d *schema.ResourceData) []*chart.Axes {
 		tfRightAxisOpts := tfAxisOpts.(*schema.Set).List()[0]
 		tfOpt := tfRightAxisOpts.(map[string]interface{})
 		axesListopts[1] = getSingleAxisOptions(tfOpt)
-	} else {
-		axesListopts[1] = &chart.Axes{}
 	}
 	if tfAxisOpts, ok := d.GetOk("axis_left"); ok {
 		tfLeftAxisOpts := tfAxisOpts.(*schema.Set).List()[0]
 		tfOpt := tfLeftAxisOpts.(map[string]interface{})
 		axesListopts[0] = getSingleAxisOptions(tfOpt)
-	} else {
-		axesListopts[0] = &chart.Axes{}
 	}
 	return axesListopts
 }
 
 func getSingleAxisOptions(axisOpt map[string]interface{}) *chart.Axes {
-	var axis *chart.Axes
+	axis := &chart.Axes{}
 
 	if val, ok := axisOpt["min_value"]; ok {
-		if val.(float64) != -math.MaxFloat64 {
-			if axis == nil {
-				axis = &chart.Axes{}
-			}
-			min := float32(val.(float64))
-			axis.Min = &min
-		}
+		axis.Min = getValueUsingMaxFloatAsDefault(val.(float64))
 	}
 	if val, ok := axisOpt["max_value"]; ok {
-		if val.(float64) != math.MaxFloat64 {
-			if axis == nil {
-				axis = &chart.Axes{}
-			}
-			max := float32(val.(float64))
-			axis.Max = &max
-		}
+		axis.Max = getValueUsingMaxFloatAsDefault(val.(float64))
 	}
 	if val, ok := axisOpt["label"]; ok {
-		if axis == nil {
-			axis = &chart.Axes{}
-		}
 		axis.Label = val.(string)
 	}
 	if val, ok := axisOpt["high_watermark"]; ok {
-		if axis == nil {
-			axis = &chart.Axes{}
-		}
-		if val.(float64) != math.MaxFloat64 {
-			if axis == nil {
-				axis = &chart.Axes{}
-			}
-			hwm := float32(val.(float64))
-			axis.HighWatermark = &hwm
-		}
+		axis.HighWatermark = getValueUsingMaxFloatAsDefault(val.(float64))
 	}
 	if val, ok := axisOpt["high_watermark_label"]; ok {
-		if axis == nil {
-			axis = &chart.Axes{}
-		}
 		axis.HighWatermarkLabel = val.(string)
 	}
 	if val, ok := axisOpt["low_watermark"]; ok {
-		if axis == nil {
-			axis = &chart.Axes{}
-		}
-		if val.(float64) != -math.MaxFloat64 {
-			if axis == nil {
-				axis = &chart.Axes{}
-			}
-			lwm := float32(val.(float64))
-			axis.LowWatermark = &lwm
-		}
+		axis.LowWatermark = getValueUsingMaxFloatAsDefault(val.(float64))
 	}
 	if val, ok := axisOpt["low_watermark_label"]; ok {
-		if axis == nil {
-			axis = &chart.Axes{}
-		}
 		axis.LowWatermarkLabel = val.(string)
 	}
-
+	if *axis == (chart.Axes{}) {
+		// We set nothing, so return a nil
+		return nil
+	}
 	return axis
 }
 
@@ -941,15 +901,34 @@ func timechartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 
 func axisToMap(axis *chart.Axes) []*map[string]interface{} {
 	if axis != nil {
+
+		// We have to deal with a few defaults
+		hwm := math.MaxFloat64
+		if axis.HighWatermark != nil {
+			hwm = float64(*axis.HighWatermark)
+		}
+		lwm := math.MaxFloat64
+		if axis.LowWatermark != nil {
+			lwm = float64(*axis.LowWatermark)
+		}
+		max := math.MaxFloat64
+		if axis.Max != nil {
+			max = float64(*axis.Max)
+		}
+		min := math.MaxFloat64
+		if axis.Min != nil {
+			min = float64(*axis.Min)
+		}
+
 		return []*map[string]interface{}{
 			&map[string]interface{}{
-				"high_watermark":       axis.HighWatermark,
+				"high_watermark":       hwm,
 				"high_watermark_label": axis.HighWatermarkLabel,
 				"label":                axis.Label,
-				"low_watermark":        axis.LowWatermark,
+				"low_watermark":        lwm,
 				"low_watermark_label":  axis.LowWatermarkLabel,
-				"max_value":            axis.Max,
-				"min_value":            axis.Min,
+				"max_value":            max,
+				"min_value":            min,
 			},
 		}
 	}

@@ -243,7 +243,7 @@ func singlevaluechartCreate(d *schema.ResourceData, meta interface{}) error {
 	payload := getPayloadSingleValueChart(d)
 
 	debugOutput, _ := json.Marshal(payload)
-	log.Printf("[DEBUG] SignalFx: Create List Chart Payload: %s", string(debugOutput))
+	log.Printf("[DEBUG] SignalFx: Create Single Value Chart Payload: %s", string(debugOutput))
 
 	chart, err := config.Client.CreateChart(payload)
 	if err != nil {
