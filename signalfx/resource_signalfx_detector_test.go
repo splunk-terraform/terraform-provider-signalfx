@@ -21,12 +21,11 @@ func TestNotifyStringFromAPI(t *testing.T) {
 			"email": "foo@example.com",
 		},
 		{
-			"type":           "Opsgenie",
-			"credentialId":   "XXX",
-			"credentialName": "YYY",
-			"responderName":  "Foo",
-			"responderId":    "ABC123",
-			"responderType":  "Team",
+			"type":          "Opsgenie",
+			"credentialId":  "XXX",
+			"responderName": "Foo",
+			"responderId":   "ABC123",
+			"responderType": "Team",
 		},
 		{
 			"type":         "PagerDuty",
@@ -76,7 +75,7 @@ func TestNotifyStringFromAPI(t *testing.T) {
 
 	expected := []string{
 		"Email,foo@example.com",
-		"Opsgenie,XXX,YYY,Foo,ABC123,Team",
+		"Opsgenie,XXX,Foo,ABC123,Team",
 		"PagerDuty,XXX",
 		"Slack,XXX,#foobar",
 		"Team,ABC123",
@@ -101,7 +100,7 @@ func TestGetNotifications(t *testing.T) {
 		"Email,test@yelp.com",
 		"PagerDuty,credId",
 		"Webhook,test,https://foo.bar.com?user=test&action=alert",
-		"Opsgenie,credId,credName,respName,respId,respType",
+		"Opsgenie,credId,respName,respId,respType",
 		"Slack,credId,#channel",
 		"Team,teamId",
 		"TeamEmail,teamId",
@@ -127,12 +126,11 @@ func TestGetNotifications(t *testing.T) {
 			"url":    "https://foo.bar.com?user=test&action=alert",
 		},
 		map[string]interface{}{
-			"type":           "Opsgenie",
-			"credentialId":   "credId",
-			"credentialName": "credName",
-			"responderName":  "respName",
-			"responderId":    "respId",
-			"responderType":  "respType",
+			"type":          "Opsgenie",
+			"credentialId":  "credId",
+			"responderName": "respName",
+			"responderId":   "respId",
+			"responderType": "respType",
 		},
 		map[string]interface{}{
 			"type":         "Slack",
