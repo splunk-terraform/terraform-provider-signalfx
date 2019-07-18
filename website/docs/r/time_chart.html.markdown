@@ -98,6 +98,7 @@ The following arguments are supported in the resource block:
     * `low_watermark_label` - (Optional) A label to attach to the low watermark line.
 * `viz_options` - (Optional) Plot-level customization options, associated with a publish statement.
     * `label` - (Required) Label used in the publish statement that displays the plot (metric time series data) you want to customize.
+    * `display_name` - (Optional) Specifies an alternate value for the Plot Name column of the Data Table associated with the chart.
     * `color` - (Optional) Color to use : gray, blue, azure, navy, brown, orange, yellow, iris, magenta, pink, purple, violet, lilac, emerald, green, aquamarine.
     * `axis` - (Optional) Y-axis associated with values for this plot. Must be either `right` or `left`.
     * `plot_type` - (Optional) The visualization style to use. Must be `"LineChart"`, `"AreaChart"`, `"ColumnChart"`, or `"Histogram"`. Chart level `plot_type` by default.
