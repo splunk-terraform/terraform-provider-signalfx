@@ -290,7 +290,6 @@ func heatmapchartCreate(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return err
 	}
-	d.Set("url", appURL)
 	if err := d.Set("url", appURL); err != nil {
 		return err
 	}
