@@ -419,6 +419,11 @@ func timeChartResource() *schema.Resource {
 							ValidateFunc: validatePlotTypeTimeChart,
 							Description:  "(Chart plot_type by default) The visualization style to use. Must be \"LineChart\", \"AreaChart\", \"ColumnChart\", or \"Histogram\"",
 						},
+						"display_name": &schema.Schema{
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "Specifies an alternate value for the Plot Name column of the Data Table associated with the chart.",
+						},
 						"value_unit": &schema.Schema{
 							Type:         schema.TypeString,
 							Optional:     true,

@@ -130,6 +130,11 @@ func singleValueChartResource() *schema.Resource {
 							Description:  "Color to use",
 							ValidateFunc: validatePerSignalColor,
 						},
+						"display_name": &schema.Schema{
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "Specifies an alternate value for the Plot Name column of the Data Table associated with the chart.",
+						},
 						"value_unit": &schema.Schema{
 							Type:         schema.TypeString,
 							Optional:     true,
