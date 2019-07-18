@@ -532,6 +532,9 @@ func getPerSignalVizOptions(d *schema.ResourceData) []*chart.PublishLabelOptions
 		item := &chart.PublishLabelOptions{
 			Label: v["label"].(string),
 		}
+		if val, ok := v["display_name"].(string); ok && val != "" {
+			item.DisplayName = val
+		}
 		if val, ok := v["color"].(string); ok {
 			if elem, ok := PaletteColors[val]; ok {
 				i := int32(elem)

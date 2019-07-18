@@ -43,6 +43,7 @@ resource "signalfx_time_chart" "mychartXX" {
 		}
     viz_options {
         label = "CPU Idle"
+				display_name = "CPU Idle Display"
         axis = "left"
         color = "orange"
 				plot_type = "Histogram"
@@ -108,6 +109,7 @@ resource "signalfx_time_chart" "mychartXX" {
 		}
     viz_options {
         label = "CPU Idle"
+				display_name = "CPU Idle Display"
         axis = "left"
         color = "orange"
 				plot_type = "Histogram"
@@ -194,6 +196,7 @@ func TestAccCreateUpdateTimeChart(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_time_chart.mychartXX", "viz_options.53506722.axis", "left"),
 					resource.TestCheckResourceAttr("signalfx_time_chart.mychartXX", "viz_options.53506722.color", "orange"),
 					resource.TestCheckResourceAttr("signalfx_time_chart.mychartXX", "viz_options.53506722.label", "CPU Idle"),
+					resource.TestCheckResourceAttr("signalfx_time_chart.mychartXX", "viz_options.53506722.display_name", "CPU Idle Display"),
 					resource.TestCheckResourceAttr("signalfx_time_chart.mychartXX", "viz_options.53506722.plot_type", "Histogram"),
 					resource.TestCheckResourceAttr("signalfx_time_chart.mychartXX", "viz_options.53506722.value_prefix", "prefix"),
 					resource.TestCheckResourceAttr("signalfx_time_chart.mychartXX", "viz_options.53506722.value_suffix", "suffix"),
