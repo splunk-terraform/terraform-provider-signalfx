@@ -943,6 +943,29 @@ func axisToMap(axis *chart.Axes) []*map[string]interface{} {
 	return nil
 }
 
+// This function handles a LabelOptions for non-time charts.
+func publishNonTimeLabelOptionsToMap(options *chart.PublishLabelOptions) (map[string]interface{}, error) {
+	color := ""
+	if options.PaletteIndex != nil {
+		// We might not have a color, so tread lightly
+		c, err := getNameFromPaletteColorsByIndex(int(*options.PaletteIndex))
+		if err != nil {
+			return map[string]interface{}{}, err
+		}
+		// Ok, we can set the color now
+		color = c
+	}
+
+	return map[string]interface{}{
+		"label":        options.Label,
+		"display_name": options.DisplayName,
+		"color":        color,
+		"value_unit":   options.ValueUnit,
+		"value_suffix": options.ValueSuffix,
+		"value_prefix": options.ValuePrefix,
+	}, nil
+}
+
 func publishLabelOptionsToMap(options *chart.PublishLabelOptions) (map[string]interface{}, error) {
 	color := ""
 	if options.PaletteIndex != nil {
@@ -961,6 +984,7 @@ func publishLabelOptionsToMap(options *chart.PublishLabelOptions) (map[string]in
 
 	return map[string]interface{}{
 		"label":        options.Label,
+		"display_name": options.DisplayName,
 		"color":        color,
 		"axis":         axis,
 		"plot_type":    options.PlotType,

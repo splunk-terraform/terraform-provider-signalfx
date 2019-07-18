@@ -307,7 +307,6 @@ func listchartCreate(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return err
 	}
-	d.Set("url", appURL)
 	if err := d.Set("url", appURL); err != nil {
 		return err
 	}
@@ -349,6 +348,20 @@ func listchartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 	}
 	if err := d.Set("sort_by", options.SortBy); err != nil {
 		return err
+	}
+
+	if len(options.PublishLabelOptions) > 0 {
+		plos := make([]map[string]interface{}, len(options.PublishLabelOptions))
+		for i, plo := range options.PublishLabelOptions {
+			no, err := publishNonTimeLabelOptionsToMap(plo)
+			if err != nil {
+				return err
+			}
+			plos[i] = no
+		}
+		if err := d.Set("viz_options", plos); err != nil {
+			return err
+		}
 	}
 
 	if options.LegendOptions != nil && len(options.LegendOptions.Fields) > 0 {

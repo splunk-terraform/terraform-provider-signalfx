@@ -259,7 +259,6 @@ func singlevaluechartCreate(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return err
 	}
-	d.Set("url", appURL)
 	if err := d.Set("url", appURL); err != nil {
 		return err
 	}
@@ -304,6 +303,27 @@ func singlevaluechartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 	}
 	if err := d.Set("show_spark_line", options.ShowSparkLine); err != nil {
 		return err
+	}
+	if options.ProgramOptions != nil {
+		if options.ProgramOptions.MaxDelay != nil {
+			if err := d.Set("max_delay", *options.ProgramOptions.MaxDelay/1000); err != nil {
+				return err
+			}
+		}
+	}
+
+	if len(options.PublishLabelOptions) > 0 {
+		plos := make([]map[string]interface{}, len(options.PublishLabelOptions))
+		for i, plo := range options.PublishLabelOptions {
+			no, err := publishNonTimeLabelOptionsToMap(plo)
+			if err != nil {
+				return err
+			}
+			plos[i] = no
+		}
+		if err := d.Set("viz_options", plos); err != nil {
+			return err
+		}
 	}
 
 	if options.ColorBy == "Scale" && len(options.ColorScale2) > 0 {
