@@ -1,4 +1,10 @@
 ## 4.1.1 (Unreleased)
+
+BUG FIXES:
+
+* resource/detector: Fixed incorrect documentation for Slack notifications. Thanks [gpetrousov](https://github.com/gpetrousov). [#25](https://github.com/terraform-providers/terraform-provider-signalfx/issues/25)
+
+
 ## 4.1.0 (July 17, 2019)
 
 FEATURES:
