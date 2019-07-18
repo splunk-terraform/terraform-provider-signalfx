@@ -71,7 +71,7 @@ notifications = ["PagerDuty,credentialId"]
 ### Slack
 
 ```
-notifications = ["Slack,channel"]
+notifications = ["Slack,credentialId,channel"]
 ```
 
 ### Team
