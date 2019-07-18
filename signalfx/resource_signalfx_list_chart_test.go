@@ -43,6 +43,15 @@ resource "signalfx_list_chart" "mychartLX" {
 		property = "collector"
 		enabled  = false
 	}
+
+	viz_options {
+		label = "CPU Idle"
+		display_name = "CPU Idle Display"
+		color = "azure"
+		value_unit = "Bit"
+		value_prefix = "foo"
+		value_suffix = "bar"
+	}
 }
 `
 
@@ -77,6 +86,15 @@ resource "signalfx_list_chart" "mychartLX" {
 	legend_options_fields {
 		property = "collector"
 		enabled  = false
+	}
+
+	viz_options {
+		label = "CPU Idle"
+		display_name = "CPU Idle Display"
+		color = "azure"
+		value_unit = "Bit"
+		value_prefix = "foo"
+		value_suffix = "bar"
 	}
 }
 `

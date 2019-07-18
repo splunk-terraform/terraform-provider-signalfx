@@ -31,6 +31,15 @@ resource "signalfx_single_value_chart" "mychartSVX" {
 		color = "vivid_yellow"
 	}
 
+	viz_options {
+		label = "CPU Idle"
+		display_name = "CPU Display"
+		color = "azure"
+		value_unit = "Bit"
+		value_prefix = "foo"
+		value_suffix = "bar"
+	}
+
   max_delay = 15
   refresh_interval = 1
   max_precision = 2
@@ -59,6 +68,15 @@ resource "signalfx_single_value_chart" "mychartSVX" {
 	color_scale {
 		lte = 40
 		color = "vivid_yellow"
+	}
+
+	viz_options {
+		label = "CPU Idle"
+		display_name = "CPU Display"
+		color = "azure"
+		value_unit = "Bit"
+		value_prefix = "foo"
+		value_suffix = "bar"
 	}
 
   max_delay = 15
