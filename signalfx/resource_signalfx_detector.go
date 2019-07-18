@@ -337,10 +337,9 @@ func getNotifications(tf_notifications []interface{}) []map[string]interface{} {
 			item["team"] = vars[1]
 		case "Opsgenie":
 			item["credentialId"] = vars[1]
-			item["credentialName"] = vars[2]
-			item["responderName"] = vars[3]
-			item["responderId"] = vars[4]
-			item["responderType"] = vars[5]
+			item["responderName"] = vars[2]
+			item["responderId"] = vars[3]
+			item["responderType"] = vars[4]
 		case "VictorOps":
 			item["credentialId"] = vars[1]
 			item["routingKey"] = vars[2]
@@ -369,10 +368,6 @@ func getNotifyStringFromAPI(notification map[string]interface{}) (string, error)
 		if !ok {
 			return "", fmt.Errorf("Missing credentialId field from notification body")
 		}
-		credName, ok := notification["credentialName"].(string)
-		if !ok {
-			return "", fmt.Errorf("Missing credentialName field from notification body")
-		}
 		respName, ok := notification["responderName"].(string)
 		if !ok {
 			return "", fmt.Errorf("Missing responderName field from notification body")
@@ -385,7 +380,7 @@ func getNotifyStringFromAPI(notification map[string]interface{}) (string, error)
 		if !ok {
 			return "", fmt.Errorf("Missing responderType field from notification body")
 		}
-		return fmt.Sprintf("%s,%s,%s,%s,%s,%s", nt, cred, credName, respName, respId, respType), nil
+		return fmt.Sprintf("%s,%s,%s,%s,%s", nt, cred, respName, respId, respType), nil
 
 	case "PagerDuty", "BigPanda", "Office365", "ServiceNow", "XMatters":
 		cred, ok := notification["credentialId"].(string)
