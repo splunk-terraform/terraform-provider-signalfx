@@ -349,6 +349,12 @@ func TestAccCreateUpdateDashboardGroup(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_dashboard_group.mydashboardgroup0", "name", "My team dashboard group"),
 				),
 			},
+			{
+				ResourceName:      "signalfx_dashboard_group.mydashboardgroup0",
+				ImportState:       true,
+				ImportStateIdFunc: testAccStateIdFunc("signalfx_dashboard_group.mydashboardgroup0"),
+				ImportStateVerify: true,
+			},
 			// Update Everything
 			{
 				Config: updatedDashConfig,

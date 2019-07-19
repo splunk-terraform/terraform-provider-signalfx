@@ -692,6 +692,14 @@ func dashboardRead(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
+	appURL, err := buildAppURL(config.CustomAppURL, DashboardAppPath+dash.Id)
+	if err != nil {
+		return err
+	}
+	if err := d.Set("url", appURL); err != nil {
+		return err
+	}
+
 	return dashboardAPIToTF(d, dash)
 }
 
