@@ -335,6 +335,16 @@ func listchartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 	if err := d.Set("color_by", options.ColorBy); err != nil {
 		return err
 	}
+	if options.ColorBy == "Scale" && len(options.ColorScale2) > 0 {
+		colorScale, err := decodeColorScale(options)
+		if err != nil {
+			return err
+		}
+		if err := d.Set("color_scale", colorScale); err != nil {
+			return err
+		}
+	}
+
 	if options.RefreshInterval != nil {
 		if err := d.Set("refresh_interval", *options.RefreshInterval/1000); err != nil {
 			return err
@@ -393,12 +403,20 @@ func listchartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 
 func listchartRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	chart, err := config.Client.GetChart(d.Id())
+	c, err := config.Client.GetChart(d.Id())
 	if err != nil {
 		return err
 	}
 
-	return listchartAPIToTF(d, chart)
+	appURL, err := buildAppURL(config.CustomAppURL, CHART_APP_PATH+c.Id)
+	if err != nil {
+		return err
+	}
+	if err := d.Set("url", appURL); err != nil {
+		return err
+	}
+
+	return listchartAPIToTF(d, c)
 }
 
 func listchartUpdate(d *schema.ResourceData, meta interface{}) error {

@@ -134,6 +134,12 @@ func TestAccCreateUpdateListChart(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_list_chart.mychartLX", "color_scale.761948173.lte", "40"),
 				),
 			},
+			{
+				ResourceName:      "signalfx_list_chart.mychartLX",
+				ImportState:       true,
+				ImportStateIdFunc: testAccStateIdFunc("signalfx_list_chart.mychartLX"),
+				ImportStateVerify: true,
+			},
 			// Update Everything
 			{
 				Config: updatedListChartConfig,

@@ -327,44 +327,52 @@ func singlevaluechartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 	}
 
 	if options.ColorBy == "Scale" && len(options.ColorScale2) > 0 {
-		scales := make([]map[string]interface{}, len(options.ColorScale2))
-		for i, cs := range options.ColorScale2 {
-			scale := map[string]interface{}{}
-			if cs.Gt == nil {
-				scale["gt"] = math.MaxFloat32
-			} else {
-				scale["gt"] = *cs.Gt
-			}
-			if cs.Gte == nil {
-				scale["gte"] = math.MaxFloat32
-			} else {
-				scale["gte"] = *cs.Gte
-			}
-			if cs.Lt == nil {
-				scale["lt"] = math.MaxFloat32
-			} else {
-				scale["lt"] = *cs.Lt
-			}
-			if cs.Lte == nil {
-				scale["lte"] = math.MaxFloat32
-			} else {
-				scale["lte"] = *cs.Lte
-			}
-			if cs.PaletteIndex != nil {
-				color, err := getNameFromChartColorsByIndex(int(*cs.PaletteIndex))
-				if err != nil {
-					return err
-				}
-				scale["color"] = color
-			}
-			scales[i] = scale
+		colorScale, err := decodeColorScale(options)
+		if err != nil {
+			return err
 		}
-		if err := d.Set("color_scale", scales); err != nil {
+		if err := d.Set("color_scale", colorScale); err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+func decodeColorScale(options *chart.Options) ([]map[string]interface{}, error) {
+	scales := make([]map[string]interface{}, len(options.ColorScale2))
+	for i, cs := range options.ColorScale2 {
+		scale := map[string]interface{}{}
+		if cs.Gt == nil {
+			scale["gt"] = math.MaxFloat32
+		} else {
+			scale["gt"] = *cs.Gt
+		}
+		if cs.Gte == nil {
+			scale["gte"] = math.MaxFloat32
+		} else {
+			scale["gte"] = *cs.Gte
+		}
+		if cs.Lt == nil {
+			scale["lt"] = math.MaxFloat32
+		} else {
+			scale["lt"] = *cs.Lt
+		}
+		if cs.Lte == nil {
+			scale["lte"] = math.MaxFloat32
+		} else {
+			scale["lte"] = *cs.Lte
+		}
+		if cs.PaletteIndex != nil {
+			color, err := getNameFromChartColorsByIndex(int(*cs.PaletteIndex))
+			if err != nil {
+				return nil, err
+			}
+			scale["color"] = color
+		}
+		scales[i] = scale
+	}
+	return scales, nil
 }
 
 func singlevaluechartRead(d *schema.ResourceData, meta interface{}) error {
