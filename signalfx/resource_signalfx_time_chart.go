@@ -351,7 +351,6 @@ func timeChartResource() *schema.Resource {
 			"show_data_markers": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Default:     false,
 				Description: "(false by default) Show markers (circles) for each datapoint used to draw line or area charts",
 			},
 			"stacked": &schema.Schema{
@@ -690,8 +689,9 @@ func getTimeChartOptions(d *schema.ResourceData) *chart.Options {
 			}
 		case "Histogram":
 			if histogramOptions, ok := d.GetOk("histogram_options"); ok {
-				hOptions := histogramOptions.(*schema.Set).List()[0].(map[string]interface{})
-				if colorTheme, ok := hOptions["color_theme"].(string); ok {
+				hOptions := histogramOptions.([]interface{})
+				hOption := hOptions[0].(map[string]interface{})
+				if colorTheme, ok := hOption["color_theme"].(string); ok {
 					if elem, ok := FullPaletteColors[colorTheme]; ok {
 						i := int32(elem)
 						options.HistogramChartOptions = &chart.HistogramChartOptions{
@@ -728,7 +728,6 @@ func timechartCreate(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return err
 	}
-	d.Set("url", appURL)
 	if err := d.Set("url", appURL); err != nil {
 		return err
 	}
@@ -744,6 +743,16 @@ func timechartRead(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return err
 	}
+
+	appURL, err := buildAppURL(config.CustomAppURL, CHART_APP_PATH+c.Id)
+	if err != nil {
+		return err
+	}
+	if err := d.Set("url", appURL); err != nil {
+		return err
+	}
+	d.SetId(c.Id)
+
 	return timechartAPIToTF(d, c)
 }
 
@@ -774,6 +783,9 @@ func timechartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 	if err := d.Set("plot_type", options.DefaultPlotType); err != nil {
 		return err
 	}
+	if err := d.Set("axes_precision", options.AxisPrecision); err != nil {
+		return err
+	}
 	if err := d.Set("show_event_lines", options.ShowEventLines); err != nil {
 		return err
 	}
@@ -794,6 +806,7 @@ func timechartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 			return err
 		}
 	}
+	log.Printf("[DEBUG] SignalFx: HISTO OPTIONS %v", options.HistogramChartOptions)
 	if options.HistogramChartOptions != nil {
 		if options.HistogramChartOptions.ColorThemeIndex != nil {
 			color, err := getNameFromFullPaletteColorsByIndex(int(*options.HistogramChartOptions.ColorThemeIndex))
