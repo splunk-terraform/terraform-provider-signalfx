@@ -381,7 +381,6 @@ func singlevaluechartRead(d *schema.ResourceData, meta interface{}) error {
 	if err := d.Set("url", appURL); err != nil {
 		return err
 	}
-	d.SetId(c.Id)
 
 	return singlevaluechartAPIToTF(d, c)
 }

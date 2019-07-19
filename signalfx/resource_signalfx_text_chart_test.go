@@ -43,6 +43,12 @@ func TestAccCreateUpdateTextChart(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_text_chart.mychartTX", "markdown", "**farts**"),
 				),
 			},
+			{
+				ResourceName:      "signalfx_text_chart.mychartTX",
+				ImportState:       true,
+				ImportStateIdFunc: testAccStateIdFunc("signalfx_text_chart.mychartTX"),
+				ImportStateVerify: true,
+			},
 			// Update Everything
 			{
 				Config: updatedTextChartConfig,

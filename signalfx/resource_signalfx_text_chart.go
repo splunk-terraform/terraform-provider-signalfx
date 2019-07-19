@@ -105,6 +105,14 @@ func textchartRead(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
+	appURL, err := buildAppURL(config.CustomAppURL, CHART_APP_PATH+c.Id)
+	if err != nil {
+		return err
+	}
+	if err := d.Set("url", appURL); err != nil {
+		return err
+	}
+
 	return textchartAPIToTF(d, c)
 }
 
