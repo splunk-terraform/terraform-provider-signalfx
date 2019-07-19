@@ -31,6 +31,15 @@ resource "signalfx_single_value_chart" "mychartSVX" {
 		color = "vivid_yellow"
 	}
 
+	viz_options {
+		label = "CPU Idle"
+		display_name = "CPU Display"
+		color = "azure"
+		value_unit = "Bit"
+		value_prefix = "foo"
+		value_suffix = "bar"
+	}
+
   max_delay = 15
   refresh_interval = 1
   max_precision = 2
@@ -59,6 +68,15 @@ resource "signalfx_single_value_chart" "mychartSVX" {
 	color_scale {
 		lte = 40
 		color = "vivid_yellow"
+	}
+
+	viz_options {
+		label = "CPU Idle"
+		display_name = "CPU Display"
+		color = "azure"
+		value_unit = "Bit"
+		value_prefix = "foo"
+		value_suffix = "bar"
 	}
 
   max_delay = 15
@@ -101,6 +119,12 @@ func TestAccCreateUpdateSingleValueChart(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_single_value_chart.mychartSVX", "color_scale.761948173.lte", "40"),
 				),
 			},
+			{
+				ResourceName:      "signalfx_single_value_chart.mychartSVX",
+				ImportState:       true,
+				ImportStateIdFunc: testAccStateIdFunc("signalfx_single_value_chart.mychartSVX"),
+				ImportStateVerify: true,
+			},
 			// Update Everything
 			{
 				Config: updatedSingleValueChartConfig,
@@ -112,6 +136,17 @@ func TestAccCreateUpdateSingleValueChart(t *testing.T) {
 			},
 		},
 	})
+}
+
+func testAccStateIdFunc(resourceName string) resource.ImportStateIdFunc {
+	return func(s *terraform.State) (string, error) {
+		rs, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return "", fmt.Errorf("Not found: %s", resourceName)
+		}
+
+		return rs.Primary.Attributes["id"], nil
+	}
 }
 
 func testAccCheckSingleValueChartResourceExists(s *terraform.State) error {

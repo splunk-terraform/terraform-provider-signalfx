@@ -351,7 +351,6 @@ func timeChartResource() *schema.Resource {
 			"show_data_markers": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Default:     false,
 				Description: "(false by default) Show markers (circles) for each datapoint used to draw line or area charts",
 			},
 			"stacked": &schema.Schema{
@@ -418,6 +417,11 @@ func timeChartResource() *schema.Resource {
 							Optional:     true,
 							ValidateFunc: validatePlotTypeTimeChart,
 							Description:  "(Chart plot_type by default) The visualization style to use. Must be \"LineChart\", \"AreaChart\", \"ColumnChart\", or \"Histogram\"",
+						},
+						"display_name": &schema.Schema{
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "Specifies an alternate value for the Plot Name column of the Data Table associated with the chart.",
 						},
 						"value_unit": &schema.Schema{
 							Type:         schema.TypeString,
@@ -526,6 +530,9 @@ func getPerSignalVizOptions(d *schema.ResourceData) []*chart.PublishLabelOptions
 		v := v.(map[string]interface{})
 		item := &chart.PublishLabelOptions{
 			Label: v["label"].(string),
+		}
+		if val, ok := v["display_name"].(string); ok && val != "" {
+			item.DisplayName = val
 		}
 		if val, ok := v["color"].(string); ok {
 			if elem, ok := PaletteColors[val]; ok {
@@ -682,8 +689,9 @@ func getTimeChartOptions(d *schema.ResourceData) *chart.Options {
 			}
 		case "Histogram":
 			if histogramOptions, ok := d.GetOk("histogram_options"); ok {
-				hOptions := histogramOptions.(*schema.Set).List()[0].(map[string]interface{})
-				if colorTheme, ok := hOptions["color_theme"].(string); ok {
+				hOptions := histogramOptions.([]interface{})
+				hOption := hOptions[0].(map[string]interface{})
+				if colorTheme, ok := hOption["color_theme"].(string); ok {
 					if elem, ok := FullPaletteColors[colorTheme]; ok {
 						i := int32(elem)
 						options.HistogramChartOptions = &chart.HistogramChartOptions{
@@ -720,7 +728,6 @@ func timechartCreate(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return err
 	}
-	d.Set("url", appURL)
 	if err := d.Set("url", appURL); err != nil {
 		return err
 	}
@@ -736,6 +743,15 @@ func timechartRead(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return err
 	}
+
+	appURL, err := buildAppURL(config.CustomAppURL, CHART_APP_PATH+c.Id)
+	if err != nil {
+		return err
+	}
+	if err := d.Set("url", appURL); err != nil {
+		return err
+	}
+
 	return timechartAPIToTF(d, c)
 }
 
@@ -766,6 +782,9 @@ func timechartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 	if err := d.Set("plot_type", options.DefaultPlotType); err != nil {
 		return err
 	}
+	if err := d.Set("axes_precision", options.AxisPrecision); err != nil {
+		return err
+	}
 	if err := d.Set("show_event_lines", options.ShowEventLines); err != nil {
 		return err
 	}
@@ -786,6 +805,7 @@ func timechartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 			return err
 		}
 	}
+	log.Printf("[DEBUG] SignalFx: HISTO OPTIONS %v", options.HistogramChartOptions)
 	if options.HistogramChartOptions != nil {
 		if options.HistogramChartOptions.ColorThemeIndex != nil {
 			color, err := getNameFromFullPaletteColorsByIndex(int(*options.HistogramChartOptions.ColorThemeIndex))
@@ -935,6 +955,29 @@ func axisToMap(axis *chart.Axes) []*map[string]interface{} {
 	return nil
 }
 
+// This function handles a LabelOptions for non-time charts.
+func publishNonTimeLabelOptionsToMap(options *chart.PublishLabelOptions) (map[string]interface{}, error) {
+	color := ""
+	if options.PaletteIndex != nil {
+		// We might not have a color, so tread lightly
+		c, err := getNameFromPaletteColorsByIndex(int(*options.PaletteIndex))
+		if err != nil {
+			return map[string]interface{}{}, err
+		}
+		// Ok, we can set the color now
+		color = c
+	}
+
+	return map[string]interface{}{
+		"label":        options.Label,
+		"display_name": options.DisplayName,
+		"color":        color,
+		"value_unit":   options.ValueUnit,
+		"value_suffix": options.ValueSuffix,
+		"value_prefix": options.ValuePrefix,
+	}, nil
+}
+
 func publishLabelOptionsToMap(options *chart.PublishLabelOptions) (map[string]interface{}, error) {
 	color := ""
 	if options.PaletteIndex != nil {
@@ -953,6 +996,7 @@ func publishLabelOptionsToMap(options *chart.PublishLabelOptions) (map[string]in
 
 	return map[string]interface{}{
 		"label":        options.Label,
+		"display_name": options.DisplayName,
 		"color":        color,
 		"axis":         axis,
 		"plot_type":    options.PlotType,

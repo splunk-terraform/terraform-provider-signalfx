@@ -74,7 +74,6 @@ func textchartCreate(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return err
 	}
-	d.Set("url", appURL)
 	if err := d.Set("url", appURL); err != nil {
 		return err
 	}
@@ -103,6 +102,14 @@ func textchartRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 	c, err := config.Client.GetChart(d.Id())
 	if err != nil {
+		return err
+	}
+
+	appURL, err := buildAppURL(config.CustomAppURL, CHART_APP_PATH+c.Id)
+	if err != nil {
+		return err
+	}
+	if err := d.Set("url", appURL); err != nil {
 		return err
 	}
 

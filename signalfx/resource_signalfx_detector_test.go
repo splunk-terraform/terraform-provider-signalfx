@@ -295,9 +295,6 @@ func TestAccCreateUpdateDetector(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "description", "your application is slow"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "max_delay", "30"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "program_text", "signal = data('app.delay').max()\ndetect(when(signal > 60, '5m')).publish('Processing old messages 5m')\ndetect(when(signal > 60, '30m')).publish('Processing old messages 30m')\n"),
-					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "show_data_markers", "false"),
-					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "show_event_lines", "false"),
-					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "disable_sampling", "false"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.#", "2"),
 					// Rule #1
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1250591008.description", "maximum > 60 for 5m"),
@@ -323,6 +320,12 @@ func TestAccCreateUpdateDetector(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1714348016.severity", "Critical"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1714348016.tip", ""),
 				),
+			},
+			{
+				ResourceName:      "signalfx_detector.application_delay",
+				ImportState:       true,
+				ImportStateIdFunc: testAccStateIdFunc("signalfx_detector.application_delay"),
+				ImportStateVerify: true,
 			},
 			// Update It
 			{

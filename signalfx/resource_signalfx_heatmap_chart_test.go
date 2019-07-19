@@ -77,6 +77,12 @@ func TestAccCreateUpdateHeatmapChart(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_heatmap_chart.mychartHX", "group_by.1", "b"),
 				),
 			},
+			{
+				ResourceName:      "signalfx_heatmap_chart.mychartHX",
+				ImportState:       true,
+				ImportStateIdFunc: testAccStateIdFunc("signalfx_heatmap_chart.mychartHX"),
+				ImportStateVerify: true,
+			},
 			// Update Everything
 			{
 				Config: updatedHeatmapChartConfig,

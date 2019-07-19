@@ -48,6 +48,12 @@ func TestAccCreateUpdateEventFeedChart(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_event_feed_chart.mychartEVX", "time_range", "900"),
 				),
 			},
+			{
+				ResourceName:      "signalfx_event_feed_chart.mychartEVX",
+				ImportState:       true,
+				ImportStateIdFunc: testAccStateIdFunc("signalfx_event_feed_chart.mychartEVX"),
+				ImportStateVerify: true,
+			},
 			// Update Everything
 			{
 				Config: updatedEventFeedChartConfig,

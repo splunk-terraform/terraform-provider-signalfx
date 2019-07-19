@@ -44,19 +44,16 @@ func detectorResource() *schema.Resource {
 			"show_data_markers": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Default:     false,
 				Description: "(false by default) When true, markers will be drawn for each datapoint within the visualization.",
 			},
 			"show_event_lines": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Default:     false,
 				Description: "(false by default) When true, vertical lines will be drawn for each triggered event within the visualization.",
 			},
 			"disable_sampling": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Default:     false,
 				Description: "(false by default) When false, samples a subset of the output MTS in the visualization.",
 			},
 			"time_range": &schema.Schema{
@@ -481,6 +478,15 @@ func detectorRead(d *schema.ResourceData, meta interface{}) error {
 		}
 		return err
 	}
+
+	appURL, err := buildAppURL(config.CustomAppURL, DetectorAppPath+det.Id)
+	if err != nil {
+		return err
+	}
+	if err := d.Set("url", appURL); err != nil {
+		return err
+	}
+
 	return detectorAPIToTF(d, det)
 }
 

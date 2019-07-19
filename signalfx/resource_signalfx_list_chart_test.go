@@ -43,6 +43,15 @@ resource "signalfx_list_chart" "mychartLX" {
 		property = "collector"
 		enabled  = false
 	}
+
+	viz_options {
+		label = "CPU Idle"
+		display_name = "CPU Idle Display"
+		color = "azure"
+		value_unit = "Bit"
+		value_prefix = "foo"
+		value_suffix = "bar"
+	}
 }
 `
 
@@ -77,6 +86,15 @@ resource "signalfx_list_chart" "mychartLX" {
 	legend_options_fields {
 		property = "collector"
 		enabled  = false
+	}
+
+	viz_options {
+		label = "CPU Idle"
+		display_name = "CPU Idle Display"
+		color = "azure"
+		value_unit = "Bit"
+		value_prefix = "foo"
+		value_suffix = "bar"
 	}
 }
 `
@@ -115,6 +133,12 @@ func TestAccCreateUpdateListChart(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_list_chart.mychartLX", "color_scale.761948173.color", "vivid_yellow"),
 					resource.TestCheckResourceAttr("signalfx_list_chart.mychartLX", "color_scale.761948173.lte", "40"),
 				),
+			},
+			{
+				ResourceName:      "signalfx_list_chart.mychartLX",
+				ImportState:       true,
+				ImportStateIdFunc: testAccStateIdFunc("signalfx_list_chart.mychartLX"),
+				ImportStateVerify: true,
 			},
 			// Update Everything
 			{
