@@ -134,6 +134,29 @@ func eventfeedchartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 		return err
 	}
 
+	options := c.Options
+
+	if options.Time != nil {
+		if options.Time.Type == "relative" {
+			if options.Time.Range != nil {
+				if err := d.Set("time_range", *options.Time.Range/1000); err != nil {
+					return err
+				}
+			}
+		} else {
+			if options.Time.Start != nil {
+				if err := d.Set("start_time", *options.Time.Start/1000); err != nil {
+					return err
+				}
+			}
+			if options.Time.End != nil {
+				if err := d.Set("end_time", *options.Time.End/1000); err != nil {
+					return err
+				}
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -141,6 +164,14 @@ func eventFeedChartRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 	c, err := config.Client.GetChart(d.Id())
 	if err != nil {
+		return err
+	}
+
+	appURL, err := buildAppURL(config.CustomAppURL, CHART_APP_PATH+c.Id)
+	if err != nil {
+		return err
+	}
+	if err := d.Set("url", appURL); err != nil {
 		return err
 	}
 
