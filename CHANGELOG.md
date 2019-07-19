@@ -1,9 +1,25 @@
 ## 4.1.1 (Unreleased)
 
+FEATURES:
+
+* resource/time_chart: Added support for `viz_options.display_name` [#13](https://github.com/terraform-providers/terraform-provider-signalfx/issues/13)
+* resource/list_chart: Added support for `viz_options.display_name` [#13](https://github.com/terraform-providers/terraform-provider-signalfx/issues/13)
+* resource/single_value_chart: Added support for `viz_options.display_name` [#13](https://github.com/terraform-providers/terraform-provider-signalfx/issues/13)
+
 BUG FIXES:
 
+* provider: Fixed a number of fields that were not correctly imported. [#27](https://github.com/terraform-providers/terraform-provider-signalfx/pull/27)
 * resource/detector: Fixed incorrect documentation for Slack notifications. Thanks [gpetrousov](https://github.com/gpetrousov). [#25](https://github.com/terraform-providers/terraform-provider-signalfx/issues/25)
 * resource/detector: Fixed invalid field for OpsGenie notifications. [#16](https://github.com/terraform-providers/terraform-provider-signalfx/issues/16)
+* resource/list_chart: Fixed an issue where `viz_options` was not being honored. [#27](https://github.com/terraform-providers/terraform-provider-signalfx/pull/27)
+* resource/single_value_chart: Fixed an issue where `viz_options` was not being honored. [#27](https://github.com/terraform-providers/terraform-provider-signalfx/pull/27)
+* resource/time_chart: Fixed crash where specifying `histogram_options.color_theme` would cause a crash. [#27](https://github.com/terraform-providers/terraform-provider-signalfx/pull/27)
+* resource/time_chart: `show_data_markers` no longer defaults to `false` because it is often omitted from API responses. [#27](https://github.com/terraform-providers/terraform-provider-signalfx/pull/27)
+
+IMPROVEMENTS
+
+* provider - Corrected places where resources were double-setting their URLs. [#27](https://github.com/terraform-providers/terraform-provider-signalfx/pull/27)
+* provider - Added import tests to all resources. [#27](https://github.com/terraform-providers/terraform-provider-signalfx/pull/27)
 
 ## 4.1.0 (July 17, 2019)
 
