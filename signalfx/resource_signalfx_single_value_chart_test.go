@@ -119,12 +119,12 @@ func TestAccCreateUpdateSingleValueChart(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_single_value_chart.mychartSVX", "color_scale.761948173.lte", "40"),
 				),
 			},
-			// {
-			// 	ResourceName:      "signalfx_single_value_chart.mychartSVX",
-			// 	ImportState:       true,
-			// 	ImportStateIdFunc: testAccSingleValueChartStateIdFunc("signalfx_single_value_chart.mychartSVX"),
-			// 	ImportStateVerify: true,
-			// },
+			{
+				ResourceName:      "signalfx_single_value_chart.mychartSVX",
+				ImportState:       true,
+				ImportStateIdFunc: testAccStateIdFunc("signalfx_single_value_chart.mychartSVX"),
+				ImportStateVerify: true,
+			},
 			// Update Everything
 			{
 				Config: updatedSingleValueChartConfig,
@@ -138,7 +138,7 @@ func TestAccCreateUpdateSingleValueChart(t *testing.T) {
 	})
 }
 
-func testAccSingleValueChartStateIdFunc(resourceName string) resource.ImportStateIdFunc {
+func testAccStateIdFunc(resourceName string) resource.ImportStateIdFunc {
 	return func(s *terraform.State) (string, error) {
 		rs, ok := s.RootModule().Resources[resourceName]
 		if !ok {

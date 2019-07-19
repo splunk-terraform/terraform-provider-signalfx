@@ -374,6 +374,15 @@ func singlevaluechartRead(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
+	appURL, err := buildAppURL(config.CustomAppURL, CHART_APP_PATH+c.Id)
+	if err != nil {
+		return err
+	}
+	if err := d.Set("url", appURL); err != nil {
+		return err
+	}
+	d.SetId(c.Id)
+
 	return singlevaluechartAPIToTF(d, c)
 }
 
