@@ -366,6 +366,16 @@ func heatmapchartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 		}
 	}
 
+	if options.SortProperty != "" {
+		sortBy := fmt.Sprintf("+%s", options.SortProperty)
+		if options.SortDirection == "Descending" {
+			sortBy = fmt.Sprintf("-%s", options.SortProperty)
+		}
+		if err := d.Set("sort_by", sortBy); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -375,6 +385,15 @@ func heatmapchartRead(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return err
 	}
+
+	appURL, err := buildAppURL(config.CustomAppURL, CHART_APP_PATH+c.Id)
+	if err != nil {
+		return err
+	}
+	if err := d.Set("url", appURL); err != nil {
+		return err
+	}
+
 	return heatmapchartAPIToTF(d, c)
 }
 
