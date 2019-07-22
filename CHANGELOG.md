@@ -1,4 +1,9 @@
 ## 4.3.0 (Unreleased)
+
+IMPROVEMENTS:
+
+* resources/detector: Improved documentation around multiple notifications in a single rule. [#30](https://github.com/terraform-providers/terraform-provider-signalfx/issues/30)
+
 ## 4.2.0 (July 19, 2019)
 
 FEATURES:
@@ -34,8 +39,7 @@ BUG FIXES:
 * provider: Correct a number of fields that defaulted to 0, resulting unintentional "defaults". Should improve unclean plans.
 * resource/dashboard: Fix a crash when using `grid` with a new dashboard. [#20](https://github.com/terraform-providers/terraform-provider-signalfx/issues/20)
 
-
-IMPROVEMENTS
+IMPROVEMENTS:
 
 * provider - Resources that used `time_range` and still have strings in their state will now be upgraded instead of generating an error.
 

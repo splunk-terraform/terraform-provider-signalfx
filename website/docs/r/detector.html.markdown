@@ -46,7 +46,13 @@ variable "clusters" {
 
 ## Notification Format
 
-As SignalFx supports different notification mechanisms a comma-delimited string is used to provide inputs. This will likely be changed in a future iteration of the provider. For now, here are some example of how to configure each notification type:
+As SignalFx supports different notification mechanisms a comma-delimited string is used to provide inputs. If you'd like to specify multiple notifications, then each should be a member in the list, like so:
+
+```
+notifications = ["Email,foo-alerts@example.com", "Slack,credentialId,#channel"]
+```
+
+This will likely be changed in a future iteration of the provider. For now, here are some example of how to configure each notification type:
 
 ### Email
 
@@ -70,8 +76,10 @@ notifications = ["PagerDuty,credentialId"]
 
 ### Slack
 
+Include the `#` on the channel name!
+
 ```
-notifications = ["Slack,credentialId,channel"]
+notifications = ["Slack,credentialId,#channel"]
 ```
 
 ### Team
