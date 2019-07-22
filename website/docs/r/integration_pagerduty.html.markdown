@@ -1,19 +1,19 @@
 ---
 layout: "signalfx"
 page_title: "SignalFx: signalfx_resource"
-sidebar_current: "docs-signalfx-resource-integration-pagerduty"
+sidebar_current: "docs-signalfx-resource-pagerduty-integration"
 description: |-
   Allows Terraform to create and manage SignalFx PagerDuty Integrations
 ---
 
-# Resource: signalfx_integration_pagerduty
+# Resource: signalfx_pagerduty_integration
 
 SignalFx PagerDuty integrations
 
 ## Example Usage
 
 ```terraform
-resource "signalfx_integration_pagerduty" "pagerduty_myteam" {
+resource "signalfx_pagerduty_integration" "pagerduty_myteam" {
     name = "PD - My Team"
     enabled = true
     api_key = "1234567890"

@@ -44,7 +44,8 @@ func integrationAWSResource() *schema.Resource {
 			},
 			"custom_namespace_sync_rules": &schema.Schema{
 				Type:          schema.TypeSet,
-				ConflictsWith: []string{"custom_cloud_watch_namespaces"},
+				Optional:      true,
+				ConflictsWith: []string{"custom_cloudwatch_namespaces"},
 				Description:   "Each element controls the data collected by SignalFx for the specified namespace. If you specify this property, SignalFx ignores values in the \"custom_cloud_watch_namespaces\" property.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -119,7 +120,7 @@ func integrationAWSResource() *schema.Resource {
 			"enable_aws_usage": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Description: "Flag that controls how SignalFx imports usage metrics from AWS to use with AWS Optimizer. If `true`, SignalFx imports the metrics.",
+				Description: "Flag that controls how SignalFx imports usage metrics from AWS to use with AWS Cost Optimizer. If `true`, SignalFx imports the metrics.",
 			},
 			"enable_check_large_volume": &schema.Schema{
 				Type:        schema.TypeBool,
