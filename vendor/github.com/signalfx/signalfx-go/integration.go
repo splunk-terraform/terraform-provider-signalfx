@@ -1,6 +1,7 @@
 package signalfx
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -52,7 +53,12 @@ func (c *Client) GetIntegration(id string) (map[string]interface{}, error) {
 
 // CreateAWSCloudWatchIntegration creates an AWS CloudWatch integration.
 func (c *Client) CreateAWSCloudWatchIntegration(acwi *integration.AwsCloudWatchIntegration) (*integration.AwsCloudWatchIntegration, error) {
-	resp, err := c.doRequest("POST", IntegrationAPIURL, nil, nil)
+	payload, err := json.Marshal(acwi)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := c.doRequest("POST", IntegrationAPIURL, nil, bytes.NewReader(payload))
 
 	if err != nil {
 		return nil, err
@@ -94,7 +100,12 @@ func (c *Client) GetAWSCloudWatchIntegration(id string) (*integration.AwsCloudWa
 
 // UpdateAWSCloudWatchIntegration updates an AWS CloudWatch integration.
 func (c *Client) UpdateAWSCloudWatchIntegration(id string, acwi *integration.AwsCloudWatchIntegration) (*integration.AwsCloudWatchIntegration, error) {
-	resp, err := c.doRequest("PUT", IntegrationAPIURL+"/"+id, nil, nil)
+	payload, err := json.Marshal(acwi)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := c.doRequest("PUT", IntegrationAPIURL+"/"+id, nil, bytes.NewReader(payload))
 
 	if err != nil {
 		return nil, err
