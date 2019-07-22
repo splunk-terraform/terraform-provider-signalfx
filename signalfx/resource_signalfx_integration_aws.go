@@ -51,11 +51,13 @@ func integrationAWSResource() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"default_action": {
 							Type:         schema.TypeString,
+							Required:     true,
 							ValidateFunc: validateFilterAction,
 							Description:  "Controls the SignalFx default behavior for processing data from an AWS namespace. SignalFx ignores this property unless you specify the \"filter\" property in the namespace sync rule. If you do specify a filter, use this property to control how SignalFx treats data that doesn't match the filter. The available actions are one of \"Include\" or \"Exclude\".",
 						},
 						"filter": {
-							Type: schema.TypeSet,
+							Type:     schema.TypeSet,
+							Optional: true,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"action": {
@@ -82,16 +84,19 @@ func integrationAWSResource() *schema.Resource {
 			},
 			"namespace_sync_rules": &schema.Schema{
 				Type:        schema.TypeSet,
+				Optional:    true,
 				Description: "Each element in the array is an object that contains an AWS namespace name and a filter that controls the data that SignalFx collects for the namespace. If you specify this property, SignalFx ignores the values in the AWS CloudWatch Integration Model \"services\" property. If you don't specify either property, SignalFx syncs all data in all AWS namespaces.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"default_action": {
 							Type:         schema.TypeString,
+							Required:     true,
 							ValidateFunc: validateFilterAction,
 							Description:  "Controls the SignalFx default behavior for processing data from an AWS namespace. SignalFx ignores this property unless you specify the \"filter\" property in the namespace sync rule. If you do specify a filter, use this property to control how SignalFx treats data that doesn't match the filter. The available actions are one of \"Include\" or \"Exclude\".",
 						},
 						"filter": {
-							Type: schema.TypeSet,
+							Type:     schema.TypeSet,
+							Optional: true,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"action": {
@@ -138,10 +143,9 @@ func integrationAWSResource() *schema.Resource {
 				Description: "If true, this property indicates that SignalFx is receiving a large volume of data and tags from AWS.",
 			},
 			"key": {
-				Type:          schema.TypeString,
-				Required:      true,
-				Description:   "If you specify `auth_method = \"SecurityToken\"` in your request to create an AWS integration object, use this property to specify the key.",
-				ConflictsWith: []string{"token"},
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "If you specify `auth_method = \"SecurityToken\"` in your request to create an AWS integration object, use this property to specify the key.",
 			},
 			"regions": {
 				Type:     schema.TypeSet,
@@ -166,10 +170,9 @@ func integrationAWSResource() *schema.Resource {
 				Description: "Array of AWS services that you want SignalFx to monitor. Each element is a string designating an AWS service.",
 			},
 			"token": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				Description:   "If you specify `auth_method = \"SecurityToken\"` in your request to create an AWS integration object, use this property to specify the token.",
-				ConflictsWith: []string{"key"},
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "If you specify `auth_method = \"SecurityToken\"` in your request to create an AWS integration object, use this property to specify the token.",
 			},
 			"poll_rate": &schema.Schema{
 				Type:         schema.TypeInt,
