@@ -4,6 +4,8 @@ Tagged!
 
 ## Added
 
+* Add `*AzureIntregration` functions to client.
+
 ## Updated
 
 ## Bugfixes
