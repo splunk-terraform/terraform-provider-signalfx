@@ -40,13 +40,13 @@ func integrationAWSResource() *schema.Resource {
 				},
 				Optional:      true,
 				Description:   "List of custom AWS CloudWatch namespaces to monitor. Custom namespaces contain custom metrics that you define in AWS; SignalFx imports the metrics so you can monitor them.",
-				ConflictsWith: []string{"custom_namespace_sync_rules"},
+				ConflictsWith: []string{"custom_namespace_sync_rule"},
 			},
-			"custom_namespace_sync_rules": &schema.Schema{
+			"custom_namespace_sync_rule": &schema.Schema{
 				Type:          schema.TypeSet,
 				Optional:      true,
 				ConflictsWith: []string{"custom_cloudwatch_namespaces"},
-				Description:   "Each element controls the data collected by SignalFx for the specified namespace. If you specify this property, SignalFx ignores values in the \"custom_cloud_watch_namespaces\" property.",
+				Description:   "Each element controls the data collected by SignalFx for the specified namespace. If you specify this property, SignalFx ignores values in the \"custom_cloudwatch_namespaces\" property.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"default_action": {
@@ -55,24 +55,16 @@ func integrationAWSResource() *schema.Resource {
 							ValidateFunc: validateFilterAction,
 							Description:  "Controls the SignalFx default behavior for processing data from an AWS namespace. SignalFx ignores this property unless you specify the \"filter\" property in the namespace sync rule. If you do specify a filter, use this property to control how SignalFx treats data that doesn't match the filter. The available actions are one of \"Include\" or \"Exclude\".",
 						},
-						"filter": {
-							Type:     schema.TypeSet,
-							Optional: true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"action": {
-										Type:         schema.TypeString,
-										Required:     true,
-										ValidateFunc: validateFilterAction,
-										Description:  "Controls how SignalFx processes data from a custom AWS namespace. The available actions are one of \"Include\" or \"Exclude\".",
-									},
-									"source": {
-										Type:        schema.TypeString,
-										Required:    true,
-										Description: "Expression that selects the data that SignalFx should sync for the custom namespace associated with this sync rule. The expression uses the syntax defined for the SignalFlow `filter()` function; it can be any valid SignalFlow filter expression.",
-									},
-								},
-							},
+						"filter_action": {
+							Type:         schema.TypeString,
+							Required:     true,
+							ValidateFunc: validateFilterAction,
+							Description:  "Controls how SignalFx processes data from a custom AWS namespace. The available actions are one of \"Include\" or \"Exclude\".",
+						},
+						"filter_source": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "Expression that selects the data that SignalFx should sync for the custom namespace associated with this sync rule. The expression uses the syntax defined for the SignalFlow `filter()` function; it can be any valid SignalFlow filter expression.",
 						},
 						"namespace": {
 							Type:        schema.TypeString,
@@ -82,10 +74,11 @@ func integrationAWSResource() *schema.Resource {
 					},
 				},
 			},
-			"namespace_sync_rules": &schema.Schema{
-				Type:        schema.TypeSet,
-				Optional:    true,
-				Description: "Each element in the array is an object that contains an AWS namespace name and a filter that controls the data that SignalFx collects for the namespace. If you specify this property, SignalFx ignores the values in the AWS CloudWatch Integration Model \"services\" property. If you don't specify either property, SignalFx syncs all data in all AWS namespaces.",
+			"namespace_sync_rule": &schema.Schema{
+				Type:          schema.TypeSet,
+				Optional:      true,
+				ConflictsWith: []string{"services"},
+				Description:   "Each element in the array is an object that contains an AWS namespace name and a filter that controls the data that SignalFx collects for the namespace. If you specify this property, SignalFx ignores the values in the AWS CloudWatch Integration Model \"services\" property. If you don't specify either property, SignalFx syncs all data in all AWS namespaces.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"default_action": {
@@ -94,24 +87,16 @@ func integrationAWSResource() *schema.Resource {
 							ValidateFunc: validateFilterAction,
 							Description:  "Controls the SignalFx default behavior for processing data from an AWS namespace. SignalFx ignores this property unless you specify the \"filter\" property in the namespace sync rule. If you do specify a filter, use this property to control how SignalFx treats data that doesn't match the filter. The available actions are one of \"Include\" or \"Exclude\".",
 						},
-						"filter": {
-							Type:     schema.TypeSet,
-							Optional: true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"action": {
-										Type:         schema.TypeString,
-										Required:     true,
-										ValidateFunc: validateFilterAction,
-										Description:  "Controls how SignalFx processes data from a custom AWS namespace. The available actions are one of \"Include\" or \"Exclude\".",
-									},
-									"source": {
-										Type:        schema.TypeString,
-										Required:    true,
-										Description: "Expression that selects the data that SignalFx should sync for the custom namespace associated with this sync rule. The expression uses the syntax defined for the SignalFlow `filter()` function; it can be any valid SignalFlow filter expression.",
-									},
-								},
-							},
+						"filter_action": {
+							Type:         schema.TypeString,
+							Required:     true,
+							ValidateFunc: validateFilterAction,
+							Description:  "Controls how SignalFx processes data from a custom AWS namespace. The available actions are one of \"Include\" or \"Exclude\".",
+						},
+						"filter_source": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "Expression that selects the data that SignalFx should sync for the custom namespace associated with this sync rule. The expression uses the syntax defined for the SignalFlow `filter()` function; it can be any valid SignalFlow filter expression.",
 						},
 						"namespace": {
 							Type:         schema.TypeString,
@@ -127,20 +112,10 @@ func integrationAWSResource() *schema.Resource {
 				Optional:    true,
 				Description: "Flag that controls how SignalFx imports usage metrics from AWS to use with AWS Cost Optimizer. If `true`, SignalFx imports the metrics.",
 			},
-			"enable_check_large_volume": &schema.Schema{
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Description: "Flag that controls how SignalFx checks for large amounts of data for this AWS integration. If `true`, SignalFx checks to see if the integration is returning a large amount of data.",
-			},
 			"import_cloud_watch": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Description: "Flag that controls how SignalFx imports Cloud Watch metrics. If true, SignalFx imports Cloud Watch metrics from AWS.",
-			},
-			"is_large_volume": &schema.Schema{
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Description: "If true, this property indicates that SignalFx is receiving a large volume of data and tags from AWS.",
 			},
 			"key": {
 				Type:        schema.TypeString,
@@ -180,6 +155,11 @@ func integrationAWSResource() *schema.Resource {
 				Description:  "AWS poll rate (in seconds)",
 				ValidateFunc: validateAwsPollRate,
 			},
+			"external_id": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "If you specify `authMethod = \"ExternalId\"` in your request to create an AWS integration object, the response object contains a value for `externalId`. Use this value and the ARN value you get from AWS to update the integration object. SignalFx can then connect to AWS using the integration object.",
+			},
 		},
 
 		Create: integrationAWSCreate,
@@ -207,7 +187,7 @@ func integrationAWSExists(d *schema.ResourceData, meta interface{}) (bool, error
 
 func integrationAWSRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	det, err := config.Client.GetAWSCloudWatchIntegration(d.Id())
+	int, err := config.Client.GetAWSCloudWatchIntegration(d.Id())
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "Bad status 404") {
 			d.SetId("")
@@ -215,15 +195,11 @@ func integrationAWSRead(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	appURL, err := buildAppURL(config.CustomAppURL, DetectorAppPath+det.Id)
-	if err != nil {
-		return err
-	}
-	if err := d.Set("url", appURL); err != nil {
+	if err := d.Set("external_id", int.ExternalId); err != nil {
 		return err
 	}
 
-	return awsIntegrationAPIToTF(d, det)
+	return awsIntegrationAPIToTF(d, int)
 }
 
 func awsIntegrationAPIToTF(d *schema.ResourceData, aws *integration.AwsCloudWatchIntegration) error {
@@ -242,13 +218,7 @@ func awsIntegrationAPIToTF(d *schema.ResourceData, aws *integration.AwsCloudWatc
 	if err := d.Set("enable_aws_usage", aws.EnableAwsUsage); err != nil {
 		return err
 	}
-	if err := d.Set("enable_check_large_volume", aws.EnableCheckLargeVolume); err != nil {
-		return err
-	}
 	if err := d.Set("import_cloud_watch", aws.ImportCloudWatch); err != nil {
-		return err
-	}
-	if err := d.Set("is_large_volume", aws.IsLargeVolume); err != nil {
 		return err
 	}
 	if err := d.Set("poll_rate", *aws.PollRate/1000); err != nil {
@@ -265,51 +235,62 @@ func awsIntegrationAPIToTF(d *schema.ResourceData, aws *integration.AwsCloudWatc
 			return err
 		}
 	}
-	if len(aws.Services) > 0 {
-		services := make([]interface{}, len(aws.Services))
-		for i, v := range aws.Services {
-			services[i] = string(v)
-		}
-		if err := d.Set("services", services); err != nil {
-			return err
-		}
-	}
-	if aws.CustomCloudWatchNamespaces != "" {
-		nesses := strings.Split(aws.CustomCloudWatchNamespaces, ",")
-		if err := d.Set("custom_cloudwatch_namespaces", flattenStringSliceToSet(nesses)); err != nil {
-			return err
-		}
-	}
 	if len(aws.CustomNamespaceSyncRules) > 0 {
-		rules := make([]map[string]interface{}, len(aws.CustomNamespaceSyncRules))
-		for i, v := range aws.CustomNamespaceSyncRules {
-			rules[i] = map[string]interface{}{
-				"default_action": string(v.DefaultAction),
-				"filter": map[string]interface{}{
-					"action": v.Filter.Action,
-					"source": v.Filter.Source,
-				},
-				"namespace": v.Namespace,
+		var rules []map[string]interface{}
+		for _, v := range aws.CustomNamespaceSyncRules {
+			if v.Filter != nil {
+				rules = append(rules, map[string]interface{}{
+					"default_action": string(v.DefaultAction),
+					"filter_action":  v.Filter.Action,
+					"filter_source":  v.Filter.Source,
+					"namespace":      v.Namespace,
+				})
 			}
 		}
-		if err := d.Set("custom_namespace_sync_rules", rules); err != nil {
-			return err
+		if len(rules) > 0 {
+			if err := d.Set("custom_namespace_sync_rule", rules); err != nil {
+				return err
+			}
+		}
+	} else {
+		// Don't look at this unless they aren't using CustomNamespaceSyncRules
+		if aws.CustomCloudWatchNamespaces != "" {
+			nesses := strings.Split(aws.CustomCloudWatchNamespaces, ",")
+			if err := d.Set("custom_cloudwatch_namespaces", flattenStringSliceToSet(nesses)); err != nil {
+				return err
+			}
 		}
 	}
 	if len(aws.NamespaceSyncRules) > 0 {
-		rules := make([]map[string]interface{}, len(aws.NamespaceSyncRules))
-		for i, v := range aws.NamespaceSyncRules {
-			rules[i] = map[string]interface{}{
-				"default_action": string(v.DefaultAction),
-				"filter": map[string]interface{}{
-					"action": v.Filter.Action,
-					"source": v.Filter.Source,
-				},
-				"namespace": string(v.Namespace),
+		var rules []map[string]interface{}
+		for _, v := range aws.NamespaceSyncRules {
+			// Sometimes the rules come back with just a namespace and no
+			// filters. If that's the case we'll ignore it and leverage
+			// that it also comes in the `services` field.
+			if v.Filter != nil {
+				rules = append(rules, map[string]interface{}{
+					"default_action": string(v.DefaultAction),
+					"filter_action":  v.Filter.Action,
+					"filter_source":  v.Filter.Source,
+					"namespace":      string(v.Namespace),
+				})
 			}
 		}
-		if err := d.Set("namespace_sync_rules", rules); err != nil {
-			return err
+		if len(rules) > 0 {
+			if err := d.Set("namespace_sync_rule", rules); err != nil {
+				return err
+			}
+		}
+	} else {
+		// Only look for services if we don't have NamespaceSyncRules
+		if len(aws.Services) > 0 {
+			services := make([]interface{}, len(aws.Services))
+			for i, v := range aws.Services {
+				services[i] = string(v)
+			}
+			if err := d.Set("services", services); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -319,16 +300,15 @@ func awsIntegrationAPIToTF(d *schema.ResourceData, aws *integration.AwsCloudWatc
 func getPayloadAWSIntegration(d *schema.ResourceData) (*integration.AwsCloudWatchIntegration, error) {
 
 	aws := &integration.AwsCloudWatchIntegration{
-		Name:                   d.Get("name").(string),
-		Type:                   "AWSCloudWatch",
-		Enabled:                d.Get("enabled").(bool),
-		EnableAwsUsage:         d.Get("enable_aws_usage").(bool),
-		EnableCheckLargeVolume: d.Get("enable_check_large_volume").(bool),
-		ImportCloudWatch:       d.Get("import_cloud_watch").(bool),
-		IsLargeVolume:          d.Get("is_large_volume").(bool),
-		Key:                    d.Get("key").(string),
-		RoleArn:                d.Get("role_arn").(string),
-		Token:                  d.Get("token").(string),
+		Name:             d.Get("name").(string),
+		Type:             "AWSCloudWatch",
+		Enabled:          d.Get("enabled").(bool),
+		EnableAwsUsage:   d.Get("enable_aws_usage").(bool),
+		ImportCloudWatch: d.Get("import_cloud_watch").(bool),
+		Key:              d.Get("key").(string),
+		RoleArn:          d.Get("role_arn").(string),
+		Token:            d.Get("token").(string),
+		ExternalId:       d.Get("external_id").(string),
 	}
 
 	if val, ok := d.GetOk("auth_method"); ok {
@@ -341,19 +321,19 @@ func getPayloadAWSIntegration(d *schema.ResourceData) (*integration.AwsCloudWatc
 
 	if val, ok := d.GetOk("custom_cloudwatch_namespaces"); ok {
 		var cwns []string
-		for _, ns := range val.([]interface{}) {
+		for _, ns := range val.(*schema.Set).List() {
 			cwns = append(cwns, ns.(string))
 		}
 		aws.CustomCloudWatchNamespaces = strings.Join(cwns, ",")
 	}
 
-	if val, ok := d.GetOk("custom_namespace_sync_rules"); ok {
-		val := val.([]map[string]interface{})
+	if val, ok := d.GetOk("custom_namespace_sync_rule"); ok {
+		val := val.(*schema.Set).List()
 		aws.CustomNamespaceSyncRules = getCustomNamespaceRules(val)
 	}
 
-	if val, ok := d.GetOk("namespace_sync_rules"); ok {
-		val := val.([]map[string]interface{})
+	if val, ok := d.GetOk("namespace_sync_rule"); ok {
+		val := val.(*schema.Set).List()
 		aws.NamespaceSyncRules = getNamespaceRules(val)
 	}
 
@@ -395,9 +375,10 @@ func getPayloadAWSIntegration(d *schema.ResourceData) (*integration.AwsCloudWatc
 	return aws, nil
 }
 
-func getCustomNamespaceRules(tfRules []map[string]interface{}) []*integration.AwsCustomNameSpaceSyncRule {
+func getCustomNamespaceRules(tfRules []interface{}) []*integration.AwsCustomNameSpaceSyncRule {
 	rules := make([]*integration.AwsCustomNameSpaceSyncRule, len(tfRules))
 	for i, r := range tfRules {
+		r := r.(map[string]interface{})
 		defaultAction := integration.AwsSyncRuleFilterAction("")
 		if da, ok := r["default_action"]; ok {
 			da := da.(string)
@@ -409,11 +390,10 @@ func getCustomNamespaceRules(tfRules []map[string]interface{}) []*integration.Aw
 		}
 
 		var filter *integration.AwsSyncRuleFilter
-		if f, fok := r["filter"]; fok {
-			f := f.(map[string]interface{})
+		if f, fok := r["filter_action"]; fok {
 			filter = &integration.AwsSyncRuleFilter{
-				Action: integration.AwsSyncRuleFilterAction(f["action"].(string)),
-				Source: f["source"].(string),
+				Action: integration.AwsSyncRuleFilterAction(f.(string)),
+				Source: r["filter_source"].(string),
 			}
 		}
 
@@ -426,9 +406,10 @@ func getCustomNamespaceRules(tfRules []map[string]interface{}) []*integration.Aw
 	return rules
 }
 
-func getNamespaceRules(tfRules []map[string]interface{}) []*integration.AwsNameSpaceSyncRule {
+func getNamespaceRules(tfRules []interface{}) []*integration.AwsNameSpaceSyncRule {
 	rules := make([]*integration.AwsNameSpaceSyncRule, len(tfRules))
 	for i, r := range tfRules {
+		r := r.(map[string]interface{})
 		defaultAction := integration.AwsSyncRuleFilterAction("")
 		if da, ok := r["default_action"]; ok {
 			da := da.(string)
@@ -440,11 +421,10 @@ func getNamespaceRules(tfRules []map[string]interface{}) []*integration.AwsNameS
 		}
 
 		var filter *integration.AwsSyncRuleFilter
-		if f, fok := r["filter"]; fok {
-			f := f.(map[string]interface{})
+		if f, fok := r["filter_action"]; fok {
 			filter = &integration.AwsSyncRuleFilter{
-				Action: integration.AwsSyncRuleFilterAction(f["action"].(string)),
-				Source: f["source"].(string),
+				Action: integration.AwsSyncRuleFilterAction(f.(string)),
+				Source: r["filter_source"].(string),
 			}
 		}
 
@@ -471,21 +451,34 @@ func integrationAWSCreate(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return err
 	}
-	// Since things worked, set the URL and move on
-	appURL, err := buildAppURL(config.CustomAppURL, IntegrationAppPath+int.Id)
-	if err != nil {
-		return err
-	}
-	if err := d.Set("url", appURL); err != nil {
-		return err
-	}
 	d.SetId(int.Id)
+	if err := d.Set("external_id", int.ExternalId); err != nil {
+		return err
+	}
 
 	return awsIntegrationAPIToTF(d, int)
 }
 
 func integrationAWSUpdate(d *schema.ResourceData, meta interface{}) error {
-	return nil
+	config := meta.(*signalfxConfig)
+	payload, err := getPayloadAWSIntegration(d)
+	if err != nil {
+		return fmt.Errorf("Failed creating json payload: %s", err.Error())
+	}
+
+	debugOutput, _ := json.Marshal(payload)
+	log.Printf("[DEBUG] SignalFx: Update AWS Integration Payload: %s", string(debugOutput))
+
+	int, err := config.Client.UpdateAWSCloudWatchIntegration(d.Id(), payload)
+	if err != nil {
+		return err
+	}
+	d.SetId(int.Id)
+	if err := d.Set("external_id", int.ExternalId); err != nil {
+		return err
+	}
+
+	return awsIntegrationAPIToTF(d, int)
 }
 
 func integrationAWSDelete(d *schema.ResourceData, meta interface{}) error {
