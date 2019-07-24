@@ -212,7 +212,7 @@ github.com/posener/complete/match
 github.com/satori/go.uuid
 # github.com/signalfx/golib v2.4.0+incompatible
 github.com/signalfx/golib/pointer
-# github.com/signalfx/signalfx-go v1.2.1-0.20190723205725-e2307e94f78f
+# github.com/signalfx/signalfx-go v1.3.0
 github.com/signalfx/signalfx-go
 github.com/signalfx/signalfx-go/chart
 github.com/signalfx/signalfx-go/dashboard

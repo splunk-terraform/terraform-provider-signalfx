@@ -1,4 +1,16 @@
-# 1.3.0, Forgot the date
+# 1.4.0, Forgot the date
+
+Tagged!
+
+## Added
+
+## Updated
+
+## Bugfixes
+
+## Removed
+
+# 1.3.0, 2019-07-24
 
 ## Added
 
