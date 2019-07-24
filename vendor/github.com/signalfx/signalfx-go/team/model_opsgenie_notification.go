@@ -15,8 +15,6 @@ type OpsgenieNotification struct {
 	Type string `json:"type"`
 	// Opsgenie-supplied credential ID that SignalFx uses to authenticate the notification with the Opsgenie system. Get this value from your Opsgenie account settings.
 	CredentialId string `json:"credentialId"`
-	// Descriptive name for the Opsgenie credential
-	CredentialName string `json:"credentialName,omitempty"`
 	// Name of an Opsgenie entity to which SignalFx assigns the alert<br> **NOTE:**<br> Specify either `responderName` or `responderId`, but not both.
 	ResponderName string `json:"responderName,omitempty"`
 	// ID of an Opsgenie entity to which SignalFx assigns the alert<br> **NOTE:**<br> Specify either `responderId` or `responderName`, but not both.

@@ -1,4 +1,6 @@
-# 1.3.0, Forgot the date
+# 1.4.0, Forgot the date
+
+Tagged!
 
 ## Added
 
@@ -8,6 +10,16 @@
 
 ## Removed
 
+# 1.3.0, 2019-07-24
+
+## Added
+
+* Added OpenAPI code for integrations, experimental for now.
+* Add `*AwsCloudWatchIntegration` functions to client.
+
+## Removed
+
+* Removed `credentialName` from OpsGenie notifications, not a real field in the API.
 
 # 1.2.0, 2019-07-16
 
