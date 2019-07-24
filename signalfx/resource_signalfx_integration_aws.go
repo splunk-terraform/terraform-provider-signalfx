@@ -53,7 +53,7 @@ func integrationAWSResource() *schema.Resource {
 							Type:         schema.TypeString,
 							Required:     true,
 							ValidateFunc: validateFilterAction,
-							Description:  "Controls the SignalFx default behavior for processing data from an AWS namespace. SignalFx ignores this property unless you specify the \"filter\" property in the namespace sync rule. If you do specify a filter, use this property to control how SignalFx treats data that doesn't match the filter. The available actions are one of \"Include\" or \"Exclude\".",
+							Description:  "Controls the SignalFx default behavior for processing data from an AWS namespace. The available actions are one of \"Include\" or \"Exclude\".",
 						},
 						"filter_action": {
 							Type:         schema.TypeString,
@@ -102,7 +102,7 @@ func integrationAWSResource() *schema.Resource {
 							Type:         schema.TypeString,
 							Required:     true,
 							ValidateFunc: validateAwsService,
-							Description:  "An AWS custom namespace having custom AWS metrics that you want to sync with SignalFx. See the AWS documentation on publishing metrics for more information.",
+							Description:  "An AWS namespace having custom AWS metrics that you want to sync with SignalFx. See the AWS documentation on publishing metrics for more information.",
 						},
 					},
 				},
@@ -120,6 +120,7 @@ func integrationAWSResource() *schema.Resource {
 			"key": {
 				Type:        schema.TypeString,
 				Optional:    true,
+				Sensitive:   true,
 				Description: "If you specify `auth_method = \"SecurityToken\"` in your request to create an AWS integration object, use this property to specify the key.",
 			},
 			"regions": {
