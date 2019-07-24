@@ -1,5 +1,13 @@
 ## 4.3.0 (Unreleased)
 
+FEATURES:
+
+* provider: Added support for AWS integrations [#32](https://github.com/terraform-providers/terraform-provider-signalfx/pull/32)
+
+BUG FIXES:
+
+* resource/pagerduty_integration: Fixed incorrect documentation. [#32](https://github.com/terraform-providers/terraform-provider-signalfx/pull/32)
+
 IMPROVEMENTS:
 
 * resources/detector: Improved documentation around multiple notifications in a single rule. [#30](https://github.com/terraform-providers/terraform-provider-signalfx/issues/30)
