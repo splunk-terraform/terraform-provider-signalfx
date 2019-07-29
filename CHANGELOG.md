@@ -1,4 +1,8 @@
-## 4.3.1 (Unreleased)
+## 4.4.0 (Unreleased)
+
+FEATURES:
+
+* provider: Added support for Azure integrations [#34](https://github.com/terraform-providers/terraform-provider-signalfx/pull/34)
 
 IMPROVEMENTS:
 

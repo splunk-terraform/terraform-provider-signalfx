@@ -129,7 +129,7 @@ func integrationAWSResource() *schema.Resource {
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
-				Description: "Array of AWS regions that SignalFx should monitor.",
+				Description: "List of AWS regions that SignalFx should monitor.",
 			},
 			"role_arn": {
 				Type:        schema.TypeString,
@@ -143,7 +143,7 @@ func integrationAWSResource() *schema.Resource {
 					Type:         schema.TypeString,
 					ValidateFunc: validateAwsService,
 				},
-				Description: "Array of AWS services that you want SignalFx to monitor. Each element is a string designating an AWS service.",
+				Description: "List of AWS services that you want SignalFx to monitor. Each element is a string designating an AWS service.",
 			},
 			"token": {
 				Type:        schema.TypeString,
@@ -153,7 +153,7 @@ func integrationAWSResource() *schema.Resource {
 			"poll_rate": &schema.Schema{
 				Type:         schema.TypeInt,
 				Optional:     true,
-				Description:  "AWS poll rate (in seconds)",
+				Description:  "AWS poll rate (in seconds). One of `60` or `300`.",
 				ValidateFunc: validateAwsPollRate,
 			},
 			"external_id": &schema.Schema{

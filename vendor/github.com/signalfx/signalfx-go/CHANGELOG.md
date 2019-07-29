@@ -1,8 +1,18 @@
-# 1.4.0, Forgot the date
-
-Tagged!
+# 1.5.0, In Progress
 
 ## Added
+
+## Updated
+
+## Bugfixes
+
+## Removed
+
+# 1.4.0, 2019-07-29
+
+## Added
+
+* Add `*AzureIntregration` functions to client.
 
 ## Updated
 
