@@ -1,7 +1,7 @@
 ---
 layout: "signalfx"
 page_title: "SignalFx: signalfx_resource"
-sidebar_current: "docs-signalfx-resource-integration-gcp"
+sidebar_current: "docs-signalfx-resource-gcp-integration"
 description: |-
   Allows Terraform to create and manage SignalFx GCP Integrations
 ---
