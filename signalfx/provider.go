@@ -60,6 +60,7 @@ func Provider() terraform.ResourceProvider {
 			"signalfx_dashboard_group":       dashboardGroupResource(),
 			"signalfx_integration":           integrationResource(),
 			"signalfx_aws_integration":       integrationAWSResource(),
+			"signalfx_azure_integration":     integrationAzureResource(),
 			"signalfx_gcp_integration":       integrationGCPResource(),
 			"signalfx_pagerduty_integration": integrationPagerDutyResource(),
 			"signalfx_slack_integration":     integrationSlackResource(),

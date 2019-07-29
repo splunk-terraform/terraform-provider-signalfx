@@ -24,21 +24,22 @@ func integrationAzureResource() *schema.Resource {
 				Description: "Whether the integration is enabled or not",
 			},
 			"environment": &schema.Schema{
-				Type:        schema.TypeString,
-				Default:     "AZURE",
-				Optional:    true,
-				Sensitive:   true,
-				Description: "what type of Azure integration this is. The allowed values are `\"azure_us_government\"` and `\"azure\"`. Defaults to `\"azure\"`",
+				Type:         schema.TypeString,
+				Default:      "azure",
+				Optional:     true,
+				Sensitive:    true,
+				ValidateFunc: validateAzureEnvironment,
+				Description:  "what type of Azure integration this is. The allowed values are `\"azure_us_government\"` and `\"azure\"`. Defaults to `\"azure\"`",
 			},
 			"app_id": &schema.Schema{
 				Type:        schema.TypeString,
-				Optional:    true,
+				Required:    true,
 				Sensitive:   true,
 				Description: "Azure application ID for the SignalFx app.",
 			},
 			"secret_key": &schema.Schema{
 				Type:        schema.TypeString,
-				Optional:    true,
+				Required:    true,
 				Sensitive:   true,
 				Description: "Azure secret key that associates the SignalFx app in Azure with the Azure tenant.",
 			},
@@ -59,7 +60,7 @@ func integrationAzureResource() *schema.Resource {
 			},
 			"subscriptions": &schema.Schema{
 				Type:     schema.TypeSet,
-				Optional: true,
+				Required: true,
 				Elem: &schema.Schema{
 					Type:         schema.TypeString,
 					ValidateFunc: validateAzureService,
@@ -68,7 +69,7 @@ func integrationAzureResource() *schema.Resource {
 			},
 			"tenant_id": &schema.Schema{
 				Type:        schema.TypeString,
-				Optional:    true,
+				Required:    true,
 				Description: "Azure ID of the Azure tenant.",
 			},
 		},
@@ -119,8 +120,32 @@ func azureIntegrationAPIToTF(d *schema.ResourceData, azure *integration.AzureInt
 	if err := d.Set("enabled", azure.Enabled); err != nil {
 		return err
 	}
+	if err := d.Set("environment", strings.ToLower(string(azure.AzureEnvironment))); err != nil {
+		return err
+	}
 	if err := d.Set("poll_rate", *azure.PollRate/1000); err != nil {
 		return err
+	}
+	if err := d.Set("tenant_id", azure.TenantId); err != nil {
+		return err
+	}
+	if len(azure.Services) > 0 {
+		services := make([]interface{}, len(azure.Services))
+		for i, v := range azure.Services {
+			services[i] = string(v)
+		}
+		if err := d.Set("services", schema.NewSet(schema.HashString, services)); err != nil {
+			return err
+		}
+	}
+	if len(azure.Subscriptions) > 0 {
+		subs := make([]interface{}, len(azure.Subscriptions))
+		for i, v := range azure.Subscriptions {
+			subs[i] = v
+		}
+		if err := d.Set("subscriptions", schema.NewSet(schema.HashString, subs)); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -129,9 +154,13 @@ func azureIntegrationAPIToTF(d *schema.ResourceData, azure *integration.AzureInt
 func getPayloadAzureIntegration(d *schema.ResourceData) (*integration.AzureIntegration, error) {
 
 	azure := &integration.AzureIntegration{
-		Name:    d.Get("name").(string),
-		Type:    "Azure",
-		Enabled: d.Get("enabled").(bool),
+		Name:             d.Get("name").(string),
+		Type:             "Azure",
+		Enabled:          d.Get("enabled").(bool),
+		AppId:            d.Get("app_id").(string),
+		AzureEnvironment: integration.AzureEnvironment(strings.ToUpper(d.Get("environment").(string))),
+		SecretKey:        d.Get("secret_key").(string),
+		TenantId:         d.Get("tenant_id").(string),
 	}
 
 	if val, ok := d.GetOk("poll_rate"); ok {
@@ -143,6 +172,26 @@ func getPayloadAzureIntegration(d *schema.ResourceData) (*integration.AzureInteg
 			}
 			azure.PollRate = &pollRate
 		}
+	}
+
+	if val, ok := d.GetOk("services"); ok {
+		tfServices := val.(*schema.Set).List()
+		services := make([]integration.AzureService, len(tfServices))
+		for i, s := range tfServices {
+			s := s.(string)
+			services[i] = integration.AzureServiceNames[s]
+		}
+		azure.Services = services
+	}
+
+	if val, ok := d.GetOk("subscriptions"); ok {
+		tfSubs := val.(*schema.Set).List()
+		subs := make([]string, len(tfSubs))
+		for i, s := range tfSubs {
+			s := s.(string)
+			subs[i] = s
+		}
+		azure.Subscriptions = subs
 	}
 
 	return azure, nil
@@ -201,7 +250,7 @@ func validateAzurePollRate(v interface{}, k string) (we []string, errors []error
 	return
 }
 
-func validateEnvironmentAction(v interface{}, k string) (we []string, errors []error) {
+func validateAzureEnvironment(v interface{}, k string) (we []string, errors []error) {
 	value := v.(string)
 	if strings.ToUpper(value) != string(integration.AZURE_DEFAULT) && strings.ToUpper(value) != string(integration.AZURE_US_GOVERNMENT) {
 		errors = append(errors, fmt.Errorf("%s not allowed; environment be one of %s or %s", value, integration.AZURE_DEFAULT, integration.AZURE_US_GOVERNMENT))
