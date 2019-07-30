@@ -178,7 +178,7 @@ func integrationAWSExists(d *schema.ResourceData, meta interface{}) (bool, error
 	config := meta.(*signalfxConfig)
 	_, err := config.Client.GetAWSCloudWatchIntegration(d.Id())
 	if err != nil {
-		if strings.Contains(err.Error(), "Bad status 404") {
+		if strings.Contains(err.Error(), "404") {
 			return false, nil
 		}
 		return false, err
@@ -190,7 +190,7 @@ func integrationAWSRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 	int, err := config.Client.GetAWSCloudWatchIntegration(d.Id())
 	if err != nil {
-		if strings.HasPrefix(err.Error(), "Bad status 404") {
+		if strings.HasPrefix(err.Error(), "404") {
 			d.SetId("")
 		}
 		return err
