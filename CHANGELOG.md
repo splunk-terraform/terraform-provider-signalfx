@@ -1,4 +1,9 @@
 ## 4.4.1 (Unreleased)
+
+IMPROVEMENTS:
+
+* resource/integration_gcp: Improve the GCP documentation example. Thanks [a-staebler](https://github.com/a-staebler) [#41](https://github.com/terraform-providers/terraform-provider-signalfx/pull/41)
+
 ## 4.4.0 (July 30, 2019)
 
 FEATURES:
