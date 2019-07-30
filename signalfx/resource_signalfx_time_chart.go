@@ -805,7 +805,6 @@ func timechartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 			return err
 		}
 	}
-	log.Printf("[DEBUG] SignalFx: HISTO OPTIONS %v", options.HistogramChartOptions)
 	if options.HistogramChartOptions != nil {
 		if options.HistogramChartOptions.ColorThemeIndex != nil {
 			color, err := getNameFromFullPaletteColorsByIndex(int(*options.HistogramChartOptions.ColorThemeIndex))
@@ -921,13 +920,12 @@ func timechartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 
 func axisToMap(axis *chart.Axes) []*map[string]interface{} {
 	if axis != nil {
-
 		// We have to deal with a few defaults
 		hwm := math.MaxFloat64
 		if axis.HighWatermark != nil {
 			hwm = float64(*axis.HighWatermark)
 		}
-		lwm := math.MaxFloat64
+		lwm := -math.MaxFloat64
 		if axis.LowWatermark != nil {
 			lwm = float64(*axis.LowWatermark)
 		}
