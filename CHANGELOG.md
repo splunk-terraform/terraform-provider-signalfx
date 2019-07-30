@@ -4,6 +4,10 @@ FEATURES:
 
 * provider: Added support for Azure integrations [#34](https://github.com/terraform-providers/terraform-provider-signalfx/pull/34)
 
+BUG FIXES:
+
+* provider: Fixed a problem where resources that had gone missing were not recreated, but instead threw errors. [#38](https://github.com/terraform-providers/terraform-provider-signalfx/pull/38)
+
 IMPROVEMENTS:
 
 * provider: Added AWS resource link to documentation sidebar. [#37](https://github.com/terraform-providers/terraform-provider-signalfx/pull/37)
