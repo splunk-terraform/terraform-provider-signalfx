@@ -677,7 +677,7 @@ func dashboardExists(d *schema.ResourceData, meta interface{}) (bool, error) {
 	config := meta.(*signalfxConfig)
 	_, err := config.Client.GetDashboard(d.Id())
 	if err != nil {
-		if strings.Contains(err.Error(), "Bad status 404") {
+		if strings.Contains(err.Error(), "404") {
 			return false, nil
 		}
 		return false, err
