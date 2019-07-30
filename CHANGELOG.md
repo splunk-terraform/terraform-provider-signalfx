@@ -6,6 +6,7 @@ FEATURES:
 
 IMPROVEMENTS:
 
+* provider: Added AWS resource link to documentation sidebar. [#37](https://github.com/terraform-providers/terraform-provider-signalfx/pull/37)
 * resources/detector: Improved documentation for OpsGenie notifications. Thanks [austburn](https://github.com/austburn)! Thanks [#36](https://github.com/terraform-providers/terraform-provider-signalfx/pull/36).
 
 ## 4.3.0 (July 24, 2019)
