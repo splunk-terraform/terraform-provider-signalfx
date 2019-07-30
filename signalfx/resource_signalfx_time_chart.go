@@ -71,22 +71,22 @@ func migrateAxisStateV0toV1(is *terraform.InstanceState) (*terraform.InstanceSta
 		return is, nil
 	}
 	if v, ok := is.Attributes["max_value"]; ok {
-		if f, err := strconv.ParseFloat(v, 32); err == nil && f == math.MaxFloat32 {
+		if f, err := strconv.ParseFloat(v, 64); err == nil && f == math.MaxFloat64 {
 			delete(is.Attributes, "max_value")
 		}
 	}
 	if v, ok := is.Attributes["min_value"]; ok {
-		if f, err := strconv.ParseFloat(v, 32); err == nil && f == -math.MaxFloat32 {
+		if f, err := strconv.ParseFloat(v, 64); err == nil && f == -math.MaxFloat64 {
 			delete(is.Attributes, "min_value")
 		}
 	}
 	if v, ok := is.Attributes["low_watermark"]; ok {
-		if f, err := strconv.ParseFloat(v, 32); err == nil && f == -math.MaxFloat32 {
+		if f, err := strconv.ParseFloat(v, 64); err == nil && f == -math.MaxFloat64 {
 			delete(is.Attributes, "low_watermark")
 		}
 	}
 	if v, ok := is.Attributes["high_watermark"]; ok {
-		if f, err := strconv.ParseFloat(v, 32); err == nil && f == math.MaxFloat32 {
+		if f, err := strconv.ParseFloat(v, 32); err == nil && f == math.MaxFloat64 {
 			delete(is.Attributes, "high_watermark")
 		}
 	}
@@ -241,13 +241,13 @@ func timeChartResource() *schema.Resource {
 						"min_value": &schema.Schema{
 							Type:        schema.TypeFloat,
 							Optional:    true,
-							Default:     -math.MaxFloat32,
+							Default:     -math.MaxFloat64,
 							Description: "The minimum value for the left axis",
 						},
 						"max_value": &schema.Schema{
 							Type:        schema.TypeFloat,
 							Optional:    true,
-							Default:     math.MaxFloat32,
+							Default:     math.MaxFloat64,
 							Description: "The maximum value for the left axis",
 						},
 						"label": &schema.Schema{
@@ -258,7 +258,7 @@ func timeChartResource() *schema.Resource {
 						"high_watermark": &schema.Schema{
 							Type:        schema.TypeFloat,
 							Optional:    true,
-							Default:     math.MaxFloat32,
+							Default:     math.MaxFloat64,
 							Description: "A line to draw as a high watermark",
 						},
 						"high_watermark_label": &schema.Schema{
@@ -269,7 +269,7 @@ func timeChartResource() *schema.Resource {
 						"low_watermark": &schema.Schema{
 							Type:        schema.TypeFloat,
 							Optional:    true,
-							Default:     -math.MaxFloat32,
+							Default:     -math.MaxFloat64,
 							Description: "A line to draw as a low watermark",
 						},
 						"low_watermark_label": &schema.Schema{
@@ -805,7 +805,6 @@ func timechartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 			return err
 		}
 	}
-	log.Printf("[DEBUG] SignalFx: HISTO OPTIONS %v", options.HistogramChartOptions)
 	if options.HistogramChartOptions != nil {
 		if options.HistogramChartOptions.ColorThemeIndex != nil {
 			color, err := getNameFromFullPaletteColorsByIndex(int(*options.HistogramChartOptions.ColorThemeIndex))
@@ -921,13 +920,12 @@ func timechartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 
 func axisToMap(axis *chart.Axes) []*map[string]interface{} {
 	if axis != nil {
-
 		// We have to deal with a few defaults
 		hwm := math.MaxFloat64
 		if axis.HighWatermark != nil {
 			hwm = float64(*axis.HighWatermark)
 		}
-		lwm := math.MaxFloat64
+		lwm := -math.MaxFloat64
 		if axis.LowWatermark != nil {
 			lwm = float64(*axis.LowWatermark)
 		}

@@ -6,7 +6,8 @@ FEATURES:
 
 BUG FIXES:
 
-* provider: Fixed a problem where resources that had gone missing were not recreated, but instead threw errors. [#38](https://github.com/terraform-providers/terraform-provider-signalfx/pull/38)
+* provider: Resources that had gone missing were not recreated, but instead threw errors. Those resources will now be recreated. [#38](https://github.com/terraform-providers/terraform-provider-signalfx/pull/38)
+* resource/time_chart: The axis' low watermark, if unset, could get "stuck" and insist on needing to change the remote chart, leaving an unclean `apply`. This has been fixed by correcting the default value, which was set incorrectly. [#35](https://github.com/terraform-providers/terraform-provider-signalfx/issues/35)
 
 IMPROVEMENTS:
 
