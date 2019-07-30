@@ -167,6 +167,7 @@ func timeChartResource() *schema.Resource {
 			"axis_right": &schema.Schema{
 				Type:     schema.TypeSet,
 				Optional: true,
+				MaxItems: 1,
 				Elem: &schema.Resource{
 					SchemaVersion: 1,
 					MigrateState:  resourceAxisMigrateState,
@@ -234,6 +235,7 @@ func timeChartResource() *schema.Resource {
 			"axis_left": &schema.Schema{
 				Type:     schema.TypeSet,
 				Optional: true,
+				MaxItems: 1,
 				Elem: &schema.Resource{
 					SchemaVersion: 1,
 					MigrateState:  resourceAxisMigrateState,
@@ -933,7 +935,7 @@ func axisToMap(axis *chart.Axes) []*map[string]interface{} {
 		if axis.Max != nil {
 			max = float64(*axis.Max)
 		}
-		min := math.MaxFloat64
+		min := -math.MaxFloat64
 		if axis.Min != nil {
 			min = float64(*axis.Min)
 		}

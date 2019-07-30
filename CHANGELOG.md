@@ -13,6 +13,7 @@ IMPROVEMENTS:
 
 * provider: Added AWS resource link to documentation sidebar. [#37](https://github.com/terraform-providers/terraform-provider-signalfx/pull/37)
 * resources/detector: Improved documentation for OpsGenie notifications. Thanks [austburn](https://github.com/austburn)! Thanks [#36](https://github.com/terraform-providers/terraform-provider-signalfx/pull/36).
+* resources/time_chart: `axis_left` and `axis_right` are now limited to single uses. This was always the case, but it's now enforced in the schema to prevent blissful ignorance.
 
 ## 4.3.0 (July 24, 2019)
 
