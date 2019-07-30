@@ -13,7 +13,7 @@ SignalFx GCP Integration
 ## Example Usage
 
 ```terraform
-resource "signalfx_integration_gcp" "gcp_myteam" {
+resource "signalfx_gcp_integration" "gcp_myteam" {
     name = "GCP - My Team"
     enabled = true
     poll_rate = 300000
