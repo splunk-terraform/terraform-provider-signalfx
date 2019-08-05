@@ -62,10 +62,10 @@ notifications = ["Email,foo-alerts@bar.com"]
 
 ### Opsgenie
 
-Note that the `credentialId` is the SignalFx-provided ID shown after setting up your Opsgenie integration.
+Note that the `credentialId` is the SignalFx-provided ID shown after setting up your Opsgenie integration. `Team` here is hardcoded as the `responderType` as that is the only acceptable type as per the API docs.
 
 ```
-notifications = ["Opsgenie,credentialId,credentialName,responderName,responderId,responderType"]
+notifications = ["Opsgenie,credentialId,credentialName,responderName,responderId,Team"]
 ```
 
 ### PagerDuty
@@ -76,8 +76,10 @@ notifications = ["PagerDuty,credentialId"]
 
 ### Slack
 
+Include the `#` on the channel name!
+
 ```
-notifications = ["Slack,credentialId,channel"]
+notifications = ["Slack,credentialId,#channel"]
 ```
 
 ### Team
