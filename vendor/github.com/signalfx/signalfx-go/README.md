@@ -21,6 +21,9 @@ import "github.com/signalfx/signalfx-go"
 // or test with a RoundTripper
 httpClient := &http.Client{…}
 client := signalfx.NewClient("your-token-here", HTTPClient(httpClient))
+
+// Then do things!
+chart, err := client.GetChart("abc123IdHere")
 ```
 
 # Questions
