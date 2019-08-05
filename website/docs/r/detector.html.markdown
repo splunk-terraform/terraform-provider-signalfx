@@ -65,7 +65,7 @@ notifications = ["Email,foo-alerts@bar.com"]
 Note that the `credentialId` is the SignalFx-provided ID shown after setting up your Opsgenie integration. `Team` here is hardcoded as the `responderType` as that is the only acceptable type as per the API docs.
 
 ```
-notifications = ["Opsgenie,credentialId,credentialName,responderName,responderId,Team"]
+notifications = ["Opsgenie,credentialId,responderName,responderId,Team"]
 ```
 
 ### PagerDuty
