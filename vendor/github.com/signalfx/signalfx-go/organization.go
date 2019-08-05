@@ -75,7 +75,7 @@ func (c *Client) DeleteMember(id string) error {
 }
 
 // InviteMember invites a member to the organization.
-func (c *Client) InviteMember(inviteRequest *organization.InviteMemberRequest) (*organization.Member, error) {
+func (c *Client) InviteMember(inviteRequest *organization.CreateUpdateMemberRequest) (*organization.Member, error) {
 	payload, err := json.Marshal(inviteRequest)
 	if err != nil {
 		return nil, err
