@@ -1,5 +1,9 @@
 ## 4.4.1 (Unreleased)
 
+FEATURES:
+
+* provider: Added support for Organization Tokens with `signalfx_org_token`. [#45](https://github.com/terraform-providers/terraform-provider-signalfx/pull/45)
+
 IMPROVEMENTS:
 
 * resource/integration_gcp: Improve the GCP documentation example. Thanks [a-staebler](https://github.com/a-staebler) [#41](https://github.com/terraform-providers/terraform-provider-signalfx/pull/41)
