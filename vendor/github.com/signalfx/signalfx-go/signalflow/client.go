@@ -151,10 +151,12 @@ func (c *Client) ensureInitialized() error {
 	var err error
 	if !c.isInitialized {
 		err = c.initialize()
-		// The mutex also acts as a memory barrier to ensure this write will be
-		// seen by any goroutine that obtains the lock after the last Unlock,
-		// see https://golang.org/ref/mem#tmp_8.
-		c.isInitialized = true
+		if err == nil {
+			// The mutex also acts as a memory barrier to ensure this write will be
+			// seen by any goroutine that obtains the lock after the last Unlock,
+			// see https://golang.org/ref/mem#tmp_8.
+			c.isInitialized = true
+		}
 	}
 	return err
 }
@@ -277,9 +279,16 @@ func (c *Client) keepReadingMessages(authenticatedCond *sync.Cond) {
 func (c *Client) acceptMessage(message messages.Message, authenticatedCond *sync.Cond) {
 	if _, ok := message.(*messages.AuthenticatedMessage); ok {
 		authenticatedCond.Signal()
-	} else {
-		log.Printf("Unknown SignalFlow message received: %v", message)
+		return
+	} else if msg, ok := message.(*messages.BaseJSONMessage); ok {
+		data := msg.RawData()
+		if data != nil && data["event"] == "KEEP_ALIVE" {
+			// Ignore keep alive messages
+			return
+		}
 	}
+
+	log.Printf("Unknown SignalFlow message received: %v", message)
 }
 
 func connect(ctx context.Context, streamURL *url.URL) (*websocket.Conn, error) {

@@ -58,6 +58,7 @@ func Provider() terraform.ResourceProvider {
 			"signalfx_text_chart":            textChartResource(),
 			"signalfx_dashboard":             dashboardResource(),
 			"signalfx_dashboard_group":       dashboardGroupResource(),
+			"signalfx_org_token":             orgTokenResource(),
 			"signalfx_integration":           integrationResource(),
 			"signalfx_aws_integration":       integrationAWSResource(),
 			"signalfx_azure_integration":     integrationAzureResource(),
