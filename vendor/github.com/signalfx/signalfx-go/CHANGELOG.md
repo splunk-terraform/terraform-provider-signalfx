@@ -2,11 +2,14 @@
 
 ## Added
 
-## Updated
+* Add OrgToken methods
 
 ## Bugfixes
+* Properly recognize the SignalFlow keep alive event message and ignore it.
 
-## Removed
+## Updated
+
+* Moved various notification bits into a `notification` package
 
 # 1.4.0, 2019-07-29
 

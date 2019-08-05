@@ -61,7 +61,7 @@ type JSONMessage interface {
 }
 
 type BaseJSONMessage struct {
-	*BaseMessage
+	BaseMessage
 	rawMessage []byte
 	rawData    map[string]interface{}
 }
@@ -95,7 +95,7 @@ type BaseJSONChannelMessage struct {
 }
 
 func (j *BaseJSONChannelMessage) String() string {
-	return string(j.BaseJSONMessage.rawMessage)
+	return fmt.Sprintf("%s", j.BaseJSONMessage.rawMessage)
 }
 
 type TimestampedMessage struct {
