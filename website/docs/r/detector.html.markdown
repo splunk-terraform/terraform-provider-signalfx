@@ -101,7 +101,7 @@ notifications = ["TeamEmail,teamId"]
 ### Webhook
 
 ```
-notifications = ["Webhook,secret,url"]
+notifications = ["Webhook,credentialId,secret,url"]
 ```
 
 ## Argument Reference
