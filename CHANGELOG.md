@@ -7,6 +7,9 @@ FEATURES:
 IMPROVEMENTS:
 
 * resource/integration_gcp: Improve the GCP documentation example. Thanks [a-staebler](https://github.com/a-staebler) [#41](https://github.com/terraform-providers/terraform-provider-signalfx/pull/41)
+* resource/detector: Notifications are now validated to prevent crashes and problems. [#46](https://github.com/terraform-providers/terraform-provider-signalfx/pull/46)
+* resource/detector: Fixed a bug in Webhook notification specifications, it was missing a `credentialId`.
+* resource/detector: Corrected documentation that disagreed on whether to include `#` in Slack channel names. In a word: don't.
 
 ## 4.4.0 (July 30, 2019)
 
