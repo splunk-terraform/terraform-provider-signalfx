@@ -108,8 +108,9 @@ func getNotifications(tf_notifications []interface{}) []map[string]interface{} {
 			item["credentialId"] = vars[1]
 			item["channel"] = vars[2]
 		case "Webhook":
-			item["secret"] = vars[1]
-			item["url"] = vars[2]
+			item["credentialId"] = vars[1]
+			item["secret"] = vars[2]
+			item["url"] = vars[3]
 		case "Team", "TeamEmail":
 			item["team"] = vars[1]
 		case "Opsgenie":
@@ -142,7 +143,7 @@ func validateNotification(val interface{}, key string) (warns []string, errs []e
 			return
 		}
 	case "Slack":
-		if len(parts) < 3 {
+		if len(parts) != 3 {
 			errs = append(errs, fmt.Errorf("Invalid Slack notification string, please consult the documentation (not enough parts)"))
 			return
 		}
@@ -151,22 +152,22 @@ func validateNotification(val interface{}, key string) (warns []string, errs []e
 			return
 		}
 	case "Webhook":
-		if len(parts) < 3 {
+		if len(parts) != 4 {
 			errs = append(errs, fmt.Errorf("Invalid Webhook notification string, please consult the documentation (not enough parts)"))
 			return
 		}
-		_, err := url.Parse(parts[2])
+		_, err := url.ParseRequestURI(parts[3])
 		if err != nil {
 			errs = append(errs, fmt.Errorf("Invalid Webhook URL %q", parts[2]))
 			return
 		}
 	case "Opsgenie":
-		if len(parts) < 5 {
+		if len(parts) != 5 {
 			errs = append(errs, fmt.Errorf("Invalid OpsGenie notification string, please consult the documentation (not enough parts)"))
 			return
 		}
 	case "VictorOps":
-		if len(parts) < 3 {
+		if len(parts) != 3 {
 			errs = append(errs, fmt.Errorf("Invalid VictorOps notification string, please consult the documentation (not enough parts)"))
 			return
 		}

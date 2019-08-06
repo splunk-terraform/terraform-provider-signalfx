@@ -88,7 +88,31 @@ func TestNotifyStringFromAPI(t *testing.T) {
 
 	for _, v := range expected {
 		_, errors := validateNotification(v, "notification")
-		assert.Len(t, errors, 0, "Expected no errors from valid notification")
+		assert.Len(t, errors, 0, "Expected no errors from valid notification: %q", v)
+	}
+}
+
+func TestNotifyValidationBad(t *testing.T) {
+
+	busted := []string{
+		"Email,fooexample.com",
+		"Opsgenie,XXX,Foo,ABC123",
+		"PagerDuty",
+		"Slack,XXX,#foobar",
+		"Team",
+		"FARTS,lol",
+		"TeamEmailABC123",
+		"Webhook,XXX,YYY,notaurl",
+		"BigPanda",
+		"Office365",
+		"ServiceNow",
+		"VictorOps,XXX",
+		"XMatters",
+	}
+
+	for _, v := range busted {
+		_, errors := validateNotification(v, "notification")
+		assert.Len(t, errors, 1, "Expected errors from invalid notification %q", v)
 	}
 }
 
@@ -96,7 +120,7 @@ func TestGetNotifications(t *testing.T) {
 	values := []interface{}{
 		"Email,test@yelp.com",
 		"PagerDuty,credId",
-		"Webhook,test,https://foo.bar.com?user=test&action=alert",
+		"Webhook,credId,test,https://foo.bar.com?user=test&action=alert",
 		"Opsgenie,credId,respName,respId,respType",
 		"Slack,credId,channel",
 		"Team,teamId",
@@ -118,9 +142,10 @@ func TestGetNotifications(t *testing.T) {
 			"credentialId": "credId",
 		},
 		map[string]interface{}{
-			"type":   "Webhook",
-			"secret": "test",
-			"url":    "https://foo.bar.com?user=test&action=alert",
+			"type":         "Webhook",
+			"credentialId": "credId",
+			"secret":       "test",
+			"url":          "https://foo.bar.com?user=test&action=alert",
 		},
 		map[string]interface{}{
 			"type":          "Opsgenie",
