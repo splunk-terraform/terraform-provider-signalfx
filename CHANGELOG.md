@@ -7,6 +7,7 @@ FEATURES:
 IMPROVEMENTS:
 
 * resource/integration_gcp: Improve the GCP documentation example. Thanks [a-staebler](https://github.com/a-staebler) [#41](https://github.com/terraform-providers/terraform-provider-signalfx/pull/41)
+* resource/detector: Notifications are now validated to prevent crashes and problems. [#46](https://github.com/terraform-providers/terraform-provider-signalfx/pull/46)
 
 ## 4.4.0 (July 30, 2019)
 
