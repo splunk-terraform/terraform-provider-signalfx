@@ -241,7 +241,10 @@ func getPayloadDetector(d *schema.ResourceData) (*detector.CreateUpdateDetectorR
 		}
 
 		if notifications, ok := tfRule["notifications"]; ok {
-			notify := getNotifications(notifications.([]interface{}))
+			notify, err := getNotifications(notifications.([]interface{}))
+			if err != nil {
+				return nil, err
+			}
 			rule.Notifications = notify
 		}
 		rulesList[i] = rule

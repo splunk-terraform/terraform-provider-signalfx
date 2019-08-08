@@ -16,6 +16,7 @@ Manage SignalFx org tokens.
 resource "signalfx_org_token" "myteamkey0" {
     name = "TeamIDKey"
     description = "My team's rad key"
+    notifications = ["Email,foo-alerts@bar.com"]
 
     host_or_usage_limits {
       host_limit = 100
@@ -37,6 +38,7 @@ The following arguments are supported in the resource block:
 * `name` - (Required) Name of the token.
 * `description` - (Optional) Description of the token.
 * `disabled` - (Optional) Flag that controls enabling the token. If set to `true`, the token is disabled, and you can't use it for authentication. Defaults to `false`.
+* `notifications` - (Optional) Where to send notifications about this token's limits. Please consult the [Notification Format](https://www.terraform.io/docs/providers/signalfx/r/detector.html#notification-format) laid out in detectors.
 * `host_or_usage_limits` - (Optional) Specify Usage-based limits for this token.
   * `host_limit` - (Optional) Max number of hosts that can use this token
   * `host_notification_threshold` - (Optional) Notification threshold for hosts

@@ -15,6 +15,7 @@ const newOrgTokenConfig = `
 resource "signalfx_org_token" "myorgtokenTOK1" {
   name = "FarToken"
   description = "Farts"
+	notifications = ["Email,foo-alerts@example.com"]
 
   host_or_usage_limits {
     host_limit = 100
@@ -33,6 +34,7 @@ const updatedOrgTokenConfig = `
 resource "signalfx_org_token" "myorgtokenTOK1" {
   name = "FarToken NEW"
   description = "Farts"
+	notifications = ["Email,foo-alerts@example.com"]
 
   host_or_usage_limits {
     host_limit = 100

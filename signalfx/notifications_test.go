@@ -3,65 +3,102 @@ package signalfx
 import (
 	"testing"
 
+	"github.com/signalfx/signalfx-go/notification"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestNotifyStringFromAPI(t *testing.T) {
-	values := []map[string]interface{}{
-		{
-			"type":  "Email",
-			"email": "foo@example.com",
+	values := []*notification.Notification{
+		&notification.Notification{
+			Type: EmailNotificationType,
+			Value: &notification.EmailNotification{
+				Type:  EmailNotificationType,
+				Email: "foo@example.com",
+			},
 		},
-		{
-			"type":          "Opsgenie",
-			"credentialId":  "XXX",
-			"responderName": "Foo",
-			"responderId":   "ABC123",
-			"responderType": "Team",
+		&notification.Notification{
+			Type: OpsgenieNotificationType,
+			Value: &notification.OpsgenieNotification{
+				Type:          OpsgenieNotificationType,
+				CredentialId:  "XXX",
+				ResponderName: "Foo",
+				ResponderId:   "ABC123",
+				ResponderType: "Team",
+			},
 		},
-		{
-			"type":         "PagerDuty",
-			"credentialId": "XXX",
+		&notification.Notification{
+			Type: PagerDutyNotificationType,
+			Value: &notification.PagerDutyNotification{
+				Type:         PagerDutyNotificationType,
+				CredentialId: "XXX",
+			},
 		},
-		{
-			"type":         "Slack",
-			"credentialId": "XXX",
-			"channel":      "foobar",
+		&notification.Notification{
+			Type: SlackNotificationType,
+			Value: &notification.SlackNotification{
+				Type:         SlackNotificationType,
+				CredentialId: "XXX",
+				Channel:      "foobar",
+			},
 		},
-		{
-			"type": "Team",
-			"team": "ABC123",
+		&notification.Notification{
+			Type: TeamNotificationType,
+			Value: &notification.TeamNotification{
+				Type: TeamNotificationType,
+				Team: "ABC123",
+			},
 		},
-		{
-			"type": "TeamEmail",
-			"team": "ABC123",
+		&notification.Notification{
+			Type: TeamEmailNotificationType,
+			Value: &notification.TeamEmailNotification{
+				Type: TeamEmailNotificationType,
+				Team: "ABC124",
+			},
 		},
-		{
-			"type":         "Webhook",
-			"credentialId": "XXX",
-			"secret":       "YYY",
-			"url":          "http://www.example.com",
+		&notification.Notification{
+			Type: WebhookNotificationType,
+			Value: &notification.WebhookNotification{
+				Type:         WebhookNotificationType,
+				CredentialId: "XXX",
+				Secret:       "YYY",
+				Url:          "http://www.example.com",
+			},
 		},
-		{
-			"type":         "BigPanda",
-			"credentialId": "XXX",
+		&notification.Notification{
+			Type: BigPandaNotificationType,
+			Value: &notification.BigPandaNotification{
+				Type:         BigPandaNotificationType,
+				CredentialId: "XXX",
+			},
 		},
-		{
-			"type":         "Office365",
-			"credentialId": "XXX",
+		&notification.Notification{
+			Type: Office365NotificationType,
+			Value: &notification.Office365Notification{
+				Type:         Office365NotificationType,
+				CredentialId: "XXX",
+			},
 		},
-		{
-			"type":         "ServiceNow",
-			"credentialId": "XXX",
+		&notification.Notification{
+			Type: ServiceNowNotificationType,
+			Value: &notification.ServiceNowNotification{
+				Type:         ServiceNowNotificationType,
+				CredentialId: "XXX",
+			},
 		},
-		{
-			"type":         "VictorOps",
-			"credentialId": "XXX",
-			"routingKey":   "YYY",
+		&notification.Notification{
+			Type: VictorOpsNotificationType,
+			Value: &notification.VictorOpsNotification{
+				Type:         VictorOpsNotificationType,
+				CredentialId: "XXX",
+				RoutingKey:   "YYY",
+			},
 		},
-		{
-			"type":         "XMatters",
-			"credentialId": "XXX",
+		&notification.Notification{
+			Type: XMattersNotificationType,
+			Value: &notification.XMattersNotification{
+				Type:         XMattersNotificationType,
+				CredentialId: "XXX",
+			},
 		},
 	}
 
@@ -71,7 +108,7 @@ func TestNotifyStringFromAPI(t *testing.T) {
 		"PagerDuty,XXX",
 		"Slack,XXX,foobar",
 		"Team,ABC123",
-		"TeamEmail,ABC123",
+		"TeamEmail,ABC124",
 		"Webhook,XXX,YYY,http://www.example.com",
 		"BigPanda,XXX",
 		"Office365,XXX",
@@ -132,62 +169,100 @@ func TestGetNotifications(t *testing.T) {
 		"XMatters,credId",
 	}
 
-	expected := []map[string]interface{}{
-		map[string]interface{}{
-			"type":  "Email",
-			"email": "test@yelp.com",
+	expected := []*notification.Notification{
+		&notification.Notification{
+			Type: EmailNotificationType,
+			Value: &notification.EmailNotification{
+				Type:  EmailNotificationType,
+				Email: "test@yelp.com",
+			},
 		},
-		map[string]interface{}{
-			"type":         "PagerDuty",
-			"credentialId": "credId",
+		&notification.Notification{
+			Type: PagerDutyNotificationType,
+			Value: &notification.PagerDutyNotification{
+				Type:         PagerDutyNotificationType,
+				CredentialId: "credId",
+			},
 		},
-		map[string]interface{}{
-			"type":         "Webhook",
-			"credentialId": "credId",
-			"secret":       "test",
-			"url":          "https://foo.bar.com?user=test&action=alert",
+		&notification.Notification{
+			Type: WebhookNotificationType,
+			Value: &notification.WebhookNotification{
+				Type:         WebhookNotificationType,
+				CredentialId: "credId",
+				Secret:       "test",
+				Url:          "https://foo.bar.com?user=test&action=alert",
+			},
 		},
-		map[string]interface{}{
-			"type":          "Opsgenie",
-			"credentialId":  "credId",
-			"responderName": "respName",
-			"responderId":   "respId",
-			"responderType": "respType",
+		&notification.Notification{
+			Type: OpsgenieNotificationType,
+			Value: &notification.OpsgenieNotification{
+				Type:          OpsgenieNotificationType,
+				CredentialId:  "credId",
+				ResponderName: "respName",
+				ResponderId:   "respId",
+				ResponderType: "respType",
+			},
 		},
-		map[string]interface{}{
-			"type":         "Slack",
-			"credentialId": "credId",
-			"channel":      "channel",
+		&notification.Notification{
+			Type: SlackNotificationType,
+			Value: &notification.SlackNotification{
+				Type:         SlackNotificationType,
+				CredentialId: "credId",
+				Channel:      "channel",
+			},
 		},
-		map[string]interface{}{
-			"type": "Team",
-			"team": "teamId",
+		&notification.Notification{
+			Type: TeamNotificationType,
+			Value: &notification.TeamNotification{
+				Type: TeamNotificationType,
+				Team: "teamId",
+			},
 		},
-		map[string]interface{}{
-			"type": "TeamEmail",
-			"team": "teamId",
+		&notification.Notification{
+			Type: TeamEmailNotificationType,
+			Value: &notification.TeamEmailNotification{
+				Type: TeamEmailNotificationType,
+				Team: "teamId",
+			},
 		},
-		map[string]interface{}{
-			"type":         "BigPanda",
-			"credentialId": "credId",
+		&notification.Notification{
+			Type: BigPandaNotificationType,
+			Value: &notification.BigPandaNotification{
+				Type:         BigPandaNotificationType,
+				CredentialId: "credId",
+			},
 		},
-		map[string]interface{}{
-			"type":         "Office365",
-			"credentialId": "credId",
+		&notification.Notification{
+			Type: Office365NotificationType,
+			Value: &notification.Office365Notification{
+				Type:         Office365NotificationType,
+				CredentialId: "credId",
+			},
 		},
-		map[string]interface{}{
-			"type":         "ServiceNow",
-			"credentialId": "credId",
+		&notification.Notification{
+			Type: ServiceNowNotificationType,
+			Value: &notification.ServiceNowNotification{
+				Type:         ServiceNowNotificationType,
+				CredentialId: "credId",
+			},
 		},
-		map[string]interface{}{
-			"type":         "VictorOps",
-			"credentialId": "credId",
-			"routingKey":   "routingKey",
+		&notification.Notification{
+			Type: VictorOpsNotificationType,
+			Value: &notification.VictorOpsNotification{
+				Type:         VictorOpsNotificationType,
+				CredentialId: "credId",
+				RoutingKey:   "routingKey",
+			},
 		},
-		map[string]interface{}{
-			"type":         "XMatters",
-			"credentialId": "credId",
+		&notification.Notification{
+			Type: XMattersNotificationType,
+			Value: &notification.XMattersNotification{
+				Type:         XMattersNotificationType,
+				CredentialId: "credId",
+			},
 		},
 	}
-	assert.Equal(t, expected, getNotifications(values))
+	nots, err := getNotifications(values)
+	assert.NoError(t, err, "No error expected on notification conversion")
+	assert.Equal(t, expected, nots)
 }

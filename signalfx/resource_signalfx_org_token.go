@@ -28,7 +28,6 @@ func orgTokenResource() *schema.Resource {
 				Default:     false,
 				Description: "Flag that controls enabling the token. If set to `true`, the token is disabled, and you can't use it for authentication. Defaults to `false`",
 			},
-
 			"host_or_usage_limits": &schema.Schema{
 				Type:          schema.TypeSet,
 				Optional:      true,
@@ -87,7 +86,6 @@ func orgTokenResource() *schema.Resource {
 					},
 				},
 			},
-
 			"dpm_limits": &schema.Schema{
 				Type:          schema.TypeSet,
 				Optional:      true,
@@ -109,6 +107,15 @@ func orgTokenResource() *schema.Resource {
 					},
 				},
 			},
+			"notifications": &schema.Schema{
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type:         schema.TypeString,
+					ValidateFunc: validateNotification,
+				},
+				Description: "List of strings specifying where notifications will be sent when an incident occurs. See https://developers.signalfx.com/v2/docs/detector-model#notifications-models for more info",
+			},
 		},
 
 		Create: orgTokenCreate,
@@ -122,7 +129,7 @@ func orgTokenResource() *schema.Resource {
 	}
 }
 
-func getPayloadOrgToken(d *schema.ResourceData) *orgtoken.CreateUpdateTokenRequest {
+func getPayloadOrgToken(d *schema.ResourceData) (*orgtoken.CreateUpdateTokenRequest, error) {
 	token := &orgtoken.CreateUpdateTokenRequest{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
@@ -190,12 +197,23 @@ func getPayloadOrgToken(d *schema.ResourceData) *orgtoken.CreateUpdateTokenReque
 		token.Limits = limits
 	}
 
-	return token
+	if notifications, ok := d.GetOk("notifications"); ok {
+		notify, err := getNotifications(notifications.([]interface{}))
+		if err != nil {
+			return nil, err
+		}
+		token.Notifications = notify
+	}
+
+	return token, nil
 }
 
 func orgTokenCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	payload := getPayloadOrgToken(d)
+	payload, err := getPayloadOrgToken(d)
+	if err != nil {
+		return err
+	}
 
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Create Org Token Payload: %s", string(debugOutput))
@@ -270,6 +288,18 @@ func orgTokenAPIToTF(d *schema.ResourceData, t *orgtoken.Token) error {
 				return err
 			}
 		}
+
+		notifications := make([]string, len(t.Notifications))
+		for i, not := range t.Notifications {
+			tfNot, err := getNotifyStringFromAPI(not)
+			if err != nil {
+				return err
+			}
+			notifications[i] = tfNot
+		}
+		if err := d.Set("notifications", notifications); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -287,7 +317,10 @@ func orgTokenRead(d *schema.ResourceData, meta interface{}) error {
 
 func orgTokenUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	payload := getPayloadOrgToken(d)
+	payload, err := getPayloadOrgToken(d)
+	if err != nil {
+		return err
+	}
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Update Org Token Payload: %s", string(debugOutput))
 
