@@ -6,6 +6,7 @@ FEATURES:
 
 IMPROVEMENTS:
 
+* provider: Bumped Terraform dependency to v0.12.6 [#47](https://github.com/terraform-providers/terraform-provider-signalfx/pull/47)
 * resource/integration_gcp: Improve the GCP documentation example. Thanks [a-staebler](https://github.com/a-staebler) [#41](https://github.com/terraform-providers/terraform-provider-signalfx/pull/41)
 * resource/detector: Notifications are now validated to prevent crashes and problems. [#46](https://github.com/terraform-providers/terraform-provider-signalfx/pull/46)
 * resource/detector: Fixed a bug in Webhook notification specifications, it was missing a `credentialId`.
