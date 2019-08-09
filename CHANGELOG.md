@@ -1,4 +1,4 @@
-## 4.4.1 (Unreleased)
+## 4.5.0 (Unreleased)
 
 FEATURES:
 
@@ -11,6 +11,7 @@ IMPROVEMENTS:
 * resource/detector: Notifications are now validated to prevent crashes and problems. [#46](https://github.com/terraform-providers/terraform-provider-signalfx/pull/46)
 * resource/detector: Fixed a bug in Webhook notification specifications, it was missing a `credentialId`.
 * resource/detector: Corrected documentation that disagreed on whether to include `#` in Slack channel names. In a word: don't.
+* resource/detector: Improve type checking and reliability of notification strings. [#48](https://github.com/terraform-providers/terraform-provider-signalfx/pull/48)
 
 ## 4.4.0 (July 30, 2019)
 

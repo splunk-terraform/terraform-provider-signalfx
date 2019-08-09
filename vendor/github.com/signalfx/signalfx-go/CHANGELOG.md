@@ -1,14 +1,8 @@
 # 1.6.0, Unreleased
 
-Tagged!
-
-## Added
-
 ## Updated
 
-## Bugfixes
-
-## Removed
+* `Detector.Rules` now uses `Notification` as it's type instead of an untyped `[]map[string]interface{}`.
 
 # 1.5.0, 2019-08-05
 
