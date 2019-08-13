@@ -23,7 +23,7 @@ resource "signalfx_time_chart" "mychart0" {
         data("cpu.total.idle", filter=myfilters).publish(label="CPU Idle")
         EOF
 
-    time_range = "-15m"
+    time_range = 3600
 
     plot_type = "LineChart"
     show_data_markers = true
@@ -76,7 +76,7 @@ The following arguments are supported in the resource block:
 * `max_delay` - (Optional) How long (in seconds) to wait for late datapoints.
 * `timezone` - (Optional) A string denotes the geographic region associated with the time zone.
 * `disable_sampling` - (Optional) If `false`, samples a subset of the output MTS, which improves UI performance. `false` by default
-* `time_range` - (Optional) From when to display data. SignalFx time syntax (e.g. `"-5m"`, `"-1h"`). Conflicts with `start_time` and `end_time`.
+* `time_range` - (Optional) How many seconds ago from which to display data. For example, the last hour would be `3600`, etc. Conflicts with `start_time` and `end_time`.
 * `start_time` - (Optional) Seconds since epoch. Used for visualization. Conflicts with `time_range`.
 * `end_time` - (Optional) Seconds since epoch. Used for visualization. Conflicts with `time_range`.
 * `axes_include_zero` - (Optional) Force the chart to display zero on the y-axes, even if none of the data is near zero.
