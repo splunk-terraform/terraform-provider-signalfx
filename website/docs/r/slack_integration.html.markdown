@@ -6,7 +6,7 @@ description: |-
   Allows Terraform to create and manage SignalFx Slack Integrations
 ---
 
-# Resource: signalfx_integration_slack
+# Resource: signalfx_slack_integration
 
 SignalFx Slack integration.
 
