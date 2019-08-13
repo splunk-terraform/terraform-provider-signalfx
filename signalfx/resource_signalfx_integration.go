@@ -118,8 +118,6 @@ func getPayloadIntegration(d *schema.ResourceData) ([]byte, error) {
 	var payload []byte
 	var err error
 	switch integrationType {
-	case "PagerDuty":
-		payload, err = getPagerDutyPayloadIntegration(d)
 	case "Slack":
 		payload, err = getSlackPayloadIntegration(d)
 	default:
