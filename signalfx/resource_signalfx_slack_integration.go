@@ -27,7 +27,7 @@ func integrationSlackResource() *schema.Resource {
 			},
 			"webhook_url": &schema.Schema{
 				Type:        schema.TypeString,
-				Optional:    true,
+				Required:    true,
 				Description: "Slack Webhook URL for integration",
 				Sensitive:   true,
 			},
