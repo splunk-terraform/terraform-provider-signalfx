@@ -2,9 +2,11 @@ package signalfx
 
 import (
 	"encoding/json"
-	"fmt"
+	"log"
+	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/signalfx/signalfx-go/integration"
 )
 
 // This resource leverages common methods for read and delete from
@@ -29,65 +31,100 @@ func integrationPagerDutyResource() *schema.Resource {
 				Description: "PagerDuty API key",
 				Sensitive:   true,
 			},
-			"synced": &schema.Schema{
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     true,
-				Description: "Whether the resource in the provider and SignalFx are identical or not. Used internally for syncing.",
-			},
-			"last_updated": &schema.Schema{
-				Type:        schema.TypeFloat,
-				Computed:    true,
-				Description: "Latest timestamp the resource was updated",
-			},
 		},
 
 		Create: integrationPagerDutyCreate,
-		Read:   integrationRead,
+		Read:   integrationPagerDutyRead,
 		Update: integrationPagerDutyUpdate,
-		Delete: integrationDelete,
-
+		Delete: integrationPagerDutyDelete,
+		Exists: integrationPagerDutyExists,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
 	}
 }
 
-func getPagerDutyPayloadIntegration(d *schema.ResourceData) ([]byte, error) {
-	payload := map[string]interface{}{
-		"name":    d.Get("name").(string),
-		"enabled": d.Get("enabled").(bool),
-		"type":    "PagerDuty",
-		"apiKey":  d.Get("api_key").(string),
+func integrationPagerDutyExists(d *schema.ResourceData, meta interface{}) (bool, error) {
+	config := meta.(*signalfxConfig)
+	_, err := config.Client.GetPagerDutyIntegration(d.Id())
+	if err != nil {
+		if strings.Contains(err.Error(), "404") {
+			return false, nil
+		}
+		return false, err
 	}
-	return json.Marshal(payload)
+	return true, nil
+}
+
+func integrationPagerDutyRead(d *schema.ResourceData, meta interface{}) error {
+	config := meta.(*signalfxConfig)
+	int, err := config.Client.GetPagerDutyIntegration(d.Id())
+	if err != nil {
+		if strings.HasPrefix(err.Error(), "404") {
+			d.SetId("")
+		}
+		return err
+	}
+
+	return pagerDutyIntegrationAPIToTF(d, int)
+}
+
+func pagerDutyIntegrationAPIToTF(d *schema.ResourceData, pd *integration.PagerDutyIntegration) error {
+	debugOutput, _ := json.Marshal(pd)
+	log.Printf("[DEBUG] SignalFx: Got PagerDuty Integration to enState: %s", string(debugOutput))
+
+	if err := d.Set("name", pd.Name); err != nil {
+		return err
+	}
+	if err := d.Set("enabled", pd.Enabled); err != nil {
+		return err
+	}
+	// Note, the API doesn't return API keys, so we ignore that
+
+	return nil
+}
+
+func getPayloadPagerDutyIntegration(d *schema.ResourceData) *integration.PagerDutyIntegration {
+	return &integration.PagerDutyIntegration{
+		Type:    "PagerDuty",
+		Name:    d.Get("name").(string),
+		Enabled: d.Get("enabled").(bool),
+		ApiKey:  d.Get("api_key").(string),
+	}
 }
 
 func integrationPagerDutyCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	payload, err := getPagerDutyPayloadIntegration(d)
-	if err != nil {
-		return fmt.Errorf("Failed creating json payload: %s", err.Error())
-	}
-	url, err := buildURL(config.APIURL, INTEGRATION_API_PATH, map[string]string{})
-	if err != nil {
-		return fmt.Errorf("[DEBUG] SignalFx: Error constructing API URL: %s", err.Error())
-	}
+	payload := getPayloadPagerDutyIntegration(d)
 
-	return resourceCreate(url, config.AuthToken, payload, d)
+	debugOutput, _ := json.Marshal(payload)
+	log.Printf("[DEBUG] SignalFx: Create PagerDuty Integration Payload: %s", string(debugOutput))
+
+	int, err := config.Client.CreatePagerDutyIntegration(payload)
+	if err != nil {
+		return err
+	}
+	d.SetId(int.Id)
+	return pagerDutyIntegrationAPIToTF(d, int)
 }
 
 func integrationPagerDutyUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	payload, err := getPagerDutyPayloadIntegration(d)
+	payload := getPayloadPagerDutyIntegration(d)
+
+	debugOutput, _ := json.Marshal(payload)
+	log.Printf("[DEBUG] SignalFx: Update PagerDuty Integration Payload: %s", string(debugOutput))
+
+	int, err := config.Client.UpdatePagerDutyIntegration(d.Id(), payload)
 	if err != nil {
-		return fmt.Errorf("Failed creating json payload: %s", err.Error())
-	}
-	path := fmt.Sprintf("%s/%s", INTEGRATION_API_PATH, d.Id())
-	url, err := buildURL(config.APIURL, path, map[string]string{})
-	if err != nil {
-		return fmt.Errorf("[DEBUG] SignalFx: Error constructing API URL: %s", err.Error())
+		return err
 	}
 
-	return resourceUpdate(url, config.AuthToken, payload, d)
+	return pagerDutyIntegrationAPIToTF(d, int)
+}
+
+func integrationPagerDutyDelete(d *schema.ResourceData, meta interface{}) error {
+	config := meta.(*signalfxConfig)
+
+	return config.Client.DeletePagerDutyIntegration(d.Id())
 }

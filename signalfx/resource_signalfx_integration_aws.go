@@ -10,10 +10,6 @@ import (
 	"github.com/signalfx/signalfx-go/integration"
 )
 
-const (
-	IntegrationAppPath = "/integration/"
-)
-
 func integrationAWSResource() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
