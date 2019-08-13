@@ -1,5 +1,9 @@
 ## 4.6.0 (Unreleased)
 
+FEATURES:
+
+* Added `resource_opsgenie_integration`. [#54](https://github.com/terraform-providers/terraform-provider-signalfx/pull/54)
+
 BUG FIXES:
 
 * provider: Fixed the documentation sidebar which had a number of incorrect integration resource names. [#53](https://github.com/terraform-providers/terraform-provider-signalfx/pull/53)
