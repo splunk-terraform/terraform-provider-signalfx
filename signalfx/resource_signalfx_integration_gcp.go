@@ -3,12 +3,12 @@ package signalfx
 import (
 	"encoding/json"
 	"fmt"
+	"log"
+	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/signalfx/signalfx-go/integration"
 )
-
-// This resource leverages common methods for read and delete from
-// integration.go!
 
 func integrationGCPResource() *schema.Resource {
 	return &schema.Resource{
@@ -27,10 +27,10 @@ func integrationGCPResource() *schema.Resource {
 				Type:         schema.TypeInt,
 				Optional:     true,
 				Description:  "GCP poll rate",
-				ValidateFunc: validatePollRate,
+				ValidateFunc: validateGCPPollRate,
 			},
 			"services": &schema.Schema{
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "GCP enabled services",
 				Elem: &schema.Schema{
@@ -38,7 +38,7 @@ func integrationGCPResource() *schema.Resource {
 				},
 			},
 			"project_service_keys": &schema.Schema{
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "GCP project service keys",
 				Sensitive:   true,
@@ -56,67 +56,159 @@ func integrationGCPResource() *schema.Resource {
 					},
 				},
 			},
-			"synced": &schema.Schema{
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     true,
-				Description: "Whether the resource in the provider and SignalFx are identical or not. Used internally for syncing.",
-			},
-			"last_updated": &schema.Schema{
-				Type:        schema.TypeFloat,
-				Computed:    true,
-				Description: "Latest timestamp the resource was updated",
-			},
 		},
 
 		Create: integrationGCPCreate,
-		Read:   integrationRead,
+		Read:   integrationGCPRead,
 		Update: integrationGCPUpdate,
-		Delete: integrationDelete,
-
+		Delete: integrationGCPDelete,
+		Exists: integrationGCPExists,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
 	}
 }
 
-func getGCPPayloadIntegration(d *schema.ResourceData) ([]byte, error) {
-	payload := map[string]interface{}{
-		"name":               d.Get("name").(string),
-		"enabled":            d.Get("enabled").(bool),
-		"type":               "GCP",
-		"pollRate":           d.Get("poll_rate").(int),
-		"services":           expandServices(d.Get("services").([]interface{})),
-		"projectServiceKeys": expandProjectServiceKeys(d.Get("project_service_keys").([]interface{})),
+func integrationGCPExists(d *schema.ResourceData, meta interface{}) (bool, error) {
+	config := meta.(*signalfxConfig)
+	_, err := config.Client.GetGCPIntegration(d.Id())
+	if err != nil {
+		if strings.Contains(err.Error(), "404") {
+			return false, nil
+		}
+		return false, err
 	}
-	return json.Marshal(payload)
+	return true, nil
+}
+
+func integrationGCPRead(d *schema.ResourceData, meta interface{}) error {
+	config := meta.(*signalfxConfig)
+	int, err := config.Client.GetGCPIntegration(d.Id())
+	if err != nil {
+		if strings.HasPrefix(err.Error(), "404") {
+			d.SetId("")
+		}
+		return err
+	}
+
+	return gcpIntegrationAPIToTF(d, int)
+}
+
+func getGCPPayloadIntegration(d *schema.ResourceData) *integration.GCPIntegration {
+	gcp := &integration.GCPIntegration{
+		Name:    d.Get("name").(string),
+		Enabled: d.Get("enabled").(bool),
+		Type:    "GCP",
+	}
+
+	if val, ok := d.GetOk("poll_rate"); ok {
+		val := val.(int)
+		if val != 0 {
+			pollRate := integration.OneMinutely
+			if val == 300 {
+				pollRate = integration.FiveMinutely
+			}
+			gcp.PollRate = &pollRate
+		}
+	}
+
+	if val, ok := d.GetOk("services"); ok {
+		servs := val.(*schema.Set).List()
+		services := make([]string, len(servs))
+		for i, v := range servs {
+			v := v.(string)
+			services[i] = v
+		}
+		gcp.Services = services
+	}
+
+	if val, ok := d.GetOk("project_service_keys"); ok {
+		keys := val.(*schema.Set).List()
+		serviceKeys := make([]*integration.GCPProject, len(keys))
+		for i, v := range keys {
+			v := v.(map[string]interface{})
+			serviceKeys[i] = &integration.GCPProject{
+				ProjectId:  v["project_id"].(string),
+				ProjectKey: v["project_key"].(string),
+			}
+		}
+		gcp.ProjectServiceKeys = serviceKeys
+	}
+
+	return gcp
+}
+
+func gcpIntegrationAPIToTF(d *schema.ResourceData, gcp *integration.GCPIntegration) error {
+	debugOutput, _ := json.Marshal(gcp)
+	log.Printf("[DEBUG] SignalFx: Got GCP Integration to enState: %s", string(debugOutput))
+
+	if err := d.Set("name", gcp.Name); err != nil {
+		return err
+	}
+	if err := d.Set("enabled", gcp.Enabled); err != nil {
+		return err
+	}
+	if err := d.Set("poll_rate", *gcp.PollRate/1000); err != nil {
+		return err
+	}
+
+	if len(gcp.Services) > 0 {
+		services := make([]interface{}, len(gcp.Services))
+		for i, v := range gcp.Services {
+			services[i] = string(v)
+		}
+		if err := d.Set("services", schema.NewSet(schema.HashString, services)); err != nil {
+			return err
+		}
+	}
+	// Note that the API doesn't return the project keys so we ignore them,
+	// because there's not much reason to poke at just the project id.
+	return nil
 }
 
 func integrationGCPCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	payload, err := getGCPPayloadIntegration(d)
-	if err != nil {
-		return fmt.Errorf("Failed creating json payload: %s", err.Error())
-	}
-	url, err := buildURL(config.APIURL, INTEGRATION_API_PATH, map[string]string{})
-	if err != nil {
-		return fmt.Errorf("[DEBUG] SignalFx: Error constructing API URL: %s", err.Error())
-	}
+	payload := getGCPPayloadIntegration(d)
 
-	return resourceCreate(url, config.AuthToken, payload, d)
+	debugOutput, _ := json.Marshal(payload)
+	log.Printf("[DEBUG] SignalFx: Create GCP Integration Payload: %s", string(debugOutput))
+
+	int, err := config.Client.CreateGCPIntegration(payload)
+	if err != nil {
+		return err
+	}
+	d.SetId(int.Id)
+
+	return gcpIntegrationAPIToTF(d, int)
 }
 
 func integrationGCPUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	payload, err := getGCPPayloadIntegration(d)
-	if err != nil {
-		return fmt.Errorf("Failed creating json payload: %s", err.Error())
-	}
-	path := fmt.Sprintf("%s/%s", INTEGRATION_API_PATH, d.Id())
-	url, err := buildURL(config.APIURL, path, map[string]string{})
-	if err != nil {
-		return fmt.Errorf("[DEBUG] SignalFx: Error constructing API URL: %s", err.Error())
-	}
+	payload := getGCPPayloadIntegration(d)
 
-	return resourceUpdate(url, config.AuthToken, payload, d)
+	debugOutput, _ := json.Marshal(payload)
+	log.Printf("[DEBUG] SignalFx: Update GCP Integration Payload: %s", string(debugOutput))
+
+	int, err := config.Client.UpdateGCPIntegration(d.Id(), payload)
+	if err != nil {
+		return err
+	}
+	d.SetId(int.Id)
+
+	return gcpIntegrationAPIToTF(d, int)
+}
+
+func integrationGCPDelete(d *schema.ResourceData, meta interface{}) error {
+	config := meta.(*signalfxConfig)
+
+	return config.Client.DeleteGCPIntegration(d.Id())
+}
+
+func validateGCPPollRate(v interface{}, k string) (we []string, errors []error) {
+	value := v.(int)
+	if value != 60 && value != 300 {
+		errors = append(errors, fmt.Errorf("%d not allowed; Use one of 60 or 300.", value))
+		return
+	}
+	return
 }

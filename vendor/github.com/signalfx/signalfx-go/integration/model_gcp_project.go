@@ -10,7 +10,7 @@
 package integration
 
 // Properties of a GCP project, in the form of a JSON object. Contains the GCP project ID and GCP service account key for a GCP project that you want SignalFx to monitor.
-type GcpProject struct {
+type GCPProject struct {
 	// GCP project ID you specified when you created your GCP project
 	ProjectId string `json:"projectId,omitempty"`
 	// Google Service Account Key generated for the project. This property is a JSON string; you must properly escape special characters before you send it to SignalFx.<br> **NOTE:** To ensure security, SignalFx doesn't return the value of this property in a response object.

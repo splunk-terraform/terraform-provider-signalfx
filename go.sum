@@ -363,6 +363,10 @@ github.com/signalfx/golib v2.4.0+incompatible h1:VtCORl7AdhkCIy3rS0m3WLpcNmqGcWo
 github.com/signalfx/golib v2.4.0+incompatible/go.mod h1:nWYefOwlUKWm/SpN/LgVSBnyH1T9NpT1ANlmgRIi1Cs=
 github.com/signalfx/signalfx-go v1.5.1-0.20190808201309-79a3e969a4c6 h1:ODi+6HZpd140s4viwoiNg+emHmNmHa2iupkm06QU7U8=
 github.com/signalfx/signalfx-go v1.5.1-0.20190808201309-79a3e969a4c6/go.mod h1:0Q0eueMWMC8r+jq+LJIGrspzvLF+hpWO9cggHlSpwVs=
+github.com/signalfx/signalfx-go v1.5.1-0.20190813151742-a8f81368dd71 h1:jmwEQIp8QH8mME5w10Ie1ZBjurGiFJNNsbmdJtlEjHo=
+github.com/signalfx/signalfx-go v1.5.1-0.20190813151742-a8f81368dd71/go.mod h1:0Q0eueMWMC8r+jq+LJIGrspzvLF+hpWO9cggHlSpwVs=
+github.com/signalfx/signalfx-go v1.5.1-0.20190813152720-b115c0f8d31b h1:PhqKkqWghwMEb776yX7qf2bfFw/y+Uh116T+LZeX1Lg=
+github.com/signalfx/signalfx-go v1.5.1-0.20190813152720-b115c0f8d31b/go.mod h1:0Q0eueMWMC8r+jq+LJIGrspzvLF+hpWO9cggHlSpwVs=
 github.com/signalfx/signalfx-go v1.5.1 h1:bsxqPwDiYrREOYoORu6OLPhi604voYaJGFsU63rgVI0=
 github.com/signalfx/signalfx-go v1.5.1/go.mod h1:0Q0eueMWMC8r+jq+LJIGrspzvLF+hpWO9cggHlSpwVs=
 github.com/sirupsen/logrus v1.1.1/go.mod h1:zrgwTnHtNr00buQ1vSptGe8m1f/BbgsPukg8qsT7A+A=

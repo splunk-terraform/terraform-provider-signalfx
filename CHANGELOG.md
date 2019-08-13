@@ -1,4 +1,9 @@
-## 4.5.1 (Unreleased)
+## 4.6.0 (Unreleased)
+
+IMPROVEMENTS:
+
+* resource/gcp_integration: Added `Exists` functionality, enabled acceptance tests, and use the new `*GCPIntegration` methods from signalfx-go. [#50](https://github.com/terraform-providers/terraform-provider-signalfx/pull/50)
+
 ## 4.5.0 (August 09, 2019)
 
 FEATURES:
@@ -8,7 +13,7 @@ FEATURES:
 IMPROVEMENTS:
 
 * provider: Bumped Terraform dependency to v0.12.6 [#47](https://github.com/terraform-providers/terraform-provider-signalfx/pull/47)
-* resource/integration_gcp: Improve the GCP documentation example. Thanks [a-staebler](https://github.com/a-staebler) [#41](https://github.com/terraform-providers/terraform-provider-signalfx/pull/41)
+* resource/gcp_integration: Improve the GCP documentation example. Thanks [a-staebler](https://github.com/a-staebler) [#41](https://github.com/terraform-providers/terraform-provider-signalfx/pull/41)
 * resource/detector: Notifications are now validated to prevent crashes and problems. [#46](https://github.com/terraform-providers/terraform-provider-signalfx/pull/46)
 * resource/detector: Fixed a bug in Webhook notification specifications, it was missing a `credentialId`.
 * resource/detector: Corrected documentation that disagreed on whether to include `#` in Slack channel names. In a word: don't.

@@ -3,70 +3,82 @@ package signalfx
 import (
 	"fmt"
 	"os"
+	"testing"
 
+	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
 
 	sfx "github.com/signalfx/signalfx-go"
 )
 
 const newIntegrationGCPConfig = `
-resource "signalfx_gcp_integration" "gcp_myteam" {
+resource "signalfx_gcp_integration" "gcp_myteamXX" {
     name = "GCP - My Team"
-    enabled = true
-    poll_rate = 300000
+    enabled = false
+    poll_rate = 300
     services = ["compute"]
-    project_service_keys = [
-        {
-            project_id = "gcp_project_id_1"
-            project_key = "secret_farts"
-        },
-        {
-            project_id = "gcp_project_id_2"
-            project_key = "secret_farts_2"
-        }
-    ]
+
+    project_service_keys {
+		    project_id = "gcp_project_id_1"
+		    project_key = "secret_farts"
+    }
+
+    project_service_keys {
+        project_id = "gcp_project_id_2"
+        project_key = "secret_farts_2"
+    }
 }
 `
 
 const updatedIntegrationGCPConfig = `
-resource "signalfx_gcp_integration" "gcp_myteam" {
-    name = "GCP - My Team 2"
-    enabled = true
-    poll_rate = 300000
+resource "signalfx_gcp_integration" "gcp_myteamXX" {
+    name = "GCP - My Team NEW"
+    enabled = false
+    poll_rate = 300
     services = ["compute"]
-    project_service_keys = [
-        {
-            project_id = "gcp_project_id_1"
-            project_key = "secret_farts"
-        },
-        {
-            project_id = "gcp_project_id_2"
-            project_key = "secret_farts_2"
-        }
-    ]
+    project_service_keys {
+		    project_id = "gcp_project_id_1"
+		    project_key = "secret_farts"
+    }
+
+    project_service_keys {
+        project_id = "gcp_project_id_2"
+        project_key = "secret_farts_2"
+    }
 }
 `
 
-// Commented out because SignalFx validates incoming keys and ours aren't valid.
-// func TestAccCreateIntegrationGCP(t *testing.T) {
-// 	resource.Test(t, resource.TestCase{
-// 		PreCheck:     func() { testAccPreCheck(t) },
-// 		Providers:    testAccProviders,
-// 		CheckDestroy: testAccIntegrationGCPDestroy,
-// 		Steps: []resource.TestStep{
-// 			// Create It
-// 			{
-// 				Config: newIntegrationGCPConfig,
-// 				Check:  testAccCheckIntegrationGCPResourceExists,
-// 			},
-// 			// Update It
-// 			{
-// 				Config: updatedIntegrationGCPConfig,
-// 				Check:  testAccCheckIntegrationGCPResourceExists,
-// 			},
-// 		},
-// 	})
-// }
+func TestAccCreateUpdateIntegrationGCP(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccIntegrationGCPDestroy,
+		Steps: []resource.TestStep{
+			// Create It
+			{
+				Config: newIntegrationGCPConfig,
+				Check:  testAccCheckIntegrationGCPResourceExists,
+			},
+			{
+				ResourceName:      "signalfx_gcp_integration.gcp_myteamXX",
+				ImportState:       true,
+				ImportStateIdFunc: testAccStateIdFunc("signalfx_gcp_integration.gcp_myteamXX"),
+				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"project_service_keys",
+				},
+			},
+			// Update It
+			{
+				Config: updatedIntegrationGCPConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckIntegrationGCPResourceExists,
+					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "name", "GCP - My Team NEW"),
+				),
+			},
+		},
+	})
+}
 
 func testAccCheckIntegrationGCPResourceExists(s *terraform.State) error {
 	client, _ := sfx.NewClient(os.Getenv("SFX_AUTH_TOKEN"))

@@ -122,8 +122,6 @@ func getPayloadIntegration(d *schema.ResourceData) ([]byte, error) {
 		payload, err = getPagerDutyPayloadIntegration(d)
 	case "Slack":
 		payload, err = getSlackPayloadIntegration(d)
-	case "GCP":
-		payload, err = getGCPPayloadIntegration(d)
 	default:
 		err = fmt.Errorf("Unknown integration type: %s", integrationType)
 	}
@@ -183,35 +181,6 @@ func integrationDelete(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	return resourceDelete(url, config.AuthToken, d)
-}
-
-func expandServices(services []interface{}) []string {
-	if len(services) == 0 {
-		return []string{}
-	}
-	payload := make([]string, 0, len(services))
-	for _, service := range services {
-		if service != nil {
-			payload = append(payload, service.(string))
-		}
-	}
-	return payload
-}
-
-func expandProjectServiceKeys(projects []interface{}) []map[string]string {
-	if len(projects) == 0 {
-		return []map[string]string{}
-	}
-	payload := make([]map[string]string, 0, len(projects))
-	for _, project := range projects {
-		m := project.(map[string]interface{})
-		config := map[string]string{
-			"projectId":  m["project_id"].(string),
-			"projectKey": m["project_key"].(string),
-		}
-		payload = append(payload, config)
-	}
-	return payload
 }
 
 func validatePollRate(value interface{}, key string) (warns []string, errors []error) {
