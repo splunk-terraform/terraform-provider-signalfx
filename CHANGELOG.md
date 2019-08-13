@@ -9,7 +9,7 @@ IMPROVEMENTS:
 
 BACKWARDS INCOMPATIBILITIES:
 
-* resource/integration: This resource was removed, as it had been deprecated for a while.
+* resource/integration: This resource was removed, as it had been deprecated for a while. [#51](https://github.com/terraform-providers/terraform-provider-signalfx/pull/51)
 
 ## 4.5.0 (August 09, 2019)
 
