@@ -1,11 +1,14 @@
 ## 4.6.0 (Unreleased)
 
+BUG FIXES:
+
+* provider: Fixed the documentation sidebar which had a number of incorrect integration resource names. [#53](https://github.com/terraform-providers/terraform-provider-signalfx/pull/53)
+
 IMPROVEMENTS:
 
 * resource/pagerduty_integration: Added `Exists` functionality, enabled acceptance tests, and use the new `*GCPIntegration` methods from signalfx-go. [#51](https://github.com/terraform-providers/terraform-provider-signalfx/pull/51)
 * resource/gcp_integration: Added `Exists` functionality, enabled acceptance tests, and use the new `*GCPIntegration` methods from signalfx-go. [#50](https://github.com/terraform-providers/terraform-provider-signalfx/pull/50)
 * resource/slack_integration: Added `Exists` functionality, enabled acceptance tests, and use the new `*GCPIntegration` methods from signalfx-go. [#52](https://github.com/terraform-providers/terraform-provider-signalfx/pull/52)
-
 
 BACKWARDS INCOMPATIBILITIES:
 
