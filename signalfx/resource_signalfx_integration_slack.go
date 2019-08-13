@@ -2,9 +2,11 @@ package signalfx
 
 import (
 	"encoding/json"
-	"fmt"
+	"log"
+	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/signalfx/signalfx-go/integration"
 )
 
 // This resource leverages common methods for read and delete from
@@ -13,11 +15,6 @@ import (
 func integrationSlackResource() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
-			"last_updated": &schema.Schema{
-				Type:        schema.TypeFloat,
-				Computed:    true,
-				Description: "Latest timestamp the resource was updated",
-			},
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
@@ -34,60 +31,101 @@ func integrationSlackResource() *schema.Resource {
 				Description: "Slack Webhook URL for integration",
 				Sensitive:   true,
 			},
-			"synced": &schema.Schema{
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     true,
-				Description: "Whether the resource in the provider and SignalFx are identical or not. Used internally for syncing.",
-			},
 		},
 
 		Create: integrationSlackCreate,
-		Read:   integrationRead,
+		Read:   integrationSlackRead,
 		Update: integrationSlackUpdate,
-		Delete: integrationDelete,
-
+		Delete: integrationSlackDelete,
+		Exists: integrationSlackExists,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
 	}
 }
 
-func getSlackPayloadIntegration(d *schema.ResourceData) ([]byte, error) {
-	payload := map[string]interface{}{
-		"name":       d.Get("name").(string),
-		"enabled":    d.Get("enabled").(bool),
-		"type":       "Slack",
-		"webhookUrl": d.Get("webhook_url").(string),
+func integrationSlackExists(d *schema.ResourceData, meta interface{}) (bool, error) {
+	config := meta.(*signalfxConfig)
+	_, err := config.Client.GetSlackIntegration(d.Id())
+	if err != nil {
+		if strings.Contains(err.Error(), "404") {
+			return false, nil
+		}
+		return false, err
 	}
-	return json.Marshal(payload)
+	return true, nil
+}
+
+func getSlackPayloadIntegration(d *schema.ResourceData) *integration.SlackIntegration {
+	return &integration.SlackIntegration{
+		Type:       "Slack",
+		Name:       d.Get("name").(string),
+		Enabled:    d.Get("enabled").(bool),
+		WebhookUrl: d.Get("webhook_url").(string),
+	}
+}
+
+func integrationSlackRead(d *schema.ResourceData, meta interface{}) error {
+	config := meta.(*signalfxConfig)
+	int, err := config.Client.GetSlackIntegration(d.Id())
+	if err != nil {
+		if strings.HasPrefix(err.Error(), "404") {
+			d.SetId("")
+		}
+		return err
+	}
+
+	return slackIntegrationAPIToTF(d, int)
+}
+
+func slackIntegrationAPIToTF(d *schema.ResourceData, slack *integration.SlackIntegration) error {
+	debugOutput, _ := json.Marshal(slack)
+	log.Printf("[DEBUG] SignalFx: Got Slack Integration to enState: %s", string(debugOutput))
+
+	if err := d.Set("name", slack.Name); err != nil {
+		return err
+	}
+	if err := d.Set("enabled", slack.Enabled); err != nil {
+		return err
+	}
+	// Note, the API doesn't return a Webhook URL so we ignore it
+	return nil
 }
 
 func integrationSlackCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	payload, err := getSlackPayloadIntegration(d)
-	if err != nil {
-		return fmt.Errorf("Failed creating json payload: %s", err.Error())
-	}
-	url, err := buildURL(config.APIURL, INTEGRATION_API_PATH, map[string]string{})
-	if err != nil {
-		return fmt.Errorf("[DEBUG] SignalFx: Error constructing API URL: %s", err.Error())
-	}
+	payload := getSlackPayloadIntegration(d)
 
-	return resourceCreate(url, config.AuthToken, payload, d)
+	debugOutput, _ := json.Marshal(payload)
+	log.Printf("[DEBUG] SignalFx: Create Slack Integration Payload: %s", string(debugOutput))
+
+	int, err := config.Client.CreateSlackIntegration(payload)
+	if err != nil {
+		return err
+	}
+	d.SetId(int.Id)
+
+	return slackIntegrationAPIToTF(d, int)
 }
 
 func integrationSlackUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	payload, err := getSlackPayloadIntegration(d)
-	if err != nil {
-		return fmt.Errorf("Failed creating json payload: %s", err.Error())
-	}
-	path := fmt.Sprintf("%s/%s", INTEGRATION_API_PATH, d.Id())
-	url, err := buildURL(config.APIURL, path, map[string]string{})
-	if err != nil {
-		return fmt.Errorf("[DEBUG] SignalFx: Error constructing API URL: %s", err.Error())
-	}
+	payload := getSlackPayloadIntegration(d)
 
-	return resourceUpdate(url, config.AuthToken, payload, d)
+	debugOutput, _ := json.Marshal(payload)
+	log.Printf("[DEBUG] SignalFx: Update Slack Integration Payload: %s", string(debugOutput))
+
+	int, err := config.Client.UpdateSlackIntegration(d.Id(), payload)
+	if err != nil {
+		return err
+	}
+	d.SetId(int.Id)
+
+	return slackIntegrationAPIToTF(d, int)
+}
+
+func integrationSlackDelete(d *schema.ResourceData, meta interface{}) error {
+	config := meta.(*signalfxConfig)
+
+	return config.Client.DeleteSlackIntegration(d.Id())
 }
