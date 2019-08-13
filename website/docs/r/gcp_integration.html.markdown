@@ -6,7 +6,7 @@ description: |-
   Allows Terraform to create and manage SignalFx GCP Integrations
 ---
 
-# Resource: signalfx_integration_gcp
+# Resource: signalfx_gcp_integration
 
 SignalFx GCP Integration
 
