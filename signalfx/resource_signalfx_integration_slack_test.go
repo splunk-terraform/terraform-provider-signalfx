@@ -12,17 +12,17 @@ import (
 )
 
 const newIntegrationSlackConfig = `
-resource "signalfx_slack_integration" "slack_myteam" {
+resource "signalfx_slack_integration" "slack_myteamXX" {
     name = "Slack - My Team"
-    enabled = true
+    enabled = false
     webhook_url = "https://example.com"
 }
 `
 
 const updatedIntegrationSlackConfig = `
-resource "signalfx_slack_integration" "slack_myteam" {
+resource "signalfx_slack_integration" "slack_myteamXX" {
     name = "Slack - My Team NEW"
-    enabled = true
+    enabled = false
     webhook_url = "https://example.com"
 }
 `
@@ -38,19 +38,27 @@ func TestAccCreateUpdateIntegrationSlack(t *testing.T) {
 				Config: newIntegrationSlackConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckIntegrationSlackResourceExists,
-					resource.TestCheckResourceAttr("signalfx_slack_integration.slack_myteam", "name", "Slack - My Team"),
-					resource.TestCheckResourceAttr("signalfx_slack_integration.slack_myteam", "webhook_url", "https://example.com"),
-					resource.TestCheckResourceAttr("signalfx_slack_integration.slack_myteam", "enabled", "true"),
+					resource.TestCheckResourceAttr("signalfx_slack_integration.slack_myteamXX", "name", "Slack - My Team"),
+					resource.TestCheckResourceAttr("signalfx_slack_integration.slack_myteamXX", "webhook_url", "https://example.com"),
+					resource.TestCheckResourceAttr("signalfx_slack_integration.slack_myteamXX", "enabled", "false"),
 				),
+			},
+			{
+				ResourceName:      "signalfx_slack_integration.slack_myteamXX",
+				ImportState:       true,
+				ImportStateIdFunc: testAccStateIdFunc("signalfx_slack_integration.slack_myteamXX"),
+				ImportStateVerify: true,
+				// The API doesn't return this value, so blow it up
+				ImportStateVerifyIgnore: []string{"webhook_url"},
 			},
 			// Update It
 			{
 				Config: updatedIntegrationSlackConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckIntegrationSlackResourceExists,
-					resource.TestCheckResourceAttr("signalfx_slack_integration.slack_myteam", "name", "Slack - My Team NEW"),
-					resource.TestCheckResourceAttr("signalfx_slack_integration.slack_myteam", "webhook_url", "https://example.com"),
-					resource.TestCheckResourceAttr("signalfx_slack_integration.slack_myteam", "enabled", "true"),
+					resource.TestCheckResourceAttr("signalfx_slack_integration.slack_myteamXX", "name", "Slack - My Team NEW"),
+					resource.TestCheckResourceAttr("signalfx_slack_integration.slack_myteamXX", "webhook_url", "https://example.com"),
+					resource.TestCheckResourceAttr("signalfx_slack_integration.slack_myteamXX", "enabled", "false"),
 				),
 			},
 		},

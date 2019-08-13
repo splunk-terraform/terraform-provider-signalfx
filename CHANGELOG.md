@@ -2,7 +2,14 @@
 
 IMPROVEMENTS:
 
+* resource/pagerduty_integration: Added `Exists` functionality, enabled acceptance tests, and use the new `*GCPIntegration` methods from signalfx-go. [#51](https://github.com/terraform-providers/terraform-provider-signalfx/pull/51)
 * resource/gcp_integration: Added `Exists` functionality, enabled acceptance tests, and use the new `*GCPIntegration` methods from signalfx-go. [#50](https://github.com/terraform-providers/terraform-provider-signalfx/pull/50)
+* resource/slack_integration: Added `Exists` functionality, enabled acceptance tests, and use the new `*GCPIntegration` methods from signalfx-go. [#50](https://github.com/terraform-providers/terraform-provider-signalfx/pull/50)
+
+
+BACKWARDS INCOMPATIBILITIES:
+
+* resource/integration: This resource was removed, as it had been deprecated for a while.
 
 ## 4.5.0 (August 09, 2019)
 
