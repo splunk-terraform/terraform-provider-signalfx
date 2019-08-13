@@ -2,7 +2,7 @@
 
 IMPROVEMENTS:
 
-* resource/gcp_integration: Added `Exists` functionality, enabled acceptance tests, and use the new `*GCPIntegration` methods from signalfx-go. [XX](https://www.example.com)
+* resource/gcp_integration: Added `Exists` functionality, enabled acceptance tests, and use the new `*GCPIntegration` methods from signalfx-go. [#50](https://github.com/terraform-providers/terraform-provider-signalfx/pull/50)
 
 ## 4.5.0 (August 09, 2019)
 
