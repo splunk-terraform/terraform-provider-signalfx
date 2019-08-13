@@ -1,8 +1,16 @@
 # 1.6.0, Unreleased
 
+## Added
+
+* Added `*GCPIntegration` methods
+* Added `*OpsGenie` methods
+* Added `*PagerDutyIntegration` methods
+* Added `*SlackIntegration` methods
+
 ## Updated
 
 * `Detector.Rules` now uses `Notification` as it's type instead of an untyped `[]map[string]interface{}`.
+* Renamed `integration.GcpIntegration` and it's sub-types to `GCP`, fixing case.
 
 # 1.5.0, 2019-08-05
 
