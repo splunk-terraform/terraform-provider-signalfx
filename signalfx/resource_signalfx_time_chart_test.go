@@ -36,6 +36,8 @@ resource "signalfx_time_chart" "mychartXX" {
 		stacked = false
 		axes_precision = 4
 
+		on_chart_legend_dimension = "plot_label"
+
 		legend_options_fields {
 			property = "collector"
 			enabled  = false
