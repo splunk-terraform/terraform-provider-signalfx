@@ -912,7 +912,15 @@ func timechartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 	}
 
 	if options.OnChartLegendOptions != nil {
-		if err := d.Set("on_chart_legend_dimension", options.OnChartLegendOptions.DimensionInLegend); err != nil {
+		dil := options.OnChartLegendOptions.DimensionInLegend
+		onChartLegendDim := dil
+		// We use different names inside TF, so convert them back
+		if dil == "sf_originatingMetric" {
+			onChartLegendDim = "metric"
+		} else if dil == "sf_metric" {
+			onChartLegendDim = "plot_label"
+		}
+		if err := d.Set("on_chart_legend_dimension", onChartLegendDim); err != nil {
 			return err
 		}
 	}
