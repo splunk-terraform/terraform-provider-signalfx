@@ -8,6 +8,7 @@ BUG FIXES:
 
 * provider: Fixed the documentation sidebar which had a number of incorrect integration resource names. [#53](https://github.com/terraform-providers/terraform-provider-signalfx/pull/53)
 * resource/time_chart: Fix incorrect documentation around use of `time_range`. [#56](https://github.com/terraform-providers/terraform-provider-signalfx/pull/56)
+* resource/time_chart: Correct unclean plans when using `on_chart_legend_dimension`. [#58](https://github.com/terraform-providers/terraform-provider-signalfx/pull/58)
 
 IMPROVEMENTS:
 
