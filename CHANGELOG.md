@@ -1,4 +1,9 @@
 ## 4.6.1 (Unreleased)
+
+BUG FIXES:
+
+* resource/detector: Fixed a bug in unmarshaling Opsgenie notifications. [#60]https://github.com/terraform-providers/terraform-provider-signalfx/pull/60
+
 ## 4.6.0 (August 15, 2019)
 
 FEATURES:
