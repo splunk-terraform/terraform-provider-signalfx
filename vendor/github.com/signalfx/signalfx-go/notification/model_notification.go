@@ -1,6 +1,9 @@
 package notification
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 // Notification properties for an alert sent to the team
 type Notification struct {
@@ -23,7 +26,7 @@ func (n *Notification) UnmarshalJSON(data []byte) error {
 		n.Value = &EmailNotification{}
 	case "Office365":
 		n.Value = &Office365Notification{}
-	case "OpsGenie":
+	case "Opsgenie":
 		n.Value = &OpsgenieNotification{}
 	case "PagerDuty":
 		n.Value = &PagerDutyNotification{}
@@ -41,6 +44,8 @@ func (n *Notification) UnmarshalJSON(data []byte) error {
 		n.Value = &WebhookNotification{}
 	case "XMatters":
 		n.Value = &XMattersNotification{}
+	default:
+		return fmt.Errorf("Unknown notification type %v", typ.Type)
 	}
 	return json.Unmarshal(data, n.Value)
 }
