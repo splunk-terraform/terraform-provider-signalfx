@@ -1,4 +1,4 @@
-# 1.6.1, Unreleased
+# 1.6.2, Unreleased
 
 ## Added
 
@@ -8,6 +8,11 @@
 
 ## Removed
 
+# 1.6.1, 2019-08-16
+
+## Updated
+
+Adjusted detector.CreateUpdateDetectorRequest to use pointer for Rules
 
 # 1.6.0, 2019-08-16
 
