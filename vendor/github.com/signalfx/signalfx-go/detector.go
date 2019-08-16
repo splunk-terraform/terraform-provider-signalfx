@@ -115,7 +115,9 @@ func (c *Client) GetDetector(id string) (*detector.Detector, error) {
 	finalDetector := &detector.Detector{}
 
 	err = json.NewDecoder(resp.Body).Decode(finalDetector)
-
+	if err != nil {
+		fmt.Printf("+%v", err)
+	}
 	return finalDetector, err
 }
 

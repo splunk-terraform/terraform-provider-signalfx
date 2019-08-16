@@ -1,9 +1,25 @@
-# 1.6.0, Unreleased
+# 1.6.2, Unreleased
+
+## Added
+
+## Updated
+
+## Bugfixes
+
+## Removed
+
+# 1.6.1, 2019-08-16
+
+## Updated
+
+Adjusted detector.CreateUpdateDetectorRequest to use pointer for Rules
+
+# 1.6.0, 2019-08-16
 
 ## Added
 
 * Added `*GCPIntegration` methods
-* Added `*OpsGenie` methods
+* Added `*Opsgenie` methods
 * Added `*PagerDutyIntegration` methods
 * Added `*SlackIntegration` methods
 
@@ -47,7 +63,7 @@
 
 ## Removed
 
-* Removed `credentialName` from OpsGenie notifications, not a real field in the API.
+* Removed `credentialName` from Opsgenie notifications, not a real field in the API.
 
 # 1.2.0, 2019-07-16
 

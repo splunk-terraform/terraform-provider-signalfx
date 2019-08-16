@@ -199,10 +199,10 @@ func timeRangeStateUpgradeV0(rawState map[string]interface{}, meta interface{}) 
 func getPayloadDetector(d *schema.ResourceData) (*detector.CreateUpdateDetectorRequest, error) {
 
 	tfRules := d.Get("rule").(*schema.Set).List()
-	rulesList := make([]detector.Rule, len(tfRules))
+	rulesList := make([]*detector.Rule, len(tfRules))
 	for i, tfRule := range tfRules {
 		tfRule := tfRule.(map[string]interface{})
-		rule := detector.Rule{
+		rule := &detector.Rule{
 			Description: tfRule["description"].(string),
 			DetectLabel: tfRule["detect_label"].(string),
 			Disabled:    tfRule["disabled"].(bool),
