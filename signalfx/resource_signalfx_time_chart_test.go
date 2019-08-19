@@ -18,7 +18,8 @@ resource "signalfx_time_chart" "mychartXX" {
 		description = "I am described"
 
     program_text = <<-EOF
-        data('cpu.total.idle').publish(label='CPU Idle')
+data('cpu.total.idle').publish(label='CPU Idle')
+events(eventType='some.testing').publish(label='testing events')
         EOF
 
     time_range = 900
@@ -52,6 +53,11 @@ resource "signalfx_time_chart" "mychartXX" {
 				value_prefix = "prefix"
 				value_suffix = "suffix"
     }
+		event_options {
+			label = "testing events"
+			display_name = "farts"
+			color = "azure"
+		}
 
 		histogram_options {
 			color_theme = "lilac"
@@ -115,7 +121,8 @@ resource "signalfx_time_chart" "mychartXX" {
 		description = "I am described NEW"
 
     program_text = <<-EOF
-        data('cpu.total.idle').publish(label='CPU Idle')
+data('cpu.total.idle').publish(label='CPU Idle')
+events(eventType='some.testing').publish(label='testing events')
         EOF
 
     time_range = 900
@@ -147,6 +154,11 @@ resource "signalfx_time_chart" "mychartXX" {
 				value_prefix = "prefix"
 				value_suffix = "suffix"
     }
+		event_options {
+			label = "testing events"
+			display_name = "farts"
+			color = "azure"
+		}
 
 		histogram_options {
 			color_theme = "lilac"
