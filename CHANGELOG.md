@@ -1,4 +1,4 @@
-## 4.6.2 (Unreleased)
+## 4.6.2 (August 20, 2019)
 
 FEATURES:
 
