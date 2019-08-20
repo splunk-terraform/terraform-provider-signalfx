@@ -1,4 +1,9 @@
 ## 4.6.2 (Unreleased)
+
+FEATURES:
+
+* resource/time_chart: Added `event_options` to support cutomization of events
+
 ## 4.6.1 (August 16, 2019)
 
 BUG FIXES:

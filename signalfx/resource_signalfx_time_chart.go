@@ -444,6 +444,31 @@ func timeChartResource() *schema.Resource {
 					},
 				},
 			},
+			"event_options": &schema.Schema{
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Description: "Event display customization options, associated with a publish statement",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"label": &schema.Schema{
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "The label used in the publish statement that displays the events you want to customize",
+						},
+						"color": &schema.Schema{
+							Type:         schema.TypeString,
+							Optional:     true,
+							Description:  "Color to use",
+							ValidateFunc: validatePerSignalColor,
+						},
+						"display_name": &schema.Schema{
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "Specifies an alternate value for the Plot Name column of the Data Table associated with the chart.",
+						},
+					},
+				},
+			},
 			"url": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -509,6 +534,9 @@ func getPayloadTimeChart(d *schema.ResourceData) *chart.CreateUpdateChartRequest
 	if vizOptions := getPerSignalVizOptions(d); len(vizOptions) > 0 {
 		viz.PublishLabelOptions = vizOptions
 	}
+	if eventOptions := getPerEventOptions(d); len(eventOptions) > 0 {
+		viz.EventPublishLabelOptions = eventOptions
+	}
 	if onChartLegendDim, ok := d.GetOk("on_chart_legend_dimension"); ok {
 		if onChartLegendDim == "metric" {
 			onChartLegendDim = "sf_originatingMetric"
@@ -565,6 +593,29 @@ func getPerSignalVizOptions(d *schema.ResourceData) []*chart.PublishLabelOptions
 		vizList[i] = item
 	}
 	return vizList
+}
+
+func getPerEventOptions(d *schema.ResourceData) []*chart.EventPublishLabelOptions {
+	eos := d.Get("event_options").(*schema.Set).List()
+	eventList := make([]*chart.EventPublishLabelOptions, len(eos))
+	for i, ev := range eos {
+		ev := ev.(map[string]interface{})
+		item := &chart.EventPublishLabelOptions{
+			Label: ev["label"].(string),
+		}
+		if val, ok := ev["display_name"].(string); ok && val != "" {
+			item.DisplayName = val
+		}
+		if val, ok := ev["color"].(string); ok {
+			if elem, ok := PaletteColors[val]; ok {
+				i := int32(elem)
+				item.PaletteIndex = &i
+			}
+		}
+
+		eventList[i] = item
+	}
+	return eventList
 }
 
 func getAxesOptions(d *schema.ResourceData) []*chart.Axes {
@@ -894,6 +945,30 @@ func timechartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 			plos[i] = no
 		}
 		if err := d.Set("viz_options", plos); err != nil {
+			return err
+		}
+	}
+
+	if len(options.EventPublishLabelOptions) > 0 {
+		eplos := make([]map[string]interface{}, len(options.PublishLabelOptions))
+		for i, eplo := range options.EventPublishLabelOptions {
+			color := ""
+			if eplo.PaletteIndex != nil {
+				// We might not have a color, so tread lightly
+				c, err := getNameFromPaletteColorsByIndex(int(*eplo.PaletteIndex))
+				if err != nil {
+					return err
+				}
+				// Ok, we can set the color now
+				color = c
+			}
+			eplos[i] = map[string]interface{}{
+				"label":        eplo.Label,
+				"display_name": eplo.DisplayName,
+				"color":        color,
+			}
+		}
+		if err := d.Set("event_options", eplos); err != nil {
 			return err
 		}
 	}

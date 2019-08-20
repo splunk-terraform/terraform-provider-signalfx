@@ -4,6 +4,8 @@
 
 ## Updated
 
+* Adjusted `EventPublishLabelOptions.PalleteIndex` to an `*int32` to match other uses.
+
 ## Bugfixes
 
 ## Removed
@@ -12,7 +14,7 @@
 
 ## Updated
 
-Adjusted detector.CreateUpdateDetectorRequest to use pointer for Rules
+* Adjusted detector.CreateUpdateDetectorRequest to use pointer for Rules
 
 # 1.6.0, 2019-08-16
 
