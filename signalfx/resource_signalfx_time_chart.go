@@ -950,7 +950,7 @@ func timechartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 	}
 
 	if len(options.EventPublishLabelOptions) > 0 {
-		eplos := make([]map[string]interface{}, len(options.PublishLabelOptions))
+		eplos := make([]map[string]interface{}, len(options.EventPublishLabelOptions))
 		for i, eplo := range options.EventPublishLabelOptions {
 			color := ""
 			if eplo.PaletteIndex != nil {
