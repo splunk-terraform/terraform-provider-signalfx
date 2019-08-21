@@ -1,4 +1,9 @@
 ## 4.6.3 (Unreleased)
+
+BUG FIXES:
+
+* resource/time_chart: Corrected an crash when using `event_options`. [#63](https://github.com/terraform-providers/terraform-provider-signalfx/pull/64)
+
 ## 4.6.2 (August 20, 2019)
 
 FEATURES:
