@@ -1,4 +1,9 @@
 ## 4.6.4 (Unreleased)
+
+BUG FIXES:
+
+* resource/time_chart: Corrected an error in the document that made `event_options` look to be nested under `viz_options`. It is not!
+
 ## 4.6.3 (August 21, 2019)
 
 BUG FIXES:
