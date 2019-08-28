@@ -165,3 +165,11 @@ func TestBuildAppURL(t *testing.T) {
 	assert.NoError(t, error)
 	assert.Equal(t, "https://www.example.com/#/chart/abc123", u)
 }
+
+func TestFlattenStringSliceToSet(t *testing.T) {
+	set := flattenStringSliceToSet([]string{"a", "b"})
+	assert.Equal(t, 2, set.Len(), "Set missing arguments")
+
+	setWithEmptyStrings := flattenStringSliceToSet([]string{"a", "", "b"})
+	assert.Equal(t, 2, setWithEmptyStrings.Len(), "Set missing arguments")
+}
