@@ -123,9 +123,11 @@ func flattenStringSliceToSet(slice []string) *schema.Set {
 	if len(slice) < 1 {
 		return nil
 	}
-	values := make([]interface{}, len(slice))
-	for i, v := range slice {
-		values[i] = v
+	var values []interface{}
+	for _, v := range slice {
+		if v != "" { // Ignore empty strings
+			values = append(values, v)
+		}
 	}
 	return schema.NewSet(schema.HashString, values)
 }
