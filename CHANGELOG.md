@@ -2,6 +2,7 @@
 
 BUG FIXES:
 
+* resource/dashboard: Dashboard variables with no default value no longer cause unclean plans. [#68](https://github.com/terraform-providers/terraform-provider-signalfx/pull/68)
 * resource/time_chart: Corrected an error in the document that made `event_options` look to be nested under `viz_options`. It is not!
 
 ## 4.6.3 (August 21, 2019)
