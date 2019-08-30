@@ -205,12 +205,12 @@ func getHeatmapColorRangeOptions(d *schema.ResourceData) *chart.HeatmapColorRang
 		item = &chart.HeatmapColorRangeOptions{}
 
 		if val, ok := options["min_value"]; ok {
-			if val.(float64) != -math.MaxFloat32 {
+			if val.(float64) > -math.MaxInt32 {
 				item.Min = val.(float64)
 			}
 		}
 		if val, ok := options["max_value"]; ok {
-			if val.(float64) != math.MaxFloat32 {
+			if val.(float64) < math.MaxInt32 {
 				item.Max = val.(float64)
 			}
 		}
