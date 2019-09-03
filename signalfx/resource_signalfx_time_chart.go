@@ -649,22 +649,22 @@ func getSingleAxisOptions(axisOpt map[string]interface{}) *chart.Axes {
 	axis := &chart.Axes{}
 
 	if val, ok := axisOpt["min_value"]; ok {
-		axis.Min = getValueUsingMaxFloatAsDefault(val.(float64))
+		axis.Min = getValueIgnoringMaxValues(val.(float64))
 	}
 	if val, ok := axisOpt["max_value"]; ok {
-		axis.Max = getValueUsingMaxFloatAsDefault(val.(float64))
+		axis.Max = getValueIgnoringMaxValues(val.(float64))
 	}
 	if val, ok := axisOpt["label"]; ok {
 		axis.Label = val.(string)
 	}
 	if val, ok := axisOpt["high_watermark"]; ok {
-		axis.HighWatermark = getValueUsingMaxFloatAsDefault(val.(float64))
+		axis.HighWatermark = getValueIgnoringMaxValues(val.(float64))
 	}
 	if val, ok := axisOpt["high_watermark_label"]; ok {
 		axis.HighWatermarkLabel = val.(string)
 	}
 	if val, ok := axisOpt["low_watermark"]; ok {
-		axis.LowWatermark = getValueUsingMaxFloatAsDefault(val.(float64))
+		axis.LowWatermark = getValueIgnoringMaxValues(val.(float64))
 	}
 	if val, ok := axisOpt["low_watermark_label"]; ok {
 		axis.LowWatermarkLabel = val.(string)

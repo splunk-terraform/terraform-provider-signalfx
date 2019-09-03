@@ -178,7 +178,7 @@ func getColorScaleOptions(d *schema.ResourceData) []*chart.SecondaryVisualizatio
 	return getColorScaleOptionsFromSlice(colorScale)
 }
 
-func getValueUsingMaxFloatAsDefault(v float64) *float32 {
+func getValueIgnoringMaxValues(v float64) *float32 {
 	if v >= math.MaxInt32 || v <= -math.MaxInt32 {
 		return nil
 	}
@@ -194,10 +194,10 @@ func getColorScaleOptionsFromSlice(colorScale []interface{}) []*chart.SecondaryV
 	for i := range colorScale {
 		options := &chart.SecondaryVisualization{}
 		scale := colorScale[i].(map[string]interface{})
-		options.Gt = getValueUsingMaxFloatAsDefault(scale["gt"].(float64))
-		options.Gte = getValueUsingMaxFloatAsDefault(scale["gte"].(float64))
-		options.Lt = getValueUsingMaxFloatAsDefault(scale["lt"].(float64))
-		options.Lte = getValueUsingMaxFloatAsDefault(scale["lte"].(float64))
+		options.Gt = getValueIgnoringMaxValues(scale["gt"].(float64))
+		options.Gte = getValueIgnoringMaxValues(scale["gte"].(float64))
+		options.Lt = getValueIgnoringMaxValues(scale["lt"].(float64))
+		options.Lte = getValueIgnoringMaxValues(scale["lte"].(float64))
 
 		var paletteIndex *int32
 		for index, thing := range ChartColorsSlice {
