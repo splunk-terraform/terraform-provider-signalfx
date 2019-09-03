@@ -96,25 +96,25 @@ func singleValueChartResource() *schema.Resource {
 						"gt": &schema.Schema{
 							Type:        schema.TypeFloat,
 							Optional:    true,
-							Default:     math.MaxFloat32,
+							Default:     math.MaxInt32,
 							Description: "Indicates the lower threshold non-inclusive value for this range",
 						},
 						"gte": &schema.Schema{
 							Type:        schema.TypeFloat,
 							Optional:    true,
-							Default:     math.MaxFloat32,
+							Default:     math.MaxInt32,
 							Description: "Indicates the lower threshold inclusive value for this range",
 						},
 						"lt": &schema.Schema{
 							Type:        schema.TypeFloat,
 							Optional:    true,
-							Default:     math.MaxFloat32,
+							Default:     math.MaxInt32,
 							Description: "Indicates the upper threshold non-inculsive value for this range",
 						},
 						"lte": &schema.Schema{
 							Type:        schema.TypeFloat,
 							Optional:    true,
-							Default:     math.MaxFloat32,
+							Default:     math.MaxInt32,
 							Description: "Indicates the upper threshold inclusive value for this range",
 						},
 					},
@@ -352,22 +352,22 @@ func decodeColorScale(options *chart.Options) ([]map[string]interface{}, error) 
 	for i, cs := range options.ColorScale2 {
 		scale := map[string]interface{}{}
 		if cs.Gt == nil {
-			scale["gt"] = math.MaxFloat32
+			scale["gt"] = math.MaxInt32
 		} else {
 			scale["gt"] = *cs.Gt
 		}
 		if cs.Gte == nil {
-			scale["gte"] = math.MaxFloat32
+			scale["gte"] = math.MaxInt32
 		} else {
 			scale["gte"] = *cs.Gte
 		}
 		if cs.Lt == nil {
-			scale["lt"] = math.MaxFloat32
+			scale["lt"] = math.MaxInt32
 		} else {
 			scale["lt"] = *cs.Lt
 		}
 		if cs.Lte == nil {
-			scale["lte"] = math.MaxFloat32
+			scale["lte"] = math.MaxInt32
 		} else {
 			scale["lte"] = *cs.Lte
 		}

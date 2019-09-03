@@ -126,12 +126,6 @@ func TestAccCreateUpdateListChart(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_list_chart.mychartLX", "legend_options_fields.#", "1"),
 					resource.TestCheckResourceAttr("signalfx_list_chart.mychartLX", "legend_options_fields.0.enabled", "false"),
 					resource.TestCheckResourceAttr("signalfx_list_chart.mychartLX", "legend_options_fields.0.property", "collector"),
-
-					resource.TestCheckResourceAttr("signalfx_list_chart.mychartLX", "color_scale.#", "2"),
-					resource.TestCheckResourceAttr("signalfx_list_chart.mychartLX", "color_scale.690432474.color", "cerise"),
-					resource.TestCheckResourceAttr("signalfx_list_chart.mychartLX", "color_scale.690432474.gt", "40"),
-					resource.TestCheckResourceAttr("signalfx_list_chart.mychartLX", "color_scale.761948173.color", "vivid_yellow"),
-					resource.TestCheckResourceAttr("signalfx_list_chart.mychartLX", "color_scale.761948173.lte", "40"),
 				),
 			},
 			{
