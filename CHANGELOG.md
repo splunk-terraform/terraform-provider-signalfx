@@ -1,5 +1,9 @@
 ## 4.6.4 (Unreleased)
 
+FEATURES:
+
+provider: Errors related to 4xx statuses when manipulating integrations now hint that you might need to use an admin token. Also added notes to the docs for same. [#70](https://github.com/terraform-providers/terraform-provider-signalfx/pull/70)
+
 BUG FIXES:
 
 * resource/dashboard: Dashboard variables with no default value no longer cause unclean plans. [#68](https://github.com/terraform-providers/terraform-provider-signalfx/pull/68)
