@@ -10,6 +10,8 @@ description: |-
 
 SignalFx Azure integrations. For help with this integration see [Monitoring Microsoft Azure](https://docs.signalfx.com/en/latest/integrations/azure-info.html).
 
+**Note:** When managing integrations you'll need to use an admin token to authenticate the SignalFx provider. Otherwise you'll receive a 4xx error.
+
 ## Example Usage
 
 ```terraform

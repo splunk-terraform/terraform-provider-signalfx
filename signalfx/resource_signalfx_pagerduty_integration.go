@@ -2,6 +2,7 @@ package signalfx
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"strings"
 
@@ -102,6 +103,9 @@ func integrationPagerDutyCreate(d *schema.ResourceData, meta interface{}) error 
 
 	int, err := config.Client.CreatePagerDutyIntegration(payload)
 	if err != nil {
+		if strings.Contains(err.Error(), "40") {
+			err = fmt.Errorf("%s\nPlease verify you are using an admin token when working with integrations", err.Error())
+		}
 		return err
 	}
 	d.SetId(int.Id)
@@ -117,6 +121,9 @@ func integrationPagerDutyUpdate(d *schema.ResourceData, meta interface{}) error 
 
 	int, err := config.Client.UpdatePagerDutyIntegration(d.Id(), payload)
 	if err != nil {
+		if strings.Contains(err.Error(), "40") {
+			err = fmt.Errorf("%s\nPlease verify you are using an admin token when working with integrations", err.Error())
+		}
 		return err
 	}
 

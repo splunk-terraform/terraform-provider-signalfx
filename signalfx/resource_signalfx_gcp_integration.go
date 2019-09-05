@@ -85,7 +85,7 @@ func integrationGCPRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 	int, err := config.Client.GetGCPIntegration(d.Id())
 	if err != nil {
-		if strings.HasPrefix(err.Error(), "404") {
+		if strings.Contains(err.Error(), "404") {
 			d.SetId("")
 		}
 		return err
@@ -175,6 +175,9 @@ func integrationGCPCreate(d *schema.ResourceData, meta interface{}) error {
 
 	int, err := config.Client.CreateGCPIntegration(payload)
 	if err != nil {
+		if strings.Contains(err.Error(), "40") {
+			err = fmt.Errorf("%s\nPlease verify you are using an admin token when working with integrations", err.Error())
+		}
 		return err
 	}
 	d.SetId(int.Id)
@@ -191,6 +194,9 @@ func integrationGCPUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	int, err := config.Client.UpdateGCPIntegration(d.Id(), payload)
 	if err != nil {
+		if strings.Contains(err.Error(), "40") {
+			err = fmt.Errorf("%s\nPlease verify you are using an admin token when working with integrations", err.Error())
+		}
 		return err
 	}
 	d.SetId(int.Id)

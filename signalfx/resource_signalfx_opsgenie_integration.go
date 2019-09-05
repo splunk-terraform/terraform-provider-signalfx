@@ -2,6 +2,7 @@ package signalfx
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"strings"
 
@@ -75,7 +76,7 @@ func integrationOpsgenieRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 	int, err := config.Client.GetOpsgenieIntegration(d.Id())
 	if err != nil {
-		if strings.HasPrefix(err.Error(), "404") {
+		if strings.Contains(err.Error(), "404") {
 			d.SetId("")
 		}
 		return err
@@ -107,6 +108,9 @@ func integrationOpsgenieCreate(d *schema.ResourceData, meta interface{}) error {
 
 	int, err := config.Client.CreateOpsgenieIntegration(payload)
 	if err != nil {
+		if strings.Contains(err.Error(), "40") {
+			err = fmt.Errorf("%s\nPlease verify you are using an admin token when working with integrations", err.Error())
+		}
 		return err
 	}
 	d.SetId(int.Id)
@@ -123,6 +127,9 @@ func integrationOpsgenieUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	int, err := config.Client.UpdateOpsgenieIntegration(d.Id(), payload)
 	if err != nil {
+		if strings.Contains(err.Error(), "40") {
+			err = fmt.Errorf("%s\nPlease verify you are using an admin token when working with integrations", err.Error())
+		}
 		return err
 	}
 	d.SetId(int.Id)
