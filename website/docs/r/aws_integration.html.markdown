@@ -10,6 +10,8 @@ description: |-
 
 SignalFx AWS CloudWatch integrations. For help with this integration see [Monitoring Amazon Web Services](https://docs.signalfx.com/en/latest/integrations/amazon-web-services.html#monitor-amazon-web-services).
 
+**Note:** When managing integrations you'll need to use an admin token to authenticate the SignalFx provider.
+
 ## Example Usage
 
 ```terraform

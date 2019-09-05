@@ -2,6 +2,7 @@ package signalfx
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"strings"
 
@@ -101,6 +102,9 @@ func integrationSlackCreate(d *schema.ResourceData, meta interface{}) error {
 
 	int, err := config.Client.CreateSlackIntegration(payload)
 	if err != nil {
+		if strings.Contains(err.Error(), "40") {
+			err = fmt.Errorf("%s\nPlease verify you are using an admin token when working with integrations", err.Error())
+		}
 		return err
 	}
 	d.SetId(int.Id)
@@ -117,6 +121,9 @@ func integrationSlackUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	int, err := config.Client.UpdateSlackIntegration(d.Id(), payload)
 	if err != nil {
+		if strings.Contains(err.Error(), "40") {
+			err = fmt.Errorf("%s\nPlease verify you are using an admin token when working with integrations", err.Error())
+		}
 		return err
 	}
 	d.SetId(int.Id)
