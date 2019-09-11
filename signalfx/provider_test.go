@@ -6,7 +6,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/hashicorp/terraform/config"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
 	"github.com/stretchr/testify/assert"
@@ -61,13 +60,9 @@ func TestProviderConfigureFromNothing(t *testing.T) {
 	SystemConfigPath = "filedoesnotexist"
 	HomeConfigPath = "filedoesnotexist"
 	raw := make(map[string]interface{})
-	rawConfig, err := config.NewRawConfig(raw)
-	if err != nil {
-		t.Fatalf("Error creating mock config: %s", err.Error())
-	}
 
 	rp := Provider()
-	err = rp.Configure(terraform.NewResourceConfig(rawConfig))
+	err := rp.Configure(terraform.NewResourceConfigRaw(raw))
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "auth_token: required field is not set")
 }
@@ -91,13 +86,9 @@ func TestProviderConfigureFromTerraform(t *testing.T) {
 	raw := map[string]interface{}{
 		"auth_token": "XXX",
 	}
-	rawConfig, err := config.NewRawConfig(raw)
-	if err != nil {
-		t.Fatalf("Error creating mock config: %s", err.Error())
-	}
 
 	rp := Provider()
-	err = rp.Configure(terraform.NewResourceConfig(rawConfig))
+	err = rp.Configure(terraform.NewResourceConfigRaw(raw))
 	meta := rp.(*schema.Provider).Meta()
 	if meta == nil {
 		t.Fatalf("Expected metadata, got nil. err: %s", err.Error())
@@ -113,13 +104,9 @@ func TestProviderConfigureFromTerraformOnly(t *testing.T) {
 	raw := map[string]interface{}{
 		"auth_token": "XXX",
 	}
-	rawConfig, err := config.NewRawConfig(raw)
-	if err != nil {
-		t.Fatalf("Error creating mock config: %s", err.Error())
-	}
 
 	rp := Provider()
-	err = rp.Configure(terraform.NewResourceConfig(rawConfig))
+	err := rp.Configure(terraform.NewResourceConfigRaw(raw))
 	meta := rp.(*schema.Provider).Meta()
 	if meta == nil {
 		t.Fatalf("Expected metadata, got nil. err: %s", err.Error())
@@ -145,13 +132,9 @@ func TestProviderConfigureFromEnvironment(t *testing.T) {
 	os.Setenv("SFX_AUTH_TOKEN", "YYY")
 	defer os.Setenv("SFX_AUTH_TOKEN", old)
 	raw := make(map[string]interface{})
-	rawConfig, err := config.NewRawConfig(raw)
-	if err != nil {
-		t.Fatalf("Error creating mock config: %s", err.Error())
-	}
 
 	rp := Provider()
-	err = rp.Configure(terraform.NewResourceConfig(rawConfig))
+	err = rp.Configure(terraform.NewResourceConfigRaw(raw))
 	meta := rp.(*schema.Provider).Meta()
 	if meta == nil {
 		t.Fatalf("Expected metadata, got nil. err: %s", err.Error())
@@ -168,13 +151,9 @@ func TestProviderConfigureFromEnvironmentOnly(t *testing.T) {
 	os.Setenv("SFX_AUTH_TOKEN", "YYY")
 	defer os.Setenv("SFX_AUTH_TOKEN", old)
 	raw := make(map[string]interface{})
-	rawConfig, err := config.NewRawConfig(raw)
-	if err != nil {
-		t.Fatalf("Error creating mock config: %s", err.Error())
-	}
 
 	rp := Provider()
-	err = rp.Configure(terraform.NewResourceConfig(rawConfig))
+	err := rp.Configure(terraform.NewResourceConfigRaw(raw))
 	meta := rp.(*schema.Provider).Meta()
 	if meta == nil {
 		t.Fatalf("Expected metadata, got nil. err: %s", err.Error())
@@ -203,13 +182,9 @@ func TestSignalFxConfigureFromHomeFile(t *testing.T) {
 	defer os.Remove(tmpfileHome.Name())
 	HomeConfigPath = tmpfileHome.Name()
 	raw := make(map[string]interface{})
-	rawConfig, err := config.NewRawConfig(raw)
-	if err != nil {
-		t.Fatalf("Error creating mock config: %s", err.Error())
-	}
 
 	rp := Provider()
-	err = rp.Configure(terraform.NewResourceConfig(rawConfig))
+	err = rp.Configure(terraform.NewResourceConfigRaw(raw))
 	meta := rp.(*schema.Provider).Meta()
 	if meta == nil {
 		t.Fatalf("Expected metadata, got nil. err: %s", err.Error())
@@ -238,13 +213,9 @@ func TestSignalFxConfigureFromNetrcFile(t *testing.T) {
 	os.Setenv("NETRC", tmpfileHome.Name())
 	defer os.Unsetenv("NETRC")
 	raw := make(map[string]interface{})
-	rawConfig, err := config.NewRawConfig(raw)
-	if err != nil {
-		t.Fatalf("Error creating mock config: %s", err.Error())
-	}
 
 	rp := Provider()
-	err = rp.Configure(terraform.NewResourceConfig(rawConfig))
+	err = rp.Configure(terraform.NewResourceConfigRaw(raw))
 	meta := rp.(*schema.Provider).Meta()
 	if meta == nil {
 		t.Fatalf("Expected metadata, got nil. err: %s", err.Error())
@@ -268,13 +239,9 @@ func TestSignalFxConfigureFromHomeFileOnly(t *testing.T) {
 	defer os.Remove(tmpfileHome.Name())
 	HomeConfigPath = tmpfileHome.Name()
 	raw := make(map[string]interface{})
-	rawConfig, err := config.NewRawConfig(raw)
-	if err != nil {
-		t.Fatalf("Error creating mock config: %s", err.Error())
-	}
 
 	rp := Provider()
-	err = rp.Configure(terraform.NewResourceConfig(rawConfig))
+	err = rp.Configure(terraform.NewResourceConfigRaw(raw))
 	meta := rp.(*schema.Provider).Meta()
 	if meta == nil {
 		t.Fatalf("Expected metadata, got nil. err: %s", err.Error())
@@ -298,13 +265,9 @@ func TestSignalFxConfigureFromSystemFileOnly(t *testing.T) {
 	SystemConfigPath = tmpfileSystem.Name()
 	HomeConfigPath = "filedoesnotexist"
 	raw := make(map[string]interface{})
-	rawConfig, err := config.NewRawConfig(raw)
-	if err != nil {
-		t.Fatalf("Error creating mock config: %s", err.Error())
-	}
 
 	rp := Provider()
-	err = rp.Configure(terraform.NewResourceConfig(rawConfig))
+	err = rp.Configure(terraform.NewResourceConfigRaw(raw))
 	meta := rp.(*schema.Provider).Meta()
 	if meta == nil {
 		t.Fatalf("Expected metadata, got nil. err: %s", err.Error())
