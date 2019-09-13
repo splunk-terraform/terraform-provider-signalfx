@@ -46,7 +46,7 @@ The following arguments are supported in the resource block:
 * `group_by` - (Optional) Properties to group by in the heatmap (in nesting order).
 * `sort_by` - (Optional) The property to use when sorting the elements. Must be prepended with `+` for ascending or `-` for descending (e.g. `-foo`).
 * `hide_timestamp` - (Optional) Whether to show the timestamp in the chart. `false` by default.
-* `color_range` - (Optional. Conflict with color_scale) Values and color for the color range. Example: `color_range : { min : 0, max : 100, color : blue }`. Look at this [link](https://docs.signalfx.com/en/latest/charts/chart-options-tab.html).
+* `color_range` - (Optional. Conflicts with color_scale) Values and color for the color range. Example: `color_range : { min : 0, max : 100, color : "#0000ff" }`. Look at this [link](https://docs.signalfx.com/en/latest/charts/chart-options-tab.html).
     * `min_value` - (Optional) The minimum value within the coloring range.
     * `max_value` - (Optional) The maximum value within the coloring range.
-    * `color` - (Required) The color range to use. Must be either gray, blue, navy, orange, yellow, magenta, purple, violet, lilac, green, aquamarine.
+    * `color` - (Required) The color range to use. The starting hex color value for data values in a heatmap chart. Specify the value as a 6-character hexadecimal value preceded by the '#' character, for example "#ea1849" (grass green).

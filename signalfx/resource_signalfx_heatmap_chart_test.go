@@ -139,3 +139,17 @@ func TestValidateHeatmapChartColorsFail(t *testing.T) {
 	_, err := validateHeatmapChartColor("whatever", "color")
 	assert.Equal(t, 1, len(err))
 }
+
+func TestValidateHeatmapColorRange(t *testing.T) {
+	_, err := validateHeatmapColorRange("fart", "color_range")
+	assert.Equal(t, 1, len(err))
+
+	_, err2 := validateHeatmapColorRange("f0f0f0", "color_range")
+	assert.Equal(t, 1, len(err2))
+
+	_, err3 := validateHeatmapColorRange("#nothex", "color_range")
+	assert.Equal(t, 1, len(err3))
+
+	_, noerr := validateHeatmapColorRange("#f0F9f0", "color_range")
+	assert.Equal(t, 0, len(noerr))
+}

@@ -5,11 +5,14 @@ import (
 	"fmt"
 	"log"
 	"math"
+	"regexp"
 	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
 	chart "github.com/signalfx/signalfx-go/chart"
 )
+
+var validHexColor = regexp.MustCompile("^#[A-Fa-f0-9]{6}")
 
 func heatmapChartResource() *schema.Resource {
 	return &schema.Resource{
@@ -72,14 +75,14 @@ func heatmapChartResource() *schema.Resource {
 			"color_range": &schema.Schema{
 				Type:        schema.TypeSet,
 				Optional:    true,
-				Description: "Values and color for the color range. Example: colorRange : { min : 0, max : 100, color : \"blue\" }",
+				Description: "Values and color for the color range. Example: colorRange : { min : 0, max : 100, color : \"#0000ff\" }",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"color": &schema.Schema{
 							Type:         schema.TypeString,
 							Required:     true,
-							Description:  "The color range to use. Must be either \"gray\", \"blue\", \"navy\", \"orange\", \"yellow\", \"magenta\", \"purple\", \"violet\", \"lilac\", \"green\", \"aquamarine\"",
-							ValidateFunc: validateHeatmapChartColor,
+							Description:  "The color range to use. The starting hex color value for data values in a heatmap chart. Specify the value as a 6-character hexadecimal value preceded by the '#' character, for example \"#ea1849\" (grass green).",
+							ValidateFunc: validateHeatmapColorRange,
 						},
 						"min_value": &schema.Schema{
 							Type:        schema.TypeFloat,
@@ -423,6 +426,14 @@ func heatmapchartDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 
 	return config.Client.DeleteChart(d.Id())
+}
+
+func validateHeatmapColorRange(v interface{}, k string) (we []string, errors []error) {
+	value := v.(string)
+	if !validHexColor.MatchString(value) {
+		errors = append(errors, fmt.Errorf("%s does not look like a hex color, similar to #0000ff", value))
+	}
+	return
 }
 
 /*
