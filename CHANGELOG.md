@@ -8,6 +8,7 @@ BUG FIXES:
 
 * resource/dashboard: Dashboard variables with no default value no longer cause unclean plans. [#68](https://github.com/terraform-providers/terraform-provider-signalfx/pull/68)
 * resource/time_chart: Corrected an error in the document that made `event_options` look to be nested under `viz_options`. It is not!
+* resource/heatmap_chart: Correctly validate `color_range` and adjust docs to demonstrate proper input of hex colors. [#76](https://github.com/terraform-providers/terraform-provider-signalfx/pull/76)
 
 IMPROVEMENTS:
 
