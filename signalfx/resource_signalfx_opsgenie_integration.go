@@ -10,9 +10,6 @@ import (
 	"github.com/signalfx/signalfx-go/integration"
 )
 
-// This resource leverages common methods for read and delete from
-// integration.go!
-
 func integrationOpsgenieResource() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
