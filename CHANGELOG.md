@@ -1,11 +1,13 @@
-## 4.6.4 (Unreleased)
+## 4.7.0 (Unreleased)
 
 FEATURES:
 
 provider: Errors related to 4xx statuses when manipulating integrations now hint that you might need to use an admin token. Also added notes to the docs for same. [#70](https://github.com/terraform-providers/terraform-provider-signalfx/pull/70)
+provider: Added VictorOps integration resource. [#79](https://github.com/terraform-providers/terraform-provider-signalfx/pull/79)
 
 BUG FIXES:
 
+* provider: Documentation page titles now reflect the actual resource name. [#79](https://github.com/terraform-providers/terraform-provider-signalfx/pull/79)
 * resource/dashboard: Dashboard variables with no default value no longer cause unclean plans. [#68](https://github.com/terraform-providers/terraform-provider-signalfx/pull/68)
 * resource/time_chart: Corrected an error in the document that made `event_options` look to be nested under `viz_options`. It is not!
 * resource/time_chart: Corrected documentation for `legend_options_fields.property`'s "special" values `metric` and `plot_label`. (Also for resource/list_chart). [#77](https://github.com/terraform-providers/terraform-provider-signalfx/pull/77)
