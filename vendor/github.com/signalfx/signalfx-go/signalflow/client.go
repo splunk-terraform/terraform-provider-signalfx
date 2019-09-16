@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"net/url"
-	"path"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -23,20 +22,22 @@ type Client struct {
 	userAgent              string
 	defaultMetadataTimeout time.Duration
 	nextChannelNum         int64
-	conn                   *websocket.Conn
-	outgoingMessages       chan interface{}
+	conn                   *wsConn
 	readTimeout            time.Duration
 	// How long to wait for writes to the websocket to finish
 	writeTimeout   time.Duration
 	streamURL      *url.URL
 	channelsByName map[string]*Channel
+	outgoingCh     chan *clientMessageRequest
 
-	isInitialized bool
-	isShutdown    bool
-	ctx           context.Context
-	cancel        context.CancelFunc
-	lastErr       error
-	lock          sync.Mutex
+	ctx    context.Context
+	cancel context.CancelFunc
+	sync.Mutex
+}
+
+type clientMessageRequest struct {
+	msg      interface{}
+	resultCh chan error
 }
 
 // ClientParam is the common type of configuration functions for the SignalFlow client
@@ -120,7 +121,8 @@ func WriteTimeout(timeout time.Duration) ClientParam {
 	}
 }
 
-// NewClient makes a new, but uninitialized, SignalFlow client.
+// NewClient makes a new SignalFlow client that will immediately try and
+// connect to the SignalFlow backend.
 func NewClient(options ...ClientParam) (*Client, error) {
 	c := &Client{
 		streamURL: &url.URL{
@@ -130,9 +132,9 @@ func NewClient(options ...ClientParam) (*Client, error) {
 		},
 		readTimeout:            1 * time.Minute,
 		writeTimeout:           5 * time.Second,
-		outgoingMessages:       make(chan interface{}),
 		channelsByName:         make(map[string]*Channel),
 		defaultMetadataTimeout: 5 * time.Second,
+		outgoingCh:             make(chan *clientMessageRequest),
 	}
 
 	for i := range options {
@@ -141,54 +143,29 @@ func NewClient(options ...ClientParam) (*Client, error) {
 		}
 	}
 
-	return c, nil
-}
-
-func (c *Client) ensureInitialized() error {
-	c.lock.Lock()
-	defer c.lock.Unlock()
-
-	var err error
-	if !c.isInitialized {
-		err = c.initialize()
-		if err == nil {
-			// The mutex also acts as a memory barrier to ensure this write will be
-			// seen by any goroutine that obtains the lock after the last Unlock,
-			// see https://golang.org/ref/mem#tmp_8.
-			c.isInitialized = true
-		}
-	}
-	return err
-}
-
-// Assumes c.Mutex is held when called.  Gets the client connection in a state
-// that is ready for execute requests.
-func (c *Client) initialize() error {
-	authenticatedCond := sync.NewCond(&c.lock)
-
-	if c.isShutdown {
-		return errors.New("cannot initialize client after shutdown")
-	}
-
 	c.ctx, c.cancel = context.WithCancel(context.Background())
 
-	if c.conn == nil {
-		var err error
-		c.conn, err = connect(c.ctx, c.streamURL)
-		if err != nil {
-			return err
-		}
-
-		go c.keepWritingMessages()
-		go c.keepReadingMessages(authenticatedCond)
-		// This just sends off the authenticate request but we have to wait for
-		// another websocket message saying that the credentials were valid,
-		// after which the authenticatedCond is triggered in the
-		// keepReadingMessages loop.
-		c.authenticate()
-		authenticatedCond.Wait()
+	c.conn = newWebsocketConn(c.ctx, c.streamURL)
+	c.conn.ReadTimeout = c.readTimeout
+	c.conn.WriteTimeout = c.writeTimeout
+	c.conn.PostDisconnectCallback = func() {
+		c.closeRegisteredChannels()
 	}
-	return c.lastErr
+
+	c.conn.PostConnectMessage = func() []byte {
+		bytes, err := c.makeAuthRequest()
+		if err != nil {
+			// This could almost be a panic
+			log.Printf("Could not make auth request: %v", err)
+			return nil
+		}
+		return bytes
+	}
+
+	go c.conn.Run()
+	go c.run()
+
+	return c, nil
 }
 
 func (c *Client) newUniqueChannelName() string {
@@ -198,115 +175,100 @@ func (c *Client) newUniqueChannelName() string {
 
 // Writes all messages from a single goroutine since that is required by
 // websocket library.
-func (c *Client) keepWritingMessages() {
+func (c *Client) run() {
 	for {
 		select {
 		case <-c.ctx.Done():
 			return
-		case message := <-c.outgoingMessages:
-			err := c.conn.SetWriteDeadline(time.Now().Add(c.writeTimeout))
+		case msg := <-c.conn.IncomingTextMessages():
+			err := c.handleMessage(msg, websocket.TextMessage)
 			if err != nil {
-				log.Printf("Error setting write timeout for SignalFlow request: %v", err)
-				c.lastErr = err
-				continue
+				log.Printf("Error handling SignalFlow text message: %v", err)
 			}
-
-			msgBytes, err := json.Marshal(message)
+		case msg := <-c.conn.IncomingBinaryMessages():
+			err := c.handleMessage(msg, websocket.BinaryMessage)
 			if err != nil {
-				log.Printf("Error marshaling SignalFlow request: %v", err)
-				c.lastErr = err
-				continue
+				log.Printf("Error handling SignalFlow binary message: %v", err)
 			}
-
-			err = c.conn.WriteMessage(websocket.TextMessage, msgBytes)
-			if err != nil {
-				log.Printf("Error writing SignalFlow request: %v", err)
-				c.lastErr = err
-				continue
-			}
+		case outMsg := <-c.outgoingCh:
+			outMsg.resultCh <- c.serializeAndWriteMessage(outMsg.msg)
 		}
 	}
 }
 
-// Reads all messages from a single goroutine and distributes them where
-// needed.
-func (c *Client) keepReadingMessages(authenticatedCond *sync.Cond) {
-	for {
-		if err := c.conn.SetReadDeadline(time.Now().Add(c.readTimeout)); err != nil {
-			log.Printf("Error setting read timeout in SignalFlow client: %v", err)
-			continue
-		}
-		msgTyp, msgBytes, err := c.conn.ReadMessage()
-		if err != nil {
-			// this means we are shutdown
-			if c.ctx.Err() != nil {
-				return
-			}
-			c.lastErr = err
-			log.Printf("SignalFlow websocket error: %v", err)
-			// This will shut down all computation resources in the client as
-			// well.
-			c.cancel()
-			// The websocket connection is closed by the server if the auth
-			// token is bad.
-			authenticatedCond.Signal()
-			continue
-		}
-
-		message, err := messages.ParseMessage(msgBytes, msgTyp == websocket.TextMessage)
-		if err != nil {
-			log.Printf("Error parsing SignalFlow message: %v", err)
-			c.lastErr = err
-			continue
-		}
-
-		if cm, ok := message.(messages.ChannelMessage); ok {
-			channelName := cm.Channel()
-			channel, ok := c.channelsByName[channelName]
-			if !ok || channelName == "" {
-				c.acceptMessage(message, authenticatedCond)
-				continue
-			}
-			channel.AcceptMessage(message)
-		} else {
-			c.acceptMessage(message, authenticatedCond)
-		}
+func (c *Client) sendMessage(message interface{}) error {
+	resultCh := make(chan error, 1)
+	c.outgoingCh <- &clientMessageRequest{
+		msg:      message,
+		resultCh: resultCh,
 	}
+	return <-resultCh
+}
+
+func (c *Client) serializeMessage(message interface{}) ([]byte, error) {
+	msgBytes, err := json.Marshal(message)
+	if err != nil {
+		return nil, fmt.Errorf("could not marshal SignalFlow request: %v", err)
+	}
+	return msgBytes, nil
+}
+
+func (c *Client) serializeAndWriteMessage(message interface{}) error {
+	msgBytes, err := c.serializeMessage(message)
+	if err != nil {
+		return err
+	}
+
+	resultCh := make(chan error, 1)
+	c.conn.OutgoingTextMessages() <- &outgoingMessage{
+		bytes:    msgBytes,
+		resultCh: resultCh,
+	}
+	return <-resultCh
+}
+
+func (c *Client) handleMessage(msgBytes []byte, msgTyp int) error {
+	message, err := messages.ParseMessage(msgBytes, msgTyp == websocket.TextMessage)
+	if err != nil {
+		return fmt.Errorf("could not parse SignalFlow message: %v", err)
+	}
+
+	if cm, ok := message.(messages.ChannelMessage); ok {
+		channelName := cm.Channel()
+		channel, ok := c.channelsByName[channelName]
+		if !ok || channelName == "" {
+			c.acceptMessage(message)
+			return nil
+		}
+		channel.AcceptMessage(message)
+	} else {
+		return c.acceptMessage(message)
+	}
+	return nil
 }
 
 // acceptMessages accepts non-channel specific messages.  The only one that I
 // know of is the authenticated response.
-func (c *Client) acceptMessage(message messages.Message, authenticatedCond *sync.Cond) {
+func (c *Client) acceptMessage(message messages.Message) error {
 	if _, ok := message.(*messages.AuthenticatedMessage); ok {
-		authenticatedCond.Signal()
-		return
+		return nil
 	} else if msg, ok := message.(*messages.BaseJSONMessage); ok {
 		data := msg.RawData()
 		if data != nil && data["event"] == "KEEP_ALIVE" {
 			// Ignore keep alive messages
-			return
+			return nil
 		}
 	}
 
-	log.Printf("Unknown SignalFlow message received: %v", message)
-}
-
-func connect(ctx context.Context, streamURL *url.URL) (*websocket.Conn, error) {
-	connectURL := *streamURL
-	connectURL.Path = path.Join(streamURL.Path, "connect")
-	conn, _, err := websocket.DefaultDialer.DialContext(ctx, connectURL.String(), nil)
-	if err != nil {
-		return nil, fmt.Errorf("could not connect Signalflow websocket: %v", err)
-	}
-	return conn, nil
+	return fmt.Errorf("unknown SignalFlow message received: %v", message)
 }
 
 // Sends the authenticate message but does not wait for a response.
-func (c *Client) authenticate() {
-	c.outgoingMessages <- &AuthRequest{
+func (c *Client) makeAuthRequest() ([]byte, error) {
+	return c.serializeMessage(&AuthRequest{
 		Token:     c.token,
 		UserAgent: c.userAgent,
-	}
+	})
 }
 
 // Execute a SignalFlow job and return a channel upon which informational
@@ -316,11 +278,10 @@ func (c *Client) Execute(req *ExecuteRequest) (*Computation, error) {
 		req.Channel = c.newUniqueChannelName()
 	}
 
-	if err := c.ensureInitialized(); err != nil {
+	err := c.sendMessage(req)
+	if err != nil {
 		return nil, err
 	}
-
-	c.outgoingMessages <- req
 
 	return newComputation(c.ctx, c.registerChannel(req.Channel), c), nil
 }
@@ -333,33 +294,32 @@ func (c *Client) Stop(req *StopRequest) error {
 	// connection is still active (i.e. we don't need to call ensureInitialized
 	// here).  If the websocket connection does drop, all jobs started by that
 	// connection get stopped automatically.
-	c.outgoingMessages <- req
-	return nil
+	return c.sendMessage(req)
 }
 
 func (c *Client) registerChannel(name string) *Channel {
 	ch := newChannel(c.ctx, name)
 
-	c.lock.Lock()
+	c.Lock()
 	c.channelsByName[name] = ch
-	defer c.lock.Unlock()
+	c.Unlock()
 
 	return ch
 }
 
-// Close the client and shutdown any ongoing connections and goroutines.
-func (c *Client) Close() {
-	c.lock.Lock()
-	defer c.lock.Unlock()
-
-	if c.cancel != nil {
-		c.cancel()
-	}
-	if c.conn != nil {
-		c.conn.Close()
-	}
+func (c *Client) closeRegisteredChannels() {
+	c.Lock()
 	for _, ch := range c.channelsByName {
 		ch.Close()
 	}
-	c.isShutdown = true
+	c.Unlock()
+}
+
+// Close the client and shutdown any ongoing connections and goroutines.  The
+// client cannot be reused after Close.
+func (c *Client) Close() {
+	if c.cancel != nil {
+		c.cancel()
+	}
+	c.closeRegisteredChannels()
 }

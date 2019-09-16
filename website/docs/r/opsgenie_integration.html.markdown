@@ -1,6 +1,6 @@
 ---
 layout: "signalfx"
-page_title: "SignalFx: signalfx_resource"
+page_title: "SignalFx: signalfx_opsgenie_integration"
 sidebar_current: "docs-signalfx-resource-opsgenie-integration"
 description: |-
   Allows Terraform to create and manage SignalFx Opsgenie Integrations

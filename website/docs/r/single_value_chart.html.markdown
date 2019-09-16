@@ -1,6 +1,6 @@
 ---
 layout: "signalfx"
-page_title: "SignalFx: signalfx_resource"
+page_title: "SignalFx: signalfx_single_value_chart"
 sidebar_current: "docs-signalfx-resource-single-value-chart"
 description: |-
   Allows Terraform to create and manage SignalFx single value charts

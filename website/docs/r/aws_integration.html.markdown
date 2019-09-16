@@ -1,6 +1,6 @@
 ---
 layout: "signalfx"
-page_title: "SignalFx: signalfx_resource"
+page_title: "SignalFx: signalfx_aws_integration"
 sidebar_current: "docs-signalfx-resource-aws-integration"
 description: |-
   Allows Terraform to create and manage SignalFx AWS Integrations

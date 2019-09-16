@@ -2,15 +2,19 @@ package signalflow
 
 import (
 	"context"
+	"sync"
 
 	"github.com/signalfx/signalfx-go/signalflow/messages"
 )
 
 // Channel is a queue of messages that all pertain to the same computation.
 type Channel struct {
+	sync.Mutex
+
 	name     string
 	messages chan messages.Message
 	ctx      context.Context
+	closed   bool
 }
 
 func newChannel(ctx context.Context, name string) *Channel {
@@ -28,6 +32,7 @@ func (c *Channel) AcceptMessage(msg messages.Message) {
 	select {
 	case c.messages <- msg:
 	case <-c.ctx.Done():
+		c.Close()
 	}
 }
 
@@ -40,5 +45,10 @@ func (c *Channel) Messages() <-chan messages.Message {
 // Close the channel.  This does not actually stop a job in SignalFlow, for
 // that use Computation.Stop().
 func (c *Channel) Close() {
-	close(c.messages)
+	c.Lock()
+	if !c.closed {
+		close(c.messages)
+		c.closed = true
+	}
+	c.Unlock()
 }

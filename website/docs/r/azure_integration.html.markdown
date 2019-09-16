@@ -1,6 +1,6 @@
 ---
 layout: "signalfx"
-page_title: "SignalFx: signalfx_resource"
+page_title: "SignalFx: signalfx_azure_integration"
 sidebar_current: "docs-signalfx-resource-azure-integration"
 description: |-
   Allows Terraform to create and manage SignalFx Azure Integrations

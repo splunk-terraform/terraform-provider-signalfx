@@ -52,3 +52,26 @@ func (mp *MetadataProperties) UnmarshalJSON(b []byte) error {
 	}
 	return nil
 }
+
+func (mp *MetadataProperties) MarshalJSON() ([]byte, error) {
+	type Alias MetadataProperties
+	intermediate, err := json.Marshal((*Alias)(mp))
+	if err != nil {
+		return nil, err
+	}
+
+	out := map[string]interface{}{}
+	err = json.Unmarshal(intermediate, &out)
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range mp.InternalProperties {
+		out[k] = v
+	}
+	for k, v := range mp.CustomProperties {
+		out[k] = v
+	}
+
+	return json.Marshal(out)
+}

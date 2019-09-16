@@ -1,6 +1,6 @@
 ---
 layout: "signalfx"
-page_title: "SignalFx: signalfx_resource"
+page_title: "SignalFx: signalfx_slack_integration"
 sidebar_current: "docs-signalfx-resource-slack-integration"
 description: |-
   Allows Terraform to create and manage SignalFx Slack Integrations

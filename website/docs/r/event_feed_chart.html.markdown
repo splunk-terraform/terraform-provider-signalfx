@@ -1,6 +1,6 @@
 ---
 layout: "signalfx"
-page_title: "SignalFx: signalfx_resource"
+page_title: "SignalFx: signalfx_event_feed_chart"
 sidebar_current: "docs-signalfx-resource-event-feed-chart"
 description: |-
   Allows Terraform to create and manage SignalFx time charts
