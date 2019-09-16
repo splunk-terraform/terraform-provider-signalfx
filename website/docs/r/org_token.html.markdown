@@ -1,6 +1,6 @@
 ---
 layout: "signalfx"
-page_title: "SignalFx: signalfx_resource"
+page_title: "SignalFx: signalfx_org_token"
 sidebar_current: "docs-signalfx-resource-org-token"
 description: |-
   Allows Terraform to create and manage SignalFx text notes

@@ -1,6 +1,6 @@
 ---
 layout: "signalfx"
-page_title: "SignalFx: signalfx_resource"
+page_title: "SignalFx: signalfx_detector"
 sidebar_current: "docs-signalfx-resource-dashboard"
 description: |-
   Allows Terraform to create and manage SignalFx Dashboards

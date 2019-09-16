@@ -1,6 +1,6 @@
 ---
 layout: "signalfx"
-page_title: "SignalFx: signalfx_resource"
+page_title: "SignalFx: signalfx_heatmap_chart"
 sidebar_current: "docs-signalfx-resource-heatmap-chart"
 description: |-
   Allows Terraform to create and manage SignalFx heat map chart

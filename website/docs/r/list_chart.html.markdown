@@ -1,6 +1,6 @@
 ---
 layout: "signalfx"
-page_title: "SignalFx: signalfx_resource"
+page_title: "SignalFx: signalfx_list_chart"
 sidebar_current: "docs-signalfx-resource-list-chart"
 description: |-
   Allows Terraform to create and manage SignalFx list charts

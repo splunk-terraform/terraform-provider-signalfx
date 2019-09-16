@@ -1,6 +1,6 @@
 ---
 layout: "signalfx"
-page_title: "SignalFx: signalfx_resource"
+page_title: "SignalFx: signalfx_pagerduty_integration"
 sidebar_current: "docs-signalfx-resource-pagerduty-integration"
 description: |-
   Allows Terraform to create and manage SignalFx PagerDuty Integrations

@@ -1,6 +1,6 @@
 ---
 layout: "signalfx"
-page_title: "SignalFx: signalfx_resource"
+page_title: "SignalFx: signalfx_text_chart"
 sidebar_current: "docs-signalfx-resource-text-chart"
 description: |-
   Allows Terraform to create and manage SignalFx text notes

@@ -1,6 +1,6 @@
 ---
 layout: "signalfx"
-page_title: "SignalFx: signalfx_resource"
+page_title: "SignalFx: signalfx_dashboard_group"
 sidebar_current: "docs-signalfx-resource-dashboard-group"
 description: |-
   Allows Terraform to create and manage SignalFx Dashboard Groups
