@@ -1,12 +1,32 @@
-# 1.6.2, Unreleased
+# 1.6.3, Unreleased
 
 ## Added
 
 ## Updated
 
+## Bugfixes
+
+## Removed
+
+# 1.6.2, 2019-09-16
+
+## Added
+
+* VictorOps integration functions
+
+## Updated
+
 * Adjusted `EventPublishLabelOptions.PalleteIndex` to an `*int32` to match other uses.
+* SignalFlow computation Handle() method wait for handle to come in until
+  returning (with timeout).
+* Renamed `BinaryPayload` to `DataPayload` in the `messages` package.
+* Exported `BinaryMessageHeader` and `DataMessageHeader` from `messages`
+  package to facilitate low-level SignalFlow parsing.
 
 ## Bugfixes
+
+* SignalFlow client connection handling was refactored to prevent deadlocks
+  that could occur on reconnects and bad authentication.
 
 ## Removed
 
@@ -28,6 +48,8 @@
 ## Updated
 
 * `Detector.Rules` now uses `Notification` as it's type instead of an untyped `[]map[string]interface{}`.
+
+## Removed
 * Renamed `integration.GcpIntegration` and it's sub-types to `GCP`, fixing case.
 
 # 1.5.0, 2019-08-05

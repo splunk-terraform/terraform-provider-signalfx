@@ -20,9 +20,11 @@ type Computation struct {
 	dataCh  chan *messages.DataMessage
 	// An intermediate channel for data messages where they can be buffered if
 	// nothing is currently pulling data messages.
-	dataChBuffer chan *messages.DataMessage
-	updateSignal updateSignal
-	lastError    error
+	dataChBuffer       chan *messages.DataMessage
+	expirationCh       chan *messages.ExpiredTSIDMessage
+	expirationChBuffer chan *messages.ExpiredTSIDMessage
+	updateSignal       updateSignal
+	lastError          error
 
 	resolutionMS *int
 	lagMS        *int
@@ -41,18 +43,21 @@ type Computation struct {
 func newComputation(ctx context.Context, channel *Channel, client *Client) *Computation {
 	newCtx, cancel := context.WithCancel(ctx)
 	comp := &Computation{
-		ctx:             newCtx,
-		cancel:          cancel,
-		channel:         channel,
-		client:          client,
-		dataCh:          make(chan *messages.DataMessage),
-		dataChBuffer:    make(chan *messages.DataMessage),
-		tsidMetadata:    make(map[idtool.ID]*messages.MetadataProperties),
-		updateSignal:    updateSignal{},
-		MetadataTimeout: client.defaultMetadataTimeout,
+		ctx:                newCtx,
+		cancel:             cancel,
+		channel:            channel,
+		client:             client,
+		dataCh:             make(chan *messages.DataMessage),
+		dataChBuffer:       make(chan *messages.DataMessage),
+		expirationCh:       make(chan *messages.ExpiredTSIDMessage),
+		expirationChBuffer: make(chan *messages.ExpiredTSIDMessage),
+		tsidMetadata:       make(map[idtool.ID]*messages.MetadataProperties),
+		updateSignal:       updateSignal{},
+		MetadataTimeout:    client.defaultMetadataTimeout,
 	}
 
 	go comp.bufferDataMessages()
+	go comp.bufferExpirationMessages()
 	go comp.watchMessages()
 	return comp
 }
@@ -64,6 +69,9 @@ func (c *Computation) Channel() *Channel {
 
 // Handle of the computation
 func (c *Computation) Handle() string {
+	if err := c.waitForMetadata(func() bool { return c.handle != "" }); err != nil {
+		return ""
+	}
 	return c.handle
 }
 
@@ -139,7 +147,11 @@ func (c *Computation) watchMessages() {
 		case <-c.ctx.Done():
 			close(c.dataCh)
 			return
-		case m := <-c.channel.Messages():
+		case m, ok := <-c.channel.Messages():
+			if !ok {
+				c.cancel()
+				continue
+			}
 			c.processMessage(m)
 		}
 	}
@@ -158,6 +170,9 @@ func (c *Computation) processMessage(m messages.Message) {
 		}
 	case *messages.DataMessage:
 		c.dataChBuffer <- v
+	case *messages.ExpiredTSIDMessage:
+		delete(c.tsidMetadata, idtool.IDFromString(v.TSID))
+		c.expirationChBuffer <- v
 	case *messages.InfoMessage:
 		switch v.MessageBlock.Code {
 		case messages.JobRunningResolution:
@@ -199,9 +214,39 @@ func (c *Computation) bufferDataMessages() {
 	}
 }
 
+// Buffer up expiration messages indefinitely until another goroutine reads
+// them off of c.expirationCh, which is an unbuffered channel.
+func (c *Computation) bufferExpirationMessages() {
+	buffer := make([]*messages.ExpiredTSIDMessage, 0)
+	var nextMessage *messages.ExpiredTSIDMessage
+	for {
+		if len(buffer) > 0 {
+			if nextMessage == nil {
+				nextMessage, buffer = buffer[0], buffer[1:]
+			}
+			select {
+			case <-c.ctx.Done():
+				return
+			case c.expirationCh <- nextMessage:
+				nextMessage = nil
+			case msg := <-c.expirationChBuffer:
+				buffer = append(buffer, msg)
+			}
+		} else {
+			buffer = append(buffer, <-c.expirationChBuffer)
+		}
+	}
+}
+
 // Data returns the channel on which data messages come.
 func (c *Computation) Data() <-chan *messages.DataMessage {
 	return c.dataCh
+}
+
+// Expirations returns a channel that will be sent messages about expired
+// TSIDs, i.e. time series that are no longer valid for this computation.
+func (c *Computation) Expirations() <-chan *messages.ExpiredTSIDMessage {
+	return c.expirationCh
 }
 
 // IsFinished returns true if the computation is done and no more data should
