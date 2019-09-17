@@ -24,10 +24,10 @@ func integrationAWSResource() *schema.Resource {
 				Description: "Whether the integration is enabled or not",
 			},
 			"auth_method": &schema.Schema{
-				Type:         schema.TypeString,
-				Optional:     true,
-				Description:  "The mechanism used to authenticate with AWS. The allowed values are \"ExternalID\" or \"SecurityToken\"",
-				ValidateFunc: validateAuthMethod,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Removed:     "Use one of `signalfx_aws_external_integration` or `signalfx_aws_token_integration`",
+				Description: "The mechanism used to authenticate with AWS.",
 			},
 			"custom_cloudwatch_namespaces": &schema.Schema{
 				Type: schema.TypeSet,
@@ -114,10 +114,11 @@ func integrationAWSResource() *schema.Resource {
 				Description: "Flag that controls how SignalFx imports Cloud Watch metrics. If true, SignalFx imports Cloud Watch metrics from AWS.",
 			},
 			"key": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Sensitive:   true,
-				Description: "If you specify `auth_method = \"SecurityToken\"` in your request to create an AWS integration object, use this property to specify the key.",
+				Type:          schema.TypeString,
+				Optional:      true,
+				Sensitive:     true,
+				ConflictsWith: []string{"role_arn", "external_id"},
+				Description:   "If you specify `auth_method = \"SecurityToken\"` in your request to create an AWS integration object, use this property to specify the key.",
 			},
 			"regions": {
 				Type:     schema.TypeSet,
@@ -128,9 +129,10 @@ func integrationAWSResource() *schema.Resource {
 				Description: "List of AWS regions that SignalFx should monitor.",
 			},
 			"role_arn": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "Role ARN that you add to an existing AWS integration object",
+				Type:          schema.TypeString,
+				Optional:      true,
+				ConflictsWith: []string{"token", "key"},
+				Description:   "Role ARN that you add to an existing AWS integration object",
 			},
 			"services": {
 				Type:     schema.TypeSet,
@@ -142,9 +144,10 @@ func integrationAWSResource() *schema.Resource {
 				Description: "List of AWS services that you want SignalFx to monitor. Each element is a string designating an AWS service.",
 			},
 			"token": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "If you specify `auth_method = \"SecurityToken\"` in your request to create an AWS integration object, use this property to specify the token.",
+				Type:          schema.TypeString,
+				Optional:      true,
+				ConflictsWith: []string{"role_arn", "external_id"},
+				Description:   "If you specify `auth_method = \"SecurityToken\"` in your request to create an AWS integration object, use this property to specify the token.",
 			},
 			"poll_rate": &schema.Schema{
 				Type:         schema.TypeInt,
@@ -153,9 +156,10 @@ func integrationAWSResource() *schema.Resource {
 				ValidateFunc: validateAwsPollRate,
 			},
 			"external_id": &schema.Schema{
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "If you specify `authMethod = \"ExternalId\"` in your request to create an AWS integration object, the response object contains a value for `externalId`. Use this value and the ARN value you get from AWS to update the integration object. SignalFx can then connect to AWS using the integration object.",
+				Type:          schema.TypeString,
+				Optional:      true,
+				ConflictsWith: []string{"token", "key"},
+				Description:   "If you specify `authMethod = \"ExternalId\"` in your request to create an AWS integration object, the response object contains a value for `externalId`. Use this value and the ARN value you get from AWS to update the integration object. SignalFx can then connect to AWS using the integration object.",
 			},
 		},
 
@@ -167,7 +171,6 @@ func integrationAWSResource() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
-		DeprecationMessage: "Please discontinue the use of this resource and use TKTK",
 	}
 }
 
@@ -193,8 +196,10 @@ func integrationAWSRead(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	if err := d.Set("external_id", int.ExternalId); err != nil {
-		return err
+	if int.ExternalId != "" {
+		if err := d.Set("external_id", int.ExternalId); err != nil {
+			return err
+		}
 	}
 
 	return awsIntegrationAPIToTF(d, int)
@@ -208,9 +213,6 @@ func awsIntegrationAPIToTF(d *schema.ResourceData, aws *integration.AwsCloudWatc
 		return err
 	}
 	if err := d.Set("enabled", aws.Enabled); err != nil {
-		return err
-	}
-	if err := d.Set("auth_method", aws.AuthMethod); err != nil {
 		return err
 	}
 	if err := d.Set("enable_aws_usage", aws.EnableAwsUsage); err != nil {
@@ -303,18 +305,16 @@ func getPayloadAWSIntegration(d *schema.ResourceData) (*integration.AwsCloudWatc
 		Enabled:          d.Get("enabled").(bool),
 		EnableAwsUsage:   d.Get("enable_aws_usage").(bool),
 		ImportCloudWatch: d.Get("import_cloud_watch").(bool),
-		Key:              d.Get("key").(string),
-		RoleArn:          d.Get("role_arn").(string),
-		Token:            d.Get("token").(string),
-		ExternalId:       d.Get("external_id").(string),
 	}
 
-	if val, ok := d.GetOk("auth_method"); ok {
-		authMethod := integration.EXTERNAL_ID
-		if val == string(integration.SECURITY_TOKEN) {
-			authMethod = integration.SECURITY_TOKEN
-		}
-		aws.AuthMethod = authMethod
+	if d.Get("external_id").(string) != "" {
+		aws.AuthMethod = integration.EXTERNAL_ID
+		aws.ExternalId = d.Get("external_id").(string)
+		aws.RoleArn = d.Get("role_arn").(string)
+	} else {
+		aws.AuthMethod = integration.SECURITY_TOKEN
+		aws.Token = d.Get("token").(string)
+		aws.Key = d.Get("key").(string)
 	}
 
 	if val, ok := d.GetOk("custom_cloudwatch_namespaces"); ok {
@@ -478,9 +478,6 @@ func integrationAWSUpdate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 	d.SetId(int.Id)
-	if err := d.Set("external_id", int.ExternalId); err != nil {
-		return err
-	}
 
 	return awsIntegrationAPIToTF(d, int)
 }
