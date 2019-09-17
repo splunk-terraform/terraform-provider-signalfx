@@ -118,7 +118,7 @@ func integrationAWSResource() *schema.Resource {
 				Optional:      true,
 				Sensitive:     true,
 				ConflictsWith: []string{"role_arn", "external_id"},
-				Description:   "If you specify `auth_method = \"SecurityToken\"` in your request to create an AWS integration object, use this property to specify the key.",
+				Description:   "Used with `signalfx_aws_token_integration`. Use this property to specify the token.",
 			},
 			"regions": {
 				Type:     schema.TypeSet,
@@ -132,7 +132,7 @@ func integrationAWSResource() *schema.Resource {
 				Type:          schema.TypeString,
 				Optional:      true,
 				ConflictsWith: []string{"token", "key"},
-				Description:   "Role ARN that you add to an existing AWS integration object",
+				Description:   "Used with `signalfx_aws_external_integration`. Use this property to specify the AIM role ARN.",
 			},
 			"services": {
 				Type:     schema.TypeSet,
@@ -147,7 +147,7 @@ func integrationAWSResource() *schema.Resource {
 				Type:          schema.TypeString,
 				Optional:      true,
 				ConflictsWith: []string{"role_arn", "external_id"},
-				Description:   "If you specify `auth_method = \"SecurityToken\"` in your request to create an AWS integration object, use this property to specify the token.",
+				Description:   "Used with `signalfx_aws_token_integration`. Use this property to specify the token.",
 			},
 			"poll_rate": &schema.Schema{
 				Type:         schema.TypeInt,
@@ -158,8 +158,9 @@ func integrationAWSResource() *schema.Resource {
 			"external_id": &schema.Schema{
 				Type:          schema.TypeString,
 				Optional:      true,
+				Sensitive:     true,
 				ConflictsWith: []string{"token", "key"},
-				Description:   "If you specify `authMethod = \"ExternalId\"` in your request to create an AWS integration object, the response object contains a value for `externalId`. Use this value and the ARN value you get from AWS to update the integration object. SignalFx can then connect to AWS using the integration object.",
+				Description:   "Used with `signalfx_aws_external_integration`. Use this property to specify the external id.",
 			},
 		},
 
