@@ -10,7 +10,7 @@ import (
 	"github.com/signalfx/signalfx-go/integration"
 )
 
-func integrationAWSEternalResource() *schema.Resource {
+func integrationAWSExternalResource() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
 			"external_id": &schema.Schema{
@@ -23,7 +23,6 @@ func integrationAWSEternalResource() *schema.Resource {
 
 		Create: integrationAWSExternalCreate,
 		Read:   integrationAWSExternalRead,
-		Update: integrationAWSExternalUpdate,
 		Delete: integrationAWSExternalDelete,
 		Exists: integrationAWSExternalExists,
 		Importer: &schema.ResourceImporter{
@@ -97,11 +96,6 @@ func integrationAWSExternalCreate(d *schema.ResourceData, meta interface{}) erro
 
 	// This method does not read back anything from the API except the
 	// id and external ID above.
-	return nil
-}
-
-func integrationAWSExternalUpdate(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("[DEBUG] SignalFx: Update AWS External Integration Payload (null op)")
 	return nil
 }
 
