@@ -167,6 +167,7 @@ func integrationAWSResource() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
+		DeprecationMessage: "Please discontinue the use of this resource and use TKTK",
 	}
 }
 
