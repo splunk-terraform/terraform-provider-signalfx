@@ -8,7 +8,7 @@ description: |-
 
 # Resource: signalfx_aws_external_integration
 
-SignalFx AWS CloudWatch integrations using Role ARNs. For help with this integration see [Monitoring Amazon Web Services](https://docs.signalfx.com/en/latest/integrations/amazon-web-services.html#monitor-amazon-web-services).
+SignalFx AWS CloudWatch integrations using Role ARNs. For help with this integration see [Connect to AWS CloudWatch](https://docs.signalfx.com/en/latest/integrations/amazon-web-services.html#connect-to-aws).
 
 **Note:** When managing integrations you'll need to use an admin token to authenticate the SignalFx provider.
 
@@ -17,7 +17,7 @@ SignalFx AWS CloudWatch integrations using Role ARNs. For help with this integra
 ## Example Usage
 
 ```terraform
-// This resource returns an account id in `external_id`…
+// This resource returns an external id in `external_id`…
 resource "signalfx_aws_external_integration" "aws_myteam_external" {
     name = "AWSFoo"
 }
@@ -63,4 +63,4 @@ resource "signalfx_aws_integration" "aws_myteam" {
 In addition to all arguments above, the following attributes are exported:
 
 * `id` - The time at which the certificate was issued
-* `external_id` - The AWS account ID to use with your IAM role and with `signalfx_aws_integration`.
+* `external_id` - The external ID to use with your IAM role and with `signalfx_aws_integration`.
