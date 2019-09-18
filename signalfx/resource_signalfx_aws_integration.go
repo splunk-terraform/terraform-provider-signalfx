@@ -31,7 +31,7 @@ func integrationAWSResource() *schema.Resource {
 			},
 			"auth_method": &schema.Schema{
 				Type:        schema.TypeString,
-				Optional:    true,
+				Computed:    true,
 				Removed:     "Use one of `signalfx_aws_external_integration` or `signalfx_aws_token_integration`",
 				Description: "The mechanism used to authenticate with AWS.",
 			},
@@ -201,12 +201,17 @@ func integrationAWSRead(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	if int.ExternalId != "" {
-		if err := d.Set("external_id", int.ExternalId); err != nil {
-			return err
+	if int.AuthMethod == integration.EXTERNAL_ID {
+		if int.ExternalId != "" {
+			if err := d.Set("external_id", int.ExternalId); err != nil {
+				return err
+			}
 		}
 	}
 	if err := d.Set("name", int.Name); err != nil {
+		return err
+	}
+	if err := d.Set("auth_method", int.AuthMethod); err != nil {
 		return err
 	}
 	fmt.Printf("[DEBUG] SignalFx: JUST DOING A READ #%v\n", int)
@@ -321,17 +326,19 @@ func getPayloadAWSIntegration(d *schema.ResourceData) (*integration.AwsCloudWatc
 		EnableAwsUsage:   d.Get("enable_aws_usage").(bool),
 		ImportCloudWatch: d.Get("import_cloud_watch").(bool),
 	}
-	fmt.Printf("[DEBUG] SignalFx %#v\n", aws)
-	fmt.Println("[DEBUG] SignalFx FARTS")
+	fmt.Printf("[DEBUG] SignalFx: %#v\n", aws)
+	fmt.Println("[DEBUG] SignalFx: FARTS")
 
 	if d.Get("external_id").(string) != "" {
 		aws.AuthMethod = integration.EXTERNAL_ID
 		aws.ExternalId = d.Get("external_id").(string)
 		aws.RoleArn = d.Get("role_arn").(string)
-	} else {
+	} else if d.Get("token").(string) != "" {
 		aws.AuthMethod = integration.SECURITY_TOKEN
 		aws.Token = d.Get("token").(string)
 		aws.Key = d.Get("key").(string)
+	} else {
+		return nil, fmt.Errorf("Please specify one of `external_id` or `token` and `key`")
 	}
 
 	if val, ok := d.GetOk("custom_cloudwatch_namespaces"); ok {
@@ -459,8 +466,10 @@ func integrationAWSCreate(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return fmt.Errorf("Error fetching existing integration for integration %s, %s", d.Get("integration_id").(string), err.Error())
 	}
-	if err := d.Set("external_id", preInt.ExternalId); err != nil {
-		return err
+	if preInt.AuthMethod == integration.EXTERNAL_ID {
+		if err := d.Set("external_id", preInt.ExternalId); err != nil {
+			return err
+		}
 	}
 	if err := d.Set("name", preInt.Name); err != nil {
 		return err
@@ -513,14 +522,6 @@ func integrationAWSUpdate(d *schema.ResourceData, meta interface{}) error {
 func integrationAWSDelete(d *schema.ResourceData, meta interface{}) error {
 	// Do nothing, let the aws_(external|token)_integration do the deletion
 	return nil
-}
-
-func validateAuthMethod(v interface{}, k string) (we []string, errors []error) {
-	value := v.(string)
-	if value != string(integration.EXTERNAL_ID) && value != string(integration.SECURITY_TOKEN) {
-		errors = append(errors, fmt.Errorf("%s not allowed; auth method must be one of %s or %s", value, integration.EXTERNAL_ID, integration.SECURITY_TOKEN))
-	}
-	return
 }
 
 func validateFilterAction(v interface{}, k string) (we []string, errors []error) {

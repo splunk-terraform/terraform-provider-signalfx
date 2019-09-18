@@ -10,7 +10,7 @@ import (
 	"github.com/signalfx/signalfx-go/integration"
 )
 
-func integrationAWSExternalResource() *schema.Resource {
+func integrationAWSTokenResource() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
 			"name": &schema.Schema{
@@ -19,7 +19,7 @@ func integrationAWSExternalResource() *schema.Resource {
 				ForceNew:    true,
 				Description: "Name of the integration",
 			},
-			"external_id": &schema.Schema{
+			"token_id": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
 				Sensitive:   true,
@@ -27,14 +27,14 @@ func integrationAWSExternalResource() *schema.Resource {
 			},
 		},
 
-		Create: integrationAWSExternalCreate,
-		Read:   integrationAWSExternalRead,
-		Delete: integrationAWSExternalDelete,
-		Exists: integrationAWSExternalExists,
+		Create: integrationAWSTokenCreate,
+		Read:   integrationAWSTokenRead,
+		Delete: integrationAWSTokenDelete,
+		Exists: integrationAWSTokenExists,
 	}
 }
 
-func integrationAWSExternalExists(d *schema.ResourceData, meta interface{}) (bool, error) {
+func integrationAWSTokenExists(d *schema.ResourceData, meta interface{}) (bool, error) {
 	config := meta.(*signalfxConfig)
 	_, err := config.Client.GetAWSCloudWatchIntegration(d.Id())
 	if err != nil {
@@ -46,9 +46,9 @@ func integrationAWSExternalExists(d *schema.ResourceData, meta interface{}) (boo
 	return true, nil
 }
 
-func integrationAWSExternalRead(d *schema.ResourceData, meta interface{}) error {
+func integrationAWSTokenRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	int, err := config.Client.GetAWSCloudWatchIntegration(d.Id())
+	_, err := config.Client.GetAWSCloudWatchIntegration(d.Id())
 	if err != nil {
 		if strings.Contains(err.Error(), "404") {
 			d.SetId("")
@@ -56,22 +56,16 @@ func integrationAWSExternalRead(d *schema.ResourceData, meta interface{}) error 
 		return err
 	}
 
-	if int.ExternalId != "" {
-		if err := d.Set("external_id", int.ExternalId); err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 
-func getPayloadAWSExternalIntegration(d *schema.ResourceData) (*integration.AwsCloudWatchIntegration, error) {
+func getPayloadAWSTokenIntegration(d *schema.ResourceData) (*integration.AwsCloudWatchIntegration, error) {
 
 	// We can't leave this empty, even though we don't need it yet
 	defaultPollRate := integration.FiveMinutely
 	aws := &integration.AwsCloudWatchIntegration{
 		Type:       "AWSCloudWatch",
-		AuthMethod: integration.EXTERNAL_ID,
+		AuthMethod: integration.SECURITY_TOKEN,
 		Name:       d.Get("name").(string),
 		PollRate:   &defaultPollRate,
 	}
@@ -79,15 +73,15 @@ func getPayloadAWSExternalIntegration(d *schema.ResourceData) (*integration.AwsC
 	return aws, nil
 }
 
-func integrationAWSExternalCreate(d *schema.ResourceData, meta interface{}) error {
+func integrationAWSTokenCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	payload, err := getPayloadAWSExternalIntegration(d)
+	payload, err := getPayloadAWSTokenIntegration(d)
 	if err != nil {
 		return fmt.Errorf("Failed creating json payload: %s", err.Error())
 	}
 
 	debugOutput, _ := json.Marshal(payload)
-	log.Printf("[DEBUG] SignalFx: Create AWS External Integration Payload: %s", string(debugOutput))
+	log.Printf("[DEBUG] SignalFx: Create AWS Token Integration Payload: %s", string(debugOutput))
 
 	int, err := config.Client.CreateAWSCloudWatchIntegration(payload)
 	if err != nil {
@@ -97,19 +91,16 @@ func integrationAWSExternalCreate(d *schema.ResourceData, meta interface{}) erro
 		return err
 	}
 	d.SetId(int.Id)
-	if err := d.Set("external_id", int.ExternalId); err != nil {
-		return err
-	}
 	if err := d.Set("name", int.Name); err != nil {
 		return err
 	}
 
 	// This method does not read back anything from the API except the
-	// id and external ID above.
+	// id and Token ID above.
 	return nil
 }
 
-func integrationAWSExternalDelete(d *schema.ResourceData, meta interface{}) error {
+func integrationAWSTokenDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 
 	return config.Client.DeleteAWSCloudWatchIntegration(d.Id())
