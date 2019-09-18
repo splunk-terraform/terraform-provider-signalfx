@@ -12,15 +12,27 @@ SignalFx AWS CloudWatch integrations. For help with this integration see [Monito
 
 **Note:** When managing integrations you'll need to use an admin token to authenticate the SignalFx provider.
 
+~> **WARNING** This resource implements a part of a workflow. You must use it with one of either `signalfx_aws_external_integration` or `signalfx_aws_token_integration`.
+
 ## Example Usage
 
 ```terraform
-resource "signalfx_aws_integration" "aws_myteam" {
+// This resource returns an account id in `external_id`…
+resource "signalfx_aws_external_integration" "aws_myteam_external" {
     name = "AWSFoo"
+}
+
+// Make yourself an AWS IAM role here, use `signalfx_aws_external_integration.aws_myteam_external.external_id`
+resource "aws_iam_role" "aws_sfx_role" {
+  // Stuff here that uses the
+}
+
+resource "signalfx_aws_integration" "aws_myteam" {
     enabled = true
 
-		auth_method = "ExternalId"
-		role_arn = "arn:aws:iam::XXX:role/SignalFx-Read-Role"
+    integration_id = "${signalfx_aws_external_integration.aws_myteam_external.id}"
+    external_id = "${signalfx_aws_external_integration.aws_myteam_external.external_id}"
+		role_arn = "${aws_iam_role.aws_sfx_role.id}"
 		regions = ["us-east-1"]
 		poll_rate = 300
 		import_cloud_watch = true
@@ -48,9 +60,9 @@ Fields that expect an AWS service/namespace will work with one of: "AWS/ApiGatew
 
 ## Argument Reference
 
-* `name` - (Required) Name of the integration.
 * `enabled` - (Required) Whether the integration is enabled.
-* `auth_method` - (Optional) The mechanism used to authenticate with AWS. The allowed values are "ExternalID" or "SecurityToken".
+* `integration_id` - (Required) The id of one of a `signalfx_aws_external_integration` or `signalfx_aws_token_integration`.
+* `external_id` - (Required) The `external_id` property from one of a `signalfx_aws_external_integration` or `signalfx_aws_token_integration`
 * `custom_cloudwatch_namespaces` - (Optional) List of custom AWS CloudWatch namespaces to monitor. Custom namespaces contain custom metrics that you define in AWS; SignalFx imports the metrics so you can monitor them.
 * `custom_namespace_sync_rule` - (Optional) Each element controls the data collected by SignalFx for the specified namespace. Conflicts with the `custom_cloudwatch_namespaces` property.
   * `default_action` - (Required) Controls the SignalFx default behavior for processing data from an AWS namespace. If you do specify a filter, use this property to control how SignalFx treats data that doesn't match the filter. The available actions are one of `"Include"` or `"Exclude"`.
@@ -68,4 +80,4 @@ Fields that expect an AWS service/namespace will work with one of: "AWS/ApiGatew
 * `regions` - (Optional) List of AWS regions that SignalFx should monitor.
 * `role_arn` - (Optional) Role ARN that you add to an existing AWS integration object.
 * `services` - (Optional) List of AWS services that you want SignalFx to monitor. Each element is a string designating an AWS service. Conflicts with `namespace_sync_rule`.
-* `poll_rate` - (Oprional) AWS poll rate (in seconds). One of `60` or `300`.
+* `poll_rate` - (Optional) AWS poll rate (in seconds). One of `60` or `300`.
