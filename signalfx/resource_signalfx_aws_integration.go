@@ -192,7 +192,7 @@ func integrationAWSExists(d *schema.ResourceData, meta interface{}) (bool, error
 
 func integrationAWSRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	fmt.Printf("[DEBUG] Trying to fetch %s\n", d.Get("integration_id").(string))
+
 	int, err := config.Client.GetAWSCloudWatchIntegration(d.Get("integration_id").(string))
 	if err != nil {
 		if strings.Contains(err.Error(), "404") {
@@ -214,7 +214,7 @@ func integrationAWSRead(d *schema.ResourceData, meta interface{}) error {
 	if err := d.Set("auth_method", int.AuthMethod); err != nil {
 		return err
 	}
-	fmt.Printf("[DEBUG] SignalFx: JUST DOING A READ #%v\n", int)
+
 	return awsIntegrationAPIToTF(d, int)
 }
 
@@ -326,8 +326,6 @@ func getPayloadAWSIntegration(d *schema.ResourceData) (*integration.AwsCloudWatc
 		EnableAwsUsage:   d.Get("enable_aws_usage").(bool),
 		ImportCloudWatch: d.Get("import_cloud_watch").(bool),
 	}
-	fmt.Printf("[DEBUG] SignalFx: %#v\n", aws)
-	fmt.Println("[DEBUG] SignalFx: FARTS")
 
 	if d.Get("external_id").(string) != "" {
 		aws.AuthMethod = integration.EXTERNAL_ID
@@ -474,8 +472,6 @@ func integrationAWSCreate(d *schema.ResourceData, meta interface{}) error {
 	if err := d.Set("name", preInt.Name); err != nil {
 		return err
 	}
-	fmt.Println("[DEBUG] SignalFx: GOT SOME VALUES, GETTING PAYLOAD")
-
 	payload, err := getPayloadAWSIntegration(d)
 	if err != nil {
 		return fmt.Errorf("Failed creating json payload: %s", err.Error())
@@ -492,13 +488,13 @@ func integrationAWSCreate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 	d.SetId(int.Id)
-	fmt.Printf("[DEBUG] SignalFx: JUST CREATED %#v", int)
+
 	return awsIntegrationAPIToTF(d, int)
 }
 
 func integrationAWSUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	fmt.Println("[DEBUG] SignalFx: AM ABOUT TO UPDATE")
+
 	payload, err := getPayloadAWSIntegration(d)
 	if err != nil {
 		return fmt.Errorf("Failed creating json payload: %s", err.Error())
@@ -515,7 +511,7 @@ func integrationAWSUpdate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 	d.SetId(int.Id)
-	fmt.Printf("[DEBUG] SignalFx JUST UPDATED %#v\n", d)
+
 	return awsIntegrationAPIToTF(d, int)
 }
 
