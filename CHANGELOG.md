@@ -1,7 +1,8 @@
-## 4.8.1 (Unreleased)
+## 4.8.0 (Unreleased)
 
 BUG FIXES:
 
+* resource/dashboard: Use of `column` was causing unclean plans. [#85](https://github.com/terraform-providers/terraform-provider-signalfx/pull/85)
 * resource/detector: Add default for `time_range`, which was being set by the API and causing unclean plans. [#83](https://github.com/terraform-providers/terraform-provider-signalfx/pull/83)
 
 ## 4.7.0 (September 17, 2019)
