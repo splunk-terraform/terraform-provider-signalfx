@@ -13,9 +13,15 @@ import (
 func integrationAWSResource() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"integration_id": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
+				Description: "The ID of this integration",
+			},
+			"name": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Removed:     "Please specify the name in `signalfx_aws_external_integration` or `signalfx_aws_integration_token`",
 				Description: "Name of the integration",
 			},
 			"enabled": &schema.Schema{
@@ -169,15 +175,12 @@ func integrationAWSResource() *schema.Resource {
 		Update: integrationAWSUpdate,
 		Delete: integrationAWSDelete,
 		Exists: integrationAWSExists,
-		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
-		},
 	}
 }
 
 func integrationAWSExists(d *schema.ResourceData, meta interface{}) (bool, error) {
 	config := meta.(*signalfxConfig)
-	_, err := config.Client.GetAWSCloudWatchIntegration(d.Id())
+	_, err := config.Client.GetAWSCloudWatchIntegration(d.Get("integration_id").(string))
 	if err != nil {
 		if strings.Contains(err.Error(), "404") {
 			return false, nil
@@ -189,7 +192,8 @@ func integrationAWSExists(d *schema.ResourceData, meta interface{}) (bool, error
 
 func integrationAWSRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	int, err := config.Client.GetAWSCloudWatchIntegration(d.Id())
+	fmt.Printf("[DEBUG] Trying to fetch %s\n", d.Get("integration_id").(string))
+	int, err := config.Client.GetAWSCloudWatchIntegration(d.Get("integration_id").(string))
 	if err != nil {
 		if strings.Contains(err.Error(), "404") {
 			d.SetId("")
@@ -202,7 +206,10 @@ func integrationAWSRead(d *schema.ResourceData, meta interface{}) error {
 			return err
 		}
 	}
-
+	if err := d.Set("name", int.Name); err != nil {
+		return err
+	}
+	fmt.Printf("[DEBUG] SignalFx: JUST DOING A READ #%v\n", int)
 	return awsIntegrationAPIToTF(d, int)
 }
 
@@ -210,6 +217,9 @@ func awsIntegrationAPIToTF(d *schema.ResourceData, aws *integration.AwsCloudWatc
 	debugOutput, _ := json.Marshal(aws)
 	log.Printf("[DEBUG] SignalFx: Got AWS Integration to enState: %s", string(debugOutput))
 
+	if err := d.Set("integration_id", aws.Id); err != nil {
+		return err
+	}
 	if err := d.Set("name", aws.Name); err != nil {
 		return err
 	}
@@ -225,11 +235,15 @@ func awsIntegrationAPIToTF(d *schema.ResourceData, aws *integration.AwsCloudWatc
 	if err := d.Set("poll_rate", *aws.PollRate/1000); err != nil {
 		return err
 	}
-	if err := d.Set("token", aws.Token); err != nil {
-		return err
+	if aws.Token != "" {
+		if err := d.Set("token", aws.Token); err != nil {
+			return err
+		}
 	}
-	if err := d.Set("key", aws.Key); err != nil {
-		return err
+	if aws.Key != "" {
+		if err := d.Set("key", aws.Key); err != nil {
+			return err
+		}
 	}
 	if len(aws.Regions) > 0 {
 		if err := d.Set("regions", flattenStringSliceToSet(aws.Regions)); err != nil {
@@ -307,6 +321,8 @@ func getPayloadAWSIntegration(d *schema.ResourceData) (*integration.AwsCloudWatc
 		EnableAwsUsage:   d.Get("enable_aws_usage").(bool),
 		ImportCloudWatch: d.Get("import_cloud_watch").(bool),
 	}
+	fmt.Printf("[DEBUG] SignalFx %#v\n", aws)
+	fmt.Println("[DEBUG] SignalFx FARTS")
 
 	if d.Get("external_id").(string) != "" {
 		aws.AuthMethod = integration.EXTERNAL_ID
@@ -438,15 +454,28 @@ func getNamespaceRules(tfRules []interface{}) []*integration.AwsNameSpaceSyncRul
 
 func integrationAWSCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
+
+	preInt, err := config.Client.GetAWSCloudWatchIntegration(d.Get("integration_id").(string))
+	if err != nil {
+		return fmt.Errorf("Error fetching existing integration for integration %s, %s", d.Get("integration_id").(string), err.Error())
+	}
+	if err := d.Set("external_id", preInt.ExternalId); err != nil {
+		return err
+	}
+	if err := d.Set("name", preInt.Name); err != nil {
+		return err
+	}
+	fmt.Println("[DEBUG] SignalFx: GOT SOME VALUES, GETTING PAYLOAD")
+
 	payload, err := getPayloadAWSIntegration(d)
 	if err != nil {
 		return fmt.Errorf("Failed creating json payload: %s", err.Error())
 	}
 
 	debugOutput, _ := json.Marshal(payload)
-	log.Printf("[DEBUG] SignalFx: Create AWS Integration Payload: %s", string(debugOutput))
+	log.Printf("[DEBUG] SignalFx: Create (Update) AWS Integration Payload: %s", string(debugOutput))
 
-	int, err := config.Client.CreateAWSCloudWatchIntegration(payload)
+	int, err := config.Client.UpdateAWSCloudWatchIntegration(d.Get("integration_id").(string), payload)
 	if err != nil {
 		if strings.Contains(err.Error(), "40") {
 			err = fmt.Errorf("%s\nPlease verify you are using an admin token when working with integrations", err.Error())
@@ -454,15 +483,13 @@ func integrationAWSCreate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 	d.SetId(int.Id)
-	if err := d.Set("external_id", int.ExternalId); err != nil {
-		return err
-	}
-
+	fmt.Printf("[DEBUG] SignalFx: JUST CREATED %#v", int)
 	return awsIntegrationAPIToTF(d, int)
 }
 
 func integrationAWSUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
+	fmt.Println("[DEBUG] SignalFx: AM ABOUT TO UPDATE")
 	payload, err := getPayloadAWSIntegration(d)
 	if err != nil {
 		return fmt.Errorf("Failed creating json payload: %s", err.Error())
@@ -479,14 +506,13 @@ func integrationAWSUpdate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 	d.SetId(int.Id)
-
+	fmt.Printf("[DEBUG] SignalFx JUST UPDATED %#v\n", d)
 	return awsIntegrationAPIToTF(d, int)
 }
 
 func integrationAWSDelete(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*signalfxConfig)
-
-	return config.Client.DeleteAWSCloudWatchIntegration(d.Id())
+	// Do nothing, let the aws_(external|token)_integration do the deletion
+	return nil
 }
 
 func validateAuthMethod(v interface{}, k string) (we []string, errors []error) {

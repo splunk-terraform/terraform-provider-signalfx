@@ -14,11 +14,15 @@ import (
 )
 
 const newIntegrationAWSConfig = `
+resource "signalfx_aws_external_integration" "aws_ext_myteamXX" {
+	name = "AWSFoo"
+}
+
 resource "signalfx_aws_integration" "aws_myteamXX" {
-    name = "AWSFoo"
     enabled = false
 
-		auth_method = "ExternalId"
+		integration_id = "${signalfx_aws_external_integration.aws_ext_myteamXX.id}"
+		external_id = "${signalfx_aws_external_integration.aws_ext_myteamXX.external_id}"
 		role_arn = "arn:aws:iam::XXX:role/SignalFx-Read-Role"
 		regions = ["us-east-1"]
 		poll_rate = 300
@@ -42,11 +46,15 @@ resource "signalfx_aws_integration" "aws_myteamXX" {
 `
 
 const updatedIntegrationAWSConfig = `
+resource "signalfx_aws_external_integration" "aws_ext_myteamXX" {
+	name = "AWSFoo"
+}
+
 resource "signalfx_aws_integration" "aws_myteamXX" {
-    name = "AWSFoo NEW"
     enabled = false
 
-		auth_method = "ExternalId"
+		integration_id = "${signalfx_aws_external_integration.aws_ext_myteamXX.id}"
+		external_id = "${signalfx_aws_external_integration.aws_ext_myteamXX.external_id}"
 		role_arn = "arn:aws:iam::XXX:role/SignalFx-Read-Role"
 		regions = ["us-east-1"]
 		poll_rate = 300
@@ -80,20 +88,12 @@ func TestAccCreateUpdateIntegrationAWS(t *testing.T) {
 				Config: newIntegrationAWSConfig,
 				Check:  testAccCheckIntegrationAWSResourceExists,
 			},
-			{
-				ResourceName:      "signalfx_aws_integration.aws_myteamXX",
-				ImportState:       true,
-				ImportStateIdFunc: testAccStateIdFunc("signalfx_aws_integration.aws_myteamXX"),
-				ImportStateVerify: true,
-				// The API doesn't return this value, so blow it up
-				ImportStateVerifyIgnore: []string{"role_arn"},
-			},
 			// Update It
 			{
 				Config: updatedIntegrationAWSConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckIntegrationAWSResourceExists,
-					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "name", "AWSFoo NEW"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "name", "AWSFoo"),
 				),
 			},
 		},
@@ -105,7 +105,7 @@ func testAccCheckIntegrationAWSResourceExists(s *terraform.State) error {
 
 	for _, rs := range s.RootModule().Resources {
 		switch rs.Type {
-		case "signalfx_aws_integration":
+		case "signalfx_aws_integration", "signalfx_aws_external_integration":
 			integration, err := client.GetAWSCloudWatchIntegration(rs.Primary.ID)
 			if integration == nil {
 				return fmt.Errorf("Error finding integration %s: %s", rs.Primary.ID, err)
@@ -122,7 +122,7 @@ func testAccIntegrationAWSDestroy(s *terraform.State) error {
 	client, _ := sfx.NewClient(os.Getenv("SFX_AUTH_TOKEN"))
 	for _, rs := range s.RootModule().Resources {
 		switch rs.Type {
-		case "signalfx_aws_integration":
+		case "signalfx_aws_integration", "signalfx_aws_external_integration":
 			integration, _ := client.GetAWSCloudWatchIntegration(rs.Primary.ID)
 			if integration != nil {
 				return fmt.Errorf("Found deleted integration %s", rs.Primary.ID)

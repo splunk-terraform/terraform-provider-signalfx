@@ -13,6 +13,12 @@ import (
 func integrationAWSExternalResource() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
+			"name": &schema.Schema{
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "Name of the integration",
+			},
 			"external_id": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -59,14 +65,18 @@ func integrationAWSExternalRead(d *schema.ResourceData, meta interface{}) error 
 		}
 	}
 
-	return awsIntegrationAPIToTF(d, int)
+	return nil
 }
 
 func getPayloadAWSExternalIntegration(d *schema.ResourceData) (*integration.AwsCloudWatchIntegration, error) {
 
+	// We can't leave this empty, even though we don't need it yet
+	defaultPollRate := integration.FiveMinutely
 	aws := &integration.AwsCloudWatchIntegration{
 		Type:       "AWSCloudWatch",
 		AuthMethod: integration.EXTERNAL_ID,
+		Name:       d.Get("name").(string),
+		PollRate:   &defaultPollRate,
 	}
 
 	return aws, nil
@@ -91,6 +101,9 @@ func integrationAWSExternalCreate(d *schema.ResourceData, meta interface{}) erro
 	}
 	d.SetId(int.Id)
 	if err := d.Set("external_id", int.ExternalId); err != nil {
+		return err
+	}
+	if err := d.Set("name", int.Name); err != nil {
 		return err
 	}
 
