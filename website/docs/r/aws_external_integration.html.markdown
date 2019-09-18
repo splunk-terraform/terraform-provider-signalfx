@@ -12,7 +12,7 @@ SignalFx AWS CloudWatch integrations using Role ARNs. For help with this integra
 
 **Note:** When managing integrations you'll need to use an admin token to authenticate the SignalFx provider.
 
-~> **WARNING** This resource implements a part of a workflow. You must use it with one of either `signalfx_aws_integration`.
+~> **WARNING** This resource implements a part of a workflow. You must use it with one of either `signalfx_aws_integration`. Check with SignalFx support for your realm's AWS account id.
 
 ## Example Usage
 
@@ -24,7 +24,7 @@ resource "signalfx_aws_external_integration" "aws_myteam_external" {
 
 // Make yourself an AWS IAM role here, use `signalfx_aws_external_integration.aws_myteam_external.external_id`
 resource "aws_iam_role" "aws_sfx_role" {
-  // Stuff here that uses the
+  // Stuff here that uses the external and account ID
 }
 
 resource "signalfx_aws_integration" "aws_myteam" {
@@ -62,5 +62,5 @@ resource "signalfx_aws_integration" "aws_myteam" {
 
 In addition to all arguments above, the following attributes are exported:
 
-* `id` - The time at which the certificate was issued
+* `id` - The ID of this integration, used with `signalfx_aws_integration`
 * `external_id` - The external ID to use with your IAM role and with `signalfx_aws_integration`.
