@@ -767,7 +767,7 @@ func dashboardAPIToTF(d *schema.ResourceData, dash *dashboard.Dashboard) error {
 	case "column":
 		chartIds := make([]string, len(dash.Charts))
 		column := make(map[string]interface{})
-		maxColumn := 1
+		maxColumn := 0
 		for i, c := range dash.Charts {
 			if int(c.Column) > maxColumn {
 				// Find our widest column, store it for later
