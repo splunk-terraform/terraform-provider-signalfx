@@ -1,4 +1,9 @@
-## 4.7.1 (Unreleased)
+## 4.8.1 (Unreleased)
+
+BUG FIXES:
+
+* resource/detector: Add default for `time_range`, which was being set by the API and causing unclean plans. [#83](https://github.com/terraform-providers/terraform-provider-signalfx/pull/83)
+
 ## 4.7.0 (September 17, 2019)
 
 FEATURES:
