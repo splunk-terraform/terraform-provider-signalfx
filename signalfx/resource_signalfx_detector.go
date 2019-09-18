@@ -59,7 +59,8 @@ func detectorResource() *schema.Resource {
 			"time_range": &schema.Schema{
 				Type:          schema.TypeInt,
 				Optional:      true,
-				Description:   "Seconds to display in the visualization. This is a rolling range from the current time. Example: 3600 = `-1h`",
+				Default:       3600,
+				Description:   "Seconds to display in the visualization. This is a rolling range from the current time. Example: 3600 = `-1h`. Defaults to 3600",
 				ConflictsWith: []string{"start_time", "end_time"},
 			},
 			"start_time": &schema.Schema{

@@ -113,7 +113,7 @@ notifications = ["Webhook,credentialId,secret,url"]
 * `show_data_markers` - (Optional) When `true`, markers will be drawn for each datapoint within the visualization. `false` by default.
 * `show_event_lines` - (Optional) When `true`, the visualization will display a vertical line for each event trigger. `false` by default.
 * `disable_sampling` - (Optional) When `false`, the visualization may sample the output timeseries rather than displaying them all. `false` by default.
-* `time_range` - (Optional) From when to display data. SignalFx time syntax (e.g. `"-5m"`, `"-1h"`). Conflicts with `start_time` and `end_time`.
+* `time_range` - (Optional) Seconds to display in the visualization. This is a rolling range from the current time. Example: 3600 = `-1h`. Defaults to 3600.
 * `start_time` - (Optional) Seconds since epoch. Used for visualization. Conflicts with `time_range`.
 * `end_time` - (Optional) Seconds since epoch. Used for visualization. Conflicts with `time_range`.
 * `teams` - (Optional) Team IDs to associcate the detector to.
