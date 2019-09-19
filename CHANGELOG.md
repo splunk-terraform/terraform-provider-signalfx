@@ -1,4 +1,4 @@
-## 4.8.0 (Unreleased)
+## 4.8.0 (September 19, 2019)
 
 FEATURES:
 
