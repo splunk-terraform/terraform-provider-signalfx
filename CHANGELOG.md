@@ -1,5 +1,9 @@
 ## 4.8.0 (Unreleased)
 
+FEATURES:
+
+* provider: Added `signalfx_aws_external_integration` and `signalfx_aws_token_integration` resources to improve AWS management.
+
 BUG FIXES:
 
 * resource/dashboard: Use of `column` was causing unclean plans. [#85](https://github.com/terraform-providers/terraform-provider-signalfx/pull/85)
