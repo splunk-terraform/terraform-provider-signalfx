@@ -6,6 +6,10 @@ BUG FIXES:
 * resource/detector: Add default for `time_range`, which was being set by the API and causing unclean plans. [#83](https://github.com/terraform-providers/terraform-provider-signalfx/pull/83)
 * resource/detector: Correct cast of start, end, and range times to `int64`. [#87](https://github.com/terraform-providers/terraform-provider-signalfx/pull/87)
 
+BACKWARDS INCOMPATIBILITIES:
+
+* resource/aws_integration: To allow fully in-Terraform management of AWS integrations, added new resources `signalfx_aws_external_integration` and `signalfx_aws_token_integration` to be used in conjunction with `signalfx_aws_integration`. This changes some of the fields to be computed. These changes are documented in the documentation for the aforementioned resources.
+
 ## 4.7.0 (September 17, 2019)
 
 FEATURES:
