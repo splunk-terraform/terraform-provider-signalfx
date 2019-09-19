@@ -291,7 +291,7 @@ func getVisualizationOptionsDetector(d *schema.ResourceData) *detector.Visualiza
 
 	if val, ok := d.GetOk("time_range"); ok {
 		tr := &detector.Time{}
-		r := int32(val.(int)) * 1000
+		r := int64(val.(int)) * 1000
 		tr.Range = &r
 		tr.Type = "relative"
 		viz.Time = tr
@@ -299,10 +299,10 @@ func getVisualizationOptionsDetector(d *schema.ResourceData) *detector.Visualiza
 	if val, ok := d.GetOk("start_time"); ok {
 		tr := &detector.Time{}
 		tr.Type = "absolute"
-		start := val.(int32) * 1000
+		start := val.(int64) * 1000
 		tr.Start = &start
 		if val, ok := d.GetOk("end_time"); ok {
-			end := val.(int32) * 1000
+			end := val.(int64) * 1000
 			tr.End = &end
 		}
 		viz.Time = tr
