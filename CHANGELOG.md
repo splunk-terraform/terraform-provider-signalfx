@@ -4,6 +4,7 @@ BUG FIXES:
 
 * resource/dashboard: Use of `column` was causing unclean plans. [#85](https://github.com/terraform-providers/terraform-provider-signalfx/pull/85)
 * resource/detector: Add default for `time_range`, which was being set by the API and causing unclean plans. [#83](https://github.com/terraform-providers/terraform-provider-signalfx/pull/83)
+* resource/detector: Correct cast of start, end, and range times to `int64`. [#87](https://github.com/terraform-providers/terraform-provider-signalfx/pull/87)
 
 ## 4.7.0 (September 17, 2019)
 
