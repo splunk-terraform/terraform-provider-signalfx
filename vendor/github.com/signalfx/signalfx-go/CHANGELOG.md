@@ -1,4 +1,4 @@
-# 1.6.3, Unreleased
+# 1.6.4, Unreleased
 
 ## Added
 
@@ -7,6 +7,12 @@
 ## Bugfixes
 
 ## Removed
+
+# 1.6.3, 2019-09-19
+
+## Bugfixes
+
+* Changed detector's time fields to be `*int64`
 
 # 1.6.2, 2019-09-16
 

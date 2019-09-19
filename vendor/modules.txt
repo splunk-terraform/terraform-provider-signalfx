@@ -136,6 +136,7 @@ github.com/hashicorp/logutils
 github.com/hashicorp/terraform/plugin
 github.com/hashicorp/terraform/helper/hashcode
 github.com/hashicorp/terraform/helper/schema
+github.com/hashicorp/terraform/helper/validation
 github.com/hashicorp/terraform/terraform
 github.com/hashicorp/terraform/configs/configschema
 github.com/hashicorp/terraform/helper/plugin
@@ -146,6 +147,7 @@ github.com/hashicorp/terraform/providers
 github.com/hashicorp/terraform/provisioners
 github.com/hashicorp/terraform/configs/hcl2shim
 github.com/hashicorp/terraform/tfdiags
+github.com/hashicorp/terraform/helper/structure
 github.com/hashicorp/terraform/addrs
 github.com/hashicorp/terraform/config
 github.com/hashicorp/terraform/configs
@@ -216,7 +218,7 @@ github.com/posener/complete/cmd
 github.com/posener/complete/match
 # github.com/signalfx/golib v2.4.0+incompatible
 github.com/signalfx/golib/pointer
-# github.com/signalfx/signalfx-go v1.6.2
+# github.com/signalfx/signalfx-go v1.6.3
 github.com/signalfx/signalfx-go
 github.com/signalfx/signalfx-go/chart
 github.com/signalfx/signalfx-go/dashboard
