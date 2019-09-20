@@ -251,7 +251,6 @@ func getListChartOptions(d *schema.ResourceData) *chart.Options {
 			if colorScaleOptions := getColorScaleOptions(d); len(colorScaleOptions) > 0 {
 				options.ColorScale2 = colorScaleOptions
 			}
-
 		}
 	}
 
