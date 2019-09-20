@@ -6,6 +6,7 @@ import (
 	"math"
 
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform/helper/validation"
 	chart "github.com/signalfx/signalfx-go/chart"
 )
 
@@ -43,7 +44,7 @@ func singleValueChartResource() *schema.Resource {
 				Type:         schema.TypeInt,
 				Optional:     true,
 				Description:  "How long (in seconds) to wait for late datapoints",
-				ValidateFunc: validateMaxDelayValue,
+				ValidateFunc: validation.IntBetween(0, 900),
 			},
 			"refresh_interval": &schema.Schema{
 				Type:        schema.TypeInt,
