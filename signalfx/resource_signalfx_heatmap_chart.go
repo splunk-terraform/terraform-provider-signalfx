@@ -77,6 +77,7 @@ func heatmapChartResource() *schema.Resource {
 			},
 			"color_range": &schema.Schema{
 				Type:          schema.TypeSet,
+				MaxItems:      1,
 				Optional:      true,
 				ConflictsWith: []string{"color_scale"},
 				Description:   "Values and color for the color range. Example: colorRange : { min : 0, max : 100, color : \"#0000ff\" }",
@@ -206,13 +207,7 @@ func getHeatmapColorRangeOptions(d *schema.ResourceData) *chart.HeatmapColorRang
 				item.Max = val.(float64)
 			}
 		}
-		color := options["color"].(string)
-		for _, colorStruct := range ChartColorsSlice {
-			if color == colorStruct.name {
-				item.Color = colorStruct.name
-				break
-			}
-		}
+		item.Color = options["color"].(string)
 	}
 	return item
 }
@@ -277,6 +272,9 @@ func getHeatmapOptionsChart(d *schema.ResourceData) *chart.Options {
 	if colorRangeOptions := getHeatmapColorRangeOptions(d); colorRangeOptions != nil {
 		options.ColorBy = "Range"
 		options.ColorRange = colorRangeOptions
+	} else if colorScaleOptions := getColorScaleOptions(d); colorScaleOptions != nil {
+		options.ColorBy = "Scale"
+		options.ColorScale2 = colorScaleOptions
 	}
 
 	return options
@@ -336,24 +334,21 @@ func heatmapchartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 		return err
 	}
 	if options.ColorRange != nil {
-
-		var color = options.ColorRange.Color
-		// Convert hex values back to values we accept
-		if strings.HasPrefix(color, "#") {
-			var err error
-			color, err = getNameFromChartColorsByHex(options.ColorRange.Color)
-			if err != nil {
-				return err
-			}
-		}
-
 		colorRange := make([]map[string]interface{}, 1)
 		colorRange[0] = map[string]interface{}{
 			"min_value": options.ColorRange.Min,
 			"max_value": options.ColorRange.Max,
-			"color":     color,
+			"color":     options.ColorRange.Color,
 		}
 		if err := d.Set("color_range", colorRange); err != nil {
+			return err
+		}
+	} else if options.ColorScale2 != nil {
+		colorScale, err := decodeColorScale(options)
+		if err != nil {
+			return err
+		}
+		if err := d.Set("color_scale", colorScale); err != nil {
 			return err
 		}
 	}

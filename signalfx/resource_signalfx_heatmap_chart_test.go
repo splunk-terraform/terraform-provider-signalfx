@@ -27,7 +27,7 @@ resource "signalfx_heatmap_chart" "mychartHX" {
 	color_range {
 		min_value = 1
 		max_value = 100
-		color = "magenta"
+		color = "#ff0000"
 	}
 }
 `
@@ -46,7 +46,7 @@ resource "signalfx_heatmap_chart" "mychartHX" {
 	color_range {
 		min_value = 1
 		max_value = 100
-		color = "magenta"
+		color = "#ff0000"
 	}
 }
 `
@@ -69,9 +69,6 @@ func TestAccCreateUpdateHeatmapChart(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_heatmap_chart.mychartHX", "hide_timestamp", "true"),
 					resource.TestCheckResourceAttr("signalfx_heatmap_chart.mychartHX", "sort_by", "-foo"),
 					resource.TestCheckResourceAttr("signalfx_heatmap_chart.mychartHX", "color_range.#", "1"),
-					resource.TestCheckResourceAttr("signalfx_heatmap_chart.mychartHX", "color_range.452638366.color", "magenta"),
-					resource.TestCheckResourceAttr("signalfx_heatmap_chart.mychartHX", "color_range.452638366.max_value", "100"),
-					resource.TestCheckResourceAttr("signalfx_heatmap_chart.mychartHX", "color_range.452638366.min_value", "1"),
 					resource.TestCheckResourceAttr("signalfx_heatmap_chart.mychartHX", "group_by.#", "2"),
 					resource.TestCheckResourceAttr("signalfx_heatmap_chart.mychartHX", "group_by.0", "a"),
 					resource.TestCheckResourceAttr("signalfx_heatmap_chart.mychartHX", "group_by.1", "b"),
