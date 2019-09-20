@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform/helper/validation"
 	chart "github.com/signalfx/signalfx-go/chart"
 )
 
@@ -39,20 +40,22 @@ func heatmapChartResource() *schema.Resource {
 				Description: "(Metric by default) Must be \"Metric\" or \"Binary\"",
 			},
 			"minimum_resolution": &schema.Schema{
-				Type:        schema.TypeInt,
-				Optional:    true,
-				Description: "The minimum resolution (in seconds) to use for computing the underlying program",
+				Type:         schema.TypeInt,
+				Optional:     true,
+				ValidateFunc: validation.IntAtLeast(0),
+				Description:  "The minimum resolution (in seconds) to use for computing the underlying program",
 			},
 			"max_delay": &schema.Schema{
 				Type:         schema.TypeInt,
 				Optional:     true,
+				ValidateFunc: validation.IntBetween(0, 900),
 				Description:  "How long (in seconds) to wait for late datapoints",
-				ValidateFunc: validateMaxDelayValue,
 			},
 			"refresh_interval": &schema.Schema{
-				Type:        schema.TypeInt,
-				Optional:    true,
-				Description: "How often (in seconds) to refresh the values of the heatmap",
+				Type:         schema.TypeInt,
+				Optional:     true,
+				ValidateFunc: validation.IntAtLeast(0),
+				Description:  "How often (in seconds) to refresh the values of the heatmap",
 			},
 			"disable_sampling": &schema.Schema{
 				Type:        schema.TypeBool,
@@ -73,16 +76,18 @@ func heatmapChartResource() *schema.Resource {
 				Description:  "The property to use when sorting the elements. Must be prepended with + for ascending or - for descending (e.g. -foo)",
 			},
 			"color_range": &schema.Schema{
-				Type:        schema.TypeSet,
-				Optional:    true,
-				Description: "Values and color for the color range. Example: colorRange : { min : 0, max : 100, color : \"#0000ff\" }",
+				Type:          schema.TypeSet,
+				MaxItems:      1,
+				Optional:      true,
+				ConflictsWith: []string{"color_scale"},
+				Description:   "Values and color for the color range. Example: colorRange : { min : 0, max : 100, color : \"#0000ff\" }",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"color": &schema.Schema{
 							Type:         schema.TypeString,
 							Required:     true,
+							ValidateFunc: validation.StringMatch(validHexColor, "does not look like a hex color, similar to #0000ff"),
 							Description:  "The color range to use. The starting hex color value for data values in a heatmap chart. Specify the value as a 6-character hexadecimal value preceded by the '#' character, for example \"#ea1849\" (grass green).",
-							ValidateFunc: validateHeatmapColorRange,
 						},
 						"min_value": &schema.Schema{
 							Type:        schema.TypeFloat,
@@ -100,9 +105,10 @@ func heatmapChartResource() *schema.Resource {
 				},
 			},
 			"color_scale": &schema.Schema{
-				Type:        schema.TypeSet,
-				Optional:    true,
-				Description: "Single color range including both the color to display for that range and the borders of the range",
+				Type:          schema.TypeSet,
+				Optional:      true,
+				ConflictsWith: []string{"color_range"},
+				Description:   "Single color range including both the color to display for that range and the borders of the range",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"color": &schema.Schema{
@@ -201,13 +207,7 @@ func getHeatmapColorRangeOptions(d *schema.ResourceData) *chart.HeatmapColorRang
 				item.Max = val.(float64)
 			}
 		}
-		color := options["color"].(string)
-		for _, colorStruct := range ChartColorsSlice {
-			if color == colorStruct.name {
-				item.Color = colorStruct.name
-				break
-			}
-		}
+		item.Color = options["color"].(string)
 	}
 	return item
 }
@@ -272,6 +272,9 @@ func getHeatmapOptionsChart(d *schema.ResourceData) *chart.Options {
 	if colorRangeOptions := getHeatmapColorRangeOptions(d); colorRangeOptions != nil {
 		options.ColorBy = "Range"
 		options.ColorRange = colorRangeOptions
+	} else if colorScaleOptions := getColorScaleOptions(d); colorScaleOptions != nil {
+		options.ColorBy = "Scale"
+		options.ColorScale2 = colorScaleOptions
 	}
 
 	return options
@@ -331,24 +334,21 @@ func heatmapchartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 		return err
 	}
 	if options.ColorRange != nil {
-
-		var color = options.ColorRange.Color
-		// Convert hex values back to values we accept
-		if strings.HasPrefix(color, "#") {
-			var err error
-			color, err = getNameFromChartColorsByHex(options.ColorRange.Color)
-			if err != nil {
-				return err
-			}
-		}
-
 		colorRange := make([]map[string]interface{}, 1)
 		colorRange[0] = map[string]interface{}{
 			"min_value": options.ColorRange.Min,
 			"max_value": options.ColorRange.Max,
-			"color":     color,
+			"color":     options.ColorRange.Color,
 		}
 		if err := d.Set("color_range", colorRange); err != nil {
+			return err
+		}
+	} else if options.ColorScale2 != nil {
+		colorScale, err := decodeColorScale(options)
+		if err != nil {
+			return err
+		}
+		if err := d.Set("color_scale", colorScale); err != nil {
 			return err
 		}
 	}
@@ -426,14 +426,6 @@ func heatmapchartDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 
 	return config.Client.DeleteChart(d.Id())
-}
-
-func validateHeatmapColorRange(v interface{}, k string) (we []string, errors []error) {
-	value := v.(string)
-	if !validHexColor.MatchString(value) {
-		errors = append(errors, fmt.Errorf("%s does not look like a hex color, similar to #0000ff", value))
-	}
-	return
 }
 
 /*

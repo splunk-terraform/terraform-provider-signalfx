@@ -44,6 +44,16 @@ resource "signalfx_heatmap_chart" "myheatmapchart0" {
     program_text = <<-EOF
         data("cpu.total.idle").publish()
         EOF
+
+		color_scale {
+			gt = 40
+			color = "cerise"
+		}
+
+		color_scale {
+			lte = 40
+			color = "vivid_yellow"
+		}
 }
 
 resource "signalfx_text_chart" "mytextchart0" {
@@ -180,6 +190,16 @@ resource "signalfx_heatmap_chart" "myheatmapchart0" {
     program_text = <<-EOF
         data("cpu.total.idle").publish()
         EOF
+
+		color_scale {
+			gt = 40
+			color = "cerise"
+		}
+
+		color_scale {
+			lte = 40
+			color = "vivid_yellow"
+		}
 }
 
 resource "signalfx_text_chart" "mytextchart0" {

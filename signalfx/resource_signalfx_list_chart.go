@@ -6,6 +6,7 @@ import (
 	"math"
 
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform/helper/validation"
 	chart "github.com/signalfx/signalfx-go/chart"
 )
 
@@ -43,7 +44,7 @@ func listChartResource() *schema.Resource {
 				Type:         schema.TypeInt,
 				Optional:     true,
 				Description:  "How long (in seconds) to wait for late datapoints",
-				ValidateFunc: validateMaxDelayValue,
+				ValidateFunc: validation.IntBetween(0, 900),
 			},
 			"disable_sampling": &schema.Schema{
 				Type:        schema.TypeBool,
@@ -250,7 +251,6 @@ func getListChartOptions(d *schema.ResourceData) *chart.Options {
 			if colorScaleOptions := getColorScaleOptions(d); len(colorScaleOptions) > 0 {
 				options.ColorScale2 = colorScaleOptions
 			}
-
 		}
 	}
 

@@ -27,7 +27,7 @@ resource "signalfx_heatmap_chart" "mychartHX" {
 	color_range {
 		min_value = 1
 		max_value = 100
-		color = "magenta"
+		color = "#ff0000"
 	}
 }
 `
@@ -46,7 +46,7 @@ resource "signalfx_heatmap_chart" "mychartHX" {
 	color_range {
 		min_value = 1
 		max_value = 100
-		color = "magenta"
+		color = "#ff0000"
 	}
 }
 `
@@ -69,9 +69,6 @@ func TestAccCreateUpdateHeatmapChart(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_heatmap_chart.mychartHX", "hide_timestamp", "true"),
 					resource.TestCheckResourceAttr("signalfx_heatmap_chart.mychartHX", "sort_by", "-foo"),
 					resource.TestCheckResourceAttr("signalfx_heatmap_chart.mychartHX", "color_range.#", "1"),
-					resource.TestCheckResourceAttr("signalfx_heatmap_chart.mychartHX", "color_range.452638366.color", "magenta"),
-					resource.TestCheckResourceAttr("signalfx_heatmap_chart.mychartHX", "color_range.452638366.max_value", "100"),
-					resource.TestCheckResourceAttr("signalfx_heatmap_chart.mychartHX", "color_range.452638366.min_value", "1"),
 					resource.TestCheckResourceAttr("signalfx_heatmap_chart.mychartHX", "group_by.#", "2"),
 					resource.TestCheckResourceAttr("signalfx_heatmap_chart.mychartHX", "group_by.0", "a"),
 					resource.TestCheckResourceAttr("signalfx_heatmap_chart.mychartHX", "group_by.1", "b"),
@@ -138,18 +135,4 @@ func TestValidateHeatmapChartColors(t *testing.T) {
 func TestValidateHeatmapChartColorsFail(t *testing.T) {
 	_, err := validateHeatmapChartColor("whatever", "color")
 	assert.Equal(t, 1, len(err))
-}
-
-func TestValidateHeatmapColorRange(t *testing.T) {
-	_, err := validateHeatmapColorRange("fart", "color_range")
-	assert.Equal(t, 1, len(err))
-
-	_, err2 := validateHeatmapColorRange("f0f0f0", "color_range")
-	assert.Equal(t, 1, len(err2))
-
-	_, err3 := validateHeatmapColorRange("#nothex", "color_range")
-	assert.Equal(t, 1, len(err3))
-
-	_, noerr := validateHeatmapColorRange("#f0F9f0", "color_range")
-	assert.Equal(t, 0, len(noerr))
 }

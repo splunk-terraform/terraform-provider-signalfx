@@ -10,6 +10,7 @@ import (
 
 	"github.com/hashicorp/terraform/helper/hashcode"
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform/helper/validation"
 	detector "github.com/signalfx/signalfx-go/detector"
 )
 
@@ -38,8 +39,8 @@ func detectorResource() *schema.Resource {
 			"max_delay": &schema.Schema{
 				Type:         schema.TypeInt,
 				Optional:     true,
-				Description:  "How long (in seconds) to wait for late datapoints. Max value 900s (15m)",
-				ValidateFunc: validateMaxDelayValue,
+				Description:  "How long (in seconds) to wait for late datapoints. Max value 900 (15m)",
+				ValidateFunc: validation.IntBetween(0, 900),
 			},
 			"show_data_markers": &schema.Schema{
 				Type:        schema.TypeBool,
