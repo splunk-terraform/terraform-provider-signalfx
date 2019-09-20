@@ -50,7 +50,7 @@ The following arguments are supported in the resource block:
     * `min_value` - (Optional) The minimum value within the coloring range.
     * `max_value` - (Optional) The maximum value within the coloring range.
     * `color` - (Required) The color range to use. The starting hex color value for data values in a heatmap chart. Specify the value as a 6-character hexadecimal value preceded by the '#' character, for example "#ea1849" (grass green).
-* `color_scale` - (Optional. Conflicts with `color_scale`) Single color range including both the color to display for that range and the borders of the range. Example: `[{ gt = 60, color = "blue" }, { lte = 60, color = "yellow" }]`. Look at this [link](https://docs.signalfx.com/en/latest/charts/chart-options-tab.html).
+* `color_scale` - (Optional. Conflicts with `color_range`) Single color range including both the color to display for that range and the borders of the range. Example: `[{ gt = 60, color = "blue" }, { lte = 60, color = "yellow" }]`. Look at this [link](https://docs.signalfx.com/en/latest/charts/chart-options-tab.html).
     * `gt` - (Optional) Indicates the lower threshold non-inclusive value for this range.
     * `gte` - (Optional) Indicates the lower threshold inclusive value for this range.
     * `lt` - (Optional) Indicates the upper threshold non-inculsive value for this range.
