@@ -69,12 +69,14 @@ func detectorResource() *schema.Resource {
 				Optional:      true,
 				ConflictsWith: []string{"time_range"},
 				Description:   "Seconds since epoch. Used for visualization",
+				ValidateFunc:  validation.IntAtLeast(0),
 			},
 			"end_time": &schema.Schema{
 				Type:          schema.TypeInt,
 				Optional:      true,
 				ConflictsWith: []string{"time_range"},
 				Description:   "Seconds since epoch. Used for visualization",
+				ValidateFunc:  validation.IntAtLeast(0),
 			},
 			"teams": &schema.Schema{
 				Type:        schema.TypeList,
@@ -413,18 +415,20 @@ func detectorAPIToTF(d *schema.ResourceData, det *detector.Detector) error {
 		}
 
 		tr := viz.Time
-		// We divide by 1000 because the API uses millis, but this provider uses
-		// seconds
-		if tr.Range != nil {
-			if err := d.Set("time_range", *tr.Range/1000); err != nil {
+		if tr != nil {
+			// We divide by 1000 because the API uses millis, but this provider uses
+			// seconds
+			if tr.Range != nil {
+				if err := d.Set("time_range", *tr.Range/1000); err != nil {
+					return err
+				}
+			}
+			if err := d.Set("start_time", tr.Start); err != nil {
 				return err
 			}
-		}
-		if err := d.Set("start_time", tr.Start); err != nil {
-			return err
-		}
-		if err := d.Set("end_time", tr.End); err != nil {
-			return err
+			if err := d.Set("end_time", tr.End); err != nil {
+				return err
+			}
 		}
 	}
 
