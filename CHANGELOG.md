@@ -9,6 +9,7 @@ BUG FIXES:
 * resource/heatmap_chart: No longer allows setting multiple `color_range` options. [#89](https://github.com/terraform-providers/terraform-provider-signalfx/pull/89)
 * resource/heatmap_chart: Many integer fields now verify that the value is >= 0 [#89](https://github.com/terraform-providers/terraform-provider-signalfx/pull/89)
 * resource/heatmap_chart: The `color_range.color` property was confusingly allowing both hex and non-hex colors. This has been standardized to hex colors. This may generate errors and ask you to change your colors if you used the old form. [#89](https://github.com/terraform-providers/terraform-provider-signalfx/pull/89)
+* resource/detector: Improved guards against null values from detectors that might cause a crash and added more property validation in the schema. Thanks to [@joshuaspence](https://github.com/joshuaspence) for flagging. [#91](https://github.com/terraform-providers/terraform-provider-signalfx/pull/91)
 
 ## 4.8.0 (September 19, 2019)
 
