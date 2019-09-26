@@ -1,4 +1,4 @@
-## 4.8.2 (Unreleased)
+## 4.8.2 (September 26, 2019)
 
 BUG FIXES:
 
