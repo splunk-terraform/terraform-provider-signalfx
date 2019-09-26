@@ -1,4 +1,9 @@
 ## 4.8.2 (Unreleased)
+
+BUG FIXES:
+
+* resource/time_chart: Fix crash when importing some charts with only a left axis. [#92](https://github.com/terraform-providers/terraform-provider-signalfx/pull/92)
+
 ## 4.8.1 (September 23, 2019)
 
 FEATURES:
