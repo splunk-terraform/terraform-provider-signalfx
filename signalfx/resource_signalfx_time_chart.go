@@ -885,13 +885,15 @@ func timechartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 				return err
 			}
 		}
-		axisRight := options.Axes[1]
-		if (axisRight == nil || *axisRight == chart.Axes{}) {
-			log.Printf("[DEBUG] SignalFx: Axis Right is nil or zero, skipping")
-		} else {
-			log.Printf("[DEBUG] SignalFx: Axis Right is real: %v", axisRight)
-			if err := d.Set("axis_right", axisToMap(axisRight)); err != nil {
-				return err
+		if len(options.Axes) > 1 {
+			axisRight := options.Axes[1]
+			if (axisRight == nil || *axisRight == chart.Axes{}) {
+				log.Printf("[DEBUG] SignalFx: Axis Right is nil or zero, skipping")
+			} else {
+				log.Printf("[DEBUG] SignalFx: Axis Right is real: %v", axisRight)
+				if err := d.Set("axis_right", axisToMap(axisRight)); err != nil {
+					return err
+				}
 			}
 		}
 	}
