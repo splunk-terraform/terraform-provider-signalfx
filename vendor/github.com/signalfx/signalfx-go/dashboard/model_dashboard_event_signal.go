@@ -14,5 +14,6 @@ type DashboardEventSignal struct {
 	// The event name or partial name that the system uses to selecct events to suggest as overlays on the charts in the dashboard.
 	EventSearchText string `json:"eventSearchText"`
 	// Controls the source of the event. You can specify the following: <br>   * detectorEvents: Select events that come from a detector   * eventTimeSeries: Select events that come from a time series <br> The API doesn't accept other event types.
-	EventType string `json:"eventType,omitempty"`
+	EventType  string `json:"eventType,omitempty"`
+	DetectorId string `json:"detectorId,omitempty"`
 }

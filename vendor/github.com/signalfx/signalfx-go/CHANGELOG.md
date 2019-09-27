@@ -1,4 +1,4 @@
-# 1.6.4, Unreleased
+# 1.6.5, Unreleased
 
 ## Added
 
@@ -7,6 +7,12 @@
 ## Bugfixes
 
 ## Removed
+
+# 1.6.4, 2019-09-27
+
+## Added
+
+Event Overlays now support a detector id.
 
 # 1.6.3, 2019-09-19
 
