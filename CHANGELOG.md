@@ -3,6 +3,7 @@
 IMPROVEMENTS:
 
 * provider: Updated to terraform-plugin-sdk [#93](https://github.com/terraform-providers/terraform-provider-signalfx/pull/93)
+* provider: Updated to new signalfx-go dep, prevent possible crashes from JSON changes.
 
 ## 4.8.2 (September 26, 2019)
 
