@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 
 	sfx "github.com/signalfx/signalfx-go"
 )
