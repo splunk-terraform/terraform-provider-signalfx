@@ -1,4 +1,9 @@
 ## 4.8.3 (Unreleased)
+
+IMPROVEMENTS:
+
+* provider: Updated to terraform-plugin-sdk [#93](https://github.com/terraform-providers/terraform-provider-signalfx/pull/93)
+
 ## 4.8.2 (September 26, 2019)
 
 BUG FIXES:
