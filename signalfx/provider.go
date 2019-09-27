@@ -9,8 +9,8 @@ import (
 	"runtime"
 
 	"github.com/bgentry/go-netrc/netrc"
-	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	homedir "github.com/mitchellh/go-homedir"
 	sfx "github.com/signalfx/signalfx-go"
 )
