@@ -171,16 +171,20 @@ func heatmapChartResource() *schema.Resource {
 /*
   Use Resource object to construct json payload in order to create an Heatmap chart
 */
-func getPayloadHeatmapChart(d *schema.ResourceData) *chart.CreateUpdateChartRequest {
+func getPayloadHeatmapChart(d *schema.ResourceData) (*chart.CreateUpdateChartRequest, error) {
 	payload := &chart.CreateUpdateChartRequest{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
 		ProgramText: d.Get("program_text").(string),
 	}
 
-	payload.Options = getHeatmapOptionsChart(d)
+	options, err := getHeatmapOptionsChart(d)
+	if err != nil {
+		return nil, err
+	}
+	payload.Options = options
 
-	return payload
+	return payload, nil
 }
 
 func getHeatmapColorRangeOptions(d *schema.ResourceData) *chart.HeatmapColorRangeOptions {
@@ -212,7 +216,7 @@ func getHeatmapColorRangeOptions(d *schema.ResourceData) *chart.HeatmapColorRang
 	return item
 }
 
-func getHeatmapOptionsChart(d *schema.ResourceData) *chart.Options {
+func getHeatmapOptionsChart(d *schema.ResourceData) (*chart.Options, error) {
 	options := &chart.Options{
 		Type: "Heatmap",
 	}
@@ -272,17 +276,22 @@ func getHeatmapOptionsChart(d *schema.ResourceData) *chart.Options {
 	if colorRangeOptions := getHeatmapColorRangeOptions(d); colorRangeOptions != nil {
 		options.ColorBy = "Range"
 		options.ColorRange = colorRangeOptions
-	} else if colorScaleOptions := getColorScaleOptions(d); colorScaleOptions != nil {
+	} else if colorScaleOptions := getColorScaleOptions(d); colorScaleOptions != nil && len(colorScaleOptions) > 0 {
 		options.ColorBy = "Scale"
 		options.ColorScale2 = colorScaleOptions
+	} else {
+		return nil, fmt.Errorf("One of `color_scale` or `color_range` must be set")
 	}
 
-	return options
+	return options, nil
 }
 
 func heatmapchartCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	payload := getPayloadHeatmapChart(d)
+	payload, err := getPayloadHeatmapChart(d)
+	if err != nil {
+		return err
+	}
 
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Create Heatmap Chart Payload: %s", string(debugOutput))
@@ -402,7 +411,10 @@ func heatmapchartRead(d *schema.ResourceData, meta interface{}) error {
 
 func heatmapchartUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	payload := getPayloadHeatmapChart(d)
+	payload, err := getPayloadHeatmapChart(d)
+	if err != nil {
+		return err
+	}
 
 	c, err := config.Client.UpdateChart(d.Id(), payload)
 	if err != nil {
