@@ -27,6 +27,12 @@ resource "signalfx_heatmap_chart" "myheatmapchart0" {
     sort_by = "+host"
     group_by = ["hostname", "host"]
     hide_timestamp = true
+
+    color_range {
+		    min_value = 0
+		    max_value = 100
+		    color = "#ff0000"
+		}
 }
 ```
 
