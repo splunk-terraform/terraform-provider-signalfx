@@ -2,6 +2,7 @@ package signalfx
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"math"
 
@@ -38,7 +39,7 @@ func listChartResource() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Default:     "Dimension",
-				Description: "(Metric by default) Must be \"Metric\" or \"Dimension\"",
+				Description: "(Metric by default) Must be \"Scale\", \"Metric\" or \"Dimension\"",
 			},
 			"max_delay": &schema.Schema{
 				Type:         schema.TypeInt,
@@ -210,14 +211,17 @@ func listChartResource() *schema.Resource {
 /*
   Use Resource object to construct json payload in order to create a list chart
 */
-func getPayloadListChart(d *schema.ResourceData) *chart.CreateUpdateChartRequest {
+func getPayloadListChart(d *schema.ResourceData) (*chart.CreateUpdateChartRequest, error) {
 	payload := &chart.CreateUpdateChartRequest{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
 		ProgramText: d.Get("program_text").(string),
 	}
 
-	viz := getListChartOptions(d)
+	viz, err := getListChartOptions(d)
+	if err != nil {
+		return nil, err
+	}
 	// There are two ways to maniplate the legend. The first is keyed from
 	// `legend_fields_to_hide`. Anything in this is marked as hidden. Unspecified
 	// fields default to showing up in SFx's UI.
@@ -235,10 +239,10 @@ func getPayloadListChart(d *schema.ResourceData) *chart.CreateUpdateChartRequest
 	}
 	payload.Options = viz
 
-	return payload
+	return payload, nil
 }
 
-func getListChartOptions(d *schema.ResourceData) *chart.Options {
+func getListChartOptions(d *schema.ResourceData) (*chart.Options, error) {
 	options := &chart.Options{
 		Type: "List",
 	}
@@ -250,6 +254,10 @@ func getListChartOptions(d *schema.ResourceData) *chart.Options {
 		if val == "Scale" {
 			if colorScaleOptions := getColorScaleOptions(d); len(colorScaleOptions) > 0 {
 				options.ColorScale2 = colorScaleOptions
+			}
+		} else {
+			if val, ok := d.GetOk("color_scale"); ok && val != nil {
+				return nil, fmt.Errorf("Using `color_scale` without `color_by = \"Scale\"` has no effect")
 			}
 		}
 	}
@@ -288,12 +296,15 @@ func getListChartOptions(d *schema.ResourceData) *chart.Options {
 		}
 	}
 
-	return options
+	return options, nil
 }
 
 func listchartCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	payload := getPayloadListChart(d)
+	payload, err := getPayloadListChart(d)
+	if err != nil {
+		return err
+	}
 
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Create List Chart Payload: %s", string(debugOutput))
@@ -421,7 +432,10 @@ func listchartRead(d *schema.ResourceData, meta interface{}) error {
 
 func listchartUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	payload := getPayloadListChart(d)
+	payload, err := getPayloadListChart(d)
+	if err != nil {
+		return err
+	}
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Update List Chart Payload: %s", string(debugOutput))
 
