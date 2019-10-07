@@ -6,7 +6,8 @@ import (
 	"log"
 	"strings"
 
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	notification "github.com/signalfx/signalfx-go/notification"
 	team "github.com/signalfx/signalfx-go/team"
 )
 
@@ -152,131 +153,125 @@ func getPayloadTeam(d *schema.ResourceData) (*team.CreateUpdateTeamRequest, erro
 }
 
 // Convert the list of TF data into proper objects
-func getNotificationList(items []interface{}) ([]*team.Notification, error) {
+func getNotificationList(items []interface{}) ([]*notification.Notification, error) {
 	if len(items) < 0 {
 		return nil, nil
 	}
-	objects := getNotifications(items)
-	notifs := make([]*team.Notification, len(objects))
-	for i, item := range objects {
-		notif, err := getNotificationObject(item)
-		if err != nil {
-			return nil, err
-		}
-		notifs[i] = notif
+	objects, err := getNotifications(items)
+	if err != nil {
+		return nil, err
 	}
 
-	return notifs, nil
+	return objects, nil
 }
 
-func getNotificationObject(item map[string]interface{}) (*team.Notification, error) {
+func getNotificationObject(item map[string]interface{}) (*notification.Notification, error) {
 	t := item["type"].(string)
 	var nValue interface{}
 	switch t {
 	case "BigPanda":
-		nValue = &team.BigPandaNotification{
+		nValue = &notification.BigPandaNotification{
 			Type:         t,
 			CredentialId: item["credentialId"].(string),
 		}
 	case "Email":
-		nValue = &team.EmailNotification{
+		nValue = &notification.EmailNotification{
 			Type:  t,
 			Email: item["email"].(string),
 		}
 	case "Office365":
-		nValue = &team.Office365Notification{
+		nValue = &notification.Office365Notification{
 			Type:         t,
 			CredentialId: item["credentialId"].(string),
 		}
 	case "Opsgenie":
-		nValue = &team.OpsgenieNotification{
-			Type:           t,
-			CredentialId:   item["credentialId"].(string),
-			CredentialName: item["credentialName"].(string),
-			ResponderName:  item["responderName"].(string),
-			ResponderId:    item["responderId"].(string),
-			ResponderType:  item["responderType"].(string),
+		nValue = &notification.OpsgenieNotification{
+			Type:          t,
+			CredentialId:  item["credentialId"].(string),
+			ResponderName: item["responderName"].(string),
+			ResponderId:   item["responderId"].(string),
+			ResponderType: item["responderType"].(string),
 		}
 	case "PagerDuty":
-		nValue = &team.PagerDutyNotification{
+		nValue = &notification.PagerDutyNotification{
 			Type:         t,
 			CredentialId: item["credentialId"].(string),
 		}
 	case "Slack":
-		nValue = &team.SlackNotification{
+		nValue = &notification.SlackNotification{
 			Type:         t,
 			CredentialId: item["credentialId"].(string),
 			Channel:      item["channel"].(string),
 		}
 	case "Team":
-		nValue = &team.TeamNotification{
+		nValue = &notification.TeamNotification{
 			Type: t,
 			Team: item["team"].(string),
 		}
 	case "TeamEmail":
-		nValue = &team.TeamEmailNotification{
+		nValue = &notification.TeamEmailNotification{
 			Type: t,
 			Team: item["team"].(string),
 		}
 	case "VictorOps":
-		nValue = &team.VictorOpsNotification{
+		nValue = &notification.VictorOpsNotification{
 			Type:         t,
 			CredentialId: item["credentialId"].(string),
 			RoutingKey:   item["routingKey"].(string),
 		}
 	case "Webhook":
-		nValue = &team.WebhookNotification{
+		nValue = &notification.WebhookNotification{
 			Type:   t,
 			Secret: item["secret"].(string),
 			Url:    item["url"].(string),
 		}
 	case "XMatters":
-		nValue = &team.XMattersNotification{
+		nValue = &notification.XMattersNotification{
 			Type:         t,
 			CredentialId: item["credentialId"].(string),
 		}
 	}
 
-	return &team.Notification{
+	return &notification.Notification{
 		Type:  t,
 		Value: nValue,
 	}, nil
 }
 
-func getNotificationStringFromAPI(notification *team.Notification) (string, error) {
-	switch notification.Value.(type) {
-	case *team.BigPandaNotification:
-		return fmt.Sprintf("%s,%s", notification.Type, notification.Value.(*team.BigPandaNotification).CredentialId), nil
-	case *team.EmailNotification:
-		return fmt.Sprintf("%s,%s", notification.Type, notification.Value.(*team.EmailNotification).Email), nil
-	case *team.Office365Notification:
-		return fmt.Sprintf("%s,%s", notification.Type, notification.Value.(*team.Office365Notification).CredentialId), nil
-	case *team.OpsgenieNotification:
-		ogn := notification.Value.(*team.OpsgenieNotification)
-		return fmt.Sprintf("%s,%s,%s,%s,%s,%s", notification.Type, ogn.CredentialId, ogn.CredentialName, ogn.ResponderName, ogn.ResponderId, ogn.ResponderType), nil
-	case *team.PagerDutyNotification:
-		return fmt.Sprintf("%s,%s", notification.Type, notification.Value.(*team.PagerDutyNotification).CredentialId), nil
-	case *team.ServiceNowNotification:
-		return fmt.Sprintf("%s,%s", notification.Type, notification.Value.(*team.ServiceNowNotification).CredentialId), nil
-	case *team.SlackNotification:
-		sn := notification.Value.(*team.SlackNotification)
-		return fmt.Sprintf("%s,%s,%s", notification.Type, sn.Channel, sn.CredentialId), nil
-	case *team.TeamNotification:
-		tn := notification.Value.(*team.TeamNotification)
-		return fmt.Sprintf("%s,%s", notification.Type, tn.Team), nil
-	case *team.TeamEmailNotification:
-		ten := notification.Value.(*team.TeamEmailNotification)
-		return fmt.Sprintf("%s,%s", notification.Type, ten.Team), nil
-	case *team.VictorOpsNotification:
-		von := notification.Value.(*team.VictorOpsNotification)
-		return fmt.Sprintf("%s,%s,%s", notification.Type, von.CredentialId, von.RoutingKey), nil
-	case *team.WebhookNotification:
-		whn := notification.Value.(*team.WebhookNotification)
-		return fmt.Sprintf("%s,%s,%s", notification.Type, whn.Secret, whn.Url), nil
-	case *team.XMattersNotification:
-		return fmt.Sprintf("%s,%s", notification.Type, notification.Value.(*team.XMattersNotification).CredentialId), nil
+func getNotificationStringFromAPI(n *notification.Notification) (string, error) {
+	switch n.Value.(type) {
+	case *notification.BigPandaNotification:
+		return fmt.Sprintf("%s,%s", n.Type, n.Value.(*notification.BigPandaNotification).CredentialId), nil
+	case *notification.EmailNotification:
+		return fmt.Sprintf("%s,%s", n.Type, n.Value.(*notification.EmailNotification).Email), nil
+	case *notification.Office365Notification:
+		return fmt.Sprintf("%s,%s", n.Type, n.Value.(*notification.Office365Notification).CredentialId), nil
+	case *notification.OpsgenieNotification:
+		ogn := n.Value.(*notification.OpsgenieNotification)
+		return fmt.Sprintf("%s,%s,%s,%s,%s", n.Type, ogn.CredentialId, ogn.ResponderName, ogn.ResponderId, ogn.ResponderType), nil
+	case *notification.PagerDutyNotification:
+		return fmt.Sprintf("%s,%s", n.Type, n.Value.(*notification.PagerDutyNotification).CredentialId), nil
+	case *notification.ServiceNowNotification:
+		return fmt.Sprintf("%s,%s", n.Type, n.Value.(*notification.ServiceNowNotification).CredentialId), nil
+	case *notification.SlackNotification:
+		sn := n.Value.(*notification.SlackNotification)
+		return fmt.Sprintf("%s,%s,%s", n.Type, sn.Channel, sn.CredentialId), nil
+	case *notification.TeamNotification:
+		tn := n.Value.(*notification.TeamNotification)
+		return fmt.Sprintf("%s,%s", n.Type, tn.Team), nil
+	case *notification.TeamEmailNotification:
+		ten := n.Value.(*notification.TeamEmailNotification)
+		return fmt.Sprintf("%s,%s", n.Type, ten.Team), nil
+	case *notification.VictorOpsNotification:
+		von := n.Value.(*notification.VictorOpsNotification)
+		return fmt.Sprintf("%s,%s,%s", n.Type, von.CredentialId, von.RoutingKey), nil
+	case *notification.WebhookNotification:
+		whn := n.Value.(*notification.WebhookNotification)
+		return fmt.Sprintf("%s,%s,%s", n.Type, whn.Secret, whn.Url), nil
+	case *notification.XMattersNotification:
+		return fmt.Sprintf("%s,%s", n.Type, n.Value.(*notification.XMattersNotification).CredentialId), nil
 	default:
-		return "", fmt.Errorf("Unknown notification type: %s", notification.Type)
+		return "", fmt.Errorf("Unknown notification type: %s", n.Type)
 	}
 }
 
@@ -374,7 +369,7 @@ func teamAPIToTF(d *schema.ResourceData, t *team.Team) error {
 	return nil
 }
 
-func getNotificationsFromAPI(nots []*team.Notification) ([]string, error) {
+func getNotificationsFromAPI(nots []*notification.Notification) ([]string, error) {
 	results := make([]string, len(nots))
 	for i, not := range nots {
 		s, err := getNotificationStringFromAPI(not)
