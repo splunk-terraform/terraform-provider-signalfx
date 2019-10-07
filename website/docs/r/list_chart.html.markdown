@@ -65,7 +65,7 @@ The following arguments are supported in the resource block:
 * `program_text` - (Required) Signalflow program text for the chart. More info at <https://developers.signalfx.com/docs/signalflow-overview>.
 * `description` - (Optional) Description of the chart.
 * `unit_prefix` - (Optional) Must be `"Metric"` or `"Binary`". `"Metric"` by default.
-* `color_by` - (Optional) Must be `"Dimension"` or `"Metric"`. `"Dimension"` by default.
+* `color_by` - (Optional) Must be one of `"Scale"`, `"Dimension"` or `"Metric"`. `"Dimension"` by default.
 * `max_delay` - (Optional) How long (in seconds) to wait for late datapoints.
 * `disable_sampling` - (Optional) If `false`, samples a subset of the output MTS, which improves UI performance. `false` by default.
 * `refresh_interval` - (Optional) How often (in seconds) to refresh the values of the list.
