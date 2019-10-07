@@ -257,7 +257,7 @@ func getListChartOptions(d *schema.ResourceData) (*chart.Options, error) {
 			}
 		} else {
 			if val, ok := d.GetOk("color_scale"); ok && val != nil {
-				return nil, fmt.Errorf("Using `color_scale` without `color_by = \"Range\"` has no effect")
+				return nil, fmt.Errorf("Using `color_scale` without `color_by = \"Scale\"` has no effect")
 			}
 		}
 	}
