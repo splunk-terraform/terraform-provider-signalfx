@@ -4,6 +4,10 @@ BUG FIXES:
 
 * resource/heatmap_chart: Now check that one of `color_range` or `color_scale` is set and emit an error if not. [#96](https://github.com/terraform-providers/terraform-provider-signalfx/pull/96)
 
+IMPROVEMENTS
+
+* resource/list_chart: An error is now emitted if `color_scale` is used without a `color_by = "Scale"`. [#99](https://github.com/terraform-providers/terraform-provider-signalfx/pull/99)
+
 ## 4.8.3 (September 27, 2019)
 
 IMPROVEMENTS:
