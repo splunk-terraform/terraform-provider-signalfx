@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	TeamAppPath = "/detector/"
+	TeamAppPath = "/team/"
 )
 
 func teamResource() *schema.Resource {
@@ -115,7 +115,7 @@ func getPayloadTeam(d *schema.ResourceData) (*team.CreateUpdateTeamRequest, erro
 	}
 
 	var members []string
-	if val, ok := d.GetOk("values"); ok {
+	if val, ok := d.GetOk("members"); ok {
 		tfValues := val.(*schema.Set).List()
 		for _, v := range tfValues {
 			members = append(members, v.(string))
