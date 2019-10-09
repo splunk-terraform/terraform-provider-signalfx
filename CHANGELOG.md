@@ -1,5 +1,9 @@
 ## 4.8.4 (Unreleased)
 
+FEATURES:
+
+* provider: Added `signalfx_team` resource. [#5](https://github.com/terraform-providers/terraform-provider-signalfx/pull/5)
+
 BUG FIXES:
 
 * resource/heatmap_chart: Now check that one of `color_range` or `color_scale` is set and emit an error if not. [#96](https://github.com/terraform-providers/terraform-provider-signalfx/pull/96)
