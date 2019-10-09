@@ -2,7 +2,6 @@ package signalfx
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"strings"
 
@@ -35,39 +34,57 @@ func teamResource() *schema.Resource {
 				Description: "Members of team team",
 			},
 			"notifications_critical": &schema.Schema{
-				Type:        schema.TypeList,
-				Optional:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type:         schema.TypeString,
+					ValidateFunc: validateNotification,
+				},
 				Description: "List of notification destinations to use for the critical alerts category.",
 			},
 			"notifications_default": &schema.Schema{
-				Type:        schema.TypeList,
-				Optional:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type:         schema.TypeString,
+					ValidateFunc: validateNotification,
+				},
 				Description: "List of notification destinations to use for the default alerts category.",
 			},
 			"notifications_info": &schema.Schema{
-				Type:        schema.TypeList,
-				Optional:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type:         schema.TypeString,
+					ValidateFunc: validateNotification,
+				},
 				Description: "List of notification destinations to use for the info alerts category.",
 			},
 			"notifications_major": &schema.Schema{
-				Type:        schema.TypeList,
-				Optional:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type:         schema.TypeString,
+					ValidateFunc: validateNotification,
+				},
 				Description: "List of notification destinations to use for the major alerts category.",
 			},
 			"notifications_minor": &schema.Schema{
-				Type:        schema.TypeList,
-				Optional:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type:         schema.TypeString,
+					ValidateFunc: validateNotification,
+				},
 				Description: "List of notification destinations to use for the minor alerts category.",
 			},
 			"notifications_warning": &schema.Schema{
-				Type:        schema.TypeList,
-				Optional:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type:         schema.TypeString,
+					ValidateFunc: validateNotification,
+				},
 				Description: "List of notification destinations to use for the warning alerts category.",
 			},
 			"url": &schema.Schema{
@@ -238,43 +255,6 @@ func getNotificationObject(item map[string]interface{}) (*notification.Notificat
 	}, nil
 }
 
-func getNotificationStringFromAPI(n *notification.Notification) (string, error) {
-	switch n.Value.(type) {
-	case *notification.BigPandaNotification:
-		return fmt.Sprintf("%s,%s", n.Type, n.Value.(*notification.BigPandaNotification).CredentialId), nil
-	case *notification.EmailNotification:
-		return fmt.Sprintf("%s,%s", n.Type, n.Value.(*notification.EmailNotification).Email), nil
-	case *notification.Office365Notification:
-		return fmt.Sprintf("%s,%s", n.Type, n.Value.(*notification.Office365Notification).CredentialId), nil
-	case *notification.OpsgenieNotification:
-		ogn := n.Value.(*notification.OpsgenieNotification)
-		return fmt.Sprintf("%s,%s,%s,%s,%s", n.Type, ogn.CredentialId, ogn.ResponderName, ogn.ResponderId, ogn.ResponderType), nil
-	case *notification.PagerDutyNotification:
-		return fmt.Sprintf("%s,%s", n.Type, n.Value.(*notification.PagerDutyNotification).CredentialId), nil
-	case *notification.ServiceNowNotification:
-		return fmt.Sprintf("%s,%s", n.Type, n.Value.(*notification.ServiceNowNotification).CredentialId), nil
-	case *notification.SlackNotification:
-		sn := n.Value.(*notification.SlackNotification)
-		return fmt.Sprintf("%s,%s,%s", n.Type, sn.Channel, sn.CredentialId), nil
-	case *notification.TeamNotification:
-		tn := n.Value.(*notification.TeamNotification)
-		return fmt.Sprintf("%s,%s", n.Type, tn.Team), nil
-	case *notification.TeamEmailNotification:
-		ten := n.Value.(*notification.TeamEmailNotification)
-		return fmt.Sprintf("%s,%s", n.Type, ten.Team), nil
-	case *notification.VictorOpsNotification:
-		von := n.Value.(*notification.VictorOpsNotification)
-		return fmt.Sprintf("%s,%s,%s", n.Type, von.CredentialId, von.RoutingKey), nil
-	case *notification.WebhookNotification:
-		whn := n.Value.(*notification.WebhookNotification)
-		return fmt.Sprintf("%s,%s,%s", n.Type, whn.Secret, whn.Url), nil
-	case *notification.XMattersNotification:
-		return fmt.Sprintf("%s,%s", n.Type, n.Value.(*notification.XMattersNotification).CredentialId), nil
-	default:
-		return "", fmt.Errorf("Unknown notification type: %s", n.Type)
-	}
-}
-
 func teamCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 	payload, err := getPayloadTeam(d)
@@ -372,7 +352,7 @@ func teamAPIToTF(d *schema.ResourceData, t *team.Team) error {
 func getNotificationsFromAPI(nots []*notification.Notification) ([]string, error) {
 	results := make([]string, len(nots))
 	for i, not := range nots {
-		s, err := getNotificationStringFromAPI(not)
+		s, err := getNotifyStringFromAPI(not)
 		if err != nil {
 			return nil, err
 		}
