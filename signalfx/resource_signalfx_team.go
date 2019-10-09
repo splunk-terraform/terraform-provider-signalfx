@@ -171,15 +171,10 @@ func getPayloadTeam(d *schema.ResourceData) (*team.CreateUpdateTeamRequest, erro
 
 // Convert the list of TF data into proper objects
 func getNotificationList(items []interface{}) ([]*notification.Notification, error) {
-	if len(items) < 0 {
+	if len(items) == 0 {
 		return nil, nil
 	}
-	objects, err := getNotifications(items)
-	if err != nil {
-		return nil, err
-	}
-
-	return objects, nil
+	return getNotifications(items)
 }
 
 func getNotificationObject(item map[string]interface{}) (*notification.Notification, error) {
@@ -400,7 +395,7 @@ func teamExists(d *schema.ResourceData, meta interface{}) (bool, error) {
 	config := meta.(*signalfxConfig)
 	_, err := config.Client.GetTeam(d.Id())
 	if err != nil {
-		if strings.Contains(err.Error(), "Bad status 404") {
+		if strings.Contains(err.Error(), "404") {
 			return false, nil
 		}
 		return false, err
