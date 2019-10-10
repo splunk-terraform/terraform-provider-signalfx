@@ -65,6 +65,7 @@ func Provider() terraform.ResourceProvider {
 			"signalfx_pagerduty_integration":    integrationPagerDutyResource(),
 			"signalfx_slack_integration":        integrationSlackResource(),
 			"signalfx_single_value_chart":       singleValueChartResource(),
+			"signalfx_team":                     teamResource(),
 			"signalfx_time_chart":               timeChartResource(),
 			"signalfx_text_chart":               textChartResource(),
 			"signalfx_victor_ops_integration":   integrationVictorOpsResource(),
