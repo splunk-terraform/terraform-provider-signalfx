@@ -120,7 +120,7 @@ func dashboardResource() *schema.Resource {
 							Type:         schema.TypeInt,
 							Optional:     true,
 							Default:      12,
-							ValidateFunc: validation.IntBetween(1, 11),
+							ValidateFunc: validation.IntBetween(1, 12),
 							Description:  "Number of columns (out of a total of 12, one-based) each chart should take up. (between 1 and 12)",
 						},
 						"height": &schema.Schema{
