@@ -104,7 +104,6 @@ func dashboardResource() *schema.Resource {
 			},
 			"grid": &schema.Schema{
 				Type:          schema.TypeList,
-				MaxItems:      1,
 				Optional:      true,
 				ConflictsWith: []string{"column", "chart"},
 				Description:   "Grid dashboard layout. Charts listed will be placed in a grid by row with the same width and height. If a chart can't fit in a row, it will be placed automatically in the next row",
@@ -135,7 +134,6 @@ func dashboardResource() *schema.Resource {
 			},
 			"column": &schema.Schema{
 				Type:          schema.TypeList,
-				MaxItems:      1,
 				Optional:      true,
 				ConflictsWith: []string{"grid", "chart"},
 				Description:   "Column layout. Charts listed, will be placed in a single column with the same width and height",
@@ -510,11 +508,13 @@ func getDashboardColumns(d *schema.ResourceData) []*dashboard.DashboardChart {
 func getDashboardGrids(d *schema.ResourceData) []*dashboard.DashboardChart {
 	grids := d.Get("grid").([]interface{})
 	charts := make([]*dashboard.DashboardChart, 0)
+	// We must keep track of the row outside of the loop as there might be many
+	// grids to draw.
+	currentRow := 0
 	for _, grid := range grids {
 		grid := grid.(map[string]interface{})
 
 		width := grid["width"].(int)
-		currentRow := 0
 		currentColumn := 0
 		for _, chartID := range grid["chart_ids"].([]interface{}) {
 			if currentColumn+width > 12 {
@@ -532,6 +532,7 @@ func getDashboardGrids(d *schema.ResourceData) []*dashboard.DashboardChart {
 			currentColumn += width
 			charts = append(charts, item)
 		}
+		currentRow++ // Increment the row for the next grid
 	}
 	return charts
 }
@@ -730,64 +731,25 @@ func dashboardAPIToTF(d *schema.ResourceData, dash *dashboard.Dashboard) error {
 		return err
 	}
 
-	layoutType := "charts"
+	// The column and grid layouts are purely a terraform-side function and
+	// the API has no awareness of it. See the documentation for the dashboard
+	// resource for further discussion.
+	defaultLayout := true
 	if gridTF, ok := d.GetOk("grid"); ok {
 		if gridList, tok := gridTF.([]interface{}); tok {
 			if len(gridList) > 0 {
-				layoutType = "grid"
+				defaultLayout = false
 			}
 		}
 	} else if colTF, ok := d.GetOk("column"); ok {
 		if colList, tok := colTF.([]interface{}); tok {
 			if len(colList) > 0 {
-				layoutType = "column"
+				defaultLayout = false
 			}
 		}
 	}
 
-	// Charts
-	// If the user used a grid, put it back into the state file that way
-	switch layoutType {
-	case "grid":
-		chartIds := make([]string, len(dash.Charts))
-		grid := make(map[string]interface{})
-		for i, c := range dash.Charts {
-			if i == 0 {
-				// These are all the same, so use the first chart to set the
-				// grid's width and height per chart
-				grid["width"] = c.Width
-				grid["height"] = c.Height
-			}
-			chartIds[i] = c.ChartId
-		}
-		grid["chart_ids"] = chartIds
-		if err := d.Set("grid", []interface{}{grid}); err != nil {
-			return err
-		}
-	case "column":
-		chartIds := make([]string, len(dash.Charts))
-		column := make(map[string]interface{})
-		maxColumn := 0
-		for i, c := range dash.Charts {
-			if int(c.Column) > maxColumn {
-				// Find our widest column, store it for later
-				maxColumn = int(c.Column)
-			}
-			if i == 0 {
-				// These are all the same, so use the first chart to set the
-				// grid's width and height per chart
-				column["width"] = c.Width
-				column["height"] = c.Height
-
-			}
-			chartIds[i] = c.ChartId
-		}
-		column["column"] = maxColumn
-		column["chart_ids"] = chartIds
-		if err := d.Set("column", []interface{}{column}); err != nil {
-			return err
-		}
-	default:
+	if defaultLayout {
 		charts := make([]map[string]interface{}, len(dash.Charts))
 		for i, c := range dash.Charts {
 			chart := make(map[string]interface{})
