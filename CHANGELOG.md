@@ -1,4 +1,9 @@
 ## 4.9.1 (Unreleased)
+
+BUG FIXES:
+
+* resource/dashboard: Corrected validation of chart widths, allowing 12. Thanks [@ImDevinC](https://github.com/ImDevinC) [#100](https://github.com/terraform-providers/terraform-provider-signalfx/pull/100)
+
 ## 4.9.0 (October 10, 2019)
 
 FEATURES:
