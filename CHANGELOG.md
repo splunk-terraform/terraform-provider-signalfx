@@ -1,4 +1,4 @@
-## 4.9.1 (Unreleased)
+## 4.9.1 (October 16, 2019)
 
 BUG FIXES:
 
