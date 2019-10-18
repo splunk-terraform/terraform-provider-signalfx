@@ -1,4 +1,9 @@
 ## 4.9.2 (Unreleased)
+
+BUG FIXES:
+
+* resource/team: Documented the `members` property, which was unhelpfully undocumented previously.
+
 ## 4.9.1 (October 16, 2019)
 
 BUG FIXES:
