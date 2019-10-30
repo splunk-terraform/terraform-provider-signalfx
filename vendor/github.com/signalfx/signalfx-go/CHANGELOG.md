@@ -1,15 +1,21 @@
-# 1.6.5, Unreleased
+# 1.6.6, Pending
 
 ## Added
-
-Additional reconnect delays upon SignalFlow socket errors to reduce load on
-backend.
 
 ## Updated
 
 ## Bugfixes
 
 ## Removed
+
+# 1.6.5, 2019-10-30
+
+## Added
+
+* Additional reconnect delays upon SignalFlow socket errors to reduce load on
+backend.
+* Added `*JiraIntegration` methods
+* Added `notification.JiraNotification`
 
 # 1.6.4, 2019-09-27
 

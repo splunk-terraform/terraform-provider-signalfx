@@ -10,7 +10,7 @@ require (
 	github.com/hashicorp/terraform-plugin-sdk v1.0.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/signalfx/golib v2.4.0+incompatible // indirect
-	github.com/signalfx/signalfx-go v1.6.5-0.20191030164616-114643f84e1a
+	github.com/signalfx/signalfx-go v1.6.5
 	github.com/smartystreets/assertions v1.0.0 // indirect
 	github.com/stretchr/testify v1.3.0
 )

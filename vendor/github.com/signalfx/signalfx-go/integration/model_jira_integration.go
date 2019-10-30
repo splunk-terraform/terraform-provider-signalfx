@@ -18,8 +18,10 @@ type JiraIntegration struct {
 	Name string `json:"name,omitempty"`
 	Type Type   `json:"type"`
 
-	APIToken   string        `json:"apiToken"`
-	UserEmail  string        `json:"userEmail"`
+	APIToken   string        `json:"apiToken,omitempty"`
+	UserEmail  string        `json:"userEmail,omitempty"`
+	Username   string        `json:"username,omitempty"`
+	Password   string        `json:"password,omitempty"`
 	Assignee   *JiraAssignee `json:"assignee,omitempty"`
 	AuthMethod string        `json:"authMethod"`
 	BaseURL    string        `json:"baseUrl"`
