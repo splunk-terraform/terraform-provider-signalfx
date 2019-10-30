@@ -1,5 +1,10 @@
 ## 4.9.2 (Unreleased)
 
+FEATURES:
+
+provider: Added support for Jira integrations via `signalfx_jira_integration`. [#10]
+resource/dector: Added support for Jira notifications
+
 BUG FIXES:
 
 * resource/team: Documented the `members` property, which was unhelpfully undocumented previously.
