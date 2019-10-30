@@ -112,6 +112,7 @@ func (c *wsConn) Run() {
 			log.Printf("Error reading from SignalFlow websocket: %v", err)
 			conn.Close()
 			conn = nil
+			time.Sleep(ReconnectDelay)
 		case msg := <-c.outgoingTextMsgs:
 			err := c.writeMessage(conn, msg.bytes)
 			msg.resultCh <- err
@@ -124,6 +125,7 @@ func (c *wsConn) Run() {
 				case <-c.readCh:
 				}
 				conn = nil
+				time.Sleep(ReconnectDelay)
 			}
 		}
 	}

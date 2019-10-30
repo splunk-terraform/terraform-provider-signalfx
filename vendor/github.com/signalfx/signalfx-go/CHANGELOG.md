@@ -2,6 +2,9 @@
 
 ## Added
 
+Additional reconnect delays upon SignalFlow socket errors to reduce load on
+backend.
+
 ## Updated
 
 ## Bugfixes
