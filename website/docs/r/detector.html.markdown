@@ -62,7 +62,7 @@ notifications = ["Email,foo-alerts@bar.com"]
 
 ### Jira
 
-Note that the `credentialId` is the SignalFx-provided ID shown after setting up your Opsgenie integration. (See also `signalfx_jira_integration`.)
+Note that the `credentialId` is the SignalFx-provided ID shown after setting up your Jira integration. (See also `signalfx_jira_integration`.)
 
 ```
 notifications = ["Jira,credentialId"]
