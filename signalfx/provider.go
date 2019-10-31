@@ -59,6 +59,7 @@ func Provider() terraform.ResourceProvider {
 			"signalfx_event_feed_chart":         eventFeedChartResource(),
 			"signalfx_gcp_integration":          integrationGCPResource(),
 			"signalfx_heatmap_chart":            heatmapChartResource(),
+			"signalfx_jira_integration":         integrationJiraResource(),
 			"signalfx_list_chart":               listChartResource(),
 			"signalfx_org_token":                orgTokenResource(),
 			"signalfx_opsgenie_integration":     integrationOpsgenieResource(),

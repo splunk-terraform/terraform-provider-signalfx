@@ -11,6 +11,7 @@ import (
 const (
 	BigPandaNotificationType   string = "BigPanda"
 	EmailNotificationType      string = "Email"
+	JiraNotificationType       string = "Jira"
 	Office365NotificationType  string = "Office365"
 	OpsgenieNotificationType   string = "Opsgenie"
 	PagerDutyNotificationType  string = "PagerDuty"
@@ -32,6 +33,9 @@ func getNotifyStringFromAPI(not *notification.Notification) (string, error) {
 	case EmailNotificationType:
 		em := not.Value.(*notification.EmailNotification)
 		return fmt.Sprintf("%s,%s", nt, em.Email), nil
+	case JiraNotificationType:
+		jira := not.Value.(*notification.JiraNotification)
+		return fmt.Sprintf("%s,%s", nt, jira.CredentialId), nil
 	case Office365NotificationType:
 		off := not.Value.(*notification.Office365Notification)
 		return fmt.Sprintf("%s,%s", nt, off.CredentialId), nil
@@ -86,6 +90,11 @@ func getNotifications(tfNotifications []interface{}) ([]*notification.Notificati
 			n = &notification.EmailNotification{
 				Type:  vars[0],
 				Email: vars[1],
+			}
+		case JiraNotificationType:
+			n = &notification.JiraNotification{
+				Type:         vars[0],
+				CredentialId: vars[1],
 			}
 		case Office365NotificationType:
 			n = &notification.Office365Notification{
@@ -167,7 +176,7 @@ func validateNotification(val interface{}, key string) (warns []string, errs []e
 	}
 
 	switch parts[0] {
-	case BigPandaNotificationType, Office365NotificationType, ServiceNowNotificationType, PagerDutyNotificationType, TeamNotificationType, TeamEmailNotificationType, XMattersNotificationType:
+	case BigPandaNotificationType, JiraNotificationType, Office365NotificationType, ServiceNowNotificationType, PagerDutyNotificationType, TeamNotificationType, TeamEmailNotificationType, XMattersNotificationType:
 		// These are ok, but have no further validation
 	case EmailNotificationType:
 		if !strings.Contains(parts[1], "@") {

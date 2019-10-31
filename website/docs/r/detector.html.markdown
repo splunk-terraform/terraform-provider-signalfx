@@ -60,6 +60,14 @@ This will likely be changed in a future iteration of the provider. See [SignalFX
 notifications = ["Email,foo-alerts@bar.com"]
 ```
 
+### Jira
+
+Note that the `credentialId` is the SignalFx-provided ID shown after setting up your Jira integration. (See also `signalfx_jira_integration`.)
+
+```
+notifications = ["Jira,credentialId"]
+```
+
 ### Opsgenie
 
 Note that the `credentialId` is the SignalFx-provided ID shown after setting up your Opsgenie integration. `Team` here is hardcoded as the `responderType` as that is the only acceptable type as per the API docs.

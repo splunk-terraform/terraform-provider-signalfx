@@ -20,10 +20,14 @@ func (n *Notification) UnmarshalJSON(data []byte) error {
 	}
 	n.Type = typ.Type
 	switch typ.Type {
+	case "AmazonEventBridge":
+		n.Value = &AmazonEventBrigeNotification{}
 	case "BigPanda":
 		n.Value = &BigPandaNotification{}
 	case "Email":
 		n.Value = &EmailNotification{}
+	case "Jira":
+		n.Value = &JiraNotification{}
 	case "Office365":
 		n.Value = &Office365Notification{}
 	case "Opsgenie":

@@ -17,6 +17,13 @@ func TestNotifyStringFromAPI(t *testing.T) {
 			},
 		},
 		&notification.Notification{
+			Type: JiraNotificationType,
+			Value: &notification.JiraNotification{
+				Type:         JiraNotificationType,
+				CredentialId: "XXX",
+			},
+		},
+		&notification.Notification{
 			Type: OpsgenieNotificationType,
 			Value: &notification.OpsgenieNotification{
 				Type:          OpsgenieNotificationType,
@@ -104,6 +111,7 @@ func TestNotifyStringFromAPI(t *testing.T) {
 
 	expected := []string{
 		"Email,foo@example.com",
+		"Jira,XXX",
 		"Opsgenie,XXX,Foo,ABC123,Team",
 		"PagerDuty,XXX",
 		"Slack,XXX,foobar",
@@ -133,6 +141,7 @@ func TestNotifyValidationBad(t *testing.T) {
 
 	busted := []string{
 		"Email,fooexample.com",
+		"Jira",
 		"Opsgenie,XXX,Foo,ABC123",
 		"PagerDuty",
 		"Slack,XXX,#foobar",
@@ -156,6 +165,7 @@ func TestNotifyValidationBad(t *testing.T) {
 func TestGetNotifications(t *testing.T) {
 	values := []interface{}{
 		"Email,test@yelp.com",
+		"Jira,credId",
 		"PagerDuty,credId",
 		"Webhook,credId,test,https://foo.bar.com?user=test&action=alert",
 		"Opsgenie,credId,respName,respId,respType",
@@ -175,6 +185,13 @@ func TestGetNotifications(t *testing.T) {
 			Value: &notification.EmailNotification{
 				Type:  EmailNotificationType,
 				Email: "test@yelp.com",
+			},
+		},
+		&notification.Notification{
+			Type: JiraNotificationType,
+			Value: &notification.JiraNotification{
+				Type:         JiraNotificationType,
+				CredentialId: "credId",
 			},
 		},
 		&notification.Notification{
