@@ -18,6 +18,13 @@ resource "signalfx_detector" "application_delay" {
     name = " max average delay - ${var.clusters[count.index]}"
     description = "your application is slow - ${var.clusters[count.index]}"
     max_delay = 30
+
+    # Note that if you use these features, you must use a user's
+    # admin key to authenticate the provider, lest Terraform not be able
+    # to modify the detector in the future!
+    authorized_writer_teams = [ "${signalfx_team.mycoolteam.id}" ]
+    authorized_writer_users = [ "abc123" ]
+
     program_text = <<-EOF
         signal = data('app.delay', filter('cluster','${var.clusters[count.index]}'), extrapolation='last_value', maxExtrapolations=5).max()
         detect(when(signal > 60, '5m')).publish('Processing old messages 5m')
@@ -117,6 +124,8 @@ notifications = ["Webhook,secret,url"]
 * `name` - (Required) Name of the detector.
 * `program_text` - (Required) Signalflow program text for the detector. More info at <https://developers.signalfx.com/docs/signalflow-overview>.
 * `description` - (Optional) Description of the detector.
+* `authorized_writer_teams` - (Optional) Team IDs that have write access to this detector. Remember to use an admin's token if using this feature and to include that admin's team (or user id in `authorized_writer_teams`).
+* `authorized_writer_users` - (Optional) User IDs that have write access to this detector. Remember to use an admin's token if using this feature and to include that admin's user id (or team id in `authorized_writer_teams`).
 * `max_delay` - (Optional) How long (in seconds) to wait for late datapoints. See <https://signalfx-product-docs.readthedocs-hosted.com/en/latest/charts/chart-builder.html#delayed-datapoints> for more info. Max value is `900` seconds (15 minutes).
 * `show_data_markers` - (Optional) When `true`, markers will be drawn for each datapoint within the visualization. `false` by default.
 * `show_event_lines` - (Optional) When `true`, the visualization will display a vertical line for each event trigger. `false` by default.

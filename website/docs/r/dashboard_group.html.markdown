@@ -18,6 +18,12 @@ In the SignalFx web UI, a [dashboard group](https://developers.signalfx.com/v2/d
 resource "signalfx_dashboard_group" "mydashboardgroup0" {
     name = "My team dashboard group"
     description = "Cool dashboard group"
+
+    # Note that if you use these features, you must use a user's
+    # admin key to authenticate the provider, lest Terraform not be able
+    # to modify the dashboard group in the future!
+    authorized_writer_teams = [ "${signalfx_team.mycoolteam.id}" ]
+    authorized_writer_users = [ "abc123" ]
 }
 ```
 
@@ -57,6 +63,8 @@ The following arguments are supported in the resource block:
 * `name` - (Required) Name of the dashboard group.
 * `description` - (Required) Description of the dashboard group.
 * `teams` - (Optional) Team IDs to associate the dashboard group to.
+* `authorized_writer_teams` - (Optional) Team IDs that have write access to this dashboard group. Remember to use an admin's token if using this feature and to include that admin's team (or user id in `authorized_writer_teams`).
+* `authorized_writer_users` - (Optional) User IDs that have write access to this dashboard group. Remember to use an admin's token if using this feature and to include that admin's user id (or team id in `authorized_writer_teams`).
 * `dashboard` - (Optional) [Mirrored dashboards](https://docs.signalfx.com/en/latest/dashboards/dashboard-mirrors.html) in this dashboard group. **Note:** This feature is not present in all accounts. Please contact support if you are unsure.
   * `dashboard_id` - (Required) The dashboard id to mirror
   * `name_override` - (Optional) The name that will override the original dashboards's name.
