@@ -1,4 +1,11 @@
 ## 4.9.3 (Unreleased)
+
+FEATURES:
+
+* resource/dashboard: Added `authorized_writer_teams` and `authorized_writer_users` [#109](https://github.com/terraform-providers/terraform-provider-signalfx/pull/109)
+* resource/dashboard_group: Added `authorized_writer_teams` and `authorized_writer_users` [#109](https://github.com/terraform-providers/terraform-provider-signalfx/pull/109)
+* resource/detector: Added `authorized_writer_teams` and `authorized_writer_users` [#109](https://github.com/terraform-providers/terraform-provider-signalfx/pull/109)
+
 ## 4.9.2 (October 31, 2019)
 
 FEATURES:
