@@ -31,7 +31,7 @@ func teamResource() *schema.Resource {
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
-				Description: "Members of team team",
+				Description: "Members of team",
 			},
 			"notifications_critical": &schema.Schema{
 				Type:     schema.TypeList,

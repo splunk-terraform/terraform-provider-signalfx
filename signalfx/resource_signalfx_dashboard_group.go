@@ -104,6 +104,18 @@ func dashboardGroupResource() *schema.Resource {
 					},
 				},
 			},
+			"authorized_writer_teams": &schema.Schema{
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "Team IDs that have write access to this dashboard",
+			},
+			"authorized_writer_users": &schema.Schema{
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "User IDs that have write access to this dashboard",
+			},
 		},
 
 		Create: dashboardgroupCreate,
@@ -134,8 +146,9 @@ func dashboardgroupExists(d *schema.ResourceData, meta interface{}) (bool, error
 */
 func getPayloadDashboardGroup(d *schema.ResourceData) *dashboard_group.CreateUpdateDashboardGroupRequest {
 	cudgr := &dashboard_group.CreateUpdateDashboardGroupRequest{
-		Name:        d.Get("name").(string),
-		Description: d.Get("description").(string),
+		Name:              d.Get("name").(string),
+		Description:       d.Get("description").(string),
+		AuthorizedWriters: &dashboard_group.AuthorizedWriters{},
 	}
 
 	if val, ok := d.GetOk("teams"); ok {
@@ -144,6 +157,23 @@ func getPayloadDashboardGroup(d *schema.ResourceData) *dashboard_group.CreateUpd
 			teams = append(teams, t.(string))
 		}
 		cudgr.Teams = teams
+	}
+
+	if val, ok := d.GetOk("authorized_writer_teams"); ok {
+		var teams []string
+		tfValues := val.(*schema.Set).List()
+		for _, v := range tfValues {
+			teams = append(teams, v.(string))
+		}
+		cudgr.AuthorizedWriters.Teams = teams
+	}
+	if val, ok := d.GetOk("authorized_writer_users"); ok {
+		var users []string
+		tfValues := val.(*schema.Set).List()
+		for _, v := range tfValues {
+			users = append(users, v.(string))
+		}
+		cudgr.AuthorizedWriters.Users = users
 	}
 
 	// Because at present the `DashboardConfigs` mirrors the `Dashboards`
@@ -271,6 +301,28 @@ func dashboardGroupAPIToTF(d *schema.ResourceData, dg *dashboard_group.Dashboard
 	}
 	if err := d.Set("teams", dg.Teams); err != nil {
 		return err
+	}
+
+	if dg.AuthorizedWriters != nil {
+		aw := dg.AuthorizedWriters
+		if aw.Teams != nil && len(aw.Teams) > 0 {
+			teams := make([]interface{}, len(aw.Teams))
+			for i, v := range aw.Teams {
+				teams[i] = v
+			}
+			if err := d.Set("authorized_writer_teams", schema.NewSet(schema.HashString, teams)); err != nil {
+				return err
+			}
+		}
+		if aw.Users != nil && len(aw.Users) > 0 {
+			users := make([]interface{}, len(aw.Users))
+			for i, v := range aw.Users {
+				users[i] = v
+			}
+			if err := d.Set("authorized_writer_users", schema.NewSet(schema.HashString, users)); err != nil {
+				return err
+			}
+		}
 	}
 
 	if len(dg.DashboardConfigs) > 0 {

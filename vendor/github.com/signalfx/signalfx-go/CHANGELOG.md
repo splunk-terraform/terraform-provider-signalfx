@@ -1,4 +1,4 @@
-# 1.6.9, Pending
+# 1.6.8, Pending
 
 ## Added
 
@@ -7,12 +7,6 @@
 ## Bugfixes
 
 ## Removed
-
-# 1.6.8, Pending
-
-## Added
-
-* Methods for Alert Muting Rules
 
 # 1.6.7, 2019-11-05
 
