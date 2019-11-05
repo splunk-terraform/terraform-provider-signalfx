@@ -11,7 +11,7 @@ FEATURES:
 FEATURES:
 
 provider: Added support for Jira integrations via `signalfx_jira_integration`. [#10]
-resource/dector: Added support for Jira notifications
+resource/detector: Added support for Jira notifications
 
 BUG FIXES:
 
