@@ -10,8 +10,8 @@ FEATURES:
 
 FEATURES:
 
-provider: Added support for Jira integrations via `signalfx_jira_integration`. [#10]
-resource/detector: Added support for Jira notifications
+provider: Added support for Jira integrations via `signalfx_jira_integration`. [#106](https://github.com/terraform-providers/terraform-provider-signalfx/pull/106)
+resource/detector: Added support for Jira notifications [#106](https://github.com/terraform-providers/terraform-provider-signalfx/pull/106)
 
 BUG FIXES:
 
