@@ -10,6 +10,7 @@
 package detector
 
 type Detector struct {
+	AuthorizedWriters *AuthorizedWriters `json:"authorizedWriters,omitempty"`
 	// The time the detector was created in milliseconds (UTC); this corresponds to the receipt of the first request to send an invitation to this email address. This value is always set by the system.
 	Created int64 `json:"created,omitempty"`
 	// User ID of the initial creator

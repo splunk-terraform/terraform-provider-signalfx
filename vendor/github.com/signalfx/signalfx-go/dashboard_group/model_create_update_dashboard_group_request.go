@@ -10,7 +10,7 @@
 package dashboard_group
 
 type CreateUpdateDashboardGroupRequest struct {
-	AuthorizedWriters AuthorizedWriters `json:"authorizedWriters,omitempty"`
+	AuthorizedWriters *AuthorizedWriters `json:"authorizedWriters,omitempty"`
 	// Array of dashboard IDs. The system adds the specified dashboards to the dashboard group you're creating. If you omit the property, the system creates a new dashboard and assigns it to the new dashboard group.
 	Dashboards       []string           `json:"dashboards,omitempty"`
 	DashboardConfigs []*DashboardConfig `json:"dashboardConfigs,omitempty"`

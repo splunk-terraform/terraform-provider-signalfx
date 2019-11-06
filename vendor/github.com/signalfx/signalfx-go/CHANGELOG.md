@@ -1,4 +1,4 @@
-# 1.6.6, Pending
+# 1.6.8, Pending
 
 ## Added
 
@@ -7,6 +7,18 @@
 ## Bugfixes
 
 ## Removed
+
+# 1.6.7, 2019-11-05
+
+## Bugfixes
+
+* Added `AuthorizedWriters` to Detector model
+
+# 1.6.6, 2019-11-05
+
+## Bugfixes
+
+* Detector and DashboardGroup structs modified to use a pointer for `AuthorizedWriters`.
 
 # 1.6.5, 2019-10-30
 

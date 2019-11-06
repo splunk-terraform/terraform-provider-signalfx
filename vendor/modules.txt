@@ -206,8 +206,9 @@ github.com/posener/complete/cmd/install
 github.com/posener/complete/match
 # github.com/signalfx/golib v2.4.0+incompatible
 github.com/signalfx/golib/pointer
-# github.com/signalfx/signalfx-go v1.6.5
+# github.com/signalfx/signalfx-go v1.6.8-0.20191106161903-3949d0a7fb91
 github.com/signalfx/signalfx-go
+github.com/signalfx/signalfx-go/alertmuting
 github.com/signalfx/signalfx-go/chart
 github.com/signalfx/signalfx-go/dashboard
 github.com/signalfx/signalfx-go/dashboard_group

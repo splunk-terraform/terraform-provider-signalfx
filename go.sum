@@ -190,8 +190,8 @@ github.com/sergi/go-diff v1.0.0/go.mod h1:0CfEIISq7TuYL3j771MWULgwwjU+GofnZX9QAm
 github.com/signalfx/golib v2.3.4+incompatible/go.mod h1:nWYefOwlUKWm/SpN/LgVSBnyH1T9NpT1ANlmgRIi1Cs=
 github.com/signalfx/golib v2.4.0+incompatible h1:VtCORl7AdhkCIy3rS0m3WLpcNmqGcWosXQ9xX2QepXw=
 github.com/signalfx/golib v2.4.0+incompatible/go.mod h1:nWYefOwlUKWm/SpN/LgVSBnyH1T9NpT1ANlmgRIi1Cs=
-github.com/signalfx/signalfx-go v1.6.5 h1:YRUPBA/+YKIRe5IxOlCucZ4dzuyszCg8kwYWBcQG6w0=
-github.com/signalfx/signalfx-go v1.6.5/go.mod h1:0Q0eueMWMC8r+jq+LJIGrspzvLF+hpWO9cggHlSpwVs=
+github.com/signalfx/signalfx-go v1.6.8-0.20191106161903-3949d0a7fb91 h1:KmAV1M7sfO1oxwBvkrLOuyXKSzjsDuSgz0/lo0Xk/9k=
+github.com/signalfx/signalfx-go v1.6.8-0.20191106161903-3949d0a7fb91/go.mod h1:0Q0eueMWMC8r+jq+LJIGrspzvLF+hpWO9cggHlSpwVs=
 github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d/go.mod h1:OnSkiWE9lh6wB0YB77sQom3nweQdgAjqCqsofrRNTgc=
 github.com/smartystreets/assertions v1.0.0 h1:UVQPSSmc3qtTi+zPPkCXvZX9VvW/xT/NsRvKfwY81a8=
 github.com/smartystreets/assertions v1.0.0/go.mod h1:kHHU4qYBaI3q23Pp3VPrmWhuIUrLW/7eUrw0BU5VaoM=
