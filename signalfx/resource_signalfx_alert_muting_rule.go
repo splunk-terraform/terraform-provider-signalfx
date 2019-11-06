@@ -75,22 +75,6 @@ func alertMutingRuleResource() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
-		// CustomizeDiff: customdiff.All(
-		// 	customdiff.ForceNewIfChange("start_time", func(old, new, meta interface{}) bool {
-		// 		// If the old time was AFTER now then we can allow an
-		// 		// update without forcing a new resource
-		// 		log.Printf("[DEBUG] SignalFx: OLD %d", old.(int))
-		// 		log.Printf("[DEBUG] SignalFx: NOW %d", time.Now().Unix())
-		// 		if int64(old.(int)) >= time.Now().Unix() {
-		// 			return false
-		// 		} else {
-		// 			// Oops, the mute rule has already begun which means
-		// 			// we need to recreate the resource
-		// 			log.Printf("[DEBUG] SignalFx: Flagging that a new mute rule is required because this start time has already passed.")
-		// 			return true
-		// 		}
-		// 	}),
-		// ),
 	}
 }
 
