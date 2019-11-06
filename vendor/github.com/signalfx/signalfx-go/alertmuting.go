@@ -28,7 +28,7 @@ func (c *Client) CreateAlertMutingRule(muteRequest *alertmuting.CreateUpdateAler
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode != http.StatusCreated {
 		message, _ := ioutil.ReadAll(resp.Body)
 		return nil, fmt.Errorf("Bad status %d: %s", resp.StatusCode, message)
 	}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	alertmuting "github.com/signalfx/signalfx-go/alertmuting"
@@ -52,12 +53,18 @@ func alertMutingRuleResource() *schema.Resource {
 			"start_time": &schema.Schema{
 				Type:        schema.TypeInt,
 				Required:    true,
-				Description: "Starting time of an alert muting rule.",
+				Description: "Starting time of an alert muting rule as a Unix timestamp, in seconds.",
+				ForceNew:    true,
 			},
-			"end_time": &schema.Schema{
+			"stop_time": &schema.Schema{
 				Type:        schema.TypeInt,
 				Optional:    true,
-				Description: "Stop time of an alert muting rule",
+				Default:     0,
+				Description: "Stop time of an alert muting rule as a Unix timestamp, in seconds.",
+			},
+			"effective_start_time": &schema.Schema{
+				Type:     schema.TypeInt,
+				Computed: true,
 			},
 		},
 		Create: alertMutingRuleCreate,
@@ -68,6 +75,22 @@ func alertMutingRuleResource() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
+		// CustomizeDiff: customdiff.All(
+		// 	customdiff.ForceNewIfChange("start_time", func(old, new, meta interface{}) bool {
+		// 		// If the old time was AFTER now then we can allow an
+		// 		// update without forcing a new resource
+		// 		log.Printf("[DEBUG] SignalFx: OLD %d", old.(int))
+		// 		log.Printf("[DEBUG] SignalFx: NOW %d", time.Now().Unix())
+		// 		if int64(old.(int)) >= time.Now().Unix() {
+		// 			return false
+		// 		} else {
+		// 			// Oops, the mute rule has already begun which means
+		// 			// we need to recreate the resource
+		// 			log.Printf("[DEBUG] SignalFx: Flagging that a new mute rule is required because this start time has already passed.")
+		// 			return true
+		// 		}
+		// 	}),
+		// ),
 	}
 }
 
@@ -103,8 +126,8 @@ func getPayloadAlertMutingRule(d *schema.ResourceData) (*alertmuting.CreateUpdat
 	cuamrr := &alertmuting.CreateUpdateAlertMutingRuleRequest{
 		Description: d.Get("description").(string),
 		Filters:     filterList,
-		StartTime:   int64(d.Get("start_time").(int)),
-		StopTime:    int64(d.Get("end_time").(int)),
+		StartTime:   int64(d.Get("start_time").(int) * 1000),
+		StopTime:    int64(d.Get("stop_time").(int) * 1000),
 	}
 
 	return cuamrr, nil
@@ -181,16 +204,23 @@ func alertMutingRuleAPIToTF(d *schema.ResourceData, amr *alertmuting.AlertMuting
 				})
 			}
 		}
-		if err := d.Set("filters", filters); err != nil {
+		if err := d.Set("filter", filters); err != nil {
 			return err
 		}
 		if err := d.Set("detectors", detectors); err != nil {
 			return err
 		}
-		if err := d.Set("start_time", amr.StartTime); err != nil {
+		// The API changes `startTime` to be >= the current
+		// timestamp at the time of the API call. This means
+		// it will pretty much never agree with what the user specified.
+		// To accomodate this we will store the "effective" start time
+		// as a computed attribute, then…
+		if err := d.Set("effective_start_time", amr.StartTime); err != nil {
 			return err
 		}
-		if err := d.Set("stop_time", amr.StopTime); err != nil {
+		// We will ignore the start time because it doesn't matter.
+		// See above.
+		if err := d.Set("stop_time", amr.StopTime/1000); err != nil {
 			return err
 		}
 	}
@@ -203,6 +233,23 @@ func alertMutingRuleUpdate(d *schema.ResourceData, meta interface{}) error {
 	payload, err := getPayloadAlertMutingRule(d)
 	if err != nil {
 		return fmt.Errorf("Failed creating json payload: %s", err.Error())
+	}
+
+	// If we have an effective start time…
+	if val, ok := d.GetOk("effective_start_time"); ok {
+		est := val.(int)
+		st := d.Get("start_time").(int)
+		// and if the start time is in the past…
+		if int64(st) <= time.Now().Unix() {
+			// then replace the start time with the effective start
+			// time. This papers over the fact that the API basically
+			// ignores our start times unless they are in the future.
+			payload.StartTime = int64(est)
+			log.Printf("[DEBUG] SignalFx: Replaced start time with effective time")
+		} else {
+			log.Printf("[DEBUG] SignalFx: Using specified start time")
+			payload.StartTime = int64(d.Get("start_time").(int)) * 1000
+		}
 	}
 
 	debugOutput, _ := json.Marshal(payload)
