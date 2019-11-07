@@ -1,7 +1,8 @@
-## 4.9.3 (Unreleased)
+## 4.10.0 (Unreleased)
 
 FEATURES:
 
+* provider: Added `signalfx_alert_muting_rule` resource for managing alert muting rules. [#110](https://github.com/terraform-providers/terraform-provider-signalfx/pull/110)
 * resource/dashboard: Added `authorized_writer_teams` and `authorized_writer_users` [#109](https://github.com/terraform-providers/terraform-provider-signalfx/pull/109)
 * resource/dashboard_group: Added `authorized_writer_teams` and `authorized_writer_users` [#109](https://github.com/terraform-providers/terraform-provider-signalfx/pull/109)
 * resource/detector: Added `authorized_writer_teams` and `authorized_writer_users` [#109](https://github.com/terraform-providers/terraform-provider-signalfx/pull/109)
