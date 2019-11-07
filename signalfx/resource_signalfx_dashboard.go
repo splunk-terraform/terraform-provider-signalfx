@@ -370,6 +370,18 @@ func dashboardResource() *schema.Resource {
 					},
 				},
 			},
+			"authorized_writer_teams": &schema.Schema{
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "Team IDs that have write access to this dashboard",
+			},
+			"authorized_writer_users": &schema.Schema{
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "User IDs that have write access to this dashboard",
+			},
 			"url": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -394,9 +406,27 @@ func dashboardResource() *schema.Resource {
 func getPayloadDashboard(d *schema.ResourceData) (*dashboard.CreateUpdateDashboardRequest, error) {
 
 	cudr := &dashboard.CreateUpdateDashboardRequest{
-		Name:        d.Get("name").(string),
-		Description: d.Get("description").(string),
-		GroupId:     d.Get("dashboard_group").(string),
+		Name:              d.Get("name").(string),
+		Description:       d.Get("description").(string),
+		GroupId:           d.Get("dashboard_group").(string),
+		AuthorizedWriters: &dashboard.AuthorizedWriters{},
+	}
+
+	if val, ok := d.GetOk("authorized_writer_teams"); ok {
+		var teams []string
+		tfValues := val.(*schema.Set).List()
+		for _, v := range tfValues {
+			teams = append(teams, v.(string))
+		}
+		cudr.AuthorizedWriters.Teams = teams
+	}
+	if val, ok := d.GetOk("authorized_writer_users"); ok {
+		var users []string
+		tfValues := val.(*schema.Set).List()
+		for _, v := range tfValues {
+			users = append(users, v.(string))
+		}
+		cudr.AuthorizedWriters.Users = users
 	}
 
 	allFilters := &dashboard.ChartsFilters{}
@@ -729,6 +759,28 @@ func dashboardAPIToTF(d *schema.ResourceData, dash *dashboard.Dashboard) error {
 	}
 	if err := d.Set("charts_resolution", strings.ToLower(string(*dash.ChartDensity))); err != nil {
 		return err
+	}
+
+	if dash.AuthorizedWriters != nil {
+		aw := dash.AuthorizedWriters
+		if aw.Teams != nil && len(aw.Teams) > 0 {
+			teams := make([]interface{}, len(aw.Teams))
+			for i, v := range aw.Teams {
+				teams[i] = v
+			}
+			if err := d.Set("authorized_writer_teams", schema.NewSet(schema.HashString, teams)); err != nil {
+				return err
+			}
+		}
+		if aw.Users != nil && len(aw.Users) > 0 {
+			users := make([]interface{}, len(aw.Users))
+			for i, v := range aw.Users {
+				users[i] = v
+			}
+			if err := d.Set("authorized_writer_users", schema.NewSet(schema.HashString, users)); err != nil {
+				return err
+			}
+		}
 	}
 
 	// The column and grid layouts are purely a terraform-side function and

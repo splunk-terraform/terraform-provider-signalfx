@@ -145,6 +145,18 @@ func detectorResource() *schema.Resource {
 				},
 				Set: resourceRuleHash,
 			},
+			"authorized_writer_teams": &schema.Schema{
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "Team IDs that have write access to this dashboard",
+			},
+			"authorized_writer_users": &schema.Schema{
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "User IDs that have write access to this dashboard",
+			},
 			"url": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -255,10 +267,28 @@ func getPayloadDetector(d *schema.ResourceData) (*detector.CreateUpdateDetectorR
 	}
 
 	cudr := &detector.CreateUpdateDetectorRequest{
-		Name:        d.Get("name").(string),
-		Description: d.Get("description").(string),
-		ProgramText: d.Get("program_text").(string),
-		Rules:       rulesList,
+		Name:              d.Get("name").(string),
+		Description:       d.Get("description").(string),
+		ProgramText:       d.Get("program_text").(string),
+		Rules:             rulesList,
+		AuthorizedWriters: &detector.AuthorizedWriters{},
+	}
+
+	if val, ok := d.GetOk("authorized_writer_teams"); ok {
+		var teams []string
+		tfValues := val.(*schema.Set).List()
+		for _, v := range tfValues {
+			teams = append(teams, v.(string))
+		}
+		cudr.AuthorizedWriters.Teams = teams
+	}
+	if val, ok := d.GetOk("authorized_writer_users"); ok {
+		var users []string
+		tfValues := val.(*schema.Set).List()
+		for _, v := range tfValues {
+			users = append(users, v.(string))
+		}
+		cudr.AuthorizedWriters.Users = users
 	}
 
 	if val, ok := d.GetOk("max_delay"); ok {
@@ -402,6 +432,29 @@ func detectorAPIToTF(d *schema.ResourceData, det *detector.Detector) error {
 	if err := d.Set("teams", det.Teams); err != nil {
 		return err
 	}
+
+	if det.AuthorizedWriters != nil {
+		aw := det.AuthorizedWriters
+		if aw.Teams != nil && len(aw.Teams) > 0 {
+			teams := make([]interface{}, len(aw.Teams))
+			for i, v := range aw.Teams {
+				teams[i] = v
+			}
+			if err := d.Set("authorized_writer_teams", schema.NewSet(schema.HashString, teams)); err != nil {
+				return err
+			}
+		}
+		if aw.Users != nil && len(aw.Users) > 0 {
+			users := make([]interface{}, len(aw.Users))
+			for i, v := range aw.Users {
+				users[i] = v
+			}
+			if err := d.Set("authorized_writer_users", schema.NewSet(schema.HashString, users)); err != nil {
+				return err
+			}
+		}
+	}
+
 	viz := det.VisualizationOptions
 	if viz != nil {
 		if err := d.Set("show_data_markers", viz.ShowDataMarkers); err != nil {
