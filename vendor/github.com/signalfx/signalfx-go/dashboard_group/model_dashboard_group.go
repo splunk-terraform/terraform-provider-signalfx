@@ -10,7 +10,7 @@
 package dashboard_group
 
 type DashboardGroup struct {
-	AuthorizedWriters AuthorizedWriters `json:"authorizedWriters,omitempty"`
+	AuthorizedWriters *AuthorizedWriters `json:"authorizedWriters,omitempty"`
 	// The dashboard group creation date and time, in the form of a Unix time value (milliseconds since the Unix epoch 1970-01-01 00:00:00 UTC+0). The system sets this value, and you can't modify it.
 	Created int64 `json:"created,omitempty"`
 	// SignalFx-assigned user ID of the user that created the dashboard group. If the system created this dashboard group, the value is \"AAAAAAAAAA\". The system sets this value, and you can't modify it.

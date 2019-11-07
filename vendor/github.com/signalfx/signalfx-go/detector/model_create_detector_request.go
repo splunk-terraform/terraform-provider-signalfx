@@ -10,7 +10,7 @@
 package detector
 
 type CreateUpdateDetectorRequest struct {
-	AuthorizedWriters AuthorizedWriters `json:"authorizedWriters,omitempty"`
+	AuthorizedWriters *AuthorizedWriters `json:"authorizedWriters,omitempty"`
 	// User-defined JSON object containing metadata
 	CustomProperties string `json:"customProperties,omitempty"`
 	// Description of the detector. It appears in the Detector window displayed from the web UI Actions menu
