@@ -17,35 +17,35 @@ func alertMutingRuleResource() *schema.Resource {
 			"description": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Description of the rule.",
+				Description: "description of the rule",
 			},
 			"detectors": &schema.Schema{
 				Type:        schema.TypeList,
 				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
-				Description: "Detectors to which this muting rule applies.",
+				Description: "detectors to which this muting rule applies",
 			},
 			"filter": &schema.Schema{
 				Type:        schema.TypeSet,
 				Required:    true,
-				Description: "List of alert muting filters for this rule.",
+				Description: "list of alert muting filters for this rule",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"property": &schema.Schema{
 							Type:        schema.TypeString,
 							Required:    true,
-							Description: "The property to filter by.",
+							Description: "the property to filter by",
 						},
 						"property_value": &schema.Schema{
 							Type:        schema.TypeString,
 							Required:    true,
-							Description: "The value of the property to filter by.",
+							Description: "the value of the property to filter by",
 						},
 						"negated": &schema.Schema{
 							Type:        schema.TypeBool,
 							Optional:    true,
 							Default:     false,
-							Description: "(false by default) Whether this filter should be a \"not\" filter",
+							Description: "(false by default) whether this filter should be a \"not\" filter",
 						},
 					},
 				},
@@ -53,15 +53,19 @@ func alertMutingRuleResource() *schema.Resource {
 			"start_time": &schema.Schema{
 				Type:        schema.TypeInt,
 				Required:    true,
-				Description: "Starting time of an alert muting rule as a Unix timestamp, in seconds.",
+				Description: "starting time of an alert muting rule as a Unix timestamp, in seconds",
 				ForceNew:    true,
 			},
 			"stop_time": &schema.Schema{
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Default:     0,
-				Description: "Stop time of an alert muting rule as a Unix timestamp, in seconds.",
+				Description: "stop time of an alert muting rule as a Unix timestamp, in seconds",
 			},
+			// Because the API returns a different start time from that
+			// defined in the config file, we need another place to store
+			// that. Note that we won't be doing seconds conversion on
+			// this field since it is *not* user-facing.
 			"effective_start_time": &schema.Schema{
 				Type:     schema.TypeInt,
 				Computed: true,
