@@ -62,8 +62,7 @@ func integrationAzureResource() *schema.Resource {
 				Type:     schema.TypeSet,
 				Required: true,
 				Elem: &schema.Schema{
-					Type:         schema.TypeString,
-					ValidateFunc: validateAzureService,
+					Type: schema.TypeString,
 				},
 				Description: "List of Azure subscriptions that SignalFx should monitor.",
 			},
