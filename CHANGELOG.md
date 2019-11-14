@@ -1,4 +1,9 @@
 ## 4.10.1 (Unreleased)
+
+BUG FIXES:
+
+* resource/azure_integration: Fixed a bug where subscription IDs were incorrectly validated. [#113](https://github.com/terraform-providers/terraform-provider-signalfx/pull/113)
+
 ## 4.10.0 (November 07, 2019)
 
 FEATURES:
