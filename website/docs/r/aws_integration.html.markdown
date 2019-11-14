@@ -32,7 +32,7 @@ resource "signalfx_aws_integration" "aws_myteam" {
 
     integration_id = "${signalfx_aws_external_integration.aws_myteam_external.id}"
     external_id = "${signalfx_aws_external_integration.aws_myteam_external.external_id}"
-		role_arn = "${aws_iam_role.aws_sfx_role.id}"
+		role_arn = "${aws_iam_role.aws_sfx_role.arn}"
 		regions = ["us-east-1"]
 		poll_rate = 300
 		import_cloud_watch = true
@@ -78,6 +78,6 @@ Fields that expect an AWS service/namespace will work with one of: "AWS/ApiGatew
 * `import_cloud_watch` - (Optional) Flag that controls how SignalFx imports Cloud Watch metrics. If true, SignalFx imports Cloud Watch metrics from AWS.
 * `key` - (Optional) If you specify `auth_method = \"SecurityToken\"` in your request to create an AWS integration object, use this property to specify the key.
 * `regions` - (Optional) List of AWS regions that SignalFx should monitor.
-* `role_arn` - (Optional) Role ARN that you add to an existing AWS integration object.
+* `role_arn` - (Optional) Role ARN that you add to an existing AWS integration object. **Note**: Ensure you use the `arn` property of your role, not the id!
 * `services` - (Optional) List of AWS services that you want SignalFx to monitor. Each element is a string designating an AWS service. Conflicts with `namespace_sync_rule`.
 * `poll_rate` - (Optional) AWS poll rate (in seconds). One of `60` or `300`.

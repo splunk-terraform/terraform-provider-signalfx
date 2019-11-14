@@ -32,7 +32,7 @@ resource "signalfx_aws_integration" "aws_myteam" {
 
     integration_id = "${signalfx_aws_external_integration.aws_myteam_external.id}"
     external_id = "${signalfx_aws_external_integration.aws_myteam_external.external_id}"
-		role_arn = "${aws_iam_role.aws_sfx_role.id}"
+		role_arn = "${aws_iam_role.aws_sfx_role.arn}"
 		regions = ["us-east-1"]
 		poll_rate = 300
 		import_cloud_watch = true
