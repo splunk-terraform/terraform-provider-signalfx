@@ -35,7 +35,7 @@ resource "signalfx_azure_integration" "azure_myteam" {
 
         services = [ "microsoft.sql/servers/elasticpools" ]
 
-        subscriptions = [ "microsoft.sql/servers/elasticpools" ]
+        subscriptions = [ "sub-guid-here" ]
     }
 }
 ```
