@@ -900,8 +900,10 @@ func dashboardAPIToTF(d *schema.ResourceData, dash *dashboard.Dashboard) error {
 				}
 				evOverlay["color"] = colorName
 			}
-			evOverlay["signal"] = v.EventSignal.EventSearchText
-			evOverlay["type"] = v.EventSignal.EventType
+			if v.EventSignal != nil {
+				evOverlay["signal"] = v.EventSignal.EventSearchText
+				evOverlay["type"] = v.EventSignal.EventType
+			}
 			evOverlays[i] = evOverlay
 
 			if len(v.Sources) > 0 {
