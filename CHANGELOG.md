@@ -1,4 +1,9 @@
 ## 4.10.2 (Unreleased)
+
+BUG FIXES:
+
+* resource/dashboard: Fixed a crash for dashboards that were missing an "event signal" section. [#120](https://github.com/terraform-providers/terraform-provider-signalfx/pull/120)
+
 ## 4.10.1 (November 14, 2019)
 
 BUG FIXES:

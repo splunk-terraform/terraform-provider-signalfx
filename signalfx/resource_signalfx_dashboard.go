@@ -900,8 +900,10 @@ func dashboardAPIToTF(d *schema.ResourceData, dash *dashboard.Dashboard) error {
 				}
 				evOverlay["color"] = colorName
 			}
-			evOverlay["signal"] = v.EventSignal.EventSearchText
-			evOverlay["type"] = v.EventSignal.EventType
+			if v.EventSignal != nil {
+				evOverlay["signal"] = v.EventSignal.EventSearchText
+				evOverlay["type"] = v.EventSignal.EventType
+			}
 			evOverlays[i] = evOverlay
 
 			if len(v.Sources) > 0 {
@@ -926,8 +928,10 @@ func dashboardAPIToTF(d *schema.ResourceData, dash *dashboard.Dashboard) error {
 		sevs := make([]map[string]interface{}, len(dash.SelectedEventOverlays))
 		for i, s := range dash.SelectedEventOverlays {
 			evOverlay := make(map[string]interface{})
-			evOverlay["signal"] = s.EventSignal.EventSearchText
-			evOverlay["type"] = s.EventSignal.EventType
+			if s.EventSignal != nil {
+				evOverlay["signal"] = s.EventSignal.EventSearchText
+				evOverlay["type"] = s.EventSignal.EventType
+			}
 			sevs[i] = evOverlay
 
 			if len(s.Sources) > 0 {
