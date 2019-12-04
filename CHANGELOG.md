@@ -1,4 +1,4 @@
-## 4.10.2 (Unreleased)
+## 4.10.2 (December 04, 2019)
 
 BUG FIXES:
 
