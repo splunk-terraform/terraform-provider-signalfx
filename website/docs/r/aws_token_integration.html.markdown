@@ -12,7 +12,7 @@ SignalFx AWS CloudWatch integrations using security tokens. For help with this i
 
 **Note:** When managing integrations you'll need to use an admin token to authenticate the SignalFx provider.
 
-~> **WARNING** This resource implements a part of a workflow. You must use it with one of either `signalfx_aws_integration`.
+~> **WARNING** This resource implements a part of a workflow. You must use it with `signalfx_aws_integration`.
 
 ## Example Usage
 
