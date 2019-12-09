@@ -1,4 +1,9 @@
 ## 4.10.3 (Unreleased)
+
+BUG FIXES:
+
+* resource/org_token: Fixed a problem where tokens with URL-unsafe names (those including slashes, etc) were not being URL encoded. [#123](https://github.com/terraform-providers/terraform-provider-signalfx/pull/123)
+
 ## 4.10.2 (December 04, 2019)
 
 BUG FIXES:
