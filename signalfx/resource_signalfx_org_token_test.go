@@ -89,6 +89,7 @@ func testAccCheckOrgTokenResourceExists(s *terraform.State) error {
 	for _, rs := range s.RootModule().Resources {
 		switch rs.Type {
 		case "signalfx_org_token":
+			fmt.Printf("[DEBUG] SignalFx: GETTING TOKEN %s", rs.Primary.ID)
 			tok, err := client.GetOrgToken(rs.Primary.ID)
 			if tok.Name != rs.Primary.ID || err != nil {
 				return fmt.Errorf("Error finding org token %s: %s", rs.Primary.ID, err)

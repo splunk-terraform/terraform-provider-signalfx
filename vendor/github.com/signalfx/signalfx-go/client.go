@@ -48,7 +48,7 @@ func NewClient(token string, options ...ClientParam) (*Client, error) {
 
 // APIUrl sets the URL that our client will communicate with, allowing
 // it to be adjusted to another URL for testing or communication with other
-// SignalFx clusters.
+// SignalFx clusters. Example `"https://api.signalfx.com"`.
 func APIUrl(apiURL string) ClientParam {
 	return func(client *Client) error {
 		client.baseURL = apiURL

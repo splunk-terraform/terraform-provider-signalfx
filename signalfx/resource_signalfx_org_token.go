@@ -2,6 +2,7 @@ package signalfx
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"strings"
 
@@ -307,6 +308,7 @@ func orgTokenAPIToTF(d *schema.ResourceData, t *orgtoken.Token) error {
 
 func orgTokenRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
+	fmt.Printf("[DEBUG] SignalFx: Looking for org token %s", d.Id())
 	t, err := config.Client.GetOrgToken(d.Id())
 	if err != nil {
 		return err
