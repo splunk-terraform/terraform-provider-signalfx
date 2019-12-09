@@ -42,7 +42,8 @@ func (c *Client) CreateOrgToken(tokenRequest *orgtoken.CreateUpdateTokenRequest)
 
 // DeleteOrgToken deletes a token.
 func (c *Client) DeleteOrgToken(name string) error {
-	resp, err := c.doRequest("DELETE", TokenAPIURL+"/"+name, nil, nil)
+	encodedName := url.PathEscape(name)
+	resp, err := c.doRequest("DELETE", TokenAPIURL+"/"+encodedName, nil, nil)
 
 	if err != nil {
 		return err
@@ -59,7 +60,8 @@ func (c *Client) DeleteOrgToken(name string) error {
 
 // GetToken gets a token.
 func (c *Client) GetOrgToken(id string) (*orgtoken.Token, error) {
-	resp, err := c.doRequest("GET", TokenAPIURL+"/"+id, nil, nil)
+	encodedName := url.PathEscape(id)
+	resp, err := c.doRequest("GET", TokenAPIURL+"/"+encodedName, nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +86,8 @@ func (c *Client) UpdateOrgToken(id string, tokenRequest *orgtoken.CreateUpdateTo
 		return nil, err
 	}
 
-	resp, err := c.doRequest("PUT", TokenAPIURL+"/"+id, nil, bytes.NewReader(payload))
+	encodedName := url.PathEscape(id)
+	resp, err := c.doRequest("PUT", TokenAPIURL+"/"+encodedName, nil, bytes.NewReader(payload))
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +109,7 @@ func (c *Client) UpdateOrgToken(id string, tokenRequest *orgtoken.CreateUpdateTo
 func (c *Client) SearchOrgTokens(limit int, name string, offset int) (*orgtoken.SearchResults, error) {
 	params := url.Values{}
 	params.Add("limit", strconv.Itoa(limit))
-	params.Add("name", name)
+	params.Add("name", url.PathEscape(name))
 	params.Add("offset", strconv.Itoa(offset))
 
 	resp, err := c.doRequest("GET", TokenAPIURL, params, nil)

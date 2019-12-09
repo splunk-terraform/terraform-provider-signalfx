@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/signalfx/golib/pointer"
+	"github.com/signalfx/golib/v3/pointer"
 	"github.com/signalfx/signalfx-go/idtool"
 	"github.com/signalfx/signalfx-go/signalflow/messages"
 )

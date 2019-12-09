@@ -32,8 +32,8 @@ resource "signalfx_org_token" "myorgtokenTOK1" {
 
 const updatedOrgTokenConfig = `
 resource "signalfx_org_token" "myorgtokenTOK1" {
-  name = "FarToken NEW"
-  description = "Farts"
+  name = "FarToken"
+  description = "Farts NEW"
 	notifications = ["Email,foo-alerts@example.com"]
 
   host_or_usage_limits {
@@ -75,8 +75,8 @@ func TestAccCreateUpdateOrgToken(t *testing.T) {
 				Config: updatedOrgTokenConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckOrgTokenResourceExists,
-					resource.TestCheckResourceAttr("signalfx_org_token.myorgtokenTOK1", "name", "FarToken NEW"),
-					resource.TestCheckResourceAttr("signalfx_org_token.myorgtokenTOK1", "description", "Farts"),
+					resource.TestCheckResourceAttr("signalfx_org_token.myorgtokenTOK1", "name", "FarToken"),
+					resource.TestCheckResourceAttr("signalfx_org_token.myorgtokenTOK1", "description", "Farts NEW"),
 				),
 			},
 		},
@@ -89,8 +89,9 @@ func testAccCheckOrgTokenResourceExists(s *terraform.State) error {
 	for _, rs := range s.RootModule().Resources {
 		switch rs.Type {
 		case "signalfx_org_token":
+			fmt.Printf("[DEBUG] SignalFx: GETTING TOKEN %s", rs.Primary.ID)
 			tok, err := client.GetOrgToken(rs.Primary.ID)
-			if tok.Name != rs.Primary.ID || err != nil {
+			if err != nil || tok.Name != rs.Primary.ID {
 				return fmt.Errorf("Error finding org token %s: %s", rs.Primary.ID, err)
 			}
 		default:
