@@ -5,8 +5,7 @@ import (
 	"strconv"
 )
 
-// StringOrInteger is a slice of strings that might be just a single
-// string in JSON. e.g. if the value is "foo" we want to make it ["foo"]
+// StringOrInteger is scalar value that might be a string or an integer.
 type StringOrInteger string
 
 // UnmarshalJSON handles the decision of this being a string or integer
