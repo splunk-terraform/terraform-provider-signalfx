@@ -25,6 +25,11 @@ func dataLinkResource() *schema.Resource {
 				Optional:    true,
 				Description: "Value of the metadata that's the trigger of a data link. If you specify this property, you must also specify `property_name`.",
 			},
+			"dashboard_id": &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The dashobard ID to which this data link will be applied",
+			},
 			"target_signalfx_dashboard": &schema.Schema{
 				Type:        schema.TypeSet,
 				Optional:    true,
@@ -156,6 +161,10 @@ func getPayloadDataLink(d *schema.ResourceData) (*datalink.CreateUpdateDataLinkR
 		}
 	}
 
+	if val, ok := d.GetOk("dashboard_id"); ok {
+		dataLink.ContextId = val.(string)
+	}
+
 	if val, ok := d.GetOk("target_signalfx_dashboard"); ok {
 		sfxDashes := val.(*schema.Set).List()
 
@@ -268,6 +277,9 @@ func dataLinkAPIToTF(d *schema.ResourceData, dl *datalink.DataLink) error {
 		return err
 	}
 	if err := d.Set("property_name", dl.PropertyName); err != nil {
+		return err
+	}
+	if err := d.Set("dashboard_id", dl.ContextId); err != nil {
 		return err
 	}
 

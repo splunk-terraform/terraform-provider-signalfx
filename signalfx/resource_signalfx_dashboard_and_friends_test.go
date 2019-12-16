@@ -167,6 +167,22 @@ resource "signalfx_data_link" "my_data_link" {
 			dashboard_id = "${signalfx_dashboard.mydashboard0.id}"
     }
 }
+
+resource "signalfx_data_link" "my_data_link_dash" {
+		dashboard_id = "${signalfx_dashboard.mydashboard0.id}"
+    property_name = "pname2"
+    property_value = "pvalue"
+
+    target_external_url {
+			is_default = "false"
+      name = "ex_url"
+      time_format = "ISO8601"
+      url = "https://www.example.com"
+      property_key_mapping = {
+        foo = "bar"
+      }
+    }
+}
 `
 
 const updatedDashConfig = `
@@ -323,6 +339,22 @@ resource "signalfx_data_link" "my_data_link" {
       name = "sfx_dash"
 			dashboard_group_id = "${signalfx_dashboard_group.mydashboardgroup0.id}"
 			dashboard_id = "${signalfx_dashboard.mydashboard0.id}"
+    }
+}
+
+resource "signalfx_data_link" "my_data_link_dash" {
+		dashboard_id = "${signalfx_dashboard.mydashboard0.id}"
+    property_name = "pname2"
+    property_value = "pvalue2"
+
+    target_external_url {
+			is_default = "false"
+      name = "ex_url"
+      time_format = "ISO8601"
+      url = "https://www.example.com"
+      property_key_mapping = {
+        foo = "bar"
+      }
     }
 }
 `
