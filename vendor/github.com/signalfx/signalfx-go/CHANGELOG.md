@@ -1,14 +1,18 @@
-# 1.6.10, Pending
+# 1.6.11, Pending
 
 ## Added
-
-* Methods for Data Links
 
 ## Updated
 
 ## Bugfixes
 
 ## Removed
+
+# 1.6.10, 2019-12-16
+
+## Added
+
+* Methods for Data Links
 
 # 1.6.9, 2019-12-09
 
