@@ -49,7 +49,9 @@ func (c *Client) DeleteDataLink(id string) error {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusNoContent {
+	// The API returns a 200 here, which I think is a mistake so covering for
+	// future changes.
+	if resp.StatusCode != http.StatusNoContent && resp.StatusCode != http.StatusOK {
 		message, _ := ioutil.ReadAll(resp.Body)
 		return fmt.Errorf("Unexpected status code: %d: %s", resp.StatusCode, message)
 	}

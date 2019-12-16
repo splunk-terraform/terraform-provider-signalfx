@@ -209,7 +209,7 @@ github.com/posener/complete/cmd/install
 github.com/posener/complete/match
 # github.com/signalfx/golib/v3 v3.0.0
 github.com/signalfx/golib/v3/pointer
-# github.com/signalfx/signalfx-go v1.6.10-0.20191213155501-2c50ac9e712d
+# github.com/signalfx/signalfx-go v1.6.10-0.20191216170353-d5bb5c3f2724
 github.com/signalfx/signalfx-go
 github.com/signalfx/signalfx-go/alertmuting
 github.com/signalfx/signalfx-go/chart
