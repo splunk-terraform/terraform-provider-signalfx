@@ -155,6 +155,18 @@ resource "signalfx_dashboard" "mydashboard0" {
         height = 1
     }
 }
+
+resource "signalfx_data_link" "my_data_link" {
+    property_name = "pname"
+    property_value = "pvalue"
+
+    target_signalfx_dashboard {
+      is_default = true
+      name = "sfx_dash"
+			dashboard_group_id = "${signalfx_dashboard_group.mydashboardgroup0.id}"
+			dashboard_id = "${signalfx_dashboard.mydashboard0.id}"
+    }
+}
 `
 
 const updatedDashConfig = `
@@ -301,6 +313,18 @@ resource "signalfx_dashboard" "mydashboard0" {
         height = 1
     }
 }
+
+resource "signalfx_data_link" "my_data_link" {
+    property_name = "pname"
+    property_value = "pvalue2"
+
+    target_signalfx_dashboard {
+      is_default = true
+      name = "sfx_dash"
+			dashboard_group_id = "${signalfx_dashboard_group.mydashboardgroup0.id}"
+			dashboard_id = "${signalfx_dashboard.mydashboard0.id}"
+    }
+}
 `
 
 func TestAccCreateUpdateDashboardGroup(t *testing.T) {
@@ -418,6 +442,11 @@ func testAccCheckDashboardGroupResourceExists(s *terraform.State) error {
 			if dashgroup.Id != rs.Primary.ID || err != nil {
 				return fmt.Errorf("Error finding dashboard group %s: %s", rs.Primary.ID, err)
 			}
+		case "signalfx_data_link":
+			dl, err := client.GetDataLink(rs.Primary.ID)
+			if err != nil || dl.Id != rs.Primary.ID {
+				return fmt.Errorf("Error finding data link %s: %s", rs.Primary.ID, err)
+			}
 		default:
 			return fmt.Errorf("Unexpected resource of type: %s", rs.Type)
 		}
@@ -443,6 +472,11 @@ func testAccDashboardGroupDestroy(s *terraform.State) error {
 			dashgroup, _ := client.GetDashboardGroup(rs.Primary.ID)
 			if dashgroup != nil {
 				return fmt.Errorf("Found deleted dashboard group %s", rs.Primary.ID)
+			}
+		case "signalfx_data_link":
+			dl, _ := client.GetDataLink(rs.Primary.ID)
+			if dl != nil {
+				return fmt.Errorf("Found deleted data link %s", rs.Primary.ID)
 			}
 		default:
 			return fmt.Errorf("Unexpected resource of type: %s", rs.Type)
