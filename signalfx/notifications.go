@@ -69,8 +69,6 @@ func getNotifyStringFromAPI(not *notification.Notification) (string, error) {
 	default:
 		return "", fmt.Errorf("Unknown notification type %q", nt)
 	}
-
-	return "", nil
 }
 
 func getNotifications(tfNotifications []interface{}) ([]*notification.Notification, error) {
@@ -170,7 +168,8 @@ func getNotifications(tfNotifications []interface{}) ([]*notification.Notificati
 
 func validateNotification(val interface{}, key string) (warns []string, errs []error) {
 	parts := strings.Split(val.(string), ",")
-	if len(parts) < 2 {
+	partCount := len(parts)
+	if partCount < 2 {
 		errs = append(errs, fmt.Errorf("Invalid notification string, not enough commas"))
 		return
 	}
@@ -184,12 +183,12 @@ func validateNotification(val interface{}, key string) (warns []string, errs []e
 			return
 		}
 	case OpsgenieNotificationType:
-		if len(parts) != 5 {
+		if partCount != 5 {
 			errs = append(errs, fmt.Errorf("Invalid OpsGenie notification string, please consult the documentation (not enough parts)"))
 			return
 		}
 	case SlackNotificationType:
-		if len(parts) != 3 {
+		if partCount != 3 {
 			errs = append(errs, fmt.Errorf("Invalid Slack notification string, please consult the documentation (not enough parts)"))
 			return
 		}
@@ -198,19 +197,36 @@ func validateNotification(val interface{}, key string) (warns []string, errs []e
 			return
 		}
 	case VictorOpsNotificationType:
-		if len(parts) != 3 {
+		if partCount != 3 {
 			errs = append(errs, fmt.Errorf("Invalid VictorOps notification string, please consult the documentation (not enough parts)"))
 			return
 		}
 	case WebhookNotificationType:
-		if len(parts) != 4 {
+		if partCount != 4 {
 			errs = append(errs, fmt.Errorf("Invalid Webhook notification string, please consult the documentation (not enough parts)"))
 			return
 		}
-		_, err := url.ParseRequestURI(parts[3])
-		if err != nil {
-			errs = append(errs, fmt.Errorf("Invalid Webhook URL %q", parts[2]))
-			return
+		if parts[1] != "" {
+			// We got a credential ID, so verify we didn't get the other parts
+			if parts[2] != "" || parts[3] != "" {
+				errs = append(errs, fmt.Errorf("Invalid Webhook notification string, please consult the documentation (use one of URL and secret or credential id)"))
+				return
+			}
+		} else {
+			// We didn't get a credential ID so verify we got the other parts
+			if parts[2] == "" || parts[3] == "" {
+				errs = append(errs, fmt.Errorf("Invalid Webhook notification string, please consult the documentation (use one of URL and secret or credential id)"))
+				return
+			}
+		}
+		// The URL might be an empty string in the case that the user
+		// only supplied a credential ID
+		if parts[3] != "" {
+			_, err := url.ParseRequestURI(parts[3])
+			if err != nil {
+				errs = append(errs, fmt.Errorf("Invalid Webhook URL %q", parts[2]))
+				return
+			}
 		}
 	default:
 		errs = append(errs, fmt.Errorf("Invalid notification type %q", parts[0]))

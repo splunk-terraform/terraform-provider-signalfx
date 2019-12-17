@@ -117,8 +117,16 @@ notifications = ["TeamEmail,teamId"]
 
 ### Webhook
 
+~> **NOTE** You need to include all the commas even if you only use a credential id below.
+
+You can either configure a Webhook to use an existing integration's credential id:
 ```
-notifications = ["Webhook,secret,url"]
+notifications = ["Webhook,credentialId,,"]
+```
+
+or configure one inline:
+```
+notifications = ["Webhook,,secret,url"]
 ```
 
 ## Argument Reference

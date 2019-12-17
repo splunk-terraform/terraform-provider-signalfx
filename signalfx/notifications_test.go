@@ -67,8 +67,14 @@ func TestNotifyStringFromAPI(t *testing.T) {
 			Value: &notification.WebhookNotification{
 				Type:         WebhookNotificationType,
 				CredentialId: "XXX",
-				Secret:       "YYY",
-				Url:          "http://www.example.com",
+			},
+		},
+		&notification.Notification{
+			Type: WebhookNotificationType,
+			Value: &notification.WebhookNotification{
+				Type:   WebhookNotificationType,
+				Secret: "YYY",
+				Url:    "http://www.example.com",
 			},
 		},
 		&notification.Notification{
@@ -117,7 +123,8 @@ func TestNotifyStringFromAPI(t *testing.T) {
 		"Slack,XXX,foobar",
 		"Team,ABC123",
 		"TeamEmail,ABC124",
-		"Webhook,XXX,YYY,http://www.example.com",
+		"Webhook,XXX,,",
+		"Webhook,,YYY,http://www.example.com",
 		"BigPanda,XXX",
 		"Office365,XXX",
 		"ServiceNow,XXX",
@@ -149,6 +156,8 @@ func TestNotifyValidationBad(t *testing.T) {
 		"FARTS,lol",
 		"TeamEmailABC123",
 		"Webhook,XXX,YYY,notaurl",
+		"Webhook,XXX,YYY,http://www.example.com",
+		"Webhook,,,",
 		"BigPanda",
 		"Office365",
 		"ServiceNow",
