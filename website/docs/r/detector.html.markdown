@@ -16,7 +16,6 @@ Provides a SignalFx detector resource. This can be used to create and manage det
 
 ```terraform
 resource "signalfx_detector" "application_delay" {
-    count = "${length(var.clusters)}"
     name = " max average delay - ${var.clusters[count.index]}"
     description = "your application is slow - ${var.clusters[count.index]}"
     max_delay = 30
@@ -61,7 +60,7 @@ As SignalFx supports different notification mechanisms a comma-delimited string 
 notifications = ["Email,foo-alerts@example.com", "Slack,credentialId,channel"]
 ```
 
-This will likely be changed in a future iteration of the provider. See [SignalFX Docs](https://developers.signalfx.com/detectors_reference.html#operation/Create%20Single%20Detector) for more information. For now, here are some example of how to configure each notification type:
+This will likely be changed in a future iteration of the provider. See [SignalFx Docs](https://developers.signalfx.com/detectors_reference.html#operation/Create%20Single%20Detector) for more information. For now, here are some example of how to configure each notification type:
 
 ### Email
 
