@@ -17,11 +17,11 @@ resource "signalfx_team" "myteamXX" {
 		description = "Fart noise"
 
     notifications_critical = [ "Email,test@example.com" ]
-    notifications_default = [ "Webhook,,,https://www.example.com" ]
-    notifications_info = [ "Webhook,,,https://www.example.com/2" ]
-    notifications_major = [ "Webhook,,,https://www.example.com/3" ]
-    notifications_minor = [ "Webhook,,,https://www.example.com/4" ]
-    notifications_warning = [ "Webhook,,,https://www.example.com/5" ]
+    notifications_default = [ "Webhook,,secret,https://www.example.com" ]
+    notifications_info = [ "Webhook,,secret,https://www.example.com/2" ]
+    notifications_major = [ "Webhook,,secret,https://www.example.com/3" ]
+    notifications_minor = [ "Webhook,,secret,https://www.example.com/4" ]
+    notifications_warning = [ "Webhook,,secret,https://www.example.com/5" ]
 }
 `
 
@@ -31,11 +31,11 @@ resource "signalfx_team" "myteamXX" {
 		description = "Fart noise NEW"
 
     notifications_critical = [ "Email,test@example.com" ]
-    notifications_default = [ "Webhook,,,https://www.example.com" ]
-    notifications_info = [ "Webhook,,,https://www.example.com/2" ]
-    notifications_major = [ "Webhook,,,https://www.example.com/3" ]
-    notifications_minor = [ "Webhook,,,https://www.example.com/4" ]
-    notifications_warning = [ "Webhook,,,https://www.example.com/5" ]
+    notifications_default = [ "Webhook,,secret,https://www.example.com" ]
+    notifications_info = [ "Webhook,,secret,https://www.example.com/2" ]
+    notifications_major = [ "Webhook,,secret,https://www.example.com/3" ]
+    notifications_minor = [ "Webhook,,secret,https://www.example.com/4" ]
+    notifications_warning = [ "Webhook,,secret,https://www.example.com/5" ]
 }
 `
 
@@ -55,15 +55,15 @@ func TestAccCreateUpdateTeam(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_team.myteamXX", "notifications_critical.#", "1"),
 					resource.TestCheckResourceAttr("signalfx_team.myteamXX", "notifications_critical.0", "Email,test@example.com"),
 					resource.TestCheckResourceAttr("signalfx_team.myteamXX", "notifications_default.#", "1"),
-					resource.TestCheckResourceAttr("signalfx_team.myteamXX", "notifications_default.0", "Webhook,,,https://www.example.com"),
+					resource.TestCheckResourceAttr("signalfx_team.myteamXX", "notifications_default.0", "Webhook,,secret,https://www.example.com"),
 					resource.TestCheckResourceAttr("signalfx_team.myteamXX", "notifications_info.#", "1"),
-					resource.TestCheckResourceAttr("signalfx_team.myteamXX", "notifications_info.0", "Webhook,,,https://www.example.com/2"),
+					resource.TestCheckResourceAttr("signalfx_team.myteamXX", "notifications_info.0", "Webhook,,secret,https://www.example.com/2"),
 					resource.TestCheckResourceAttr("signalfx_team.myteamXX", "notifications_major.#", "1"),
-					resource.TestCheckResourceAttr("signalfx_team.myteamXX", "notifications_major.0", "Webhook,,,https://www.example.com/3"),
+					resource.TestCheckResourceAttr("signalfx_team.myteamXX", "notifications_major.0", "Webhook,,secret,https://www.example.com/3"),
 					resource.TestCheckResourceAttr("signalfx_team.myteamXX", "notifications_minor.#", "1"),
-					resource.TestCheckResourceAttr("signalfx_team.myteamXX", "notifications_minor.0", "Webhook,,,https://www.example.com/4"),
+					resource.TestCheckResourceAttr("signalfx_team.myteamXX", "notifications_minor.0", "Webhook,,secret,https://www.example.com/4"),
 					resource.TestCheckResourceAttr("signalfx_team.myteamXX", "notifications_warning.#", "1"),
-					resource.TestCheckResourceAttr("signalfx_team.myteamXX", "notifications_warning.0", "Webhook,,,https://www.example.com/5"),
+					resource.TestCheckResourceAttr("signalfx_team.myteamXX", "notifications_warning.0", "Webhook,,secret,https://www.example.com/5"),
 				),
 			},
 			// Update Everything

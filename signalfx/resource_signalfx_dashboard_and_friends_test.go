@@ -169,7 +169,7 @@ resource "signalfx_data_link" "my_data_link" {
 }
 
 resource "signalfx_data_link" "my_data_link_dash" {
-		dashboard_id = "${signalfx_dashboard.mydashboard0.id}"
+		context_dashboard_id = "${signalfx_dashboard.mydashboard0.id}"
     property_name = "pname2"
     property_value = "pvalue"
 
@@ -343,7 +343,7 @@ resource "signalfx_data_link" "my_data_link" {
 }
 
 resource "signalfx_data_link" "my_data_link_dash" {
-		dashboard_id = "${signalfx_dashboard.mydashboard0.id}"
+		context_dashboard_id = "${signalfx_dashboard.mydashboard0.id}"
     property_name = "pname2"
     property_value = "pvalue2"
 
