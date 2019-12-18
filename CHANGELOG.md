@@ -1,6 +1,12 @@
 ## 4.10.4 (Unreleased)
 
-FEATURES: Added support for [Data Links](https://docs.signalfx.com/en/latest/managing/data-links.html) via `signalfx_data_link`. [#125](https://github.com/terraform-providers/terraform-provider-signalfx/pull/125)
+FEATURES:
+
+* provider: Added support for [Data Links](https://docs.signalfx.com/en/latest/managing/data-links.html) via `signalfx_data_link`. [#125](https://github.com/terraform-providers/terraform-provider-signalfx/pull/125)
+
+IMPROVEMENTS:
+
+* Fixed some little doc tings. [#131](https://github.com/terraform-providers/terraform-provider-signalfx/pull/131)
 
 BUG FIXES:
 
