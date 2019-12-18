@@ -1,4 +1,4 @@
-# 1.6.10, Pending
+# 1.6.11, Pending
 
 ## Added
 
@@ -8,13 +8,21 @@
 
 ## Removed
 
+# 1.6.10, 2019-12-16
+
+## Added
+
+* Methods for Data Links
+
 # 1.6.9, 2019-12-09
 
 ## Added
- - New datapoint and span writer for high volume output
+
+* New datapoint and span writer for high volume output
 
 ## Bugfixes
-- Token operations now URL encode the name.
+
+* Token operations now URL encode the name.
 
 # 1.6.8, Pending
 
