@@ -1,4 +1,11 @@
 ## 4.10.4 (Unreleased)
+
+FEATURES: Added support for [Data Links](https://docs.signalfx.com/en/latest/managing/data-links.html) via `signalfx_data_link`. [#125](https://github.com/terraform-providers/terraform-provider-signalfx/pull/125)
+
+BUG FIXES:
+
+* resource/detector: Webhook notifications are now validated as required a credentialId or a URL and secret. [#129](https://github.com/terraform-providers/terraform-provider-signalfx/pull/129)
+
 ## 4.10.3 (December 09, 2019)
 
 BUG FIXES:
