@@ -25,7 +25,7 @@ func dataLinkResource() *schema.Resource {
 				Optional:    true,
 				Description: "Value of the metadata that's the trigger of a data link. If you specify this property, you must also specify `property_name`.",
 			},
-			"dashboard_id": &schema.Schema{
+			"context_dashboard_id": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "The dashobard ID to which this data link will be applied",
@@ -161,7 +161,7 @@ func getPayloadDataLink(d *schema.ResourceData) (*datalink.CreateUpdateDataLinkR
 		}
 	}
 
-	if val, ok := d.GetOk("dashboard_id"); ok {
+	if val, ok := d.GetOk("context_dashboard_id"); ok {
 		dataLink.ContextId = val.(string)
 	}
 
@@ -279,7 +279,7 @@ func dataLinkAPIToTF(d *schema.ResourceData, dl *datalink.DataLink) error {
 	if err := d.Set("property_name", dl.PropertyName); err != nil {
 		return err
 	}
-	if err := d.Set("dashboard_id", dl.ContextId); err != nil {
+	if err := d.Set("context_dashboard_id", dl.ContextId); err != nil {
 		return err
 	}
 
