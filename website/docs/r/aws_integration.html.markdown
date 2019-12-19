@@ -24,7 +24,7 @@ resource "signalfx_aws_external_integration" "aws_myteam_external" {
 
 // Make yourself an AWS IAM role here, use `signalfx_aws_external_integration.aws_myteam_external.external_id`
 resource "aws_iam_role" "aws_sfx_role" {
-  // Stuff here that uses the
+  // Stuff here that uses the external and account ID
 }
 
 resource "signalfx_aws_integration" "aws_myteam" {

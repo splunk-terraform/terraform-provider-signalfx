@@ -23,7 +23,7 @@ resource "signalfx_aws_token_integration" "aws_myteam_token" {
 
 // Make yourself an AWS IAM role here
 resource "aws_iam_role" "aws_sfx_role" {
-  // Stuff here that uses the
+  // Stuff here that uses the external and account ID
 }
 
 resource "signalfx_aws_integration" "aws_myteam" {
