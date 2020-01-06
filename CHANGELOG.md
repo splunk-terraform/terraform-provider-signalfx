@@ -1,4 +1,9 @@
 ## 4.11.1 (Unreleased)
+
+BUG FIXES:
+
+* docs: Fix bad example of poll rate for GCP integration.
+
 ## 4.11.0 (December 19, 2019)
 
 FEATURES:
