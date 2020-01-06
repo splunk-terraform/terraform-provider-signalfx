@@ -3,6 +3,7 @@
 BUG FIXES:
 
 * docs: Fix bad example of poll rate for GCP integration.
+* docs: Document description field of Detector. [#134](https://github.com/terraform-providers/terraform-provider-signalfx/pull/134), thanks [@shwin](https://github.com/shwin)
 
 ## 4.11.0 (December 19, 2019)
 
