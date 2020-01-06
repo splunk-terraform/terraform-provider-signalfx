@@ -146,6 +146,7 @@ notifications = ["Webhook,,secret,url"]
 * `rule` - (Required) Set of rules used for alerting.
     * `detect_label` - (Required) A detect label which matches a detect label within `program_text`.
     * `severity` - (Required) The severity of the rule, must be one of: `"Critical"`, `"Major"`, `"Minor"`, `"Warning"`, `"Info"`.
+    * `description` - (Optional) Description for the rule. Displays as the alert condition in the Alert Rules tab of the detector editor in the web UI. 
     * `disabled` - (Optional) When true, notifications and events will not be generated for the detect label. `false` by default.
     * `notifications` - (Optional) List of strings specifying where notifications will be sent when an incident occurs. See <https://developers.signalfx.com/detectors_reference.html#operation/Create%20Single%20Detector> for more info.
     * `parameterized_body` - (Optional) Custom notification message body when an alert is triggered. See <https://docs.signalfx.com/en/latest/detect-alert/set-up-detectors.html#about-detectors#alert-settings> for more info.
