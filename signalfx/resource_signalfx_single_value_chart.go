@@ -39,6 +39,9 @@ func singleValueChartResource() *schema.Resource {
 				Optional:    true,
 				Default:     "Metric",
 				Description: "(Metric by default) Must be \"Metric\", \"Dimension\", or \"Scale\". \"Scale\" maps to Color by Value in the UI",
+				ValidateFunc: validation.StringInSlice([]string{
+					"Metric", "Dimension", "Scale",
+				}, false),
 			},
 			"max_delay": &schema.Schema{
 				Type:         schema.TypeInt,
@@ -200,8 +203,9 @@ func getSingleValueChartOptions(d *schema.ResourceData) *chart.Options {
 		options.UnitPrefix = val.(string)
 	}
 	if val, ok := d.GetOk("color_by"); ok {
-		options.ColorBy = val.(string)
-		if val == "Scale" {
+		cb := val.(string)
+		options.ColorBy = cb
+		if cb == "Scale" {
 			if colorScaleOptions := getColorScaleOptions(d); len(colorScaleOptions) > 0 {
 				options.ColorScale2 = colorScaleOptions
 			}
