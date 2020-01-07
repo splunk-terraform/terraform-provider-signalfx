@@ -185,10 +185,23 @@ func listChartResource() *schema.Resource {
 					},
 				},
 			},
-			"last_updated": &schema.Schema{
-				Type:        schema.TypeFloat,
-				Computed:    true,
-				Description: "Latest timestamp the resource was updated",
+			"time_range": &schema.Schema{
+				Type:          schema.TypeInt,
+				Optional:      true,
+				Description:   "Seconds to display in the visualization. This is a rolling range from the current time. Example: 3600 = `-1h`",
+				ConflictsWith: []string{"start_time", "end_time"},
+			},
+			"start_time": &schema.Schema{
+				Type:          schema.TypeInt,
+				Optional:      true,
+				Description:   "Seconds since epoch to start the visualization",
+				ConflictsWith: []string{"time_range"},
+			},
+			"end_time": &schema.Schema{
+				Type:          schema.TypeInt,
+				Optional:      true,
+				Description:   "Seconds since epoch to end the visualization",
+				ConflictsWith: []string{"time_range"},
 			},
 			"url": &schema.Schema{
 				Type:        schema.TypeString,
@@ -277,6 +290,27 @@ func getListChartOptions(d *schema.ResourceData) (*chart.Options, error) {
 		programOptions.DisableSampling = val.(bool)
 	}
 	options.ProgramOptions = programOptions
+
+	var timeOptions *chart.TimeDisplayOptions
+	if val, ok := d.GetOk("time_range"); ok {
+		r := int64(val.(int) * 1000)
+		timeOptions = &chart.TimeDisplayOptions{
+			Range: &r,
+			Type:  "relative",
+		}
+	}
+	if val, ok := d.GetOk("start_time"); ok {
+		start := int64(val.(int) * 1000)
+		timeOptions = &chart.TimeDisplayOptions{
+			Start: &start,
+			Type:  "absolute",
+		}
+		if val, ok := d.GetOk("end_time"); ok {
+			end := int64(val.(int) * 1000)
+			timeOptions.End = &end
+		}
+	}
+	options.Time = timeOptions
 
 	if sortBy, ok := d.GetOk("sort_by"); ok {
 		options.SortBy = sortBy.(string)
@@ -369,6 +403,27 @@ func listchartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 	}
 	if err := d.Set("sort_by", options.SortBy); err != nil {
 		return err
+	}
+
+	if options.Time != nil {
+		if options.Time.Type == "relative" {
+			if options.Time.Range != nil {
+				if err := d.Set("time_range", *options.Time.Range/1000); err != nil {
+					return err
+				}
+			}
+		} else {
+			if options.Time.Start != nil {
+				if err := d.Set("start_time", *options.Time.Start/1000); err != nil {
+					return err
+				}
+			}
+			if options.Time.End != nil {
+				if err := d.Set("end_time", *options.Time.End/1000); err != nil {
+					return err
+				}
+			}
+		}
 	}
 
 	if len(options.PublishLabelOptions) > 0 {
