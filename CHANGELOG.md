@@ -7,7 +7,6 @@ IMPROVEMENTS:
 * resource/single_value_chart: Began validating `color_by`. [#136](https://github.com/terraform-providers/terraform-provider-signalfx/pull/136)
 * resource/time_chart: Began validating `color_by`. [#138](https://github.com/terraform-providers/terraform-provider-signalfx/pull/138)
 
-
 BUG FIXES:
 
 * docs: Fix bad example of poll rate for GCP integration.
