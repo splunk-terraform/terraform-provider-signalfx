@@ -123,6 +123,9 @@ func timeChartResource() *schema.Resource {
 				Optional:    true,
 				Default:     "Dimension",
 				Description: "(Dimension by default) Must be \"Dimension\" or \"Metric\"",
+				ValidateFunc: validation.StringInSlice([]string{
+					"Metric", "Dimension", "Scale",
+				}, false),
 			},
 			"minimum_resolution": &schema.Schema{
 				Type:        schema.TypeInt,
