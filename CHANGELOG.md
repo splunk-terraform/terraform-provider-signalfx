@@ -3,9 +3,9 @@
 IMPROVEMENTS:
 
 * resource/list_chart: Added `time_range`, `start_time` and `end_time`. [#137](https://github.com/terraform-providers/terraform-provider-signalfx/pull/137)
-* resource/list_chart: Began validating `color_by`. [#137](https://github.com/terraform-providers/terraform-provider-signalfx/pull/137)
+* resource/list_chart: Began validating `color_by`. [#138](https://github.com/terraform-providers/terraform-provider-signalfx/pull/138)
 * resource/single_value_chart: Began validating `color_by`. [#136](https://github.com/terraform-providers/terraform-provider-signalfx/pull/136)
-* resource/time_chart: Began validating `color_by`. [#137](https://github.com/terraform-providers/terraform-provider-signalfx/pull/137)
+* resource/time_chart: Began validating `color_by`. [#138](https://github.com/terraform-providers/terraform-provider-signalfx/pull/138)
 
 
 BUG FIXES:
