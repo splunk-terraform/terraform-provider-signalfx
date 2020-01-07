@@ -40,6 +40,9 @@ func listChartResource() *schema.Resource {
 				Optional:    true,
 				Default:     "Dimension",
 				Description: "(Metric by default) Must be \"Scale\", \"Metric\" or \"Dimension\"",
+				ValidateFunc: validation.StringInSlice([]string{
+					"Metric", "Dimension", "Scale",
+				}, false),
 			},
 			"max_delay": &schema.Schema{
 				Type:         schema.TypeInt,
