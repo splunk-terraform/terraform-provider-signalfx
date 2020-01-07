@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"math"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
@@ -39,6 +40,9 @@ func singleValueChartResource() *schema.Resource {
 				Optional:    true,
 				Default:     "Metric",
 				Description: "(Metric by default) Must be \"Metric\", \"Dimension\", or \"Scale\". \"Scale\" maps to Color by Value in the UI",
+				ValidateFunc: validation.StringInSlice([]string{
+					"metric", "dimension", "scale",
+				}, true),
 			},
 			"max_delay": &schema.Schema{
 				Type:         schema.TypeInt,
@@ -200,8 +204,9 @@ func getSingleValueChartOptions(d *schema.ResourceData) *chart.Options {
 		options.UnitPrefix = val.(string)
 	}
 	if val, ok := d.GetOk("color_by"); ok {
-		options.ColorBy = val.(string)
-		if val == "Scale" {
+		cb := val.(string)
+		options.ColorBy = strings.Title(cb)
+		if strings.EqualFold(cb, "scale") {
 			if colorScaleOptions := getColorScaleOptions(d); len(colorScaleOptions) > 0 {
 				options.ColorScale2 = colorScaleOptions
 			}
