@@ -88,3 +88,6 @@ The following arguments are supported in the resource block:
     * `lte` - (Optional) Indicates the upper threshold inclusive value for this range.
     * `color` - (Required) The color range to use. Must be either gray, blue, navy, orange, yellow, magenta, purple, violet, lilac, green, aquamarine.
 * `sort_by` - (Optional) The property to use when sorting the elements. Use `value` if you want to sort by value. Must be prepended with `+` for ascending or `-` for descending (e.g. `-foo`). Note there are some special values for some of the options provided in the UX: `"value"` for Value, `"sf_originatingMetric"` for Metric, and `"sf_metric"` for plot.
+* `time_range` - (Optional) How many seconds ago from which to display data. For example, the last hour would be `3600`, etc. Conflicts with `start_time` and `end_time`.
+* `start_time` - (Optional) Seconds since epoch. Used for visualization. Conflicts with `time_range`.
+* `end_time` - (Optional) Seconds since epoch. Used for visualization. Conflicts with `time_range`.
