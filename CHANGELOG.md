@@ -2,11 +2,14 @@
 
 IMPROVEMENTS:
 
+* resource/heatmap_chart: Began validating `unit_prefix`. [#139](https://github.com/terraform-providers/terraform-provider-signalfx/pull/139)
 * resource/list_chart: Added `time_range`, `start_time` and `end_time`. [#137](https://github.com/terraform-providers/terraform-provider-signalfx/pull/137)
 * resource/list_chart: Began validating `color_by`. [#138](https://github.com/terraform-providers/terraform-provider-signalfx/pull/138)
+* resource/list_chart: Began validating `unit_prefix`. [#139](https://github.com/terraform-providers/terraform-provider-signalfx/pull/139)
 * resource/single_value_chart: Began validating `color_by`. [#136](https://github.com/terraform-providers/terraform-provider-signalfx/pull/136)
+* resource/single_value_chart: Began validating `unit_prefix`. [#139](https://github.com/terraform-providers/terraform-provider-signalfx/pull/139)
 * resource/time_chart: Began validating `color_by`. [#138](https://github.com/terraform-providers/terraform-provider-signalfx/pull/138)
-
+* resource/time_chart: Began validating `unit_prefix`. [#139](https://github.com/terraform-providers/terraform-provider-signalfx/pull/139)
 
 BUG FIXES:
 

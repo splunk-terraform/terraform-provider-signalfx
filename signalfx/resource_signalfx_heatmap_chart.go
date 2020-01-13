@@ -38,6 +38,9 @@ func heatmapChartResource() *schema.Resource {
 				Optional:    true,
 				Default:     "Metric",
 				Description: "(Metric by default) Must be \"Metric\" or \"Binary\"",
+				ValidateFunc: validation.StringInSlice([]string{
+					"Metric", "Binary",
+				}, false),
 			},
 			"minimum_resolution": &schema.Schema{
 				Type:         schema.TypeInt,

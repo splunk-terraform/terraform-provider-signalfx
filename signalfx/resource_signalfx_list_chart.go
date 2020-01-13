@@ -34,6 +34,9 @@ func listChartResource() *schema.Resource {
 				Optional:    true,
 				Default:     "Metric",
 				Description: "(Metric by default) Must be \"Metric\" or \"Binary\"",
+				ValidateFunc: validation.StringInSlice([]string{
+					"Metric", "Binary",
+				}, false),
 			},
 			"color_by": &schema.Schema{
 				Type:        schema.TypeString,
