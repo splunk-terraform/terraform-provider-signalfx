@@ -67,6 +67,10 @@ func HTTPClient(httpClient *http.Client) ClientParam {
 }
 
 func (c *Client) doRequest(method string, path string, params url.Values, body io.Reader) (*http.Response, error) {
+	return c.doRequestWithToken(method, path, params, body, c.authToken)
+}
+
+func (c *Client) doRequestWithToken(method string, path string, params url.Values, body io.Reader, token string) (*http.Response, error) {
 	destURL, err := url.Parse(c.baseURL)
 	if err != nil {
 		return nil, err
@@ -77,7 +81,9 @@ func (c *Client) doRequest(method string, path string, params url.Values, body i
 		destURL.RawQuery = params.Encode()
 	}
 	req, err := http.NewRequest(method, destURL.String(), body)
-	req.Header.Set(AuthHeaderKey, c.authToken)
+	if token != "" {
+		req.Header.Set(AuthHeaderKey, token)
+	}
 	req.Header.Set("Content-Type", "application/json")
 	if err != nil {
 		return nil, err

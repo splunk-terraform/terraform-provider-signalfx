@@ -48,6 +48,8 @@ type AwsCloudWatchIntegration struct {
 	RoleArn string `json:"roleArn,omitempty"`
 	// Array of AWS services that you want SignalFx to monitor. Each element is a string designating an AWS service
 	Services []AwsService `json:"services,omitempty"`
+	// The account ARN used with this AWS integration.
+	SfxAwsAccountArn string `json:"sfxAwsAccountArn,omitempty"`
 	// If you specify `\"authMethod\": \"SecurityToken\"` in your request to create an AWS integration object, use this property to specify the token.
 	Token string `json:"token,omitempty"`
 	// Flag that controls how SignalFx checks for large amounts of data for this AWS integration. If `true`, SignalFx checks to see if the integration is returning a large amount of data.
