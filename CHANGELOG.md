@@ -1,7 +1,14 @@
+## 4.12.0 (Unreleased)
+
+IMPROVEMENTS:
+
+BUG FIXES:
+
 ## 4.11.1 (Unreleased)
 
 IMPROVEMENTS:
 
+* resource/aws_external_integration: Added field `signalfx_aws_account`, updated documentation. [#140](https://github.com/terraform-providers/terraform-provider-signalfx/pull/140)
 * resource/heatmap_chart: Began validating `unit_prefix`. [#139](https://github.com/terraform-providers/terraform-provider-signalfx/pull/139)
 * resource/list_chart: Added `time_range`, `start_time` and `end_time`. [#137](https://github.com/terraform-providers/terraform-provider-signalfx/pull/137)
 * resource/list_chart: Began validating `color_by`. [#138](https://github.com/terraform-providers/terraform-provider-signalfx/pull/138)

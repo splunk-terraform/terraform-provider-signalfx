@@ -1,4 +1,4 @@
-# 1.6.11, Pending
+# 1.6.13, Pending
 
 ## Added
 
@@ -7,6 +7,18 @@
 ## Bugfixes
 
 ## Removed
+
+# 1.6.12, 2020-01-21
+
+## Added
+
+* Field `sfxAwsAccountArn` added to AWS response
+
+# 1.6.11, 2019-12-18
+
+## Added
+
+* Support for creating and deleting tokens using the Session API
 
 # 1.6.10, 2019-12-16
 

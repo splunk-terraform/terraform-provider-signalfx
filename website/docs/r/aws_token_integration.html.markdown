@@ -62,3 +62,4 @@ resource "signalfx_aws_integration" "aws_myteam" {
 In addition to all arguments above, the following attributes are exported:
 
 * `id` - The ID of the integration to use with `signalfx_aws_integration`
+* `signalfx_aws_account` - The AWS Account ARN to use with your policies/roles, provided by SignalFx.
