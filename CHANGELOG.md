@@ -1,9 +1,3 @@
-## 4.12.0 (Unreleased)
-
-IMPROVEMENTS:
-
-BUG FIXES:
-
 ## 4.11.1 (Unreleased)
 
 IMPROVEMENTS:
