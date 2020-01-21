@@ -23,7 +23,13 @@ func integrationAWSExternalResource() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Sensitive:   true,
-				Description: "The SignalFx-generated AWS account ID to use with an AWS integration.",
+				Description: "The SignalFx-generated AWS external ID to use with an AWS integration.",
+			},
+			"signalfx_aws_account": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Sensitive:   true,
+				Description: "The SignalFx AWS account ID to use with an AWS role.",
 			},
 		},
 
@@ -61,6 +67,9 @@ func integrationAWSExternalRead(d *schema.ResourceData, meta interface{}) error 
 			return err
 		}
 	}
+	if err := d.Set("signalfx_aws_account", int.SfxAwsAccountArn); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -97,6 +106,9 @@ func integrationAWSExternalCreate(d *schema.ResourceData, meta interface{}) erro
 		return err
 	}
 	d.SetId(int.Id)
+	if err := d.Set("signalfx_aws_account", int.SfxAwsAccountArn); err != nil {
+		return err
+	}
 	if err := d.Set("external_id", int.ExternalId); err != nil {
 		return err
 	}
