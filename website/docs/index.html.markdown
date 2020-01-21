@@ -20,6 +20,10 @@ Use the navigation to the left to read about the available resources.
 # Configure the SignalFx provider
 provider "signalfx" {
   auth_token = "${var.signalfx_auth_token}"
+  # If your organization uses a different realm
+  # api_url = "https://api.us2.signalfx.com"
+  # If your organization uses a custom URL
+  # custom_app_url = "https://myorg.signalfx.com"
 }
 
 # Create a new detector
