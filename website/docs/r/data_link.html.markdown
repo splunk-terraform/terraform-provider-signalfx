@@ -28,7 +28,7 @@ resource "signalfx_data_link" "my_data_link" {
 
 # A dashboard-specific link to an external URL
 resource "signalfx_data_link" "my_data_link_dash" {
-		dashboard_id = "${signalfx_dashboard.mydashboard0.id}"
+		context_dashboard_id = "${signalfx_dashboard.mydashboard0.id}"
     property_name = "pname2"
     property_value = "pvalue"
 
@@ -50,7 +50,7 @@ The following arguments are supported in the resource block:
 
 * `property_name` - (Optional) Name (key) of the metadata that's the trigger of a data link. If you specify `property_value`, you must specify `property_name`.
 * `property_value` - (Optional) Value of the metadata that's the trigger of a data link. If you specify this property, you must also specify `property_name`.
-* `dashboard_id` - (Optional) If provided, scopes this data link to the supplied dashobard id. If omitted then the link will be global.
+* `context_dashboard_id` - (Optional) If provided, scopes this data link to the supplied dashboard id. If omitted then the link will be global.
 * `target_external_url` - (Optional) Link to an external URL
   * `name` (Required) User-assigned target name. Use this value to differentiate between the link targets for a data link object.
   * `is_default` - (Optional) Flag that designates a target as the default for a data link object. `true` by default.
