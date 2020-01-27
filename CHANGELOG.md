@@ -1,4 +1,9 @@
-## 4.11.2 (Unreleased)
+## 4.12.0 (Unreleased)
+
+FEATURES:
+
+* resource/detector: Added `viz_options` field and its constituents: `label`, `display_name`, `color`, `value_unit`, `value_prefix` and `value_suffix`.
+
 ## 4.11.1 (January 21, 2020)
 
 IMPROVEMENTS:
