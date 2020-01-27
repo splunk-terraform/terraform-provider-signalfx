@@ -1,4 +1,4 @@
-# 1.6.13, Pending
+# 1.6.14, Pending
 
 ## Added
 
@@ -7,6 +7,12 @@
 ## Bugfixes
 
 ## Removed
+
+# 1.6.13, 2020-01-27
+
+## Added
+
+* Added `PublishLabelOptions` to Detector
 
 # 1.6.12, 2020-01-21
 

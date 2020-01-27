@@ -35,8 +35,9 @@ type Detector struct {
 	// If true one, or more statements in the detector matched too many time series and the matched set was forcefully limited. In this case, the detector is most likely looking at incomplete data or an incomplete aggregation. If this flag is set to true, you can use a series of partition_filter functions to split the data set into manageable pieces then use the union function to rejoin the results in a subsequent computation. Note that the union function still observes the time series limit; some type of aggregation on the partial streams must limit the data set prior to recombining the streams for this approach to work.
 	OverMTSLimit bool `json:"overMTSLimit,omitempty"`
 	// The SignalFlow program that populates the detector. The program must include one or more detect functions and each detect function must be modified by a publish stream method with a label that's unique across the program. If you wish to support custom notification messages that include input data you must use variables to assign the detect conditions . If more than one line of SignalFlow is included, each line should be separated by either semicolons (\";\") or new line characters (\"\\n\"). See the [Detectors Overview](https://developers.signalfx.com/v2/reference.html#detectors-overview) for more information.
-	ProgramText string  `json:"programText,omitempty"`
-	Rules       []*Rule `json:"rules,omitempty"`
+	ProgramText         string `json:"programText,omitempty"`
+	PublishLabelOptions *PublishLabelOptions
+	Rules               []*Rule `json:"rules,omitempty"`
 	// A an array of keywords that filters detectors by one of their fields. Use tags to indicate the state of a detector or its data source (for example, you can label a detector with a \"prod\" tag to indicate that it monitors a production environment).
 	Tags []string `json:"tags,omitempty"`
 	// IDs of teams associated with this detector. Teams associated with a detector can see the detector and its active alerts on the team's landing page in the web UI. The list of teams associated with a detector is independent of notification settings.  Teams specified in this field don\\'\\'t automatically get notified of new alerts, and teams that choose to get alerts do not have to display the detector on their team landing page in the web application.
