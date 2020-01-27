@@ -16,6 +16,7 @@ type Visualization struct {
 	// If true, markers are drawn for each datapoint in the visualization.
 	ShowDataMarkers bool `json:"showDataMarkers,omitempty"`
 	// If true, a vertical line is displayed on the visualization when an event is triggered.
-	ShowEventLines bool  `json:"showEventLines,omitempty"`
-	Time           *Time `json:"time,omitempty"`
+	ShowEventLines      bool                   `json:"showEventLines,omitempty"`
+	Time                *Time                  `json:"time,omitempty"`
+	PublishLabelOptions []*PublishLabelOptions `json:"publishLabelOptions,omitempty"`
 }

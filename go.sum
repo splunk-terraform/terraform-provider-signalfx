@@ -125,8 +125,8 @@ github.com/hashicorp/logutils v1.0.0 h1:dLEQVugN8vlakKOUE3ihGLTZJRB4j+M2cdTm/ORI
 github.com/hashicorp/logutils v1.0.0/go.mod h1:QIAnNjmIWmVIIkWDTG1z5v++HQmx9WQRO+LraFDTW64=
 github.com/hashicorp/terraform-config-inspect v0.0.0-20191115094559-17f92b0546e8 h1:+RyjwU+Gnd/aTJBPZVDNm903eXVjjqhbaR4Ypx3xYyY=
 github.com/hashicorp/terraform-config-inspect v0.0.0-20191115094559-17f92b0546e8/go.mod h1:p+ivJws3dpqbp1iP84+npOyAmTTOLMgCzrXd3GSdn/A=
-github.com/hashicorp/terraform-plugin-sdk v1.4.0 h1:b1LluARpES0Gq78oF4a9of3eS0iXM5JTwlt604vGvBY=
-github.com/hashicorp/terraform-plugin-sdk v1.4.0/go.mod h1:H5QLx/uhwfxBZ59Bc5SqT19M4i+fYt7LZjHTpbLZiAg=
+github.com/hashicorp/terraform-plugin-sdk v1.5.0 h1:hzac/oigJkGup0kI+PwBGI4/fvG7Na8kM8j9xCBrmWo=
+github.com/hashicorp/terraform-plugin-sdk v1.5.0/go.mod h1:H5QLx/uhwfxBZ59Bc5SqT19M4i+fYt7LZjHTpbLZiAg=
 github.com/hashicorp/terraform-svchost v0.0.0-20191011084731-65d371908596 h1:hjyO2JsNZUKT1ym+FAdlBEkGPevazYsmVgIMw7dVELg=
 github.com/hashicorp/terraform-svchost v0.0.0-20191011084731-65d371908596/go.mod h1:kNDNcF7sN4DocDLBkQYz73HGKwN1ANB1blq4lIYLYvg=
 github.com/hashicorp/yamux v0.0.0-20180604194846-3520598351bb h1:b5rjCoWHc7eqmAS4/qyk21ZsHyb6Mxv/jykxvNTkU4M=
@@ -208,8 +208,8 @@ github.com/signalfx/gohistogram v0.0.0-20160107210732-1ccfd2ff5083/go.mod h1:adP
 github.com/signalfx/golib/v3 v3.0.0 h1:7jU1iitxa4qsLMbOlquaHHaUf0GJ86P8ZFxnE5hTUVA=
 github.com/signalfx/golib/v3 v3.0.0/go.mod h1:p+krygP/cDlWvCBEgdkQp3H16rbP4NW7YQa81TDMRe8=
 github.com/signalfx/gomemcache v0.0.0-20180823214636-4f7ef64c72a9/go.mod h1:Ytb8KfCSyuwy/VILnROdgCvbQLA5ch0nkbG7lKT0BXw=
-github.com/signalfx/signalfx-go v1.6.12 h1:dze8CmUycs7nGxK61p/Wm3y82AwoixMBkiaapcY+mVc=
-github.com/signalfx/signalfx-go v1.6.12/go.mod h1:CeCGXKT2wqqky0Nz8eV0NH/CpMPE7tzYUcV8eQS1U1s=
+github.com/signalfx/signalfx-go v1.6.13-0.20200127161541-709d317dd29e h1:Gqh2RjQSPneQ61UERPICBcpbad89HKSGnDzdi7UwTBk=
+github.com/signalfx/signalfx-go v1.6.13-0.20200127161541-709d317dd29e/go.mod h1:CeCGXKT2wqqky0Nz8eV0NH/CpMPE7tzYUcV8eQS1U1s=
 github.com/signalfx/thrift v0.0.0-20181211001559-3838fa316492/go.mod h1:Xv29nl9fxdk0hmeqcUHgAZZwvYrOhduNW+9qk4H+6K0=
 github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d/go.mod h1:OnSkiWE9lh6wB0YB77sQom3nweQdgAjqCqsofrRNTgc=
 github.com/smartystreets/assertions v0.0.0-20190215210624-980c5ac6f3ac/go.mod h1:OnSkiWE9lh6wB0YB77sQom3nweQdgAjqCqsofrRNTgc=

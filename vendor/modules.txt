@@ -126,7 +126,7 @@ github.com/hashicorp/hcl/v2/json
 github.com/hashicorp/logutils
 # github.com/hashicorp/terraform-config-inspect v0.0.0-20191115094559-17f92b0546e8
 github.com/hashicorp/terraform-config-inspect/tfconfig
-# github.com/hashicorp/terraform-plugin-sdk v1.4.0
+# github.com/hashicorp/terraform-plugin-sdk v1.5.0
 github.com/hashicorp/terraform-plugin-sdk/helper/hashcode
 github.com/hashicorp/terraform-plugin-sdk/helper/logging
 github.com/hashicorp/terraform-plugin-sdk/helper/resource
@@ -209,7 +209,7 @@ github.com/posener/complete/cmd/install
 github.com/posener/complete/match
 # github.com/signalfx/golib/v3 v3.0.0
 github.com/signalfx/golib/v3/pointer
-# github.com/signalfx/signalfx-go v1.6.12
+# github.com/signalfx/signalfx-go v1.6.13-0.20200127161541-709d317dd29e
 github.com/signalfx/signalfx-go
 github.com/signalfx/signalfx-go/alertmuting
 github.com/signalfx/signalfx-go/chart

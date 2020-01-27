@@ -45,7 +45,8 @@ func detectorResource() *schema.Resource {
 			"show_data_markers": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Description: "(false by default) When true, markers will be drawn for each datapoint within the visualization.",
+				Default:     true,
+				Description: "(true by default) When true, markers will be drawn for each datapoint within the visualization.",
 			},
 			"show_event_lines": &schema.Schema{
 				Type:        schema.TypeBool,
@@ -156,6 +157,47 @@ func detectorResource() *schema.Resource {
 				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "User IDs that have write access to this dashboard",
+			},
+			"viz_options": &schema.Schema{
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Description: "Plot-level customization options, associated with a publish statement",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"label": &schema.Schema{
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "The label used in the publish statement that displays the plot (metric time series data) you want to customize",
+						},
+						"color": &schema.Schema{
+							Type:         schema.TypeString,
+							Optional:     true,
+							Description:  "Color to use",
+							ValidateFunc: validatePerSignalColor,
+						},
+						"display_name": &schema.Schema{
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "Specifies an alternate value for the Plot Name column of the Data Table associated with the chart.",
+						},
+						"value_unit": &schema.Schema{
+							Type:         schema.TypeString,
+							Optional:     true,
+							ValidateFunc: validateUnitTimeChart,
+							Description:  "A unit to attach to this plot. Units support automatic scaling (eg thousands of bytes will be displayed as kilobytes)",
+						},
+						"value_prefix": &schema.Schema{
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "An arbitrary prefix to display with the value of this plot",
+						},
+						"value_suffix": &schema.Schema{
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "An arbitrary suffix to display with the value of this plot",
+						},
+					},
+				},
 			},
 			"url": &schema.Schema{
 				Type:        schema.TypeString,
@@ -341,12 +383,33 @@ func getVisualizationOptionsDetector(d *schema.ResourceData) *detector.Visualiza
 		viz.Time = tr
 	}
 
-	if (detector.Visualization{}) == viz {
-		// Return a nil ptr so we don't serialize nothing
-		return nil
+	if vizOptions := getPerSignalDetectorVizOptions(d); len(vizOptions) > 0 {
+		viz.PublishLabelOptions = vizOptions
 	}
 
 	return &viz
+}
+
+func detectorPublishLabelOptionsToMap(options *detector.PublishLabelOptions) (map[string]interface{}, error) {
+	color := ""
+	if options.PaletteIndex != nil {
+		// We might not have a color, so tread lightly
+		c, err := getNameFromPaletteColorsByIndex(int(*options.PaletteIndex))
+		if err != nil {
+			return map[string]interface{}{}, err
+		}
+		// Ok, we can set the color now
+		color = c
+	}
+
+	return map[string]interface{}{
+		"label":        options.Label,
+		"display_name": options.DisplayName,
+		"color":        color,
+		"value_unit":   options.ValueUnit,
+		"value_suffix": options.ValueSuffix,
+		"value_prefix": options.ValuePrefix,
+	}, nil
 }
 
 func detectorCreate(d *schema.ResourceData, meta interface{}) error {
@@ -483,6 +546,20 @@ func detectorAPIToTF(d *schema.ResourceData, det *detector.Detector) error {
 				return err
 			}
 		}
+
+		if len(viz.PublishLabelOptions) > 0 {
+			plos := make([]map[string]interface{}, len(viz.PublishLabelOptions))
+			for i, plo := range viz.PublishLabelOptions {
+				no, err := detectorPublishLabelOptionsToMap(plo)
+				if err != nil {
+					return err
+				}
+				plos[i] = no
+			}
+			if err := d.Set("viz_options", plos); err != nil {
+				return err
+			}
+		}
 	}
 
 	rules := make([]map[string]interface{}, len(det.Rules))
@@ -546,6 +623,38 @@ func detectorDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 
 	return config.Client.DeleteDetector(d.Id())
+}
+
+func getPerSignalDetectorVizOptions(d *schema.ResourceData) []*detector.PublishLabelOptions {
+	viz := d.Get("viz_options").(*schema.Set).List()
+	vizList := make([]*detector.PublishLabelOptions, len(viz))
+	for i, v := range viz {
+		v := v.(map[string]interface{})
+		item := &detector.PublishLabelOptions{
+			Label: v["label"].(string),
+		}
+		if val, ok := v["display_name"].(string); ok && val != "" {
+			item.DisplayName = val
+		}
+		if val, ok := v["color"].(string); ok {
+			if elem, ok := PaletteColors[val]; ok {
+				i := int32(elem)
+				item.PaletteIndex = &i
+			}
+		}
+		if val, ok := v["value_unit"].(string); ok && val != "" {
+			item.ValueUnit = val
+		}
+		if val, ok := v["value_suffix"].(string); ok && val != "" {
+			item.ValueSuffix = val
+		}
+		if val, ok := v["value_prefix"].(string); ok && val != "" {
+			item.ValuePrefix = val
+		}
+
+		vizList[i] = item
+	}
+	return vizList
 }
 
 /*
