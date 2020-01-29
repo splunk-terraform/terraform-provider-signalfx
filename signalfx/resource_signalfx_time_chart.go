@@ -6,7 +6,6 @@ import (
 	"log"
 	"math"
 	"strconv"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
@@ -322,6 +321,9 @@ func timeChartResource() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Dimension to show in the on-chart legend. On-chart legend is off unless a dimension is specified. Allowed: 'metric', 'plot_label' and any dimension.",
+				ValidateFunc: validation.StringInSlice([]string{
+					"metric", "plot_label",
+				}, false),
 			},
 			"legend_fields_to_hide": &schema.Schema{
 				Type:          schema.TypeSet,
@@ -376,11 +378,13 @@ func timeChartResource() *schema.Resource {
 				Description: "Tags associated with the chart",
 			},
 			"plot_type": &schema.Schema{
-				Type:         schema.TypeString,
-				Optional:     true,
-				Default:      "LineChart",
-				Description:  "(LineChart by default) The default plot display style for the visualization. Must be \"LineChart\", \"AreaChart\", \"ColumnChart\", or \"Histogram\"",
-				ValidateFunc: validatePlotTypeTimeChart,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Default:     "LineChart",
+				Description: "(LineChart by default) The default plot display style for the visualization. Must be \"LineChart\", \"AreaChart\", \"ColumnChart\", or \"Histogram\"",
+				ValidateFunc: validation.StringInSlice([]string{
+					"AreaChart", "ColumnChart", "Histogram", "LineChart",
+				}, false),
 			},
 			"histogram_options": &schema.Schema{
 				Type:        schema.TypeList,
@@ -415,17 +419,21 @@ func timeChartResource() *schema.Resource {
 							ValidateFunc: validatePerSignalColor,
 						},
 						"axis": &schema.Schema{
-							Type:         schema.TypeString,
-							Optional:     true,
-							Default:      "left",
-							ValidateFunc: validateAxisTimeChart,
-							Description:  "The Y-axis associated with values for this plot. Must be either \"right\" or \"left\". Defaults to \"left\".",
+							Type:        schema.TypeString,
+							Optional:    true,
+							Default:     "left",
+							Description: "The Y-axis associated with values for this plot. Must be either \"right\" or \"left\". Defaults to \"left\".",
+							ValidateFunc: validation.StringInSlice([]string{
+								"left", "right",
+							}, false),
 						},
 						"plot_type": &schema.Schema{
-							Type:         schema.TypeString,
-							Optional:     true,
-							ValidateFunc: validatePlotTypeTimeChart,
-							Description:  "(Chart plot_type by default) The visualization style to use. Must be \"LineChart\", \"AreaChart\", \"ColumnChart\", or \"Histogram\"",
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "(Chart plot_type by default) The visualization style to use. Must be \"LineChart\", \"AreaChart\", \"ColumnChart\", or \"Histogram\"",
+							ValidateFunc: validation.StringInSlice([]string{
+								"AreaChart", "ColumnChart", "Histogram", "LineChart",
+							}, false),
 						},
 						"display_name": &schema.Schema{
 							Type:        schema.TypeString,
@@ -435,8 +443,8 @@ func timeChartResource() *schema.Resource {
 						"value_unit": &schema.Schema{
 							Type:         schema.TypeString,
 							Optional:     true,
-							ValidateFunc: validateUnitTimeChart,
 							Description:  "A unit to attach to this plot. Units support automatic scaling (eg thousands of bytes will be displayed as kilobytes)",
+							ValidateFunc: validateUnitTimeChart,
 						},
 						"value_prefix": &schema.Schema{
 							Type:        schema.TypeString,
@@ -1126,63 +1134,31 @@ func timechartDelete(d *schema.ResourceData, meta interface{}) error {
 	return config.Client.DeleteChart(d.Id())
 }
 
-/*
-  Validates the plot_type field against a list of allowed words.
-*/
-func validatePlotTypeTimeChart(v interface{}, k string) (we []string, errors []error) {
-	value := v.(string)
-	if value != "LineChart" && value != "AreaChart" && value != "ColumnChart" && value != "Histogram" {
-		errors = append(errors, fmt.Errorf("%s not allowed; Must be \"LineChart\", \"AreaChart\", \"ColumnChart\", or \"Histogram\"", value))
-	}
-	return
-}
-
-/*
-  Validates the axis right or left.
-*/
-func validateAxisTimeChart(v interface{}, k string) (we []string, errors []error) {
-	value := v.(string)
-	if value != "right" && value != "left" {
-		errors = append(errors, fmt.Errorf("%s not allowed; must be either right or left", value))
-	}
-	return
-}
-
-func validateUnitTimeChart(v interface{}, k string) (we []string, errors []error) {
-	value := v.(string)
-	allowedWords := []string{
-		"Bit",
-		"Kilobit",
-		"Megabit",
-		"Gigabit",
-		"Terabit",
-		"Petabit",
-		"Exabit",
-		"Zettabit",
-		"Yottabit",
-		"Byte",
-		"Kibibyte",
-		"Mebibyte",
-		"Gigibyte",
-		"Tebibyte",
-		"Pebibyte",
-		"Exbibyte",
-		"Zebibyte",
-		"Yobibyte",
-		"Nanosecond",
-		"Microsecond",
-		"Millisecond",
-		"Second",
-		"Minute",
-		"Hour",
-		"Day",
-		"Week",
-	}
-	for _, word := range allowedWords {
-		if value == word {
-			return
-		}
-	}
-	errors = append(errors, fmt.Errorf("%s not allowed; must be one of: %s", value, strings.Join(allowedWords, ", ")))
-	return
-}
+var validateUnitTimeChart = validation.StringInSlice([]string{
+	"Bit",
+	"Kilobit",
+	"Megabit",
+	"Gigabit",
+	"Terabit",
+	"Petabit",
+	"Exabit",
+	"Zettabit",
+	"Yottabit",
+	"Byte",
+	"Kibibyte",
+	"Mebibyte",
+	"Gigibyte",
+	"Tebibyte",
+	"Pebibyte",
+	"Exbibyte",
+	"Zebibyte",
+	"Yobibyte",
+	"Nanosecond",
+	"Microsecond",
+	"Millisecond",
+	"Second",
+	"Minute",
+	"Hour",
+	"Day",
+	"Week",
+}, false)
