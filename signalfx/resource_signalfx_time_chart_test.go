@@ -7,7 +7,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
-	"github.com/stretchr/testify/assert"
 
 	sfx "github.com/signalfx/signalfx-go"
 )
@@ -252,18 +251,6 @@ func TestAccCreateUpdateTimeChart(t *testing.T) {
 			},
 		},
 	})
-}
-
-func TestValidatePlotTypeTimeChartAllowed(t *testing.T) {
-	for _, value := range []string{"LineChart", "AreaChart", "ColumnChart", "Histogram"} {
-		_, errors := validatePlotTypeTimeChart(value, "plot_type")
-		assert.Equal(t, len(errors), 0)
-	}
-}
-
-func TestValidatePlotTypeTimeChartNotAllowed(t *testing.T) {
-	_, errors := validatePlotTypeTimeChart("absolute", "plot_type")
-	assert.Equal(t, len(errors), 1)
 }
 
 func testAccCheckTimeChartResourceExists(s *terraform.State) error {
