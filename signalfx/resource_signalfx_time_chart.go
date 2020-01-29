@@ -321,9 +321,6 @@ func timeChartResource() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Dimension to show in the on-chart legend. On-chart legend is off unless a dimension is specified. Allowed: 'metric', 'plot_label' and any dimension.",
-				ValidateFunc: validation.StringInSlice([]string{
-					"metric", "plot_label",
-				}, false),
 			},
 			"legend_fields_to_hide": &schema.Schema{
 				Type:          schema.TypeSet,
@@ -1007,9 +1004,10 @@ func timechartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 		dil := options.OnChartLegendOptions.DimensionInLegend
 		onChartLegendDim := dil
 		// We use different names inside TF, so convert them back
-		if dil == "sf_originatingMetric" {
+		currDim := d.Get("on_chart_legend_dimension").(string)
+		if dil == "sf_originatingMetric" && currDim != "sf_originatingMetric" {
 			onChartLegendDim = "metric"
-		} else if dil == "sf_metric" {
+		} else if dil == "sf_metric" && currDim != "sf_metric" {
 			onChartLegendDim = "plot_label"
 		}
 		if err := d.Set("on_chart_legend_dimension", onChartLegendDim); err != nil {

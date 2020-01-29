@@ -1,7 +1,12 @@
 ## 4.12.2 (Unreleased)
+
+IMPROVEMENTS:
+
 ## 4.12.1 (January 29, 2020)
 
-* IMPROVEMENTS
+* resource/time_chart: Fix accidental overzealous validation of `on_chart_legend_dimension` from last release. Sorry! [#145](https://github.com/terraform-providers/terraform-provider-signalfx/pull/145)
+
+IMPROVEMENTS:
 
 * resource/time_chart: Added validation for `on_chart_legend_dimension` to prevent unclean plans. [#143](https://github.com/terraform-providers/terraform-provider-signalfx/pull/143)
 
