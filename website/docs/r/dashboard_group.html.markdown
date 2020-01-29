@@ -56,6 +56,10 @@ resource "signalfx_dashboard_group" "mydashboardgroup_withmirrors" {
 }
 ```
 
+## Prefixing
+
+Please note that you can use the `dashboard_group_name_prefix` option to the provider to include a prefix on any created dashboard group.
+
 ## Argument Reference
 
 The following arguments are supported in the resource block:

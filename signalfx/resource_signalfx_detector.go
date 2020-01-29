@@ -254,7 +254,7 @@ func timeRangeStateUpgradeV0(rawState map[string]interface{}, meta interface{}) 
 /*
   Use Resource object to construct json payload in order to create a detector
 */
-func getPayloadDetector(d *schema.ResourceData) (*detector.CreateUpdateDetectorRequest, error) {
+func getPayloadDetector(namePrefix string, d *schema.ResourceData) (*detector.CreateUpdateDetectorRequest, error) {
 
 	tfRules := d.Get("rule").(*schema.Set).List()
 	rulesList := make([]*detector.Rule, len(tfRules))
@@ -306,6 +306,11 @@ func getPayloadDetector(d *schema.ResourceData) (*detector.CreateUpdateDetectorR
 			rule.Notifications = notify
 		}
 		rulesList[i] = rule
+	}
+
+	var name = d.Get("name").(string)
+	if namePrefix != "" {
+		name = fmt.Sprintf("%s %s", namePrefix, name)
 	}
 
 	cudr := &detector.CreateUpdateDetectorRequest{
@@ -414,7 +419,7 @@ func detectorPublishLabelOptionsToMap(options *detector.PublishLabelOptions) (ma
 
 func detectorCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	payload, err := getPayloadDetector(d)
+	payload, err := getPayloadDetector(config.DetectorNamePrefix, d)
 	if err != nil {
 		return fmt.Errorf("Failed creating json payload: %s", err.Error())
 	}
@@ -594,7 +599,7 @@ func detectorAPIToTF(d *schema.ResourceData, det *detector.Detector) error {
 
 func detectorUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	payload, err := getPayloadDetector(d)
+	payload, err := getPayloadDetector(config.DetectorNamePrefix, d)
 	if err != nil {
 		return fmt.Errorf("Failed creating json payload: %s", err.Error())
 	}

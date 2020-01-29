@@ -20,10 +20,12 @@ var HomeConfigSuffix = "/.signalfx.conf"
 var HomeConfigPath = ""
 
 type signalfxConfig struct {
-	AuthToken    string `json:"auth_token"`
-	APIURL       string `json:"api_url"`
-	CustomAppURL string `json:"custom_app_url"`
-	Client       *sfx.Client
+	AuthToken                string `json:"auth_token"`
+	APIURL                   string `json:"api_url"`
+	CustomAppURL             string `json:"custom_app_url"`
+	DashboardGroupNamePrefix string `json:"dashboard_group_name_prefix"`
+	DetectorNamePrefix       string `json:"detector_name_prefix"`
+	Client                   *sfx.Client
 }
 
 func Provider() terraform.ResourceProvider {

@@ -2,6 +2,7 @@ package signalfx
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"strings"
 
@@ -144,9 +145,14 @@ func dashboardgroupExists(d *schema.ResourceData, meta interface{}) (bool, error
 /*
   Use Resource object to construct json payload in order to create a dasboard group
 */
-func getPayloadDashboardGroup(d *schema.ResourceData) *dashboard_group.CreateUpdateDashboardGroupRequest {
+func getPayloadDashboardGroup(namePrefix string, d *schema.ResourceData) *dashboard_group.CreateUpdateDashboardGroupRequest {
+	var name = d.Get("name").(string)
+	if namePrefix != "" {
+		name = fmt.Sprintf("%s %s", namePrefix, name)
+	}
+
 	cudgr := &dashboard_group.CreateUpdateDashboardGroupRequest{
-		Name:              d.Get("name").(string),
+		Name:              name,
 		Description:       d.Get("description").(string),
 		AuthorizedWriters: &dashboard_group.AuthorizedWriters{},
 	}
@@ -275,7 +281,7 @@ func getPayloadDashboardGroup(d *schema.ResourceData) *dashboard_group.CreateUpd
 
 func dashboardgroupCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	payload := getPayloadDashboardGroup(d)
+	payload := getPayloadDashboardGroup(config.DashboardGroupNamePrefix, d)
 
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Dashboard Group Create Payload: %s", debugOutput)
@@ -393,7 +399,7 @@ func dashboardgroupRead(d *schema.ResourceData, meta interface{}) error {
 
 func dashboardgroupUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	payload := getPayloadDashboardGroup(d)
+	payload := getPayloadDashboardGroup(config.DashboardGroupNamePrefix, d)
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Update Dashboard Group Payload: %s", string(debugOutput))
 

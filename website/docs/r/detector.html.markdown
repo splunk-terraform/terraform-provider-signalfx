@@ -52,6 +52,10 @@ variable "clusters" {
 }
 ```
 
+## Prefixing
+
+Please note that you can use the `detector_name_prefix` option to the provider to include a prefix on any created detector.
+
 ## Notification Format
 
 As SignalFx supports different notification mechanisms a comma-delimited string is used to provide inputs. If you'd like to specify multiple notifications, then each should be a member in the list, like so:
