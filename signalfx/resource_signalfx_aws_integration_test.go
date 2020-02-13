@@ -58,6 +58,7 @@ resource "signalfx_aws_integration" "aws_myteam_tokXX" {
 		poll_rate = 300
 		import_cloud_watch = true
 		enable_aws_usage = true
+		use_get_metric_data_method = true
 
 		custom_namespace_sync_rule {
 			default_action = "Exclude"
@@ -120,6 +121,7 @@ resource "signalfx_aws_integration" "aws_myteam_tokXX" {
 		poll_rate = 300
 		import_cloud_watch = true
 		enable_aws_usage = true
+		use_get_metric_data_method = true
 
 		custom_namespace_sync_rule {
 			default_action = "Exclude"

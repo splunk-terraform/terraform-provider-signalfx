@@ -1,4 +1,4 @@
-# 1.6.15, Pending
+# 1.6.17, Pending
 
 ## Added
 
@@ -7,6 +7,12 @@
 ## Bugfixes
 
 ## Removed
+
+# 1.6.16, 2020-02-13
+
+## Added
+
+* Added `UseGetMetricDataMethod` to AWS integration
 
 # 1.6.15, 2020-01-27
 

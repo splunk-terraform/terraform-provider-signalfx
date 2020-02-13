@@ -81,3 +81,4 @@ Fields that expect an AWS service/namespace will work with one of: "AWS/ApiGatew
 * `role_arn` - (Optional) Role ARN that you add to an existing AWS integration object. **Note**: Ensure you use the `arn` property of your role, not the id!
 * `services` - (Optional) List of AWS services that you want SignalFx to monitor. Each element is a string designating an AWS service. Conflicts with `namespace_sync_rule`.
 * `poll_rate` - (Optional) AWS poll rate (in seconds). One of `60` or `300`.
+* `use_get_metric_data_method` - (Optional) Enable the use of Amazon's `GetMetricData` for collecting metrics. Note that this requires the inclusion of the `"cloudwatch:GetMetricData"` permission.

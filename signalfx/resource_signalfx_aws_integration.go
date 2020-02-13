@@ -168,6 +168,12 @@ func integrationAWSResource() *schema.Resource {
 				ConflictsWith: []string{"token", "key"},
 				Description:   "Used with `signalfx_aws_external_integration`. Use this property to specify the external id.",
 			},
+			"use_get_metric_data_method": &schema.Schema{
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Enables the use of Amazon's GetMetricData API. Defaults to `false`.",
+			},
 		},
 
 		Create: integrationAWSCreate,
@@ -238,6 +244,9 @@ func awsIntegrationAPIToTF(d *schema.ResourceData, aws *integration.AwsCloudWatc
 		return err
 	}
 	if err := d.Set("poll_rate", *aws.PollRate/1000); err != nil {
+		return err
+	}
+	if err := d.Set("use_get_metric_data_method", aws.UseGetMetricDataMethod); err != nil {
 		return err
 	}
 	if aws.Token != "" {
@@ -320,11 +329,12 @@ func awsIntegrationAPIToTF(d *schema.ResourceData, aws *integration.AwsCloudWatc
 func getPayloadAWSIntegration(d *schema.ResourceData) (*integration.AwsCloudWatchIntegration, error) {
 
 	aws := &integration.AwsCloudWatchIntegration{
-		Name:             d.Get("name").(string),
-		Type:             "AWSCloudWatch",
-		Enabled:          d.Get("enabled").(bool),
-		EnableAwsUsage:   d.Get("enable_aws_usage").(bool),
-		ImportCloudWatch: d.Get("import_cloud_watch").(bool),
+		Name:                   d.Get("name").(string),
+		Type:                   "AWSCloudWatch",
+		Enabled:                d.Get("enabled").(bool),
+		EnableAwsUsage:         d.Get("enable_aws_usage").(bool),
+		ImportCloudWatch:       d.Get("import_cloud_watch").(bool),
+		UseGetMetricDataMethod: d.Get("use_get_metric_data_method").(bool),
 	}
 
 	if d.Get("external_id").(string) != "" {
