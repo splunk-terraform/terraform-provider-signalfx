@@ -1,4 +1,9 @@
 ## 4.12.3 (Unreleased)
+
+IMPROVEMENTS:
+
+* resource/signalfx_aws_integration: Added support for `use_get_metric_data_method`.
+
 ## 4.12.2 (January 29, 2020)
 
 IMPROVEMENTS:
