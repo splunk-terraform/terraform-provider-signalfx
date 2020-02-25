@@ -17,7 +17,7 @@ A dashboard is a curated collection of specific charts and supports dimensional 
 ```terraform
 resource "signalfx_dashboard" "mydashboard0" {
     name = "My Dashboard"
-    dashboard_group = "${signalfx_dashboard_group.mydashboardgroup0.id}"
+    dashboard_group = signalfx_dashboard_group.mydashboardgroup0.id
 
     time_range = "-30m"
 
@@ -31,12 +31,12 @@ resource "signalfx_dashboard" "mydashboard0" {
         values = ["uswest-1-"]
     }
     chart {
-        chart_id = "${signalfx_time_chart.mychart0.id}"
+        chart_id = signalfx_time_chart.mychart0.id
         width = 12
         height = 1
     }
     chart {
-        chart_id = "${signalfx_time_chart.mychart1.id}"
+        chart_id = signalfx_time_chart.mychart1.id
         width = 5
         height = 2
     }

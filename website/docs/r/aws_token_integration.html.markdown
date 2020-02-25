@@ -29,7 +29,7 @@ resource "aws_iam_role" "aws_sfx_role" {
 resource "signalfx_aws_integration" "aws_myteam" {
     enabled = true
 
-    integration_id = "${signalfx_aws_token_integration.aws_myteam_token.id}"
+    integration_id = signalfx_aws_token_integration.aws_myteam_token.id
     token = "put_your_token_here"
     key = "put_your_key_here"
 		regions = ["us-east-1"]
