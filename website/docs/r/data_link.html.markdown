@@ -21,14 +21,14 @@ resource "signalfx_data_link" "my_data_link" {
     target_signalfx_dashboard {
       is_default = true
       name = "sfx_dash"
-			dashboard_group_id = "${signalfx_dashboard_group.mydashboardgroup0.id}"
-			dashboard_id = "${signalfx_dashboard.mydashboard0.id}"
+			dashboard_group_id = signalfx_dashboard_group.mydashboardgroup0.id
+			dashboard_id = signalfx_dashboard.mydashboard0.id
     }
 }
 
 # A dashboard-specific link to an external URL
 resource "signalfx_data_link" "my_data_link_dash" {
-		context_dashboard_id = "${signalfx_dashboard.mydashboard0.id}"
+		context_dashboard_id = signalfx_dashboard.mydashboard0.id
     property_name = "pname2"
     property_value = "pvalue"
 
