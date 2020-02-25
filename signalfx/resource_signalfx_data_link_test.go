@@ -3,6 +3,7 @@ package signalfx
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
@@ -28,6 +29,33 @@ resource "signalfx_data_link" "big_test_data_link" {
 }
 `
 
+const newDataLinkConfigWithoutPropertyValue = `
+resource "signalfx_data_link" "big_test_data_link" {
+    property_name = "pname"
+
+    target_external_url {
+      is_default = false
+      name = "ex_url"
+      time_format = "ISO8601"
+      url = "https://www.example.com"
+      property_key_mapping = {
+        foo = "bar"
+      }
+    }
+}
+`
+
+const newDataLinkConfigWithoutPropertyErr = `
+resource "signalfx_data_link" "big_test_data_link" {
+    target_signalfx_dashboard {
+      dashboard_group_id = "XYZ"
+      dashboard_id = "XYZ"
+      is_default = false
+      name = "dashboard"
+    }
+}
+`
+
 const updatedDataLinkConfig = `
 resource "signalfx_data_link" "big_test_data_link" {
     property_name = "pname"
@@ -44,6 +72,20 @@ resource "signalfx_data_link" "big_test_data_link" {
     }
 }
 `
+
+func TestAccCreateDashboardDataLinkFails(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		Providers:    testAccProviders,
+		CheckDestroy: testAccDataLinkDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config:      newDataLinkConfigWithoutPropertyErr,
+				ExpectError: regexp.MustCompile("Must supply a property_name when using target_signalfx_dashboard"),
+			},
+		},
+	})
+
+}
 
 func TestAccCreateUpdateDataLink(t *testing.T) {
 	resource.Test(t, resource.TestCase{
@@ -73,6 +115,25 @@ func TestAccCreateUpdateDataLink(t *testing.T) {
 					testAccCheckDataLinkResourceExists,
 					resource.TestCheckResourceAttr("signalfx_data_link.big_test_data_link", "property_name", "pname"),
 					resource.TestCheckResourceAttr("signalfx_data_link.big_test_data_link", "property_value", "pvalue_new"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccCreateUpdateDataLinkWithoutPropertyValue(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccDataLinkDestroy,
+		Steps: []resource.TestStep{
+			// Create It
+			{
+				Config: newDataLinkConfigWithoutPropertyValue,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckDataLinkResourceExists,
+					resource.TestCheckResourceAttr("signalfx_data_link.big_test_data_link", "property_name", "pname"),
+					resource.TestCheckResourceAttr("signalfx_data_link.big_test_data_link", "property_value", ""),
 				),
 			},
 		},
