@@ -167,3 +167,55 @@ func (c *Client) SearchDetectors(limit int, name string, offset int, tags string
 
 	return finalDetectors, err
 }
+
+// GetDetectorEvents gets a detector's events.
+func (c *Client) GetDetectorEvents(id string, from int, to int, offset int, limit int) ([]*detector.Event, error) {
+	params := url.Values{}
+	params.Add("from", strconv.Itoa(from))
+	params.Add("to", strconv.Itoa(to))
+	params.Add("offset", strconv.Itoa(offset))
+	params.Add("limit", strconv.Itoa(limit))
+	resp, err := c.doRequest("GET", DetectorAPIURL+"/"+id+"/events", params, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		message, _ := ioutil.ReadAll(resp.Body)
+		return nil, fmt.Errorf("Bad status %d: %s", resp.StatusCode, message)
+	}
+
+	var events []*detector.Event
+
+	err = json.NewDecoder(resp.Body).Decode(&events)
+	if err != nil {
+		fmt.Printf("+%v", err)
+	}
+	return events, err
+}
+
+// GetDetectorIncidents gets a detector's incidents.
+func (c *Client) GetDetectorIncidents(id string, offset int, limit int) ([]*detector.Incident, error) {
+	params := url.Values{}
+	params.Add("offset", strconv.Itoa(offset))
+	params.Add("limit", strconv.Itoa(limit))
+	resp, err := c.doRequest("GET", DetectorAPIURL+"/"+id+"/incidents", params, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		message, _ := ioutil.ReadAll(resp.Body)
+		return nil, fmt.Errorf("Bad status %d: %s", resp.StatusCode, message)
+	}
+
+	var incidents []*detector.Incident
+
+	err = json.NewDecoder(resp.Body).Decode(&incidents)
+	if err != nil {
+		fmt.Printf("+%v", err)
+	}
+	return incidents, err
+}
