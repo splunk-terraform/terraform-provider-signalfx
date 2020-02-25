@@ -1,4 +1,4 @@
-# 1.6.17, Pending
+# 1.6.19, Pending
 
 ## Added
 
@@ -7,6 +7,18 @@
 ## Bugfixes
 
 ## Removed
+
+# 1.6.18, 2020-02-25
+
+## Added
+
+* New `datalink.EpochSeconds` for it's `TimeFormat`
+
+# 1.6.17, 2020-02-18
+
+## Added
+
+* New methods `GetDetectorEvents` and `GetDetectorIncidents`
 
 # 1.6.16, 2020-02-13
 

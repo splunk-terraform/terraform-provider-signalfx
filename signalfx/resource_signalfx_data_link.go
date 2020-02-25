@@ -83,7 +83,7 @@ func dataLinkResource() *schema.Resource {
 							Optional:    true,
 							Description: "Designates the format of minimumTimeWindow in the same data link target object.",
 							ValidateFunc: validation.StringInSlice([]string{
-								string(datalink.ISO8601), string(datalink.Epoch),
+								string(datalink.ISO8601), string(datalink.Epoch), string(datalink.EpochSeconds),
 							}, false),
 						},
 						"url": &schema.Schema{
