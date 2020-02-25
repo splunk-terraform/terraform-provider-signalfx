@@ -152,17 +152,15 @@ func dataLinkResource() *schema.Resource {
 func getPayloadDataLink(d *schema.ResourceData) (*datalink.CreateUpdateDataLinkRequest, error) {
 	dataLink := &datalink.CreateUpdateDataLinkRequest{}
 
-	if val, ok := d.GetOk("property_value"); ok {
-		if name, ok := d.GetOk("property_name"); ok {
-			dataLink.PropertyValue = val.(string)
-			dataLink.PropertyName = name.(string)
-		} else {
-			return dataLink, fmt.Errorf("Must supply a property_name when supplying a property_value")
-		}
-	}
-
 	if name, ok := d.GetOk("property_name"); ok {
 		dataLink.PropertyName = name.(string)
+	}
+
+	if val, ok := d.GetOk("property_value"); ok {
+		if dataLink.PropertyName == "" {
+			return dataLink, fmt.Errorf("Must supply a property_name when supplying a property_value")
+		}
+		dataLink.PropertyValue = val.(string)
 	}
 
 	if val, ok := d.GetOk("context_dashboard_id"); ok {
@@ -170,8 +168,8 @@ func getPayloadDataLink(d *schema.ResourceData) (*datalink.CreateUpdateDataLinkR
 	}
 
 	if val, ok := d.GetOk("target_signalfx_dashboard"); ok {
-		if name, ok := d.GetOk("property_name"); !ok || name.(string) == "" {
-			return nil, fmt.Errorf("Must supply a property_name when using target_signalfx_dashboard")
+		if dataLink.PropertyName == "" {
+			return dataLink, fmt.Errorf("Must supply a property_name when using target_signalfx_dashboard")
 		}
 
 		sfxDashes := val.(*schema.Set).List()

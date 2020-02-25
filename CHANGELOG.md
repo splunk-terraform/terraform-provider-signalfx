@@ -1,5 +1,9 @@
 ## 4.14.0 (Unreleased)
 
+BUG FIXES:
+
+* resource/data_link: Use `property_name` when set without a `property_value`.
+
 IMPROVEMENTS:
 
 * Remove some interpolation-only expressions, which are now deprecated. [#152](https://github.com/terraform-providers/terraform-provider-signalfx/issues/152)
