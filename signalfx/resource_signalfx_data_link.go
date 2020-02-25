@@ -17,7 +17,7 @@ func dataLinkResource() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"property_name": &schema.Schema{
 				Type:        schema.TypeString,
-				Optional:    true,
+				Required:    true,
 				Description: "Name (key) of the metadata that's the trigger of a data link. If you specify `property_value`, you must specify `property_name`.",
 			},
 			"property_value": &schema.Schema{
@@ -152,13 +152,11 @@ func dataLinkResource() *schema.Resource {
 func getPayloadDataLink(d *schema.ResourceData) (*datalink.CreateUpdateDataLinkRequest, error) {
 	dataLink := &datalink.CreateUpdateDataLinkRequest{}
 
+	if name, ok := d.GetOk("property_name"); ok {
+		dataLink.PropertyValue = name.(string)
+	}
 	if val, ok := d.GetOk("property_value"); ok {
-		if name, ok := d.GetOk("property_name"); ok {
-			dataLink.PropertyValue = val.(string)
-			dataLink.PropertyName = name.(string)
-		} else {
-			return dataLink, fmt.Errorf("Must supply a property_name when supplying a property_value")
-		}
+		dataLink.PropertyName = val.(string)
 	}
 
 	if val, ok := d.GetOk("context_dashboard_id"); ok {
