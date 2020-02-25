@@ -21,14 +21,14 @@ resource "signalfx_data_link" "my_data_link" {
     target_signalfx_dashboard {
       is_default = true
       name = "sfx_dash"
-			dashboard_group_id = "${signalfx_dashboard_group.mydashboardgroup0.id}"
-			dashboard_id = "${signalfx_dashboard.mydashboard0.id}"
+			dashboard_group_id = signalfx_dashboard_group.mydashboardgroup0.id
+			dashboard_id = signalfx_dashboard.mydashboard0.id
     }
 }
 
 # A dashboard-specific link to an external URL
 resource "signalfx_data_link" "my_data_link_dash" {
-		context_dashboard_id = "${signalfx_dashboard.mydashboard0.id}"
+		context_dashboard_id = signalfx_dashboard.mydashboard0.id
     property_name = "pname2"
     property_value = "pvalue"
 
@@ -55,7 +55,7 @@ The following arguments are supported in the resource block:
   * `name` (Required) User-assigned target name. Use this value to differentiate between the link targets for a data link object.
   * `is_default` - (Optional) Flag that designates a target as the default for a data link object. `true` by default.
   * `url`- (Required) URL string for a Splunk instance or external system data link target. [See the supported template variables](https://developers.signalfx.com/administration/data_links_overview.html#_external_link_targets).
-  * `time_format` - (Optional) [Designates the format](https://developers.signalfx.com/administration/data_links_overview.html#_minimum_time_window) of `minimum_time_window` in the same data link target object. Must be on of `"ISO8601"` or `"Epoch"` Defaults to `"ISO8601"`.
+  * `time_format` - (Optional) [Designates the format](https://developers.signalfx.com/administration/data_links_overview.html#_minimum_time_window) of `minimum_time_window` in the same data link target object. Must be one of `"ISO8601"`, `"EpochSeconds"` or `"Epoch"` (which is milliseconds). Defaults to `"ISO8601"`.
   * `minimum_time_window` - (Optional) The [minimum time window](https://developers.signalfx.com/administration/data_links_overview.html#_minimum_time_window) for a search sent to an external site. Defaults to `6000`
   * `property_key_mapping` - Describes the relationship between SignalFx metadata keys and external system properties when the key names are different.
 * `target_signalfx_dashboard` - (Optional) Link to a SignalFx dashboard

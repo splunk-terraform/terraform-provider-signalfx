@@ -5,6 +5,7 @@ type TimeFormat string
 
 // List of Time Format
 const (
-	ISO8601 TimeFormat = "ISO8601"
-	Epoch   TimeFormat = "Epoch"
+	ISO8601      TimeFormat = "ISO8601"
+	Epoch        TimeFormat = "Epoch"
+	EpochSeconds TimeFormat = "EpochSeconds"
 )

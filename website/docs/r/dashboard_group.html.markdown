@@ -22,7 +22,7 @@ resource "signalfx_dashboard_group" "mydashboardgroup0" {
     # Note that if you use these features, you must use a user's
     # admin key to authenticate the provider, lest Terraform not be able
     # to modify the dashboard group in the future!
-    authorized_writer_teams = [ "${signalfx_team.mycoolteam.id}" ]
+    authorized_writer_teams = [ signalfx_team.mycoolteam.id ]
     authorized_writer_users = [ "abc123" ]
 }
 ```
@@ -37,7 +37,7 @@ resource "signalfx_dashboard_group" "mydashboardgroup_withmirrors" {
     // You can add as many of these as you like. Make sure your account
     // supports this feature!
     dashboard {
-      dashboard_id = "${signalfx_dashboard.gc_dashboard.id}"
+      dashboard_id = signalfx_dashboard.gc_dashboard.id
       name_override = "GC For My Service"
       description_override = "Garbage Collection dashboard maintained by JVM team"
 

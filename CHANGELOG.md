@@ -1,4 +1,10 @@
 ## 4.14.0 (Unreleased)
+
+IMPROVEMENTS:
+
+* Remove some interpolation-only expressions, which are now deprecated. [#152](https://github.com/terraform-providers/terraform-provider-signalfx/issues/152)
+* resource/data_link: Add `"EpochSeconds"` as a value for `time_format`. [#156](https://github.com/terraform-providers/terraform-provider-signalfx/pull/156)
+
 ## 4.13.0 (February 13, 2020)
 
 IMPROVEMENTS:
