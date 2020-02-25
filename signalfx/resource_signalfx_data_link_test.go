@@ -28,6 +28,22 @@ resource "signalfx_data_link" "big_test_data_link" {
 }
 `
 
+const newDataLinkConfigWithoutPropertyValue = `
+resource "signalfx_data_link" "big_test_data_link" {
+    property_name = "pname"
+
+    target_external_url {
+      is_default = false
+      name = "ex_url"
+      time_format = "ISO8601"
+      url = "https://www.example.com"
+      property_key_mapping = {
+        foo = "bar"
+      }
+    }
+}
+`
+
 const updatedDataLinkConfig = `
 resource "signalfx_data_link" "big_test_data_link" {
     property_name = "pname"
@@ -73,6 +89,25 @@ func TestAccCreateUpdateDataLink(t *testing.T) {
 					testAccCheckDataLinkResourceExists,
 					resource.TestCheckResourceAttr("signalfx_data_link.big_test_data_link", "property_name", "pname"),
 					resource.TestCheckResourceAttr("signalfx_data_link.big_test_data_link", "property_value", "pvalue_new"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccCreateUpdateDataLinkWithoutPropertyValue(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccDataLinkDestroy,
+		Steps: []resource.TestStep{
+			// Create It
+			{
+				Config: newDataLinkConfigWithoutPropertyValue,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckDataLinkResourceExists,
+					resource.TestCheckResourceAttr("signalfx_data_link.big_test_data_link", "property_name", "pname"),
+					resource.TestCheckResourceAttr("signalfx_data_link.big_test_data_link", "property_value", ""),
 				),
 			},
 		},

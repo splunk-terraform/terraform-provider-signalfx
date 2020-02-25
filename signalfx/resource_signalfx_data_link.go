@@ -161,11 +161,19 @@ func getPayloadDataLink(d *schema.ResourceData) (*datalink.CreateUpdateDataLinkR
 		}
 	}
 
+	if name, ok := d.GetOk("property_name"); ok {
+		dataLink.PropertyName = name.(string)
+	}
+
 	if val, ok := d.GetOk("context_dashboard_id"); ok {
 		dataLink.ContextId = val.(string)
 	}
 
 	if val, ok := d.GetOk("target_signalfx_dashboard"); ok {
+		if name, ok := d.GetOk("property_name"); !ok || name.(string) == "" {
+			return nil, fmt.Errorf("Must supply a property_name when using target_signalfx_dashboard")
+		}
+
 		sfxDashes := val.(*schema.Set).List()
 
 		for _, tfLink := range sfxDashes {
