@@ -1,4 +1,9 @@
 ## 4.15.0 (Unreleased)
+
+FEATURES:
+
+* Added `signalfx_webhook_integration` resource. [#158](https://github.com/terraform-providers/terraform-provider-signalfx/pull/158)
+
 ## 4.14.0 (February 25, 2020)
 
 BUG FIXES:
