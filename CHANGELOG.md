@@ -1,4 +1,9 @@
 ## 4.16.0 (Unreleased)
+
+IMPROVEMENTS:
+
+* resource/aws_integration: The fields in `namespace_sync_rule` and `custom_namespace_sync_rule` are now optional except for `namespace`. [#161](https://github.com/terraform-providers/terraform-provider-signalfx/pull/161)
+
 ## 4.15.0 (February 26, 2020)
 
 FEATURES:
