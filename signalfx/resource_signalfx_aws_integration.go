@@ -53,19 +53,19 @@ func integrationAWSResource() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"default_action": {
 							Type:         schema.TypeString,
-							Required:     true,
+							Optional:     true,
 							ValidateFunc: validateFilterAction,
 							Description:  "Controls the SignalFx default behavior for processing data from an AWS namespace. The available actions are one of \"Include\" or \"Exclude\".",
 						},
 						"filter_action": {
 							Type:         schema.TypeString,
-							Required:     true,
+							Optional:     true,
 							ValidateFunc: validateFilterAction,
 							Description:  "Controls how SignalFx processes data from a custom AWS namespace. The available actions are one of \"Include\" or \"Exclude\".",
 						},
 						"filter_source": {
 							Type:        schema.TypeString,
-							Required:    true,
+							Optional:    true,
 							Description: "Expression that selects the data that SignalFx should sync for the custom namespace associated with this sync rule. The expression uses the syntax defined for the SignalFlow `filter()` function; it can be any valid SignalFlow filter expression.",
 						},
 						"namespace": {
@@ -85,19 +85,19 @@ func integrationAWSResource() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"default_action": {
 							Type:         schema.TypeString,
-							Required:     true,
+							Optional:     true,
 							ValidateFunc: validateFilterAction,
 							Description:  "Controls the SignalFx default behavior for processing data from an AWS namespace. SignalFx ignores this property unless you specify the \"filter\" property in the namespace sync rule. If you do specify a filter, use this property to control how SignalFx treats data that doesn't match the filter. The available actions are one of \"Include\" or \"Exclude\".",
 						},
 						"filter_action": {
 							Type:         schema.TypeString,
-							Required:     true,
+							Optional:     true,
 							ValidateFunc: validateFilterAction,
 							Description:  "Controls how SignalFx processes data from a custom AWS namespace. The available actions are one of \"Include\" or \"Exclude\".",
 						},
 						"filter_source": {
 							Type:        schema.TypeString,
-							Required:    true,
+							Optional:    true,
 							Description: "Expression that selects the data that SignalFx should sync for the custom namespace associated with this sync rule. The expression uses the syntax defined for the SignalFlow `filter()` function; it can be any valid SignalFlow filter expression.",
 						},
 						"namespace": {
@@ -420,7 +420,7 @@ func getCustomNamespaceRules(tfRules []interface{}) []*integration.AwsCustomName
 		}
 
 		var filter *integration.AwsSyncRuleFilter
-		if f, fok := r["filter_action"]; fok {
+		if f, fok := r["filter_action"]; fok && (f.(string) != "") {
 			filter = &integration.AwsSyncRuleFilter{
 				Action: integration.AwsSyncRuleFilterAction(f.(string)),
 				Source: r["filter_source"].(string),
@@ -451,7 +451,7 @@ func getNamespaceRules(tfRules []interface{}) []*integration.AwsNameSpaceSyncRul
 		}
 
 		var filter *integration.AwsSyncRuleFilter
-		if f, fok := r["filter_action"]; fok {
+		if f, fok := r["filter_action"]; fok && (f.(string) != "") {
 			filter = &integration.AwsSyncRuleFilter{
 				Action: integration.AwsSyncRuleFilterAction(f.(string)),
 				Source: r["filter_source"].(string),
