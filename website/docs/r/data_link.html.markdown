@@ -6,7 +6,7 @@ description: |-
   Allows Terraform to create and manage SignalFx data link
 ---
 
-# Resource: signalfx_org_token
+# Resource: signalfx_data_link
 
 Manage SignalFx [Data Links](https://docs.signalfx.com/en/latest/managing/data-links.html).
 
