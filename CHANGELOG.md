@@ -1,4 +1,4 @@
-## 4.17.0 (Unreleased)
+## 4.17.0 (March 03, 2020)
 
 IMPROVEMENTS:
 
