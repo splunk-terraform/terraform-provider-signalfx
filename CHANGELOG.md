@@ -1,3 +1,9 @@
+## 4.17.0 (Pending)
+
+IMPROVEMENTS:
+
+* resource/aws_integration: Added various new AWS services for validation. [#163](https://github.com/terraform-providers/terraform-provider-signalfx/pull/163)
+
 ## 4.16.0 (March 02, 2020)
 
 IMPROVEMENTS:
