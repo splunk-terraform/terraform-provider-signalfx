@@ -1,4 +1,4 @@
-# 1.6.20, Pending
+# 1.6.21, Pending
 
 ## Added
 
@@ -6,7 +6,11 @@
 
 ## Bugfixes
 
-## Removed
+# 1.6.20, Pending
+
+## Added
+
+* Many new AWS services
 
 # 1.6.19, 2020-02-26
 
