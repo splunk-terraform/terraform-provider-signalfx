@@ -1,4 +1,4 @@
-## 4.18.0 (Unreleased)
+## 4.18.0 (March 04, 2020)
 
 IMPROVEMENTS:
 
