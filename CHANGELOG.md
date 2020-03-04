@@ -3,6 +3,7 @@
 IMPROVEMENTS:
 
 * resource/detector: Various documentation fixes, thanks [xp-1000](https://github.com/xp-1000)! [#166](https://github.com/terraform-providers/terraform-provider-signalfx/pull/166)
+* resource/aws_integration: Fixed a problem that caused some services in AWS integrations to not work. [#167](https://github.com/terraform-providers/terraform-provider-signalfx/pull/167)
 
 ## 4.17.0 (March 03, 2020)
 

@@ -1,10 +1,16 @@
-# 1.6.21, Pending
+# 1.6.22, Pending
 
 ## Added
 
 ## Updated
 
 ## Bugfixes
+
+# 1.6.21, Pending
+
+## Bugfixes
+
+* Fixed some errors in new AWS services
 
 # 1.6.20, Pending
 
