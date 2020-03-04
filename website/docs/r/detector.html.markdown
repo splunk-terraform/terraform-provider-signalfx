@@ -16,6 +16,8 @@ Provides a SignalFx detector resource. This can be used to create and manage det
 
 ```terraform
 resource "signalfx_detector" "application_delay" {
+    count = length(var.clusters)
+
     name = " max average delay - ${var.clusters[count.index]}"
     description = "your application is slow - ${var.clusters[count.index]}"
     max_delay = 30
