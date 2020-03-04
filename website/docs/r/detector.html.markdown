@@ -186,7 +186,7 @@ The following attributes are exported:
 
 ## Import
 
-Downtimes can be imported using their string ID, e.g.
+Detectors can be imported using their string ID (recoverable from URL: `/#/detector/v2/abc123/edit`, e.g.
 
 ```
 $ terraform import signalfx_detector.application_delay abc123
