@@ -1,18 +1,23 @@
-# 1.6.22, Pending
-
-## Added
-
-## Updated
+# 1.6.23, Pending
 
 ## Bugfixes
+* Make the writer package work properly on 32-bit systems by aligning struct
+  fields on 64-bit boundaries.
 
-# 1.6.21, Pending
+# 1.6.22, 2020-03-09
+
+## Added
+* New package `realm` to help with constructing SignalFx ingest and API urls
+  from the realm name
+
+
+# 1.6.21, 2020-03-04
 
 ## Bugfixes
 
 * Fixed some errors in new AWS services
 
-# 1.6.20, Pending
+# 1.6.20, 2020-03-03
 
 ## Added
 
