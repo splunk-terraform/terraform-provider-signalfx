@@ -1,6 +1,9 @@
-# 1.6.23, Pending
+# 1.6.24, Pending
+
+# 1.6.23, 2020-03-10
 
 ## Bugfixes
+
 * Make the writer package work properly on 32-bit systems by aligning struct
   fields on 64-bit boundaries.
 
@@ -9,7 +12,6 @@
 ## Added
 * New package `realm` to help with constructing SignalFx ingest and API urls
   from the realm name
-
 
 # 1.6.21, 2020-03-04
 

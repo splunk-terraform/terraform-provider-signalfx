@@ -23,7 +23,7 @@ type DashboardGroup struct {
 	// The SignalFx-assigned ID for this dashboard.
 	Id string `json:"id,omitempty"`
 
-	ImportQualifiers *[]ImportQualifier `json:"importQualifier,omitempty"`
+	ImportQualifiers []*ImportQualifier `json:"importQualifiers,omitempty"`
 	// The last time the dashboard group was updated, in the form of a Unix timestamp (milliseconds since the Unix epoch 1970-01-01 00:00:00 UTC+0) This value is \"read-only\".
 	LastUpdated int64 `json:"lastUpdated,omitempty"`
 	// SignalFx-assigned ID of the last user who updated the dashboard group. If the last update was by the system, the value is \"AAAAAAAAAA\". This value is \"read-only\".
