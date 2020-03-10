@@ -116,6 +116,44 @@ func dashboardGroupResource() *schema.Resource {
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "User IDs that have write access to this dashboard",
 			},
+			"import_qualifier": &schema.Schema{
+				Type:     schema.TypeSet,
+				Optional: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"metric": &schema.Schema{
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"filters": &schema.Schema{
+							Type:        schema.TypeSet,
+							Optional:    true,
+							Description: "Filter to apply to each chart in the dashboard",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"property": &schema.Schema{
+										Type:        schema.TypeString,
+										Required:    true,
+										Description: "A metric time series dimension or property name",
+									},
+									"values": &schema.Schema{
+										Type:        schema.TypeSet,
+										Required:    true,
+										Elem:        &schema.Schema{Type: schema.TypeString},
+										Description: "List of strings (which will be treated as an OR filter on the property)",
+									},
+									"negated": &schema.Schema{
+										Type:        schema.TypeBool,
+										Optional:    true,
+										Default:     false,
+										Description: "(false by default) Whether this filter should be a \"not\" filter",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 		},
 
 		Create: dashboardgroupCreate,
@@ -268,6 +306,11 @@ func getPayloadDashboardGroup(d *schema.ResourceData) *dashboard_group.CreateUpd
 			log.Println("[DEBUG] SignalFx: We have mirrors, adding them")
 			cudgr.DashboardConfigs = dashConfigs
 		}
+	}
+
+	if ok, iq := d.GetOk("import_qualifier"); ok {
+		var iqs := []*dashboard_group.ImportQualifier
+		tfValues := val.(*schema.Set).List()
 	}
 
 	return cudgr

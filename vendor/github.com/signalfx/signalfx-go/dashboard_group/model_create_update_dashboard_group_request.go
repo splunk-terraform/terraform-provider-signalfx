@@ -16,6 +16,8 @@ type CreateUpdateDashboardGroupRequest struct {
 	DashboardConfigs []*DashboardConfig `json:"dashboardConfigs,omitempty"`
 	// Description of the dashboard group. This value appears in the tooltip for the dashboard group on the Dashboards page in the web UI.
 	Description string `json:"description,omitempty"`
+
+	ImportQualifiers *[]ImportQualifier `json:"importQualifier,omitempty"`
 	// Name of the dashboard group. This value identifies the dashboard group in the web UI. It appears on the dashboards page and in the catalog. It also appears at the top left corner of the screen whenever you're viewing a dashboard that the group contains.
 	Name string `json:"name"`
 	// Array of existing team object ID. The dashboard group appears on the team landing page for any team in the list.
