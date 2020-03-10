@@ -21,7 +21,8 @@ type Dashboard struct {
 	// Custom properties for the dashboard, in the form of a JSON object that contains key-value pairs. Custom properties must follow these syntax restrictions:<br> **Key:**<br>   * ASCII characters only   * Length <= 128 characters   * Can only contain upper and lower case alphanumeric characters,     underscores (\"_\"), and hyphens (\"-\")   * Must start with an alphabetic character, upper or lower case.   * Can't start with any of the following strings, which are     reserved for system use: \"_\", \"sf_\", \"aws_\", or \"gcp_\". <br> **Value:**<br>   * Must be present if you specify a key   * Must not be empty   * ASCII characters only   * Length <= 256 characters
 	CustomProperties map[string]interface{} `json:"customProperties,omitempty"`
 	// Description of the dashboard. The system displays the value in the dashboard tab tooltip in the dashboard group in the web UI.
-	Description string `json:"description,omitempty"`
+	Description      string            `json:"description,omitempty"`
+	DiscoveryOptions *DiscoveryOptions `json:"discoveryOptions,omitempty"`
 	// Array of event overlay definitions that you can apply to all of the charts of this dashboard. When you apply the overlays, the system displays all the active events that match the specified search term and any specified filter on all the charts in the dashboard. The display uses the color you specify for the overlay and, if selected, vertical lines that mark the event.<br> **Note:** The objects in this array correspond to the *suggested* event overlays specified in the web UI, and they're not automatically applied as active overlays. To set default active event overlays, use the `selectedEventOverlays` property instead.
 	EventOverlays []*ChartEventOverlay `json:"eventOverlays,omitempty"`
 	Filters       *ChartsFilters       `json:"filters,omitempty"`

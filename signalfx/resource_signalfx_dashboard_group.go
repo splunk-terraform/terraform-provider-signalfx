@@ -116,6 +116,44 @@ func dashboardGroupResource() *schema.Resource {
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "User IDs that have write access to this dashboard",
 			},
+			"import_qualifier": &schema.Schema{
+				Type:     schema.TypeSet,
+				Optional: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"metric": &schema.Schema{
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"filters": &schema.Schema{
+							Type:        schema.TypeSet,
+							Optional:    true,
+							Description: "Filter to apply to each chart in the dashboard",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"property": &schema.Schema{
+										Type:        schema.TypeString,
+										Required:    true,
+										Description: "A metric time series dimension or property name",
+									},
+									"values": &schema.Schema{
+										Type:        schema.TypeSet,
+										Required:    true,
+										Elem:        &schema.Schema{Type: schema.TypeString},
+										Description: "List of strings (which will be treated as an OR filter on the property)",
+									},
+									"negated": &schema.Schema{
+										Type:        schema.TypeBool,
+										Optional:    true,
+										Default:     false,
+										Description: "(false by default) Whether this filter should be a \"not\" filter",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 		},
 
 		Create: dashboardgroupCreate,
@@ -204,9 +242,9 @@ func getPayloadDashboardGroup(d *schema.ResourceData) *dashboard_group.CreateUpd
 
 			if filterOver, ok := dash["filter_override"]; ok {
 				hasMirrors = true
-				tfFilters := filterOver.(*schema.Set).List()
-				filters := make([]*dashboard_group.Filter, len(tfFilters))
-				for i, f := range tfFilters {
+				filterOver := filterOver.(*schema.Set).List()
+				filters := make([]*dashboard_group.Filter, len(filterOver))
+				for i, f := range filterOver {
 					f := f.(map[string]interface{})
 					var values []string
 					tfValues := f["values"].(*schema.Set).List()
@@ -223,6 +261,7 @@ func getPayloadDashboardGroup(d *schema.ResourceData) *dashboard_group.CreateUpd
 						Values:   values,
 					}
 				}
+
 				filtersOverride.Sources = filters
 			}
 
@@ -268,6 +307,40 @@ func getPayloadDashboardGroup(d *schema.ResourceData) *dashboard_group.CreateUpd
 			log.Println("[DEBUG] SignalFx: We have mirrors, adding them")
 			cudgr.DashboardConfigs = dashConfigs
 		}
+	}
+
+	if tfiq, ok := d.GetOk("import_qualifier"); ok {
+		tfIQs := tfiq.(*schema.Set).List()
+		iqs := make([]*dashboard_group.ImportQualifier, len(tfIQs))
+		for i, iq := range tfIQs {
+			iq := iq.(map[string]interface{})
+
+			filterOver := iq["filters"].(*schema.Set).List()
+			filters := make([]*dashboard_group.ImportFilter, len(filterOver))
+			for i, f := range filterOver {
+				f := f.(map[string]interface{})
+				var values []string
+				tfValues := f["values"].(*schema.Set).List()
+				if len(tfValues) > 0 {
+					values = []string{}
+					for _, v := range tfValues {
+						values = append(values, v.(string))
+					}
+				}
+
+				filters[i] = &dashboard_group.ImportFilter{
+					NOT:      f["negated"].(bool),
+					Property: f["property"].(string),
+					Values:   values,
+				}
+			}
+
+			iqs[i] = &dashboard_group.ImportQualifier{
+				Metric:  iq["metric"].(string),
+				Filters: filters,
+			}
+		}
+		cudgr.ImportQualifiers = iqs
 	}
 
 	return cudgr
@@ -375,6 +448,27 @@ func dashboardGroupAPIToTF(d *schema.ResourceData, dg *dashboard_group.Dashboard
 			if err := d.Set("dashboard", dConfigs); err != nil {
 				return err
 			}
+		}
+	}
+
+	if len(dg.ImportQualifiers) > 0 {
+		iqs := make([]map[string]interface{}, len(dg.ImportQualifiers))
+		for i, apiIQ := range dg.ImportQualifiers {
+			iq := make(map[string]interface{})
+			iq["metric"] = apiIQ.Metric
+			filters := make([]map[string]interface{}, len(apiIQ.Filters))
+			for j, apiFilter := range apiIQ.Filters {
+				filter := make(map[string]interface{})
+				filter["negated"] = apiFilter.NOT
+				filter["property"] = apiFilter.Property
+				filter["values"] = flattenStringSliceToSet(apiFilter.Values)
+				filters[j] = filter
+			}
+			iq["filters"] = filters
+			iqs[i] = iq
+		}
+		if err := d.Set("import_qualifier", iqs); err != nil {
+			return err
 		}
 	}
 

@@ -382,6 +382,15 @@ func dashboardResource() *schema.Resource {
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "User IDs that have write access to this dashboard",
 			},
+			"discovery_options_query": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"discovery_options_selectors": &schema.Schema{
+				Type:     schema.TypeSet,
+				Optional: true,
+				Elem:     &schema.Schema{Type: schema.TypeString},
+			},
 			"url": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -467,6 +476,20 @@ func getPayloadDashboard(d *schema.ResourceData) (*dashboard.CreateUpdateDashboa
 			cudr.ChartDensity = dashboard.HIGHEST
 		default:
 			cudr.ChartDensity = dashboard.DEFAULT
+		}
+	}
+
+	if doQuery, ok := d.GetOk("discovery_options_query"); ok {
+		var selectors []string
+		if val, ok := d.GetOk("discovery_options_selectors"); ok {
+			tfSels := val.(*schema.Set).List()
+			for _, v := range tfSels {
+				selectors = append(selectors, v.(string))
+			}
+		}
+		cudr.DiscoveryOptions = &dashboard.DiscoveryOptions{
+			Query:     doQuery.(string),
+			Selectors: &selectors,
 		}
 	}
 
@@ -947,6 +970,15 @@ func dashboardAPIToTF(d *schema.ResourceData, dash *dashboard.Dashboard) error {
 			}
 		}
 		if err := d.Set("selected_event_overlay", sevs); err != nil {
+			return err
+		}
+	}
+
+	if dash.DiscoveryOptions != nil {
+		if err := d.Set("discovery_options_query", dash.DiscoveryOptions.Query); err != nil {
+			return err
+		}
+		if err := d.Set("discovery_options_selectors", flattenStringSliceToSet(*dash.DiscoveryOptions.Selectors)); err != nil {
 			return err
 		}
 	}
