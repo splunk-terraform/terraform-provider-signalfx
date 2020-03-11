@@ -19,8 +19,7 @@ resource "signalfx_time_chart" "mychart0" {
     name = "CPU Total Idle"
 
     program_text = <<-EOF
-        myfilters = filter("shc_name", "prod") and filter("role", "splunk_searchhead")
-        data("cpu.total.idle", filter=myfilters).publish(label="CPU Idle")
+        data("cpu.total.idle").publish(label="CPU Idle")
         EOF
 
     time_range = 3600
@@ -29,25 +28,14 @@ resource "signalfx_time_chart" "mychart0" {
     show_data_markers = true
 
     legend_options_fields {
-      property = "shc_name"
-      enabled = true
-    }
-    legend_options_fields {
-      property = "role"
-      enabled = true
-    }
-    legend_options_fields {
       property = "collector"
-      enabled = false
-    }
-    legend_options_fields {
-      property = "prefix"
       enabled = false
     }
     legend_options_fields {
       property = "hostname"
       enabled = false
     }
+
     viz_options {
         label = "CPU Idle"
         axis = "left"
