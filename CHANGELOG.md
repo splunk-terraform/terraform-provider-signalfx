@@ -3,6 +3,8 @@
 IMPROVEMENTS:
 
 * resource/aws_integration: Fixed a problem that caused some services in AWS integrations to not work. [#167](https://github.com/terraform-providers/terraform-provider-signalfx/pull/167)
+* resource/aws_integration: Using `namespace_sync_rule` without filters no longer causes an unclean plan. [#170](https://github.com/terraform-providers/terraform-provider-signalfx/pull/170)
+* resource/detector: Unsetting the `max_delay` or setting it to `0` should now correctly reset on the max delay on `apply` rather than unhelpfully doing nothing and leaving an unclean plan. #[171](https://github.com/terraform-providers/terraform-provider-signalfx/pull/171)
 
 
 ## 4.18.0 (March 04, 2020)

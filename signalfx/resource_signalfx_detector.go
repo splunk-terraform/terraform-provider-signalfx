@@ -39,6 +39,7 @@ func detectorResource() *schema.Resource {
 			"max_delay": &schema.Schema{
 				Type:         schema.TypeInt,
 				Optional:     true,
+				Default:      0,
 				Description:  "How long (in seconds) to wait for late datapoints. Max value 900 (15m)",
 				ValidateFunc: validation.IntBetween(0, 900),
 			},
@@ -308,9 +309,12 @@ func getPayloadDetector(d *schema.ResourceData) (*detector.CreateUpdateDetectorR
 		rulesList[i] = rule
 	}
 
+	maxDelay := int32(d.Get("max_delay").(int) * 1000)
+
 	cudr := &detector.CreateUpdateDetectorRequest{
 		Name:              d.Get("name").(string),
 		Description:       d.Get("description").(string),
+		MaxDelay:          &maxDelay,
 		ProgramText:       d.Get("program_text").(string),
 		Rules:             rulesList,
 		AuthorizedWriters: &detector.AuthorizedWriters{},
@@ -331,11 +335,6 @@ func getPayloadDetector(d *schema.ResourceData) (*detector.CreateUpdateDetectorR
 			users = append(users, v.(string))
 		}
 		cudr.AuthorizedWriters.Users = users
-	}
-
-	if val, ok := d.GetOk("max_delay"); ok {
-		maxDelay := int32(val.(int) * 1000)
-		cudr.MaxDelay = &maxDelay
 	}
 
 	cudr.VisualizationOptions = getVisualizationOptionsDetector(d)
