@@ -14,6 +14,16 @@ with the proper credentials before it can be used.
 
 Use the navigation to the left to read about the available resources.
 
+# Learning
+
+If you're new to Terraform and SignalFx there are few resource we can offer to
+help!
+
+Terraform is a tool and ecosystem beyond just SignalFx. It's really powerful and you can check out an [Introduction to Terraform](https://www.terraform.io/intro/index.html)
+which covers the basic usage.
+
+Once you got the basics of working with Terraform down, using this provider is much easier. You'll probably want to check out the docs on the [SignalFlow programming language](https://developers.signalfx.com/signalflow_analytics/signalflow_overview.html#_signalflow_programming_language) as all charts and detectors will require you to provide the `program_text` in SignalFlow. Also keep in mind that you can open any chart or in SignalFx and click "Show SignalFlow" if you prefer to use the UI.
+
 ## Example Usage
 
 ```hcl

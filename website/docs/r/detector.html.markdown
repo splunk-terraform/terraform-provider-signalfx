@@ -139,7 +139,7 @@ notifications = ["Webhook,,secret,url"]
 ## Argument Reference
 
 * `name` - (Required) Name of the detector.
-* `program_text` - (Required) Signalflow program text for the detector. More info at <https://developers.signalfx.com/signalflow_analytics/signalflow_overview.html>.
+* `program_text` - (Required) Signalflow program text for the detector. More info [in the SignalFx docs](https://developers.signalfx.com/signalflow_analytics/signalflow_overview.html#_signalflow_programming_language).
 * `description` - (Optional) Description of the detector.
 * `authorized_writer_teams` - (Optional) Team IDs that have write access to this detector. Remember to use an admin's token if using this feature and to include that admin's team id (or user id in `authorized_writer_users`).
 * `authorized_writer_users` - (Optional) User IDs that have write access to this detector. Remember to use an admin's token if using this feature and to include that admin's user id (or team id in `authorized_writer_teams`).
