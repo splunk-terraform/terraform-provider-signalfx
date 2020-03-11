@@ -10,7 +10,7 @@ description: |-
 
 SignalFx AWS CloudWatch integrations. For help with this integration see [Monitoring Amazon Web Services](https://docs.signalfx.com/en/latest/integrations/amazon-web-services.html#monitor-amazon-web-services).
 
-**Note:** When managing integrations you'll need to use an admin token to authenticate the SignalFx provider.
+~> **NOTE** When managing integrations you'll need to use an admin token to authenticate the SignalFx provider.
 
 ~> **WARNING** This resource implements a part of a workflow. You must use it with one of either `signalfx_aws_external_integration` or `signalfx_aws_token_integration`.
 

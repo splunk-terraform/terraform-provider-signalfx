@@ -10,7 +10,7 @@ description: |-
 
 SignalFx VictorOps integration.
 
-**Note:** When managing integrations you'll need to use an admin token to authenticate the SignalFx provider. Otherwise you'll receive a 4xx error.
+~> **NOTE** When managing integrations you'll need to use an admin token to authenticate the SignalFx provider. Otherwise you'll receive a 4xx error.
 
 ## Example Usage
 

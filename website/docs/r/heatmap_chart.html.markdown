@@ -60,6 +60,6 @@ The following arguments are supported in the resource block:
 * `color_scale` - (Required unless using `color_range`.  Conflicts with `color_range`) Single color range including both the color to display for that range and the borders of the range. Example: `[{ gt = 60, color = "blue" }, { lte = 60, color = "yellow" }]`. Look at this [link](https://docs.signalfx.com/en/latest/charts/chart-options-tab.html).
     * `gt` - (Optional) Indicates the lower threshold non-inclusive value for this range.
     * `gte` - (Optional) Indicates the lower threshold inclusive value for this range.
-    * `lt` - (Optional) Indicates the upper threshold non-inculsive value for this range.
+    * `lt` - (Optional) Indicates the upper threshold non-inclusive value for this range.
     * `lte` - (Optional) Indicates the upper threshold inclusive value for this range.
     * `color` - (Required) The color range to use. Must be either gray, blue, navy, orange, yellow, magenta, purple, violet, lilac, green, aquamarine.
