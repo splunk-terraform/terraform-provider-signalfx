@@ -293,14 +293,18 @@ func awsIntegrationAPIToTF(d *schema.ResourceData, aws *integration.AwsCloudWatc
 	if len(aws.NamespaceSyncRules) > 0 {
 		var rules []map[string]interface{}
 		for _, v := range aws.NamespaceSyncRules {
-			// Sometimes the rules come back with just a namespace and no
-			// filters. If that's the case we'll ignore it and leverage
-			// that it also comes in the `services` field.
 			if v.Filter != nil {
 				rules = append(rules, map[string]interface{}{
 					"default_action": string(v.DefaultAction),
 					"filter_action":  v.Filter.Action,
 					"filter_source":  v.Filter.Source,
+					"namespace":      string(v.Namespace),
+				})
+			} else {
+				// Sometimes the rules come back with just a namespace and no
+				// filters.
+				rules = append(rules, map[string]interface{}{
+					"default_action": string(v.DefaultAction),
 					"namespace":      string(v.Namespace),
 				})
 			}
@@ -445,7 +449,7 @@ func getNamespaceRules(tfRules []interface{}) []*integration.AwsNameSpaceSyncRul
 			da := da.(string)
 			if da == string(integration.INCLUDE) {
 				defaultAction = integration.INCLUDE
-			} else {
+			} else if da == string(integration.EXCLUDE) {
 				defaultAction = integration.EXCLUDE
 			}
 		}
