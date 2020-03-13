@@ -1,4 +1,4 @@
-## 4.18.2 (Unreleased)
+## 4.18.2 (March 13, 2020)
 
 BUGFIXES:
 
