@@ -235,7 +235,9 @@ func (c *Client) handleMessage(msgBytes []byte, msgTyp int) error {
 
 	if cm, ok := message.(messages.ChannelMessage); ok {
 		channelName := cm.Channel()
+		c.Lock()
 		channel, ok := c.channelsByName[channelName]
+		c.Unlock()
 		if !ok || channelName == "" {
 			c.acceptMessage(message)
 			return nil

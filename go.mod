@@ -8,7 +8,7 @@ require (
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/hashicorp/terraform-plugin-sdk v1.7.0
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/signalfx/signalfx-go v1.6.23
+	github.com/signalfx/signalfx-go v1.6.25
 	github.com/smartystreets/assertions v1.0.0 // indirect
 	github.com/stretchr/testify v1.4.0
 )
