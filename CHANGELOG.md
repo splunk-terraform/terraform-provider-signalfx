@@ -1,4 +1,9 @@
-## 4.19.0 (Unreleased)
+## 4.18.2 (Unreleased)
+
+BUGFIXES:
+
+* resource/aws_integration: Corrected bad service name for `AWS/VPN`.
+
 ## 4.18.1 (March 11, 2020)
 
 IMPROVEMENTS:

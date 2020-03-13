@@ -9,7 +9,7 @@
 
 package integration
 
-// AwsService : An AWS service that you want SignalFx to collect data from. SignalFx supports the following AWS services:<br>   * AWS/ApiGateway   * AWS/AppStream   * AWS/AutoScaling   * AWS/Billing   * AWS/CloudFront   * AWS/CloudSearch   * AWS/Events   * AWS/Logs   * AWS/Connect   * AWS/DMS   * AWS/DX   * AWS/DynamoDB   * AWS/EC2   * AWS/EC2Spot   * AWS/ECS   * AWS/ElasticBeanstalk   * AWS/EBS   * AWS/EFS   * AWS/ELB   * AWS/ApplicationELB   * AWS/NetworkELB   * AWS/ElasticTranscoder   * AWS/ElastiCache   * AWS/ES   * AWS/ElasticMapReduce   * AWS/GameLift   * AWS/Inspector   * AWS/IoT   * AWS/KMS   * AWS/KinesisAnalytics   * AWS/Firehose   * AWS/Kinesis   * AWS/KinesisVideo   * AWS/Lambda   * AWS/Lex   * AWS/ML   * AWS/OpsWorks   * AWS/Polly   * AWS/Redshift   * AWS/RDS   * AWS/Route53   * AWS/SageMaker   * AWS/DDoSProtection   * AWS/SES   * AWS/SNS   * AWS/SQS   * AWS/S3   * AWS/SWF   * AWS/States   * AWS/StorageGateway   * AWS/Translate   * AWS/NATGateway   * AWS/VPN (VPN)   * WAF   * AWS/WorkSpaces
+// AwsService : An AWS service that you want SignalFx to collect data from. SignalFx supports the following AWS services:<br>   * AWS/ApiGateway   * AWS/AppStream   * AWS/AutoScaling   * AWS/Billing   * AWS/CloudFront   * AWS/CloudSearch   * AWS/Events   * AWS/Logs   * AWS/Connect   * AWS/DMS   * AWS/DX   * AWS/DynamoDB   * AWS/EC2   * AWS/EC2Spot   * AWS/ECS   * AWS/ElasticBeanstalk   * AWS/EBS   * AWS/EFS   * AWS/ELB   * AWS/ApplicationELB   * AWS/NetworkELB   * AWS/ElasticTranscoder   * AWS/ElastiCache   * AWS/ES   * AWS/ElasticMapReduce   * AWS/GameLift   * AWS/Inspector   * AWS/IoT   * AWS/KMS   * AWS/KinesisAnalytics   * AWS/Firehose   * AWS/Kinesis   * AWS/KinesisVideo   * AWS/Lambda   * AWS/Lex   * AWS/ML   * AWS/OpsWorks   * AWS/Polly   * AWS/Redshift   * AWS/RDS   * AWS/Route53   * AWS/SageMaker   * AWS/DDoSProtection   * AWS/SES   * AWS/SNS   * AWS/SQS   * AWS/S3   * AWS/SWF   * AWS/States   * AWS/StorageGateway   * AWS/Translate   * AWS/NATGateway   * AWS/VPN   * WAF   * AWS/WorkSpaces
 type AwsService string
 
 // List of AWSService
@@ -87,7 +87,7 @@ const (
 	AWSTRANSLATE          AwsService = "AWS/Translate"
 	AWSTRUSTED_ADVISOR    AwsService = "AWS/TrustedAdvisor"
 	AWSNAT_GATEWAY        AwsService = "AWS/NATGateway"
-	AWSVPN__VPN           AwsService = "AWS/VPN (VPN)"
+	AWSVPN                AwsService = "AWS/VPN"
 	WAF                   AwsService = "WAF"
 	AWSWORK_MAIL          AwsService = "AWS/WorkMail"
 	AWSWORK_SPACES        AwsService = "AWS/WorkSpaces"
@@ -169,7 +169,7 @@ var AWSServiceNames = map[string]AwsService{
 	"AWS/Translate":         AWSTRANSLATE,
 	"AWS/TrustedAdvisor":    AWSTRUSTED_ADVISOR,
 	"AWS/NATGateway":        AWSNAT_GATEWAY,
-	"AWS/VPN (VPN)":         AWSVPN__VPN,
+	"AWS/VPN":               AWSVPN,
 	"WAF":                   WAF,
 	"AWS/WorkMail":          AWSWORK_MAIL,
 	"AWS/WorkSpaces":        AWSWORK_SPACES,
