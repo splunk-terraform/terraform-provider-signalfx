@@ -14,5 +14,5 @@ type ColorScale struct {
 	// Determines how to use colors specified in `options.colorRange`. If this property is set to `true` and `options.colorBy`  is set to `Range`, darker colors represent smaller data values. For chart types other than Heatmap, setting this property to `true` results in red representing lower values and green representing higher ones (if the default color scheme is in use).<br> Available when the chart type specified in `options.type` is set to Heatmap, SingleValue, or List.
 	Inverted bool `json:"inverted,omitempty"`
 	// Specifies data values that map to color gradient values. Specify the  values from lowest to highest. Data values that outside the specified partitions don't appear in color, so you should set the first array value to corresopnd to the lowest expected data value. Similarly, set the last array value to correspond to the highest expected data value.<br> **Note** SignalFx only uses the first six elements in the array.
-	Thresholds []float32 `json:"thresholds,omitempty"`
+	Thresholds []float64 `json:"thresholds,omitempty"`
 }
