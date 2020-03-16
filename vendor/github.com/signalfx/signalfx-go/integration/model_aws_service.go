@@ -14,165 +14,173 @@ type AwsService string
 
 // List of AWSService
 const (
-	AWSAPI_GATEWAY        AwsService = "AWS/ApiGateway"
-	AWSAPP_STREAM         AwsService = "AWS/AppStream"
-	AWSATHENA             AwsService = "AWS/Athena"
-	AWSAUTO_SCALING       AwsService = "AWS/AutoScaling"
-	AWSBILLING            AwsService = "AWS/Billing"
-	AWSACP_PRIVATE_CA     AwsService = "AWS/ACMPrivateCA"
-	AWSCLOUD_FRONT        AwsService = "AWS/CloudFront"
-	AWSCLOUD_HSM          AwsService = "AWS/CloudHSM"
-	AWSCLOUD_SEARCH       AwsService = "AWS/CloudSearch"
-	AWSEVENTS             AwsService = "AWS/Events"
-	AWSLOGS               AwsService = "AWS/Logs"
-	AWSCODEBUILD          AwsService = "AWS/CodeBuild"
-	AWSCOGNITO            AwsService = "AWS/Cognito"
-	AWSCONNECT            AwsService = "AWS/Connect"
-	AWSDMS                AwsService = "AWS/DMS"
-	AWSDX                 AwsService = "AWS/DX"
-	AWSDOCDB              AwsService = "AWS/DocDB"
-	AWSDYNAMO_DB          AwsService = "AWS/DynamoDB"
-	AWSEC2                AwsService = "AWS/EC2"
-	AWSEC2_SPOT           AwsService = "AWS/EC2Spot"
-	AWSECS                AwsService = "AWS/ECS"
-	AWSELASTIC_BEANSTALK  AwsService = "AWS/ElasticBeanstalk"
-	AWSELASTIC_INTERFACE  AwsService = "AWS/ElasticInterface"
-	AWSEBS                AwsService = "AWS/EBS"
-	AWSEFS                AwsService = "AWS/EFS"
-	AWSELB                AwsService = "AWS/ELB"
-	AWSAPPLICATION_ELB    AwsService = "AWS/ApplicationELB"
-	AWSNETWORK_ELB        AwsService = "AWS/NetworkELB"
-	AWSELASTIC_TRANSCODER AwsService = "AWS/ElasticTranscoder"
-	AWSELASTI_CACHE       AwsService = "AWS/ElastiCache"
-	AWSES                 AwsService = "AWS/ES"
-	AWSELASTIC_MAP_REDUCE AwsService = "AWS/ElasticMapReduce"
-	AWSFSX                AwsService = "AWS/FSx"
-	AWSGAME_LIFT          AwsService = "AWS/GameLift"
-	AWSGLUE               AwsService = "AWS/Glue"
-	AWSINSPECTOR          AwsService = "AWS/Inspector"
-	AWSIO_T               AwsService = "AWS/IoT"
-	AWSIO_T_ANALYTICS     AwsService = "AWS/IoTAnalytics"
-	AWSKAFKA              AwsService = "AWS/Kafka"
-	AWSKMS                AwsService = "AWS/KMS"
-	AWSKINESIS_ANALYTICS  AwsService = "AWS/KinesisAnalytics"
-	AWSFIREHOSE           AwsService = "AWS/Firehose"
-	AWSKINESIS            AwsService = "AWS/Kinesis"
-	AWSKINESIS_VIDEO      AwsService = "AWS/KinesisVideo"
-	AWSLAMBDA             AwsService = "AWS/Lambda"
-	AWSLEX                AwsService = "AWS/Lex"
-	AWSMEDIA_CONNECT      AwsService = "AWS/MediaConnect"
-	AWSMEDIA_CONVERT      AwsService = "AWS/MediaConvert"
-	AWSMEDIA_PACKAGE      AwsService = "AWS/MediaPackage"
-	AWSMEDIA_TAILOR       AwsService = "AWS/MediaTailor"
-	AWSML                 AwsService = "AWS/ML"
-	AWSAMAZON_MQ          AwsService = "AWS/AmazonMQ"
-	AWSOPS_WORKS          AwsService = "AWS/OpsWorks"
-	AWSPOLLY              AwsService = "AWS/Polly"
-	AWSREDSHIFT           AwsService = "AWS/Redshift"
-	AWSRDS                AwsService = "AWS/RDS"
-	AWSROBOMAKER          AwsService = "AWS/RoboMaker"
-	AWSROUTE53            AwsService = "AWS/Route53"
-	AWSSAGE_MAKER         AwsService = "AWS/SageMaker"
-	AWSSDK_METRICS        AwsService = "AWS/SDKMetrics"
-	AWSD_DO_S_PROTECTION  AwsService = "AWS/DDoSProtection"
-	AWSSES                AwsService = "AWS/SES"
-	AWSSNS                AwsService = "AWS/SNS"
-	AWSSQS                AwsService = "AWS/SQS"
-	AWSS3                 AwsService = "AWS/S3"
-	AWSSWF                AwsService = "AWS/SWF"
-	AWSSTATES             AwsService = "AWS/States"
-	AWSSTORAGE_GATEWAY    AwsService = "AWS/StorageGateway"
-	AWSTEXTRACT           AwsService = "AWS/Textract"
-	AWSTHINGS_GRAPH       AwsService = "AWS/ThingsGraph"
-	AWSTRANSLATE          AwsService = "AWS/Translate"
-	AWSTRUSTED_ADVISOR    AwsService = "AWS/TrustedAdvisor"
-	AWSNAT_GATEWAY        AwsService = "AWS/NATGateway"
-	AWSVPN                AwsService = "AWS/VPN"
-	WAF                   AwsService = "WAF"
-	AWSWORK_MAIL          AwsService = "AWS/WorkMail"
-	AWSWORK_SPACES        AwsService = "AWS/WorkSpaces"
-	AWSNEPTUNE            AwsService = "AWS/Neptune"
-	AWS_SYSTEM_LINUX      AwsService = "System/Linux"
+	AWSAPI_GATEWAY               AwsService = "AWS/ApiGateway"
+	AWSAPP_STREAM                AwsService = "AWS/AppStream"
+	AWSATHENA                    AwsService = "AWS/Athena"
+	AWSAUTO_SCALING              AwsService = "AWS/AutoScaling"
+	AWSBILLING                   AwsService = "AWS/Billing"
+	AWSACP_PRIVATE_CA            AwsService = "AWS/ACMPrivateCA"
+	AWSCLOUD_FRONT               AwsService = "AWS/CloudFront"
+	AWSCLOUD_HSM                 AwsService = "AWS/CloudHSM"
+	AWSCLOUD_SEARCH              AwsService = "AWS/CloudSearch"
+	AWSEVENTS                    AwsService = "AWS/Events"
+	AWSLOGS                      AwsService = "AWS/Logs"
+	AWSCODEBUILD                 AwsService = "AWS/CodeBuild"
+	AWSCOGNITO                   AwsService = "AWS/Cognito"
+	AWSCONNECT                   AwsService = "AWS/Connect"
+	AWSDMS                       AwsService = "AWS/DMS"
+	AWSDX                        AwsService = "AWS/DX"
+	AWSDOCDB                     AwsService = "AWS/DocDB"
+	AWSDYNAMO_DB                 AwsService = "AWS/DynamoDB"
+	AWSEC2                       AwsService = "AWS/EC2"
+	AWSEC2_SPOT                  AwsService = "AWS/EC2Spot"
+	AWSECS                       AwsService = "AWS/ECS"
+	AWSELASTIC_BEANSTALK         AwsService = "AWS/ElasticBeanstalk"
+	AWSELASTIC_INTERFACE         AwsService = "AWS/ElasticInterface"
+	AWSEBS                       AwsService = "AWS/EBS"
+	AWSEFS                       AwsService = "AWS/EFS"
+	AWSELB                       AwsService = "AWS/ELB"
+	AWSAPPLICATION_ELB           AwsService = "AWS/ApplicationELB"
+	AWSNETWORK_ELB               AwsService = "AWS/NetworkELB"
+	AWSELASTIC_TRANSCODER        AwsService = "AWS/ElasticTranscoder"
+	AWSELASTI_CACHE              AwsService = "AWS/ElastiCache"
+	AWSES                        AwsService = "AWS/ES"
+	AWSELASTIC_MAP_REDUCE        AwsService = "AWS/ElasticMapReduce"
+	AWSFSX                       AwsService = "AWS/FSx"
+	AWSGAME_LIFT                 AwsService = "AWS/GameLift"
+	AWSGLUE                      AwsService = "AWS/Glue"
+	AWSINSPECTOR                 AwsService = "AWS/Inspector"
+	AWSIO_T                      AwsService = "AWS/IoT"
+	AWSIO_T_ANALYTICS            AwsService = "AWS/IoTAnalytics"
+	AWSKAFKA                     AwsService = "AWS/Kafka"
+	AWSKMS                       AwsService = "AWS/KMS"
+	AWSKINESIS_ANALYTICS         AwsService = "AWS/KinesisAnalytics"
+	AWSFIREHOSE                  AwsService = "AWS/Firehose"
+	AWSKINESIS                   AwsService = "AWS/Kinesis"
+	AWSKINESIS_VIDEO             AwsService = "AWS/KinesisVideo"
+	AWSLAMBDA                    AwsService = "AWS/Lambda"
+	AWSLEX                       AwsService = "AWS/Lex"
+	AWSMEDIA_CONNECT             AwsService = "AWS/MediaConnect"
+	AWSMEDIA_CONVERT             AwsService = "AWS/MediaConvert"
+	AWSMEDIA_PACKAGE             AwsService = "AWS/MediaPackage"
+	AWSMEDIA_TAILOR              AwsService = "AWS/MediaTailor"
+	AWSML                        AwsService = "AWS/ML"
+	AWSAMAZON_MQ                 AwsService = "AWS/AmazonMQ"
+	AWSOPS_WORKS                 AwsService = "AWS/OpsWorks"
+	AWSPOLLY                     AwsService = "AWS/Polly"
+	AWSREDSHIFT                  AwsService = "AWS/Redshift"
+	AWSRDS                       AwsService = "AWS/RDS"
+	AWSROBOMAKER                 AwsService = "AWS/RoboMaker"
+	AWSROUTE53                   AwsService = "AWS/Route53"
+	AWSSAGE_MAKER                AwsService = "AWS/SageMaker"
+	AWSSAGE_MAKER_TRAINING_JOBS  AwsService = "aws/sagemaker/TrainingJobs"
+	AWSSAGE_MAKER_TRANSFORM_JOBS AwsService = "aws/sagemaker/TransformJobs"
+	AWSSAGE_MAKER_ENDPOINTS      AwsService = "aws/sagemaker/Endpoints"
+	AWSSDK_METRICS               AwsService = "AWS/SDKMetrics"
+	AWSD_DO_S_PROTECTION         AwsService = "AWS/DDoSProtection"
+	AWSSES                       AwsService = "AWS/SES"
+	AWSSNS                       AwsService = "AWS/SNS"
+	AWSSQS                       AwsService = "AWS/SQS"
+	AWSS3                        AwsService = "AWS/S3"
+	AWSSWF                       AwsService = "AWS/SWF"
+	AWSSTATES                    AwsService = "AWS/States"
+	AWSSTORAGE_GATEWAY           AwsService = "AWS/StorageGateway"
+	AWSTEXTRACT                  AwsService = "AWS/Textract"
+	AWSTHINGS_GRAPH              AwsService = "AWS/ThingsGraph"
+	AWSTRANSLATE                 AwsService = "AWS/Translate"
+	AWSTRUSTED_ADVISOR           AwsService = "AWS/TrustedAdvisor"
+	AWSNAT_GATEWAY               AwsService = "AWS/NATGateway"
+	AWSVPN                       AwsService = "AWS/VPN"
+	WAF                          AwsService = "WAF"
+	AWSWORK_MAIL                 AwsService = "AWS/WorkMail"
+	AWSWORK_SPACES               AwsService = "AWS/WorkSpaces"
+	AWSNEPTUNE                   AwsService = "AWS/Neptune"
+	AWSMEDIA_LIVE                AwsService = "AWS/MediaLive"
+	AWS_SYSTEM_LINUX             AwsService = "System/Linux"
 )
 
 var AWSServiceNames = map[string]AwsService{
-	"AWS/ApiGateway":        AWSAPI_GATEWAY,
-	"AWS/AppStream":         AWSAPP_STREAM,
-	"AWS/Athena":            AWSATHENA,
-	"AWS/AutoScaling":       AWSAUTO_SCALING,
-	"AWS/Billing":           AWSBILLING,
-	"AWS/ACMPrivateCA":      AWSACP_PRIVATE_CA,
-	"AWS/CloudFront":        AWSCLOUD_FRONT,
-	"AWS/CloudHSM":          AWSCLOUD_HSM,
-	"AWS/CloudSearch":       AWSCLOUD_SEARCH,
-	"AWS/Events":            AWSEVENTS,
-	"AWS/Logs":              AWSLOGS,
-	"AWS/CodeBuild":         AWSCODEBUILD,
-	"AWS/Cognito":           AWSCOGNITO,
-	"AWS/Connect":           AWSCONNECT,
-	"AWS/DMS":               AWSDMS,
-	"AWS/DX":                AWSDX,
-	"AWS/DocDB":             AWSDOCDB,
-	"AWS/DynamoDB":          AWSDYNAMO_DB,
-	"AWS/EC2":               AWSEC2,
-	"AWS/EC2Spot":           AWSEC2_SPOT,
-	"AWS/ECS":               AWSECS,
-	"AWS/ElasticBeanstalk":  AWSELASTIC_BEANSTALK,
-	"AWS/ElasticInterface":  AWSELASTIC_INTERFACE,
-	"AWS/EBS":               AWSEBS,
-	"AWS/EFS":               AWSEFS,
-	"AWS/ELB":               AWSELB,
-	"AWS/ApplicationELB":    AWSAPPLICATION_ELB,
-	"AWS/NetworkELB":        AWSNETWORK_ELB,
-	"AWS/ElasticTranscoder": AWSELASTIC_TRANSCODER,
-	"AWS/ElastiCache":       AWSELASTI_CACHE,
-	"AWS/ES":                AWSES,
-	"AWS/ElasticMapReduce":  AWSELASTIC_MAP_REDUCE,
-	"AWS/FSx":               AWSFSX,
-	"AWS/GameLift":          AWSGAME_LIFT,
-	"AWS/Glue":              AWSGLUE,
-	"AWS/Inspector":         AWSINSPECTOR,
-	"AWS/IoT":               AWSIO_T,
-	"AWS/IoTAnalytics":      AWSIO_T_ANALYTICS,
-	"AWS/Kafka":             AWSKAFKA,
-	"AWS/KMS":               AWSKMS,
-	"AWS/KinesisAnalytics":  AWSKINESIS_ANALYTICS,
-	"AWS/Firehose":          AWSFIREHOSE,
-	"AWS/Kinesis":           AWSKINESIS,
-	"AWS/KinesisVideo":      AWSKINESIS_VIDEO,
-	"AWS/Lambda":            AWSLAMBDA,
-	"AWS/Lex":               AWSLEX,
-	"AWS/MediaConnect":      AWSMEDIA_CONNECT,
-	"AWS/MediaConvert":      AWSMEDIA_CONVERT,
-	"AWS/MediaPackage":      AWSMEDIA_PACKAGE,
-	"AWS/MediaTailor":       AWSMEDIA_TAILOR,
-	"AWS/ML":                AWSML,
-	"AWS/AmazonMQ":          AWSAMAZON_MQ,
-	"AWS/OpsWorks":          AWSOPS_WORKS,
-	"AWS/Polly":             AWSPOLLY,
-	"AWS/Redshift":          AWSREDSHIFT,
-	"AWS/RDS":               AWSRDS,
-	"AWS/RoboMaker":         AWSROBOMAKER,
-	"AWS/Route53":           AWSROUTE53,
-	"AWS/SageMaker":         AWSSAGE_MAKER,
-	"AWS/SDKMetrics":        AWSSDK_METRICS,
-	"AWS/DDoSProtection":    AWSD_DO_S_PROTECTION,
-	"AWS/SES":               AWSSES,
-	"AWS/SNS":               AWSSNS,
-	"AWS/SQS":               AWSSQS,
-	"AWS/S3":                AWSS3,
-	"AWS/SWF":               AWSSWF,
-	"AWS/States":            AWSSTATES,
-	"AWS/StorageGateway":    AWSSTORAGE_GATEWAY,
-	"AWS/Textract":          AWSTEXTRACT,
-	"AWS/ThingsGraph":       AWSTHINGS_GRAPH,
-	"AWS/Translate":         AWSTRANSLATE,
-	"AWS/TrustedAdvisor":    AWSTRUSTED_ADVISOR,
-	"AWS/NATGateway":        AWSNAT_GATEWAY,
-	"AWS/VPN":               AWSVPN,
-	"WAF":                   WAF,
-	"AWS/WorkMail":          AWSWORK_MAIL,
-	"AWS/WorkSpaces":        AWSWORK_SPACES,
-	"AWS/Neptune":           AWSNEPTUNE,
-	"System/Linux":          AWS_SYSTEM_LINUX,
+	"AWS/ApiGateway":              AWSAPI_GATEWAY,
+	"AWS/AppStream":               AWSAPP_STREAM,
+	"AWS/Athena":                  AWSATHENA,
+	"AWS/AutoScaling":             AWSAUTO_SCALING,
+	"AWS/Billing":                 AWSBILLING,
+	"AWS/ACMPrivateCA":            AWSACP_PRIVATE_CA,
+	"AWS/CloudFront":              AWSCLOUD_FRONT,
+	"AWS/CloudHSM":                AWSCLOUD_HSM,
+	"AWS/CloudSearch":             AWSCLOUD_SEARCH,
+	"AWS/Events":                  AWSEVENTS,
+	"AWS/Logs":                    AWSLOGS,
+	"AWS/CodeBuild":               AWSCODEBUILD,
+	"AWS/Cognito":                 AWSCOGNITO,
+	"AWS/Connect":                 AWSCONNECT,
+	"AWS/DMS":                     AWSDMS,
+	"AWS/DX":                      AWSDX,
+	"AWS/DocDB":                   AWSDOCDB,
+	"AWS/DynamoDB":                AWSDYNAMO_DB,
+	"AWS/EC2":                     AWSEC2,
+	"AWS/EC2Spot":                 AWSEC2_SPOT,
+	"AWS/ECS":                     AWSECS,
+	"AWS/ElasticBeanstalk":        AWSELASTIC_BEANSTALK,
+	"AWS/ElasticInterface":        AWSELASTIC_INTERFACE,
+	"AWS/EBS":                     AWSEBS,
+	"AWS/EFS":                     AWSEFS,
+	"AWS/ELB":                     AWSELB,
+	"AWS/ApplicationELB":          AWSAPPLICATION_ELB,
+	"AWS/NetworkELB":              AWSNETWORK_ELB,
+	"AWS/ElasticTranscoder":       AWSELASTIC_TRANSCODER,
+	"AWS/ElastiCache":             AWSELASTI_CACHE,
+	"AWS/ES":                      AWSES,
+	"AWS/ElasticMapReduce":        AWSELASTIC_MAP_REDUCE,
+	"AWS/FSx":                     AWSFSX,
+	"AWS/GameLift":                AWSGAME_LIFT,
+	"AWS/Glue":                    AWSGLUE,
+	"AWS/Inspector":               AWSINSPECTOR,
+	"AWS/IoT":                     AWSIO_T,
+	"AWS/IoTAnalytics":            AWSIO_T_ANALYTICS,
+	"AWS/Kafka":                   AWSKAFKA,
+	"AWS/KMS":                     AWSKMS,
+	"AWS/KinesisAnalytics":        AWSKINESIS_ANALYTICS,
+	"AWS/Firehose":                AWSFIREHOSE,
+	"AWS/Kinesis":                 AWSKINESIS,
+	"AWS/KinesisVideo":            AWSKINESIS_VIDEO,
+	"AWS/Lambda":                  AWSLAMBDA,
+	"AWS/Lex":                     AWSLEX,
+	"AWS/MediaConnect":            AWSMEDIA_CONNECT,
+	"AWS/MediaConvert":            AWSMEDIA_CONVERT,
+	"AWS/MediaPackage":            AWSMEDIA_PACKAGE,
+	"AWS/MediaTailor":             AWSMEDIA_TAILOR,
+	"AWS/ML":                      AWSML,
+	"AWS/AmazonMQ":                AWSAMAZON_MQ,
+	"AWS/OpsWorks":                AWSOPS_WORKS,
+	"AWS/Polly":                   AWSPOLLY,
+	"AWS/Redshift":                AWSREDSHIFT,
+	"AWS/RDS":                     AWSRDS,
+	"AWS/RoboMaker":               AWSROBOMAKER,
+	"AWS/Route53":                 AWSROUTE53,
+	"AWS/SageMaker":               AWSSAGE_MAKER,
+	"aws/sagemaker/TrainingJobs":  AWSSAGE_MAKER_TRAINING_JOBS,
+	"aws/sagemaker/TransformJobs": AWSSAGE_MAKER_TRANSFORM_JOBS,
+	"aws/sagemaker/Endpoints":     AWSSAGE_MAKER_ENDPOINTS,
+	"AWS/SDKMetrics":              AWSSDK_METRICS,
+	"AWS/DDoSProtection":          AWSD_DO_S_PROTECTION,
+	"AWS/SES":                     AWSSES,
+	"AWS/SNS":                     AWSSNS,
+	"AWS/SQS":                     AWSSQS,
+	"AWS/S3":                      AWSS3,
+	"AWS/SWF":                     AWSSWF,
+	"AWS/States":                  AWSSTATES,
+	"AWS/StorageGateway":          AWSSTORAGE_GATEWAY,
+	"AWS/Textract":                AWSTEXTRACT,
+	"AWS/ThingsGraph":             AWSTHINGS_GRAPH,
+	"AWS/Translate":               AWSTRANSLATE,
+	"AWS/TrustedAdvisor":          AWSTRUSTED_ADVISOR,
+	"AWS/NATGateway":              AWSNAT_GATEWAY,
+	"AWS/VPN":                     AWSVPN,
+	"WAF":                         WAF,
+	"AWS/WorkMail":                AWSWORK_MAIL,
+	"AWS/WorkSpaces":              AWSWORK_SPACES,
+	"AWS/Neptune":                 AWSNEPTUNE,
+	"AWS/MediaLive":               AWSMEDIA_LIVE,
+	"System/Linux":                AWS_SYSTEM_LINUX,
 }

@@ -1,4 +1,10 @@
+# 1.6.27, Pending
+
 # 1.6.26, Pending
+
+## Bugfixes
+
+* Add some more AWS Services
 
 # 1.6.25, 2020-03-13
 
