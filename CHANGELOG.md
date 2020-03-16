@@ -1,9 +1,10 @@
 ## 4.18.3 (Unreleased)
 
-
 IMPROVEMENTS
 
 * resource/aws_integration: Added some missing AWS services. [#173](https://github.com/terraform-providers/terraform-provider-signalfx/pull/173)
+* resource/time_chart: Fix some unclean plans caused by type conversions gone mad. [#174](https://github.com/terraform-providers/terraform-provider-signalfx/pull/174)
+
 
 ## 4.18.2 (March 13, 2020)
 

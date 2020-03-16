@@ -890,7 +890,7 @@ func timechartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 		// We need to verify that there are real axes and not just nil
 		// or zeroed structs, so we do comparison before setting each.
 		if (axisLeft == nil || *axisLeft == chart.Axes{}) {
-			log.Printf("[DEBUG] SignalFx: Axis Right is nil or zero, skipping")
+			log.Printf("[DEBUG] SignalFx: Axis Left is nil or zero, skipping")
 		} else {
 			if err := d.Set("axis_left", axisToMap(axisLeft)); err != nil {
 				return err

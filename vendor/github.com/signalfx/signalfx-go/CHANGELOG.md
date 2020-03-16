@@ -1,10 +1,15 @@
-# 1.6.27, Pending
+# 1.6.28, Pending
 
-# 1.6.26, Pending
+# 1.6.27, 2020-03-16
 
 ## Bugfixes
 
-* Add some more AWS Services
+* Chart Axes' `HighWatermark`, `LowWatermark`, `Max`, and `Min` are now correctly typed as `float64`. Same for `ColorScale.Thresholds` and `SecondaryVisualization`'s fields (`Gt`, `Gte`, `Lt`, and `Lte`). [#75](https://github.com/signalfx/signalfx-go/pull/75).
+
+## Improvements
+
+* `Computation`s internal errors are now richer, allowing users to get to the code, message and type. Thanks [rma-stripe](https://github.com/rma-stripe)! [#74](https://github.com/signalfx/signalfx-go/pull/74)
+
 
 # 1.6.25, 2020-03-13
 
