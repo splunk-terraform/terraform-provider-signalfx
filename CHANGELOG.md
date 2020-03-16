@@ -1,4 +1,10 @@
-## 4.19.0 (Unreleased)
+## 4.18.3 (Unreleased)
+
+
+IMPROVEMENTS
+
+* resource/aws_integration: Added some missing AWS services. []()
+
 ## 4.18.2 (March 13, 2020)
 
 BUGFIXES:
