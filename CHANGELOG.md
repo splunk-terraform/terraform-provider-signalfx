@@ -3,7 +3,7 @@
 
 IMPROVEMENTS
 
-* resource/aws_integration: Added some missing AWS services. []()
+* resource/aws_integration: Added some missing AWS services. [#173](https://github.com/terraform-providers/terraform-provider-signalfx/pull/173)
 
 ## 4.18.2 (March 13, 2020)
 
