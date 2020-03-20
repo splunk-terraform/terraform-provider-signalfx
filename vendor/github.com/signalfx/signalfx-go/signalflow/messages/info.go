@@ -9,6 +9,7 @@ const (
 	JobRunningResolution = "JOB_RUNNING_RESOLUTION"
 	JobDetectedLag       = "JOB_DETECTED_LAG"
 	JobInitialMaxDelay   = "JOB_INITIAL_MAX_DELAY"
+	FindLimitedResultSet = "FIND_LIMITED_RESULT_SET"
 )
 
 type MessageBlock struct {
@@ -44,6 +45,8 @@ func (im *InfoMessage) UnmarshalJSON(raw []byte) error {
 		mb.Contents = JobDetectedLagContents(mb.ContentsRaw)
 	case JobInitialMaxDelay:
 		mb.Contents = JobInitialMaxDelayContents(mb.ContentsRaw)
+	case FindLimitedResultSet:
+		mb.Contents = FindLimitedResultSetContents(mb.ContentsRaw)
 	default:
 		mb.Contents = mb.ContentsRaw
 	}
@@ -73,6 +76,18 @@ type JobInitialMaxDelayContents map[string]interface{}
 
 func (jm JobInitialMaxDelayContents) MaxDelayMS() int {
 	field, _ := jm["maxDelayMs"].(float64)
+	return int(field)
+}
+
+type FindLimitedResultSetContents map[string]interface{}
+
+func (jm FindLimitedResultSetContents) MatchedSize() int {
+	field, _ := jm["matchedSize"].(float64)
+	return int(field)
+}
+
+func (jm FindLimitedResultSetContents) LimitSize() int {
+	field, _ := jm["limitSize"].(float64)
 	return int(field)
 }
 

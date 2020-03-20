@@ -13,7 +13,7 @@ type Target struct {
 	// User-assigned name of the dashboard link target.
 	DashboardName string `json:"dashboardName,omitempty"`
 	// Flag that designates a target as the default for a data link object.
-	IsDefault bool `json:"isDefault,omitempty"`
+	IsDefault bool `json:"isDefault"`
 	// User-assigned target name.
 	Name string `json:"name,omitempty"`
 	// The minimum time window for a search sent to an external site.
