@@ -4,9 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net"
+	"net/http"
 	"os"
 	"os/user"
 	"runtime"
+	"time"
 
 	"github.com/bgentry/go-netrc/netrc"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -126,7 +129,17 @@ func signalfxConfigure(data *schema.ResourceData) (interface{}, error) {
 		config.CustomAppURL = custom_app_url.(string)
 	}
 
-	client, err := sfx.NewClient(config.AuthToken, sfx.APIUrl(config.APIURL))
+	var netTransport = &http.Transport{
+		Dial: (&net.Dialer{
+			Timeout: 5 * time.Second,
+		}).Dial,
+		TLSHandshakeTimeout: 5 * time.Second,
+	}
+
+	client, err := sfx.NewClient(config.AuthToken, sfx.APIUrl(config.APIURL), sfx.HTTPClient(&http.Client{
+		Timeout:   time.Second * 30,
+		Transport: netTransport,
+	}))
 	if err != nil {
 		return &config, err
 	}
