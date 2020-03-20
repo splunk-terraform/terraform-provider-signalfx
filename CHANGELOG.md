@@ -1,12 +1,16 @@
 ## 4.18.4 (Unreleased)
 
+IMPROVEMENTS:
+
+* provider: There are now timeouts on HTTP connection (5s), TLS negotiation (5s) and overall HTTP transaction (30s) durations to avoid long blocks and generate errors where needed. [#177](https://github.com/terraform-providers/terraform-provider-signalfx/pull/177)
+
 BUGFIXES:
 
 * resource/data_link: Setting `is_default` was having no effect and causing unclean plans. [#176](https://github.com/terraform-providers/terraform-provider-signalfx/pull/176)
 
 ## 4.18.3 (March 16, 2020)
 
-IMPROVEMENTS
+IMPROVEMENTS:
 
 * resource/aws_integration: Added some missing AWS services. [#173](https://github.com/terraform-providers/terraform-provider-signalfx/pull/173)
 * resource/time_chart: Fix some unclean plans caused by type conversions gone mad. [#174](https://github.com/terraform-providers/terraform-provider-signalfx/pull/174)
