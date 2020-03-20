@@ -29,6 +29,8 @@ type Computation struct {
 	resolutionMS *int
 	lagMS        *int
 	maxDelayMS   *int
+	matchedSize  *int
+	limitSize    *int
 
 	tsidMetadata map[idtool.ID]*messages.MetadataProperties
 
@@ -137,6 +139,26 @@ func (c *Computation) MaxDelay() time.Duration {
 	return time.Duration(*c.maxDelayMS) * time.Millisecond
 }
 
+// MatchedSize detected of the job.  This will wait for a short while for the matched
+// size message to come on the websocket, but will return 0 after a timeout if
+// it does not come.
+func (c *Computation) MatchedSize() int {
+	if err := c.waitForMetadata(func() bool { return c.matchedSize != nil }); err != nil {
+		return 0
+	}
+	return *c.matchedSize
+}
+
+// LimitSize detected of the job.  This will wait for a short while for the limit
+// size message to come on the websocket, but will return 0 after a timeout if
+// it does not come.
+func (c *Computation) LimitSize() int {
+	if err := c.waitForMetadata(func() bool { return c.limitSize != nil }); err != nil {
+		return 0
+	}
+	return *c.limitSize
+}
+
 // TSIDMetadata for a particular tsid.  This will wait for a short while for
 // the tsid metadata message to come on the websocket, but will return nil
 // after a timeout if it does not come.
@@ -199,6 +221,9 @@ func (c *Computation) processMessage(m messages.Message) {
 			c.lagMS = pointer.Int(v.MessageBlock.Contents.(messages.JobDetectedLagContents).LagMS())
 		case messages.JobInitialMaxDelay:
 			c.maxDelayMS = pointer.Int(v.MessageBlock.Contents.(messages.JobInitialMaxDelayContents).MaxDelayMS())
+		case messages.FindLimitedResultSet:
+			c.matchedSize = pointer.Int(v.MessageBlock.Contents.(messages.FindLimitedResultSetContents).MatchedSize())
+			c.limitSize = pointer.Int(v.MessageBlock.Contents.(messages.FindLimitedResultSetContents).LimitSize())
 		}
 	case *messages.ErrorMessage:
 		rawData := v.RawData()

@@ -152,7 +152,9 @@ func (c *Client) SearchDetectors(limit int, name string, offset int, tags string
 	params.Add("limit", strconv.Itoa(limit))
 	params.Add("name", name)
 	params.Add("offset", strconv.Itoa(offset))
-	params.Add("tags", tags)
+	if tags != "" {
+		params.Add("tags", tags)
+	}
 
 	resp, err := c.doRequest("GET", DetectorAPIURL, params, nil)
 

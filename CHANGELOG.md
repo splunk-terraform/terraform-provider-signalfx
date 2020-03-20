@@ -1,4 +1,9 @@
-## 4.19.0 (Unreleased)
+## 4.18.4 (Unreleased)
+
+BUGFIXES:
+
+* resource/data_link: Setting `is_default` was having no effect and causing unclean plans. [#176](https://github.com/terraform-providers/terraform-provider-signalfx/pull/176)
+
 ## 4.18.3 (March 16, 2020)
 
 IMPROVEMENTS
