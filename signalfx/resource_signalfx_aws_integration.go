@@ -290,32 +290,10 @@ func awsIntegrationAPIToTF(d *schema.ResourceData, aws *integration.AwsCloudWatc
 			}
 		}
 	}
-	if len(aws.NamespaceSyncRules) > 0 {
-		var rules []map[string]interface{}
-		for _, v := range aws.NamespaceSyncRules {
-			if v.Filter != nil {
-				rules = append(rules, map[string]interface{}{
-					"default_action": string(v.DefaultAction),
-					"filter_action":  v.Filter.Action,
-					"filter_source":  v.Filter.Source,
-					"namespace":      string(v.Namespace),
-				})
-			} else {
-				// Sometimes the rules come back with just a namespace and no
-				// filters.
-				rules = append(rules, map[string]interface{}{
-					"default_action": string(v.DefaultAction),
-					"namespace":      string(v.Namespace),
-				})
-			}
-		}
-		if len(rules) > 0 {
-			if err := d.Set("namespace_sync_rule", rules); err != nil {
-				return err
-			}
-		}
-	} else {
-		// Only look for services if we don't have NamespaceSyncRules
+	if _, ok := d.GetOk("services"); ok {
+		// The SFx API unhelpfully "upgrades" services entries into
+		// `namespace_sync_rule`s with a bunch of null fields. As such we'll ignore
+		// `NamespaceSyncRules` if we have services
 		if len(aws.Services) > 0 {
 			services := make([]interface{}, len(aws.Services))
 			for i, v := range aws.Services {
@@ -323,6 +301,32 @@ func awsIntegrationAPIToTF(d *schema.ResourceData, aws *integration.AwsCloudWatc
 			}
 			if err := d.Set("services", services); err != nil {
 				return err
+			}
+		}
+	} else {
+		if len(aws.NamespaceSyncRules) > 0 {
+			var rules []map[string]interface{}
+			for _, v := range aws.NamespaceSyncRules {
+				if v.Filter != nil {
+					rules = append(rules, map[string]interface{}{
+						"default_action": string(v.DefaultAction),
+						"filter_action":  v.Filter.Action,
+						"filter_source":  v.Filter.Source,
+						"namespace":      string(v.Namespace),
+					})
+				} else {
+					// Sometimes the rules come back with just a namespace and no
+					// filters.
+					rules = append(rules, map[string]interface{}{
+						"default_action": string(v.DefaultAction),
+						"namespace":      string(v.Namespace),
+					})
+				}
+			}
+			if len(rules) > 0 {
+				if err := d.Set("namespace_sync_rule", rules); err != nil {
+					return err
+				}
 			}
 		}
 	}

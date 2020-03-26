@@ -1,4 +1,9 @@
-## 4.19.0 (Unreleased)
+## 4.18.5 (Unreleased)
+
+BUGFIXES:
+
+* resource/aws_integration: Using `services` no longer generates unclean plans when there are no changes. [#180](https://github.com/terraform-providers/terraform-provider-signalfx/pull/180)
+
 ## 4.18.4 (March 20, 2020)
 
 IMPROVEMENTS:
