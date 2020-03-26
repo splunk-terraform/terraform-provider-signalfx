@@ -130,6 +130,7 @@ func signalfxConfigure(data *schema.ResourceData) (interface{}, error) {
 	}
 
 	var netTransport = &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
 		Dial: (&net.Dialer{
 			Timeout: 5 * time.Second,
 		}).Dial,
