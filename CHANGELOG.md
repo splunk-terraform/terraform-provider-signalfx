@@ -1,4 +1,9 @@
 ## 4.19.0 (Unreleased)
+
+IMPROVEMENTS:
+
+* provider: Added support for proxies via Go's [ProxyFromEnvironment](https://golang.org/pkg/net/http/#ProxyFromEnvironment). Thanks [RafeKettler](https://github.com/RafeKettler)! [#183](https://github.com/terraform-providers/terraform-provider-signalfx/pull/183)
+
 ## 4.18.5 (March 26, 2020)
 
 BUGFIXES:
