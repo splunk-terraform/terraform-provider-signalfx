@@ -1,4 +1,4 @@
-## 4.18.6 (Unreleased)
+## 4.18.6 (March 27, 2020)
 
 IMPROVEMENTS:
 
