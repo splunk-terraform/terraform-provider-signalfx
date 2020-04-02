@@ -25,7 +25,7 @@ resource "signalfx_team" "myteam0" {
       "PagerDuty,credentialId"
     ]
 
-    notificiations_info = [
+    notifications_info = [
       "Email,notify@example.com"
     ]
 }
