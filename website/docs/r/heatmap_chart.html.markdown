@@ -30,10 +30,25 @@ resource "signalfx_heatmap_chart" "myheatmapchart0" {
 
     # You must specify one of `color_range` or `color_scale`
     color_range {
-		    min_value = 0
-		    max_value = 100
-		    color = "#ff0000"
-		}
+        min_value = 0
+        max_value = 100
+        color = "#ff0000"
+    }
+    
+    # !Do not use both color_range and color_scale!
+    color_scale {
+        gte = 99
+	color = "green"
+    }
+    color_scale {
+        lt = 99 # This ensures terraform recognizes that we cover the range 95-99
+        gte = 95
+	color = "yellow"
+    }
+    color_scale {
+        lt = 95
+	color = "red"
+    }
 }
 ```
 
@@ -57,9 +72,9 @@ The following arguments are supported in the resource block:
     * `min_value` - (Optional) The minimum value within the coloring range.
     * `max_value` - (Optional) The maximum value within the coloring range.
     * `color` - (Required) The color range to use. The starting hex color value for data values in a heatmap chart. Specify the value as a 6-character hexadecimal value preceded by the '#' character, for example "#ea1849" (grass green).
-* `color_scale` - (Required unless using `color_range`.  Conflicts with `color_range`) Single color range including both the color to display for that range and the borders of the range. Example: `[{ gt = 60, color = "blue" }, { lte = 60, color = "yellow" }]`. Look at this [link](https://docs.signalfx.com/en/latest/charts/chart-options-tab.html).
+* `color_scale` - (Required unless using `color_range`.  Conflicts with `color_range`) One to N blocks, each defining a single color range including both the color to display for that range and the borders of the range. Example: `color_scale { gt = 60, color = "blue" } color_scale { lte = 60, color = "yellow" }`. Look at this [link](https://docs.signalfx.com/en/latest/charts/chart-options-tab.html).
     * `gt` - (Optional) Indicates the lower threshold non-inclusive value for this range.
     * `gte` - (Optional) Indicates the lower threshold inclusive value for this range.
     * `lt` - (Optional) Indicates the upper threshold non-inclusive value for this range.
     * `lte` - (Optional) Indicates the upper threshold inclusive value for this range.
-    * `color` - (Required) The color range to use. Must be either gray, blue, navy, orange, yellow, magenta, purple, violet, lilac, green, aquamarine.
+    * `color` - (Required) The color range to use. Hex values are not supported here. Must be either gray, blue, light_blue, navy, dark_orange, orange, dark_yellow, magenta, cerise, pink, violet, purple, gray_blue, dark_green, green, aquamarine, red, yellow, vivid_yellow, light_green, lime_green.
