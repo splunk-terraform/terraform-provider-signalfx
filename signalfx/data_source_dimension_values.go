@@ -2,11 +2,11 @@ package signalfx
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"math"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/signalfx/golib/errors"
 )
 
 // This is an arbtirary limit and could be changed. I just don't think it
@@ -48,7 +48,7 @@ func dataSourceReadSignalFxDimensionValue(d *schema.ResourceData, meta interface
 		return nil
 	}
 	if resp.Count >= PAGE_LIMIT {
-		return errors.Errorf("This data source only allows <= %d dimensions", PAGE_LIMIT)
+		return fmt.Errorf("This data source only allows <= %d dimensions", PAGE_LIMIT)
 	}
 
 	values := make([]string, resp.Count)
