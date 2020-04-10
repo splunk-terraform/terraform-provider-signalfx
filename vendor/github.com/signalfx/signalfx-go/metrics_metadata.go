@@ -73,7 +73,9 @@ func (c *Client) UpdateDimension(key string, value string, dim *metrics_metadata
 func (c *Client) SearchDimension(query string, orderBy string, limit int, offset int) (*metrics_metadata.DimensionQueryResponseModel, error) {
 	params := url.Values{}
 	params.Add("query", query)
-	params.Add("orderBy", orderBy)
+	if orderBy != "" {
+		params.Add("orderBy", orderBy)
+	}
 	params.Add("limit", strconv.Itoa(limit))
 	params.Add("offset", strconv.Itoa(offset))
 

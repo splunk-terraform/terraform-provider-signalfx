@@ -51,6 +51,9 @@ func Provider() terraform.ResourceProvider {
 				Description: "Application URL for your SignalFx org, often customzied for organizations using SSO",
 			},
 		},
+		DataSourcesMap: map[string]*schema.Resource{
+			"signalfx_dimension_values": dataSourceDimensionValues(),
+		},
 		ResourcesMap: map[string]*schema.Resource{
 			"signalfx_alert_muting_rule":        alertMutingRuleResource(),
 			"signalfx_aws_external_integration": integrationAWSExternalResource(),

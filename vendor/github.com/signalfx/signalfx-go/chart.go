@@ -107,9 +107,13 @@ func (c *Client) UpdateChart(id string, chartRequest *chart.CreateUpdateChartReq
 func (c *Client) SearchCharts(limit int, name string, offset int, tags string) (*chart.SearchResult, error) {
 	params := url.Values{}
 	params.Add("limit", strconv.Itoa(limit))
-	params.Add("name", name)
+	if name != "" {
+		params.Add("name", name)
+	}
 	params.Add("offset", strconv.Itoa(offset))
-	params.Add("tags", tags)
+	if tags != "" {
+		params.Add("tags", tags)
+	}
 
 	resp, err := c.doRequest("GET", ChartAPIURL, params, nil)
 
