@@ -1,4 +1,16 @@
-# 1.6.30, Pending
+# 1.6.32, Pending
+
+# 1.6.31, 2020-04-10
+
+## Bugfixes
+
+* Don't set orderBy on dimension search if an empty string.
+
+# 1.6.30, 2020-03-27
+
+## Bugfixes
+
+* Don't set tags on chart search if an empty string. Thanks [ChimeraCoder](https://github.com/ChimeraCoder)! [#79](https://github.com/signalfx/signalfx-go/pull/79)
 
 # 1.6.29, 2020-03-20
 
