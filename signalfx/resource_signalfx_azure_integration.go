@@ -51,7 +51,8 @@ func integrationAzureResource() *schema.Resource {
 			},
 			"services": &schema.Schema{
 				Type:     schema.TypeSet,
-				Optional: true,
+				Required: true,
+				MinItems: 1,
 				Elem: &schema.Schema{
 					Type:         schema.TypeString,
 					ValidateFunc: validateAzureService,
