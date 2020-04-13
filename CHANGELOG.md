@@ -1,4 +1,4 @@
-## 4.19.1 (Unreleased)
+## 4.19.1 (April 13, 2020)
 
 IMPROVEMENTS:
 * provider: Now includes a user-agent in it's requests. [#190](https://github.com/terraform-providers/terraform-provider-signalfx/pull/190)
