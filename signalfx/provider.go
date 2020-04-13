@@ -16,11 +16,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	homedir "github.com/mitchellh/go-homedir"
 	sfx "github.com/signalfx/signalfx-go"
+	"github.com/terraform-providers/terraform-provider-signalfx/version"
 )
 
 var SystemConfigPath = "/etc/signalfx.conf"
 var HomeConfigSuffix = "/.signalfx.conf"
 var HomeConfigPath = ""
+
+var sfxProvider *schema.Provider
 
 type signalfxConfig struct {
 	AuthToken    string `json:"auth_token"`
@@ -30,7 +33,7 @@ type signalfxConfig struct {
 }
 
 func Provider() terraform.ResourceProvider {
-	return &schema.Provider{
+	sfxProvider = &schema.Provider{
 		Schema: map[string]*schema.Schema{
 			"auth_token": &schema.Schema{
 				Type:        schema.TypeString,
@@ -82,6 +85,8 @@ func Provider() terraform.ResourceProvider {
 		},
 		ConfigureFunc: signalfxConfigure,
 	}
+
+	return sfxProvider
 }
 
 func signalfxConfigure(data *schema.ResourceData) (interface{}, error) {
@@ -140,13 +145,21 @@ func signalfxConfigure(data *schema.ResourceData) (interface{}, error) {
 		TLSHandshakeTimeout: 5 * time.Second,
 	}
 
-	client, err := sfx.NewClient(config.AuthToken, sfx.APIUrl(config.APIURL), sfx.HTTPClient(&http.Client{
-		Timeout:   time.Second * 30,
-		Transport: netTransport,
-	}))
+	pv := version.ProviderVersion
+	providerUserAgent := fmt.Sprintf("Terraform/%s terraform-provider-signalfx/%s", sfxProvider.TerraformVersion, pv)
+
+	client, err := sfx.NewClient(config.AuthToken,
+		sfx.APIUrl(config.APIURL),
+		sfx.HTTPClient(&http.Client{
+			Timeout:   time.Second * 30,
+			Transport: netTransport,
+		}),
+		sfx.UserAgent(fmt.Sprintf(providerUserAgent)),
+	)
 	if err != nil {
 		return &config, err
 	}
+
 	config.Client = client
 
 	return &config, nil
