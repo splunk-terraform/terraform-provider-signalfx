@@ -1,4 +1,9 @@
-## 4.20.0 (Unreleased)
+## 4.19.1 (Unreleased)
+
+IMPROVEMENTS:
+* provider: Now includes a user-agent in it's requests. [#190](https://github.com/terraform-providers/terraform-provider-signalfx/pull/190)
+* provider: Bump various dependencies, including the Terraform SDK [#190](https://github.com/terraform-providers/terraform-provider-signalfx/pull/190)
+
 ## 4.19.0 (April 13, 2020)
 
 BUGFIXES:
