@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net"
 	"net/http"
 	"os"
@@ -148,7 +147,6 @@ func signalfxConfigure(data *schema.ResourceData) (interface{}, error) {
 
 	pv := version.ProviderVersion
 	providerUserAgent := fmt.Sprintf("Terraform/%s terraform-provider-signalfx/%s", sfxProvider.TerraformVersion, pv)
-	log.Printf("[DEBUG] SignalFx: User-Agent=%s\n", providerUserAgent)
 
 	client, err := sfx.NewClient(config.AuthToken,
 		sfx.APIUrl(config.APIURL),
