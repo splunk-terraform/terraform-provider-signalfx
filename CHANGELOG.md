@@ -1,4 +1,4 @@
-## 4.19.0 (Unreleased)
+## 4.19.0 (April 13, 2020)
 
 BUGFIXES:
 * resource/signalfx_team: Fix a spelling error. Thanks [@ajwood-acquia](https://github.com/ajwood-acquia) [#185](https://github.com/terraform-providers/terraform-provider-signalfx/pull/185)
