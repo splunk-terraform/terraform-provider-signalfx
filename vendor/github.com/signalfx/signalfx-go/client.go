@@ -22,6 +22,7 @@ type Client struct {
 	baseURL    string
 	httpClient *http.Client
 	authToken  string
+	userAgent  string
 }
 
 // ClientParam is an option for NewClient. Its implementation borrows
@@ -37,6 +38,7 @@ func NewClient(token string, options ...ClientParam) (*Client, error) {
 			Timeout: time.Second * 30,
 		},
 		authToken: token,
+		userAgent: "signalfx-go",
 	}
 
 	for _, option := range options {
@@ -52,6 +54,14 @@ func NewClient(token string, options ...ClientParam) (*Client, error) {
 func APIUrl(apiURL string) ClientParam {
 	return func(client *Client) error {
 		client.baseURL = apiURL
+		return nil
+	}
+}
+
+// UserAgent sets the UserAgent string to include with the request.
+func UserAgent(userAgent string) ClientParam {
+	return func(client *Client) error {
+		client.userAgent = userAgent
 		return nil
 	}
 }
@@ -84,6 +94,7 @@ func (c *Client) doRequestWithToken(method string, path string, params url.Value
 	if token != "" {
 		req.Header.Set(AuthHeaderKey, token)
 	}
+	req.Header.Set("User-Agent", c.userAgent)
 	req.Header.Set("Content-Type", "application/json")
 	if err != nil {
 		return nil, err
