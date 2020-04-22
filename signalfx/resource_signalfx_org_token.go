@@ -117,6 +117,11 @@ func orgTokenResource() *schema.Resource {
 				},
 				Description: "List of strings specifying where notifications will be sent when an incident occurs. See https://developers.signalfx.com/v2/docs/detector-model#notifications-models for more info",
 			},
+			"secret": &schema.Schema{
+				Type:      schema.TypeString,
+				Computed:  true,
+				Sensitive: true,
+			},
 		},
 
 		Create: orgTokenCreate,
@@ -301,6 +306,10 @@ func orgTokenAPIToTF(d *schema.ResourceData, t *orgtoken.Token) error {
 			notifications[i] = tfNot
 		}
 		if err := d.Set("notifications", notifications); err != nil {
+			return err
+		}
+
+		if err := d.Set("secret", t.Secret); err != nil {
 			return err
 		}
 	}
