@@ -1,4 +1,4 @@
-## 4.19.2 (Unreleased)
+## 4.19.2 (April 22, 2020)
 
 BUGFIXES
 
