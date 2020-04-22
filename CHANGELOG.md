@@ -1,4 +1,4 @@
-## 4.19.3 (Unreleased)
+## 4.19.3 (April 22, 2020)
 
 IMPROVEMENTS:
 * resource/org_token: The field `secret` is now available on the token. [#194](https://github.com/terraform-providers/terraform-provider-signalfx/pull/194)
