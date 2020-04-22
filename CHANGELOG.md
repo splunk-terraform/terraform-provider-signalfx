@@ -1,8 +1,11 @@
-## 4.20.0 (Unreleased)
+## 4.19.3 (Unreleased)
+
+IMPROVEMENTS:
+* resource/org_token: The field `secret` is now available on the token. [#194](https://github.com/terraform-providers/terraform-provider-signalfx/pull/194)
+
 ## 4.19.2 (April 22, 2020)
 
-BUGFIXES
-
+BUGFIXES:
 * resource/org_token: No longer crashes when trying to create without any limits. [#192](https://github.com/terraform-providers/terraform-provider-signalfx/pull/192)
 
 ## 4.19.1 (April 13, 2020)
