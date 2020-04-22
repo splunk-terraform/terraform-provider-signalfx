@@ -1,4 +1,9 @@
-## 4.20.0 (Unreleased)
+## 4.19.2 (Unreleased)
+
+BUGFIXES
+
+* resource/org_token: No longer crashes when trying to create without any limits. [#192](https://github.com/terraform-providers/terraform-provider-signalfx/pull/192)
+
 ## 4.19.1 (April 13, 2020)
 
 IMPROVEMENTS:

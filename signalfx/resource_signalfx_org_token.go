@@ -285,8 +285,10 @@ func orgTokenAPIToTF(d *schema.ResourceData, t *orgtoken.Token) error {
 					usageStuff["high_res_metrics_notification_threshold"] = *cnt.HighResMetricThreshold
 				}
 			}
-			if err := d.Set("host_or_usage_limits", []interface{}{usageStuff}); err != nil {
-				return err
+			if len(usageStuff) > 0 {
+				if err := d.Set("host_or_usage_limits", []map[string]interface{}{usageStuff}); err != nil {
+					return err
+				}
 			}
 		}
 
