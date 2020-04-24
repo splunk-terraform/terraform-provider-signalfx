@@ -276,14 +276,14 @@ func getHeatmapOptionsChart(d *schema.ResourceData) (*chart.Options, error) {
 		}
 	}
 
+	// Default to an empty range
+	options.ColorBy = "Range"
 	if colorRangeOptions := getHeatmapColorRangeOptions(d); colorRangeOptions != nil {
 		options.ColorBy = "Range"
 		options.ColorRange = colorRangeOptions
 	} else if colorScaleOptions := getColorScaleOptions(d); colorScaleOptions != nil && len(colorScaleOptions) > 0 {
 		options.ColorBy = "Scale"
 		options.ColorScale2 = colorScaleOptions
-	} else {
-		return nil, fmt.Errorf("One of `color_scale` or `color_range` must be set")
 	}
 
 	return options, nil
@@ -345,7 +345,7 @@ func heatmapchartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 	if err := d.Set("hide_timestamp", options.TimestampHidden); err != nil {
 		return err
 	}
-	if options.ColorRange != nil {
+	if options.ColorRange != nil && options.ColorRange.Color != "" {
 		colorRange := make([]map[string]interface{}, 1)
 		colorRange[0] = map[string]interface{}{
 			"min_value": options.ColorRange.Min,
