@@ -1,4 +1,4 @@
-## 4.19.4 (Unreleased)
+## 4.19.4 (April 24, 2020)
 
 BUGFIXES:
 * resource/heatmap_chart: Importing some heatmaps would fail. Fixed by defaulting to an empty `color_range` if none is specified. [#196](https://github.com/terraform-providers/terraform-provider-signalfx/pull/196)
