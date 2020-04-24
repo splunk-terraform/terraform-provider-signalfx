@@ -345,7 +345,7 @@ func heatmapchartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 	if err := d.Set("hide_timestamp", options.TimestampHidden); err != nil {
 		return err
 	}
-	if options.ColorRange != nil {
+	if options.ColorRange != nil && options.ColorRange.Color != "" {
 		colorRange := make([]map[string]interface{}, 1)
 		colorRange[0] = map[string]interface{}{
 			"min_value": options.ColorRange.Min,
