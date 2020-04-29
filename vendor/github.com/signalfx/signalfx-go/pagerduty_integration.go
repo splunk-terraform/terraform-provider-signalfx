@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 
@@ -18,11 +19,12 @@ func (c *Client) CreatePagerDutyIntegration(pdi *integration.PagerDutyIntegratio
 	}
 
 	resp, err := c.doRequest("POST", IntegrationAPIURL, nil, bytes.NewReader(payload))
-
+	if resp != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		message, _ := ioutil.ReadAll(resp.Body)
@@ -32,6 +34,7 @@ func (c *Client) CreatePagerDutyIntegration(pdi *integration.PagerDutyIntegratio
 	finalIntegration := integration.PagerDutyIntegration{}
 
 	err = json.NewDecoder(resp.Body).Decode(&finalIntegration)
+	_, _ = io.Copy(ioutil.Discard, resp.Body)
 
 	return &finalIntegration, err
 }
@@ -39,11 +42,12 @@ func (c *Client) CreatePagerDutyIntegration(pdi *integration.PagerDutyIntegratio
 // GetPagerDutyIntegration retrieves a PagerDuty integration.
 func (c *Client) GetPagerDutyIntegration(id string) (*integration.PagerDutyIntegration, error) {
 	resp, err := c.doRequest("GET", IntegrationAPIURL+"/"+id, nil, nil)
-
+	if resp != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		message, _ := ioutil.ReadAll(resp.Body)
@@ -53,6 +57,7 @@ func (c *Client) GetPagerDutyIntegration(id string) (*integration.PagerDutyInteg
 	finalIntegration := integration.PagerDutyIntegration{}
 
 	err = json.NewDecoder(resp.Body).Decode(&finalIntegration)
+	_, _ = io.Copy(ioutil.Discard, resp.Body)
 
 	return &finalIntegration, err
 }
@@ -65,11 +70,12 @@ func (c *Client) UpdatePagerDutyIntegration(id string, pdi *integration.PagerDut
 	}
 
 	resp, err := c.doRequest("PUT", IntegrationAPIURL+"/"+id, nil, bytes.NewReader(payload))
-
+	if resp != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		message, _ := ioutil.ReadAll(resp.Body)
@@ -79,6 +85,7 @@ func (c *Client) UpdatePagerDutyIntegration(id string, pdi *integration.PagerDut
 	finalIntegration := integration.PagerDutyIntegration{}
 
 	err = json.NewDecoder(resp.Body).Decode(&finalIntegration)
+	_, _ = io.Copy(ioutil.Discard, resp.Body)
 
 	return &finalIntegration, err
 }
@@ -86,16 +93,18 @@ func (c *Client) UpdatePagerDutyIntegration(id string, pdi *integration.PagerDut
 // DeletePagerDutyIntegration deletes a PagerDuty integration.
 func (c *Client) DeletePagerDutyIntegration(id string) error {
 	resp, err := c.doRequest("DELETE", IntegrationAPIURL+"/"+id, nil, nil)
-
+	if resp != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusNoContent {
 		message, _ := ioutil.ReadAll(resp.Body)
 		return fmt.Errorf("Unexpected status code: %d: %s", resp.StatusCode, message)
 	}
+	_, _ = io.Copy(ioutil.Discard, resp.Body)
 
 	return err
 }

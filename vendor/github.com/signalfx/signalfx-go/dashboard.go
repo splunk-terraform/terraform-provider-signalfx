@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -25,10 +26,12 @@ func (c *Client) CreateDashboard(dashboardRequest *dashboard.CreateUpdateDashboa
 	}
 
 	resp, err := c.doRequest("POST", DashboardAPIURL, nil, bytes.NewReader(payload))
+	if resp != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		message, _ := ioutil.ReadAll(resp.Body)
@@ -38,6 +41,7 @@ func (c *Client) CreateDashboard(dashboardRequest *dashboard.CreateUpdateDashboa
 	finalDashboard := &dashboard.Dashboard{}
 
 	err = json.NewDecoder(resp.Body).Decode(finalDashboard)
+	_, _ = io.Copy(ioutil.Discard, resp.Body)
 
 	return finalDashboard, err
 }
@@ -45,16 +49,18 @@ func (c *Client) CreateDashboard(dashboardRequest *dashboard.CreateUpdateDashboa
 // DeleteDashboard deletes a dashboard.
 func (c *Client) DeleteDashboard(id string) error {
 	resp, err := c.doRequest("DELETE", DashboardAPIURL+"/"+id, nil, nil)
-
+	if resp != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		message, _ := ioutil.ReadAll(resp.Body)
 		return fmt.Errorf("Unexpected status code: %d: %s", resp.StatusCode, message)
 	}
+	_, _ = io.Copy(ioutil.Discard, resp.Body)
 
 	return nil
 }
@@ -62,11 +68,12 @@ func (c *Client) DeleteDashboard(id string) error {
 // GetDashboard gets a dashboard.
 func (c *Client) GetDashboard(id string) (*dashboard.Dashboard, error) {
 	resp, err := c.doRequest("GET", DashboardAPIURL+"/"+id, nil, nil)
-
+	if resp != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		message, _ := ioutil.ReadAll(resp.Body)
@@ -76,6 +83,7 @@ func (c *Client) GetDashboard(id string) (*dashboard.Dashboard, error) {
 	finalDashboard := &dashboard.Dashboard{}
 
 	err = json.NewDecoder(resp.Body).Decode(finalDashboard)
+	_, _ = io.Copy(ioutil.Discard, resp.Body)
 
 	return finalDashboard, err
 }
@@ -88,10 +96,12 @@ func (c *Client) UpdateDashboard(id string, dashboardRequest *dashboard.CreateUp
 	}
 
 	resp, err := c.doRequest("PUT", DashboardAPIURL+"/"+id, nil, bytes.NewReader(payload))
+	if resp != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		message, _ := ioutil.ReadAll(resp.Body)
@@ -101,6 +111,7 @@ func (c *Client) UpdateDashboard(id string, dashboardRequest *dashboard.CreateUp
 	finalDashboard := &dashboard.Dashboard{}
 
 	err = json.NewDecoder(resp.Body).Decode(finalDashboard)
+	_, _ = io.Copy(ioutil.Discard, resp.Body)
 
 	return finalDashboard, err
 }
@@ -114,15 +125,17 @@ func (c *Client) SearchDashboard(limit int, name string, offset int, tags string
 	params.Add("tags", tags)
 
 	resp, err := c.doRequest("GET", DashboardAPIURL, params, nil)
-
+	if resp != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
 
 	finalDashboards := &dashboard.SearchResult{}
 
 	err = json.NewDecoder(resp.Body).Decode(finalDashboards)
+	_, _ = io.Copy(ioutil.Discard, resp.Body)
 
 	return finalDashboards, err
 }

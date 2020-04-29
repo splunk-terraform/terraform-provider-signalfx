@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -20,10 +21,12 @@ const OrganizationMembersAPIURL = "/v2/organization/members"
 // GetOrganization gets an organization.
 func (c *Client) GetOrganization(id string) (*organization.Organization, error) {
 	resp, err := c.doRequest("GET", OrganizationAPIURL+"/"+id, nil, nil)
+	if resp != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		message, _ := ioutil.ReadAll(resp.Body)
@@ -33,6 +36,7 @@ func (c *Client) GetOrganization(id string) (*organization.Organization, error) 
 	finalOrganization := &organization.Organization{}
 
 	err = json.NewDecoder(resp.Body).Decode(finalOrganization)
+	_, _ = io.Copy(ioutil.Discard, resp.Body)
 
 	return finalOrganization, err
 }
@@ -40,10 +44,12 @@ func (c *Client) GetOrganization(id string) (*organization.Organization, error) 
 // GetMember gets a member.
 func (c *Client) GetMember(id string) (*organization.Member, error) {
 	resp, err := c.doRequest("GET", OrganizationMemberAPIURL+"/"+id, nil, nil)
+	if resp != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		message, _ := ioutil.ReadAll(resp.Body)
@@ -53,6 +59,7 @@ func (c *Client) GetMember(id string) (*organization.Member, error) {
 	finalMember := &organization.Member{}
 
 	err = json.NewDecoder(resp.Body).Decode(finalMember)
+	_, _ = io.Copy(ioutil.Discard, resp.Body)
 
 	return finalMember, err
 }
@@ -60,16 +67,18 @@ func (c *Client) GetMember(id string) (*organization.Member, error) {
 // DeleteMember deletes a detector.
 func (c *Client) DeleteMember(id string) error {
 	resp, err := c.doRequest("DELETE", OrganizationMemberAPIURL+"/"+id, nil, nil)
-
+	if resp != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusNoContent {
 		message, _ := ioutil.ReadAll(resp.Body)
 		return fmt.Errorf("Unexpected status code: %d: %s", resp.StatusCode, message)
 	}
+	_, _ = io.Copy(ioutil.Discard, resp.Body)
 
 	return nil
 }
@@ -82,10 +91,12 @@ func (c *Client) InviteMember(inviteRequest *organization.CreateUpdateMemberRequ
 	}
 
 	resp, err := c.doRequest("POST", OrganizationMemberAPIURL, nil, bytes.NewReader(payload))
+	if resp != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		message, _ := ioutil.ReadAll(resp.Body)
@@ -95,6 +106,7 @@ func (c *Client) InviteMember(inviteRequest *organization.CreateUpdateMemberRequ
 	finalMember := &organization.Member{}
 
 	err = json.NewDecoder(resp.Body).Decode(finalMember)
+	_, _ = io.Copy(ioutil.Discard, resp.Body)
 
 	return finalMember, err
 }
@@ -107,10 +119,12 @@ func (c *Client) InviteMembers(inviteRequest *organization.InviteMembersRequest)
 	}
 
 	resp, err := c.doRequest("POST", OrganizationMembersAPIURL, nil, bytes.NewReader(payload))
+	if resp != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		message, _ := ioutil.ReadAll(resp.Body)
@@ -120,6 +134,7 @@ func (c *Client) InviteMembers(inviteRequest *organization.InviteMembersRequest)
 	finalMembers := &organization.InviteMembersRequest{}
 
 	err = json.NewDecoder(resp.Body).Decode(finalMembers)
+	_, _ = io.Copy(ioutil.Discard, resp.Body)
 
 	return finalMembers, err
 }
@@ -133,15 +148,17 @@ func (c *Client) GetOrganizationMembers(limit int, query string, offset int, ord
 	params.Add("orderBy", orderBy)
 
 	resp, err := c.doRequest("GET", OrganizationMemberAPIURL, params, nil)
-
+	if resp != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
 
 	finalMembers := &organization.MemberSearchResults{}
 
 	err = json.NewDecoder(resp.Body).Decode(finalMembers)
+	_, _ = io.Copy(ioutil.Discard, resp.Body)
 
 	return finalMembers, err
 }

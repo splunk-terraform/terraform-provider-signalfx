@@ -1,4 +1,8 @@
-## 4.20.0 (Unreleased)
+## 4.19.5 (Unreleased)
+
+IMPROVEMENTS:
+* provider: Some additional checks to ensure HTTP cleanliness, hopefully preventing possible hangs or leaks. [#198](https://github.com/terraform-providers/terraform-provider-signalfx/pull/198)
+
 ## 4.19.4 (April 24, 2020)
 
 BUGFIXES:

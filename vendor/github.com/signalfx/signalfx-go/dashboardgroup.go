@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -30,10 +31,12 @@ func (c *Client) CreateDashboardGroup(dashboardGroupRequest *dashboard_group.Cre
 	}
 
 	resp, err := c.doRequest("POST", DashboardGroupAPIURL, params, bytes.NewReader(payload))
+	if resp != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		message, _ := ioutil.ReadAll(resp.Body)
@@ -43,6 +46,7 @@ func (c *Client) CreateDashboardGroup(dashboardGroupRequest *dashboard_group.Cre
 	finalDashboardGroup := &dashboard_group.DashboardGroup{}
 
 	err = json.NewDecoder(resp.Body).Decode(finalDashboardGroup)
+	_, _ = io.Copy(ioutil.Discard, resp.Body)
 
 	return finalDashboardGroup, err
 }
@@ -50,16 +54,18 @@ func (c *Client) CreateDashboardGroup(dashboardGroupRequest *dashboard_group.Cre
 // DeleteDashboardGroup deletes a dashboard.
 func (c *Client) DeleteDashboardGroup(id string) error {
 	resp, err := c.doRequest("DELETE", DashboardGroupAPIURL+"/"+id, nil, nil)
-
+	if resp != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusNoContent {
 		message, _ := ioutil.ReadAll(resp.Body)
 		return fmt.Errorf("Unexpected status code: %d: %s", resp.StatusCode, message)
 	}
+	_, _ = io.Copy(ioutil.Discard, resp.Body)
 
 	return nil
 }
@@ -67,11 +73,12 @@ func (c *Client) DeleteDashboardGroup(id string) error {
 // GetDashboardGroup gets a dashboard group.
 func (c *Client) GetDashboardGroup(id string) (*dashboard_group.DashboardGroup, error) {
 	resp, err := c.doRequest("GET", DashboardGroupAPIURL+"/"+id, nil, nil)
-
+	if resp != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		message, _ := ioutil.ReadAll(resp.Body)
@@ -81,6 +88,7 @@ func (c *Client) GetDashboardGroup(id string) (*dashboard_group.DashboardGroup, 
 	finalDashboardGroup := &dashboard_group.DashboardGroup{}
 
 	err = json.NewDecoder(resp.Body).Decode(finalDashboardGroup)
+	_, _ = io.Copy(ioutil.Discard, resp.Body)
 
 	return finalDashboardGroup, err
 }
@@ -93,10 +101,12 @@ func (c *Client) UpdateDashboardGroup(id string, dashboardGroupRequest *dashboar
 	}
 
 	resp, err := c.doRequest("PUT", DashboardGroupAPIURL+"/"+id, nil, bytes.NewReader(payload))
+	if resp != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		message, _ := ioutil.ReadAll(resp.Body)
@@ -106,6 +116,7 @@ func (c *Client) UpdateDashboardGroup(id string, dashboardGroupRequest *dashboar
 	finalDashboardGroup := &dashboard_group.DashboardGroup{}
 
 	err = json.NewDecoder(resp.Body).Decode(finalDashboardGroup)
+	_, _ = io.Copy(ioutil.Discard, resp.Body)
 
 	return finalDashboardGroup, err
 }
@@ -118,15 +129,17 @@ func (c *Client) SearchDashboardGroups(limit int, name string, offset int) (*das
 	params.Add("offset", strconv.Itoa(offset))
 
 	resp, err := c.doRequest("GET", DashboardGroupAPIURL, params, nil)
-
+	if resp != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
 
 	finalDashboardGroups := &dashboard_group.SearchResult{}
 
 	err = json.NewDecoder(resp.Body).Decode(finalDashboardGroups)
+	_, _ = io.Copy(ioutil.Discard, resp.Body)
 
 	return finalDashboardGroups, err
 }

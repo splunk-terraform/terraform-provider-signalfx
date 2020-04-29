@@ -11,7 +11,7 @@ require (
 	github.com/hashicorp/terraform-config-inspect v0.0.0-20191212124732-c6ae6269b9d7 // indirect
 	github.com/hashicorp/terraform-plugin-sdk v1.9.1
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/signalfx/signalfx-go v1.6.32
+	github.com/signalfx/signalfx-go v1.6.33
 	github.com/smartystreets/assertions v1.0.0 // indirect
 	github.com/stretchr/testify v1.4.0
 )

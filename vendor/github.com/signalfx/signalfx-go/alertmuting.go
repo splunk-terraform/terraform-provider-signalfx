@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -23,10 +24,12 @@ func (c *Client) CreateAlertMutingRule(muteRequest *alertmuting.CreateUpdateAler
 	}
 
 	resp, err := c.doRequest("POST", AlertMutingRuleAPIURL, nil, bytes.NewReader(payload))
+	if resp != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusCreated {
 		message, _ := ioutil.ReadAll(resp.Body)
@@ -36,6 +39,7 @@ func (c *Client) CreateAlertMutingRule(muteRequest *alertmuting.CreateUpdateAler
 	finalRule := &alertmuting.AlertMutingRule{}
 
 	err = json.NewDecoder(resp.Body).Decode(finalRule)
+	_, _ = io.Copy(ioutil.Discard, resp.Body)
 
 	return finalRule, err
 }
@@ -43,16 +47,18 @@ func (c *Client) CreateAlertMutingRule(muteRequest *alertmuting.CreateUpdateAler
 // DeleteAlertMutingRule deletes an alert muting rule.
 func (c *Client) DeleteAlertMutingRule(name string) error {
 	resp, err := c.doRequest("DELETE", AlertMutingRuleAPIURL+"/"+name, nil, nil)
-
+	if resp != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusNoContent {
 		message, _ := ioutil.ReadAll(resp.Body)
 		return fmt.Errorf("Unexpected status code: %d: %s", resp.StatusCode, message)
 	}
+	_, _ = io.Copy(ioutil.Discard, resp.Body)
 
 	return nil
 }
@@ -60,10 +66,12 @@ func (c *Client) DeleteAlertMutingRule(name string) error {
 // GetAlertMutingRule gets an alert muting rule.
 func (c *Client) GetAlertMutingRule(id string) (*alertmuting.AlertMutingRule, error) {
 	resp, err := c.doRequest("GET", AlertMutingRuleAPIURL+"/"+id, nil, nil)
+	if resp != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		message, _ := ioutil.ReadAll(resp.Body)
@@ -73,6 +81,7 @@ func (c *Client) GetAlertMutingRule(id string) (*alertmuting.AlertMutingRule, er
 	finalRule := &alertmuting.AlertMutingRule{}
 
 	err = json.NewDecoder(resp.Body).Decode(finalRule)
+	_, _ = io.Copy(ioutil.Discard, resp.Body)
 
 	return finalRule, err
 }
@@ -85,10 +94,12 @@ func (c *Client) UpdateAlertMutingRule(id string, muteRequest *alertmuting.Creat
 	}
 
 	resp, err := c.doRequest("PUT", AlertMutingRuleAPIURL+"/"+id, nil, bytes.NewReader(payload))
+	if resp != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		message, _ := ioutil.ReadAll(resp.Body)
@@ -98,6 +109,7 @@ func (c *Client) UpdateAlertMutingRule(id string, muteRequest *alertmuting.Creat
 	finalRule := &alertmuting.AlertMutingRule{}
 
 	err = json.NewDecoder(resp.Body).Decode(finalRule)
+	_, _ = io.Copy(ioutil.Discard, resp.Body)
 
 	return finalRule, err
 }
@@ -111,15 +123,17 @@ func (c *Client) SearchAlertMutingRules(include string, limit int, name string, 
 	params.Add("offset", strconv.Itoa(offset))
 
 	resp, err := c.doRequest("GET", AlertMutingRuleAPIURL, params, nil)
-
+	if resp != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
 
 	finalRules := &alertmuting.SearchResult{}
 
 	err = json.NewDecoder(resp.Body).Decode(finalRules)
+	_, _ = io.Copy(ioutil.Discard, resp.Body)
 
 	return finalRules, err
 }
