@@ -1,4 +1,14 @@
-# 1.6.32, Pending
+# 1.6.34, Pending
+
+# 1.6.33, 2020-04-29
+
+* Adjust behavior to more reliably close/fully-read HTTP bodies with sketchy replies. [#81](https://github.com/signalfx/signalfx-go/pull/81)
+
+# 1.6.32, 2020-04-13
+
+## Improvements
+
+* Added User-Agent client param and header to client.
 
 # 1.6.31, 2020-04-10
 
