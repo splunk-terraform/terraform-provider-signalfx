@@ -143,6 +143,8 @@ func signalfxConfigure(data *schema.ResourceData) (interface{}, error) {
 			Timeout: 5 * time.Second,
 		}).Dial,
 		TLSHandshakeTimeout: 5 * time.Second,
+		MaxIdleConns:        100,
+		MaxIdleConnsPerHost: 100,
 	}
 
 	pv := version.ProviderVersion
