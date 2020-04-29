@@ -1,4 +1,4 @@
-## 4.19.5 (Unreleased)
+## 4.19.5 (April 29, 2020)
 
 IMPROVEMENTS:
 * provider: Some additional checks to ensure HTTP cleanliness, hopefully preventing possible hangs or leaks. [#198](https://github.com/terraform-providers/terraform-provider-signalfx/pull/198)
