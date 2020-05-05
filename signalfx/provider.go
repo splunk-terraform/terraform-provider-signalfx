@@ -153,7 +153,7 @@ func signalfxConfigure(data *schema.ResourceData) (interface{}, error) {
 	client, err := sfx.NewClient(config.AuthToken,
 		sfx.APIUrl(config.APIURL),
 		sfx.HTTPClient(&http.Client{
-			Timeout:   time.Second * 30,
+			Timeout:   time.Second * 60,
 			Transport: netTransport,
 		}),
 		sfx.UserAgent(fmt.Sprintf(providerUserAgent)),
