@@ -1,4 +1,8 @@
-## 4.20.0 (Unreleased)
+## 4.16.6 (May 5, 2020)
+
+IMPROVEMENTS:
+* provider: Bumped version of Terraform SDK. [#200](https://github.com/terraform-providers/terraform-provider-signalfx/pull/200)
+
 ## 4.19.5 (April 29, 2020)
 
 IMPROVEMENTS:
