@@ -1,7 +1,7 @@
 ## 4.16.6 (May 5, 2020)
 
 IMPROVEMENTS:
-* provider: Bumped version of Terraform SDK. [#200](https://github.com/terraform-providers/terraform-provider-signalfx/pull/200)
+* provider: Revert version of Terraform SDK to older version. [#200](https://github.com/terraform-providers/terraform-provider-signalfx/pull/200)
 * provider: Fixed a problem with a test case wherein data links were colliding. [#200](https://github.com/terraform-providers/terraform-provider-signalfx/pull/200)
 
 
