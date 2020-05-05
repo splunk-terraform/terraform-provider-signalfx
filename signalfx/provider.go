@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net"
 	"net/http"
 	"os"
@@ -52,6 +53,12 @@ func Provider() terraform.ResourceProvider {
 				Optional:    true,
 				Default:     "https://app.signalfx.com",
 				Description: "Application URL for your SignalFx org, often customzied for organizations using SSO",
+			},
+			"timeout_seconds": &schema.Schema{
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Default:     120,
+				Description: "Timeout duration for a single HTTP call in seconds. Defaults to 120",
 			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
@@ -150,10 +157,12 @@ func signalfxConfigure(data *schema.ResourceData) (interface{}, error) {
 	pv := version.ProviderVersion
 	providerUserAgent := fmt.Sprintf("Terraform/%s terraform-provider-signalfx/%s", sfxProvider.TerraformVersion, pv)
 
+	totalTimeoutSeconds := data.Get("timeout_seconds").(int)
+	log.Printf("[DEBUG] SignalFx: HTTP Timeout is %d seconds", totalTimeoutSeconds)
 	client, err := sfx.NewClient(config.AuthToken,
 		sfx.APIUrl(config.APIURL),
 		sfx.HTTPClient(&http.Client{
-			Timeout:   time.Second * 60,
+			Timeout:   time.Second * time.Duration(int64(totalTimeoutSeconds)),
 			Transport: netTransport,
 		}),
 		sfx.UserAgent(fmt.Sprintf(providerUserAgent)),
