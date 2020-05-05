@@ -236,14 +236,11 @@ func getPayloadDataLink(d *schema.ResourceData) (*datalink.CreateUpdateDataLinkR
 			}
 
 			if v, ok := tfLink["property_key_mapping"]; ok {
-				fmt.Printf("[DEBUG] SignalFx: GOT A KEY MAPPING")
 				pkMap := map[string]string{}
 				for key, value := range v.(map[string]interface{}) {
 					pkMap[key] = value.(string)
 				}
 				dl.PropertyKeyMapping = pkMap
-			} else {
-				fmt.Printf("[DEBUG] SignalFx: NONONO A KEY MAPPING")
 			}
 
 			dataLink.Targets = append(dataLink.Targets, dl)

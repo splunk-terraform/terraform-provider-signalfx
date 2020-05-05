@@ -1,4 +1,11 @@
-## 4.20.0 (Unreleased)
+## 4.19.6 (May 5, 2020)
+
+IMPROVEMENTS:
+* provider: Bump version of Terraform SDK to older version. [#200](https://github.com/terraform-providers/terraform-provider-signalfx/pull/200)
+* provider: Fixed a problem with a test case wherein data links were colliding. [#200](https://github.com/terraform-providers/terraform-provider-signalfx/pull/200)
+* provider: Add `timeout_seconds` configuration option and default it to 120, up from 30. [#200](https://github.com/terraform-providers/terraform-provider-signalfx/pull/200)
+
+
 ## 4.19.5 (April 29, 2020)
 
 IMPROVEMENTS:
