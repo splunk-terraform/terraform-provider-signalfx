@@ -27,9 +27,10 @@ func detectorResource() *schema.Resource {
 				Description: "Name of the detector",
 			},
 			"program_text": &schema.Schema{
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "Signalflow program text for the detector. More info at \"https://developers.signalfx.com/docs/signalflow-overview\"",
+				Type:         schema.TypeString,
+				Required:     true,
+				Description:  "Signalflow program text for the detector. More info at \"https://developers.signalfx.com/docs/signalflow-overview\"",
+				ValidateFunc: validation.StringLenBetween(1, 50000),
 			},
 			"description": &schema.Schema{
 				Type:        schema.TypeString,

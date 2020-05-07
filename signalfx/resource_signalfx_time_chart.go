@@ -102,9 +102,10 @@ func timeChartResource() *schema.Resource {
 				Description: "Name of the chart",
 			},
 			"program_text": &schema.Schema{
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "Signalflow program text for the chart. More info at \"https://developers.signalfx.com/docs/signalflow-overview\"",
+				Type:         schema.TypeString,
+				Required:     true,
+				Description:  "Signalflow program text for the chart. More info at \"https://developers.signalfx.com/docs/signalflow-overview\"",
+				ValidateFunc: validation.StringLenBetween(1, 50000),
 			},
 			"description": &schema.Schema{
 				Type:        schema.TypeString,

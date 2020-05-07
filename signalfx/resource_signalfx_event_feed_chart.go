@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	chart "github.com/signalfx/signalfx-go/chart"
 )
 
@@ -17,9 +18,10 @@ func eventFeedChartResource() *schema.Resource {
 				Description: "Name of the chart",
 			},
 			"program_text": &schema.Schema{
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "Signalflow program text for the chart. More info at \"https://developers.signalfx.com/docs/signalflow-overview\"",
+				Type:         schema.TypeString,
+				Required:     true,
+				Description:  "Signalflow program text for the chart. More info at \"https://developers.signalfx.com/docs/signalflow-overview\"",
+				ValidateFunc: validation.StringLenBetween(1, 50000),
 			},
 			"description": &schema.Schema{
 				Type:        schema.TypeString,
