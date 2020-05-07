@@ -1,4 +1,9 @@
-## 4.20.0 (Unreleased)
+## 4.19.7 (Unreleased)
+
+IMPROVEMENTS:
+
+* provider: Various resources now ensure that `program_text` is not too big or too small. [#201](https://github.com/terraform-providers/terraform-provider-signalfx/pull/201)
+
 ## 4.19.6 (May 06, 2020)
 
 IMPROVEMENTS:
