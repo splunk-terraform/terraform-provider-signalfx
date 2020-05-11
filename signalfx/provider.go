@@ -62,6 +62,8 @@ func Provider() terraform.ResourceProvider {
 			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
+			"signalfx_aws_services":     dataSourceAwsServices(),
+			"signalfx_azure_services":   dataSourceAzureServices(),
 			"signalfx_dimension_values": dataSourceDimensionValues(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
