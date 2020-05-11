@@ -1,6 +1,7 @@
-## 4.19.8 (Unreleased)
+## 4.20.0 (Unreleased)
 
 IMPROVEMENTS:
+* provider: Added data sources `signalfx_aws_services` and `signalfx_azure_services` such that managing AWS and Azure integrations that use "all" services is a bit easier. [#204](https://github.com/terraform-providers/terraform-provider-signalfx/pull/204)
 * provider/azure_integration: Updated the list of Azure services. [#203](https://github.com/terraform-providers/terraform-provider-signalfx/pull/203)
 
 ## 4.19.7 (May 07, 2020)
@@ -15,7 +16,6 @@ IMPROVEMENTS:
 * provider: Bump version of Terraform SDK to older version. [#200](https://github.com/terraform-providers/terraform-provider-signalfx/pull/200)
 * provider: Fixed a problem with a test case wherein data links were colliding. [#200](https://github.com/terraform-providers/terraform-provider-signalfx/pull/200)
 * provider: Add `timeout_seconds` configuration option and default it to 120, up from 30. [#200](https://github.com/terraform-providers/terraform-provider-signalfx/pull/200)
-
 
 ## 4.19.5 (April 29, 2020)
 
