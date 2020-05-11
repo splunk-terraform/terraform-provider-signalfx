@@ -6,7 +6,7 @@ description: |-
   Provides a list of dimension values given a query
 ---
 
-# Data Source: signalfx_signalfx_dimension_values
+# Data Source: signalfx_dimension_values
 
 Use this data source to get a list of dimension values matching the provided query.
 
