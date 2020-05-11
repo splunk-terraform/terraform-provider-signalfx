@@ -1,4 +1,4 @@
-## 4.20.0 (Unreleased)
+## 4.20.0 (May 11, 2020)
 
 IMPROVEMENTS:
 * provider: Added data sources `signalfx_aws_services` and `signalfx_azure_services` such that managing AWS and Azure integrations that use "all" services is a bit easier. [#204](https://github.com/terraform-providers/terraform-provider-signalfx/pull/204)
