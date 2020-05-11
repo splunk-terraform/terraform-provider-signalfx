@@ -1,4 +1,8 @@
-## 4.20.0 (Unreleased)
+## 4.19.8 (Unreleased)
+
+IMPROVEMENTS:
+* provider/azure_integration: Updated the list of Azure services. [#203](https://github.com/terraform-providers/terraform-provider-signalfx/pull/203)
+
 ## 4.19.7 (May 07, 2020)
 
 IMPROVEMENTS:
@@ -44,7 +48,7 @@ IMPROVEMENTS:
 BUGFIXES:
 * resource/signalfx_team: Fix a spelling error. Thanks [@ajwood-acquia](https://github.com/ajwood-acquia) [#185](https://github.com/terraform-providers/terraform-provider-signalfx/pull/185)
 * resource/signalfx_list_chart: Correct confusing documentation around `legend_options_fields` and it's `property` attribute. [@ebutleratlassian](https://github.com/ebutleratlassian) [#187](https://github.com/terraform-providers/terraform-provider-signalfx/pull/187)
-* resource/signalfx_azure_integration: The `services` property is now required and must have at least one item in it. [#188](https://github.com/terraform-providers/terraform-provider-signalfx/pull/188)
+* resource/signalfx_azure_integration: The `services` property is now required and must have at least one item in it. [#189](https://github.com/terraform-providers/terraform-provider-signalfx/pull/189)
 
 IMPROVEMENTS:
 * resource/signalfx_heatmap_chart: Improve `color_scale` example and fix indentation. Thanks [@ebutleratlassian](https://github.com/ebutleratlassian) [#186](https://github.com/terraform-providers/terraform-provider-signalfx/pull/186)

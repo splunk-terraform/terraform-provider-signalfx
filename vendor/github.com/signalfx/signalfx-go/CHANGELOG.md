@@ -1,4 +1,8 @@
-# 1.6.34, Pending
+# 1.6.35, Pending
+
+# 1.6.34, 2020-05-11
+
+* Add new Azure services. [#82](https://github.com/signalfx/signalfx-go/pull/82)
 
 # 1.6.33, 2020-04-29
 
