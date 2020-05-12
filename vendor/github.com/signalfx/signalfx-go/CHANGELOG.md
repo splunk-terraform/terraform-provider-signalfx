@@ -1,4 +1,8 @@
-# 1.6.35, Pending
+# 1.6.36, Pending
+
+# 1.6.35, 2020-05-12
+
+Fix some typos in Azure services
 
 # 1.6.34, 2020-05-11
 
