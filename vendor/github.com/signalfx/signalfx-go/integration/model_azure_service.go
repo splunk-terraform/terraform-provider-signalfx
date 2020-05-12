@@ -7,8 +7,8 @@ type AzureService string
 const (
 	AZURE_SQL_SERVERS_ELASTICPOOLS                               AzureService = "microsoft.sql/servers/elasticpools"
 	AZURE_STORAGE_STORAGEACCOUNTS                                AzureService = "microsoft.storage/storageaccounts"
-	AZURE_STORAGE_STORAGEACCOUNTSSERVICES_TABLESERVICES          AzureService = "microsoft.storage/storageaccountsservices/tableservices"
-	AZURE_STORAGE_STORAGEACCOUNTSSERVICES_BLOBSERVICES           AzureService = "microsoft.storage/storageaccountsservices/blobservices"
+	AZURE_STORAGE_STORAGEACCOUNTS_TABLESERVICES                  AzureService = "microsoft.storage/storageaccounts/tableservices"
+	AZURE_STORAGE_STORAGEACCOUNTS_BLOBSERVICES                   AzureService = "microsoft.storage/storageaccounts/blobservices"
 	AZURE_STORAGE_STORAGEACCOUNTS_QUEUESERVICES                  AzureService = "microsoft.storage/storageaccounts/queueservices"
 	AZURE_STORAGE_STORAGEACCOUNTS_FILESERVICES                   AzureService = "microsoft.storage/storageaccounts/fileservices"
 	AZURE_COMPUTE_VIRTUALMACHINESCALESETS                        AzureService = "microsoft.compute/virtualmachinescalesets"
@@ -18,7 +18,7 @@ const (
 	AZURE_DEVICES_IOTHUBS                                        AzureService = "microsoft.devices/iothubs"
 	AZURE_DEVICES_ELASTICPOOLS                                   AzureService = "microsoft.devices/elasticpools"
 	AZURE_DEVICES_ELASTICPOOLS_IOHUBTENANTS                      AzureService = "microsoft.devices/elasticpools/iothubtenants"
-	AZURE_EVENTHUB_NAMESPACES                                    AzureService = "microsoft.eventHub/namespaces"
+	AZURE_EVENTHUB_NAMESPACES                                    AzureService = "microsoft.eventhub/namespaces"
 	AZURE_BATCH_BATCHACCOUNTS                                    AzureService = "microsoft.batch/batchaccounts"
 	AZURE_SQL_SERVERS_DATABASES                                  AzureService = "microsoft.sql/servers/databases"
 	AZURE_CACHE_REDIS                                            AzureService = "microsoft.cache/redis"
@@ -26,7 +26,7 @@ const (
 	AZURE_MICROSOFT_WEB                                          AzureService = "microsoft.web"
 	AZURE_MICROSOFT_WEB_SITES                                    AzureService = "microsoft.web/sites"
 	AZURE_MICROSOFT_WEB_SERVERFARMS                              AzureService = "microsoft.web/serverfarms"
-	AZURE_MICROSOFT_WEB_SLOTS                                    AzureService = "microsoft.web/slots"
+	AZURE_MICROSOFT_WEB_SITES_SLOTS                              AzureService = "microsoft.web/sites/slots"
 	AZURE_MICROSOFT_WEB_HOSTINGENVIRONMENTS_MULTIROLEPOOLS       AzureService = "microsoft.web/hostingenvironments/multirolepools"
 	AZURE_MICROSOFT_WEB_HOSTINGENVIRONMENTS_WORKERPOOLS          AzureService = "microsoft.web/hostingenvironments/workerpools"
 	AZURE_MICROSOFT_ANALYSISSERVICES_SERVERS                     AzureService = "microsoft.analysisservices/servers"
@@ -70,8 +70,8 @@ const (
 var AzureServiceNames = map[string]AzureService{
 	"microsoft.sql/servers/elasticpools":                        AZURE_SQL_SERVERS_ELASTICPOOLS,
 	"microsoft.storage/storageaccounts":                         AZURE_STORAGE_STORAGEACCOUNTS,
-	"microsoft.storage/storageaccountsservices/tableservices":   AZURE_STORAGE_STORAGEACCOUNTSSERVICES_TABLESERVICES,
-	"microsoft.storage/storageaccountsservices/blobservices":    AZURE_STORAGE_STORAGEACCOUNTSSERVICES_BLOBSERVICES,
+	"microsoft.storage/storageaccounts/tableservices":           AZURE_STORAGE_STORAGEACCOUNTS_TABLESERVICES,
+	"microsoft.storage/storageaccounts/blobservices":            AZURE_STORAGE_STORAGEACCOUNTS_BLOBSERVICES,
 	"microsoft.storage/storageaccounts/queueservices":           AZURE_STORAGE_STORAGEACCOUNTS_QUEUESERVICES,
 	"microsoft.storage/storageaccounts/fileservices":            AZURE_STORAGE_STORAGEACCOUNTS_FILESERVICES,
 	"microsoft.compute/virtualmachinescalesets":                 AZURE_COMPUTE_VIRTUALMACHINESCALESETS,
@@ -81,7 +81,7 @@ var AzureServiceNames = map[string]AzureService{
 	"microsoft.devices/iothubs":                                 AZURE_DEVICES_IOTHUBS,
 	"microsoft.devices/elasticpools":                            AZURE_DEVICES_ELASTICPOOLS,
 	"microsoft.devices/elasticpools/iothubtenants":              AZURE_DEVICES_ELASTICPOOLS_IOHUBTENANTS,
-	"microsoft.eventHub/namespaces":                             AZURE_EVENTHUB_NAMESPACES,
+	"microsoft.eventhub/namespaces":                             AZURE_EVENTHUB_NAMESPACES,
 	"microsoft.batch/batchaccounts":                             AZURE_BATCH_BATCHACCOUNTS,
 	"microsoft.sql/servers/databases":                           AZURE_SQL_SERVERS_DATABASES,
 	"microsoft.cache/redis":                                     AZURE_CACHE_REDIS,
@@ -89,7 +89,7 @@ var AzureServiceNames = map[string]AzureService{
 	"microsoft.web":                                             AZURE_MICROSOFT_WEB,
 	"microsoft.web/sites":                                       AZURE_MICROSOFT_WEB_SITES,
 	"microsoft.web/serverfarms":                                 AZURE_MICROSOFT_WEB_SERVERFARMS,
-	"microsoft.web/slots":                                       AZURE_MICROSOFT_WEB_SLOTS,
+	"microsoft.web/sites/slots":                                 AZURE_MICROSOFT_WEB_SITES_SLOTS,
 	"microsoft.web/hostingenvironments/multirolepools":          AZURE_MICROSOFT_WEB_HOSTINGENVIRONMENTS_MULTIROLEPOOLS,
 	"microsoft.web/hostingenvironments/workerpools":             AZURE_MICROSOFT_WEB_HOSTINGENVIRONMENTS_WORKERPOOLS,
 	"microsoft.analysisservices/servers":                        AZURE_MICROSOFT_ANALYSISSERVICES_SERVERS,
