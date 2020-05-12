@@ -1,4 +1,4 @@
-## 4.20.1 (Unreleased)
+## 4.20.1 (May 12, 2020)
 
 BUGFIXES:
 * provider/azure_integration: Fixed some typos in Azure service names. [#205](https://github.com/terraform-providers/terraform-provider-signalfx/pull/205)
