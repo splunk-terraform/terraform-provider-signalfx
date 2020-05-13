@@ -108,7 +108,7 @@ Sends [notifications to a team](https://docs.signalfx.com/en/latest/managing/tea
 notifications = ["Team,teamId"]
 ```
 
-### Team
+### TeamEmail
 
 Sends an email to every member of a team.
 
