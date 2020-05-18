@@ -28,7 +28,7 @@ type GCPIntegration struct {
 	Type     Type      `json:"type"`
 	PollRate *PollRate `json:"pollRate,omitempty"`
 	// Array of GCP services that you want SignalFx to monitor. SignalFx only supports certain services, and if you specify an unsupported one, you receive an API error. The supported services are: <br>   * appengine   * bigquery   * bigtable   * cloudfunctions   * cloudiot   * cloudsql   * cloudtasks   * compute   * container   * dataflow   * datastore   * firebasedatabase   * firebasehosting   * interconnect   * loadbalancing   * logging   * ml   * monitoring   * pubsub   * router   * serviceruntime   * spanner   * storage   * vpn
-	Services []string `json:"services,omitempty"`
+	Services []GcpService `json:"services,omitempty"`
 	// List of GCP project that you want SignalFx to monitor, in the form of a JSON array of objects
 	ProjectServiceKeys []*GCPProject `json:"projectServiceKeys,omitempty"`
 	// List of GCP metadata names that you want SignalFx to collect from the data incoming from the GCP integration, in the form of a JSON array. Refer to Google's GCP documentation to find out the names you want to whitelist.

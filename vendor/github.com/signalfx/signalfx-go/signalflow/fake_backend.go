@@ -148,11 +148,6 @@ func (f *FakeBackend) handleMessage(ctx context.Context, message map[string]inte
 			textMsgs <- fmt.Sprintf(`{"type": "error", "message": "%s"}`, errMsg)
 		}
 
-		resMs, _ := message["resolution"].(float64)
-		if resMs == 0 {
-			resMs = 1000
-		}
-
 		programTSIDs := f.tsidsByProgram[program]
 
 		handle := fmt.Sprintf("handle-%d", f.handleIdx)
@@ -164,9 +159,28 @@ func (f *FakeBackend) handleMessage(ctx context.Context, message map[string]inte
 		log.Printf("Executing SignalFlow program %s with tsids %v and handle %s", program, programTSIDs, handle)
 		f.runningJobsByProgram[program]++
 
+		var resolutionMs int
+		for _, tsid := range programTSIDs {
+			if md := f.metadataByTSID[tsid]; md != nil {
+				if md.ResolutionMS > resolutionMs {
+					resolutionMs = md.ResolutionMS
+				}
+			}
+		}
+
+		messageResMs, _ := message["resolution"].(float64)
+		if messageResMs != 0.0 {
+			resolutionMs = int(messageResMs)
+		}
+
+		if resolutionMs == 0 {
+			resolutionMs = 1000
+		}
+
 		textMsgs <- fmt.Sprintf(`{"type": "control-message", "channel": "%s", "event": "STREAM_START"}`, ch)
 		textMsgs <- fmt.Sprintf(`{"type": "control-message", "channel": "%s", "event": "JOB_START", "handle": "%s"}`, ch, handle)
-		textMsgs <- fmt.Sprintf(`{"type": "message", "channel": "%s", "logicalTimestampMs": 1464736034000, "message": {"contents": {"resolutionMs" : %d}, "messageCode": "JOB_RUNNING_RESOLUTION", "timestampMs": 1464736033000}}`, ch, int64(resMs))
+		textMsgs <- fmt.Sprintf(`{"type": "message", "channel": "%s", "logicalTimestampMs": 1464736034000, "message": {"contents": {"resolutionMs" : %d}, "messageCode": "JOB_RUNNING_RESOLUTION", "timestampMs": 1464736033000}}`, ch, int64(resolutionMs))
+
 		for _, tsid := range programTSIDs {
 			if md := f.metadataByTSID[tsid]; md != nil {
 				propJSON, err := json.Marshal(md)
@@ -177,9 +191,10 @@ func (f *FakeBackend) handleMessage(ctx context.Context, message map[string]inte
 				textMsgs <- fmt.Sprintf(`{"type": "metadata", "tsId": "%s", "channel": "%s", "properties": %s}`, tsid, ch, propJSON)
 			}
 		}
+
 		// Send data periodically until the connection is closed.
 		go func() {
-			t := time.NewTicker(1 * time.Second)
+			t := time.NewTicker(time.Duration(resolutionMs) * time.Millisecond)
 			for {
 				select {
 				case <-execCtx.Done():

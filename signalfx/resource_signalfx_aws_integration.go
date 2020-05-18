@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/signalfx/signalfx-go/integration"
 )
 
@@ -159,7 +160,7 @@ func integrationAWSResource() *schema.Resource {
 				Type:         schema.TypeInt,
 				Optional:     true,
 				Description:  "AWS poll rate (in seconds). One of `60` or `300`.",
-				ValidateFunc: validateAwsPollRate,
+				ValidateFunc: validation.IntInSlice([]int{60, 300}),
 			},
 			"external_id": &schema.Schema{
 				Type:          schema.TypeString,
@@ -542,15 +543,6 @@ func validateFilterAction(v interface{}, k string) (we []string, errors []error)
 	value := v.(string)
 	if value != string(integration.EXCLUDE) && value != string(integration.INCLUDE) {
 		errors = append(errors, fmt.Errorf("%s not allowed; filter action must be one of %s or %s", value, integration.EXCLUDE, integration.INCLUDE))
-	}
-	return
-}
-
-func validateAwsPollRate(v interface{}, k string) (we []string, errors []error) {
-	value := v.(int)
-	if value != 60 && value != 300 {
-		errors = append(errors, fmt.Errorf("%d not allowed; Use one of 60 or 300.", value))
-		return
 	}
 	return
 }

@@ -180,6 +180,11 @@ func (c *Client) SearchDetectors(limit int, name string, offset int, tags string
 		return nil, err
 	}
 
+	if resp.StatusCode != http.StatusOK {
+		message, _ := ioutil.ReadAll(resp.Body)
+		return nil, fmt.Errorf("Bad status %d: %s", resp.StatusCode, message)
+	}
+
 	finalDetectors := &detector.SearchResults{}
 
 	err = json.NewDecoder(resp.Body).Decode(finalDetectors)

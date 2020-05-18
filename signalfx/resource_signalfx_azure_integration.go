@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/signalfx/signalfx-go/integration"
 )
 
@@ -28,7 +29,7 @@ func integrationAzureResource() *schema.Resource {
 				Default:      "azure",
 				Optional:     true,
 				Sensitive:    true,
-				ValidateFunc: validateAzureEnvironment,
+				ValidateFunc: validation.StringInSlice([]string{string(integration.AZURE_DEFAULT), string(integration.AZURE_US_GOVERNMENT)}, true),
 				Description:  "what type of Azure integration this is. The allowed values are `\"azure_us_government\"` and `\"azure\"`. Defaults to `\"azure\"`",
 			},
 			"app_id": &schema.Schema{
@@ -47,7 +48,7 @@ func integrationAzureResource() *schema.Resource {
 				Type:         schema.TypeInt,
 				Optional:     true,
 				Description:  "Azure poll rate (in seconds). One of `60` or `300`.",
-				ValidateFunc: validateAzurePollRate,
+				ValidateFunc: validation.IntInSlice([]int{60, 300}),
 			},
 			"services": &schema.Schema{
 				Type:     schema.TypeSet,
@@ -245,23 +246,6 @@ func integrationAzureDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 
 	return config.Client.DeleteAzureIntegration(d.Id())
-}
-
-func validateAzurePollRate(v interface{}, k string) (we []string, errors []error) {
-	value := v.(int)
-	if value != 60 && value != 300 {
-		errors = append(errors, fmt.Errorf("%d not allowed; Use one of 60 or 300.", value))
-		return
-	}
-	return
-}
-
-func validateAzureEnvironment(v interface{}, k string) (we []string, errors []error) {
-	value := v.(string)
-	if strings.ToUpper(value) != string(integration.AZURE_DEFAULT) && strings.ToUpper(value) != string(integration.AZURE_US_GOVERNMENT) {
-		errors = append(errors, fmt.Errorf("%s not allowed; environment be one of %s or %s", value, integration.AZURE_DEFAULT, integration.AZURE_US_GOVERNMENT))
-	}
-	return
 }
 
 func validateAzureService(v interface{}, k string) (we []string, errors []error) {

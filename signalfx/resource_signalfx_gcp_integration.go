@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/signalfx/signalfx-go/integration"
 )
 
@@ -27,14 +28,15 @@ func integrationGCPResource() *schema.Resource {
 				Type:         schema.TypeInt,
 				Optional:     true,
 				Description:  "GCP poll rate",
-				ValidateFunc: validateGCPPollRate,
+				ValidateFunc: validation.IntInSlice([]int{60, 300}),
 			},
 			"services": &schema.Schema{
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "GCP enabled services",
 				Elem: &schema.Schema{
-					Type: schema.TypeString,
+					Type:         schema.TypeString,
+					ValidateFunc: validateGcpService,
 				},
 			},
 			"project_service_keys": &schema.Schema{
@@ -114,9 +116,9 @@ func getGCPPayloadIntegration(d *schema.ResourceData) *integration.GCPIntegratio
 
 	if val, ok := d.GetOk("services"); ok {
 		servs := val.(*schema.Set).List()
-		services := make([]string, len(servs))
+		services := make([]integration.GcpService, len(servs))
 		for i, v := range servs {
-			v := v.(string)
+			v := integration.GcpService(v.(string))
 			services[i] = v
 		}
 		gcp.Services = services
@@ -210,11 +212,13 @@ func integrationGCPDelete(d *schema.ResourceData, meta interface{}) error {
 	return config.Client.DeleteGCPIntegration(d.Id())
 }
 
-func validateGCPPollRate(v interface{}, k string) (we []string, errors []error) {
-	value := v.(int)
-	if value != 60 && value != 300 {
-		errors = append(errors, fmt.Errorf("%d not allowed; Use one of 60 or 300.", value))
-		return
+func validateGcpService(v interface{}, k string) (we []string, errors []error) {
+	value := v.(string)
+	for key, _ := range integration.GcpServiceNames {
+		if key == value {
+			return
+		}
 	}
+	errors = append(errors, fmt.Errorf("%s not allowed; consult the documentation for a list of valid GCP service names", value))
 	return
 }

@@ -155,6 +155,11 @@ func (c *Client) GetOrganizationMembers(limit int, query string, offset int, ord
 		return nil, err
 	}
 
+	if resp.StatusCode != http.StatusOK {
+		message, _ := ioutil.ReadAll(resp.Body)
+		return nil, fmt.Errorf("Unexpected status code: %d: %s", resp.StatusCode, message)
+	}
+
 	finalMembers := &organization.MemberSearchResults{}
 
 	err = json.NewDecoder(resp.Body).Decode(finalMembers)
