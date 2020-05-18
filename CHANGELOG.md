@@ -1,4 +1,4 @@
-## 4.21.0 (Unreleased)
+## 4.21.0 (May 18, 2020)
 
 IMPROVEMENTS:
 * provider: Added `signalfx_gcp_services` data source. [#207](https://github.com/terraform-providers/terraform-provider-signalfx/pull/207/)
