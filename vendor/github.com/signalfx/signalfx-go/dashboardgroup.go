@@ -136,6 +136,11 @@ func (c *Client) SearchDashboardGroups(limit int, name string, offset int) (*das
 		return nil, err
 	}
 
+	if resp.StatusCode != http.StatusOK {
+		message, _ := ioutil.ReadAll(resp.Body)
+		return nil, fmt.Errorf("Unexpected status code: %d: %s", resp.StatusCode, message)
+	}
+
 	finalDashboardGroups := &dashboard_group.SearchResult{}
 
 	err = json.NewDecoder(resp.Body).Decode(finalDashboardGroups)

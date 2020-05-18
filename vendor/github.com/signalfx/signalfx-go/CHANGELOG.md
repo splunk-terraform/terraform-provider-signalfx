@@ -1,4 +1,21 @@
-# 1.6.36, Pending
+# 1.6.38, Pending
+
+# 1.6.37, 2020-05-18
+
+## Improvements
+
+Added GCP service type to match the other integrations. [#86](https://github.com/signalfx/signalfx-go/pull/86)
+
+# 1.6.36, 2020-05-14
+
+## Improvements
+
+Various `Search*` methods now verify the response code. [#83](https://github.com/signalfx/signalfx-go/issues/83)
+
+## Improvements
+
+* Add better resolution management to the fake SignalFlow backend for external
+  testing uses.
 
 # 1.6.35, 2020-05-12
 

@@ -132,6 +132,11 @@ func (c *Client) SearchDashboard(limit int, name string, offset int, tags string
 		return nil, err
 	}
 
+	if resp.StatusCode != http.StatusOK {
+		message, _ := ioutil.ReadAll(resp.Body)
+		return nil, fmt.Errorf("Unexpected status code: %d: %s", resp.StatusCode, message)
+	}
+
 	finalDashboards := &dashboard.SearchResult{}
 
 	err = json.NewDecoder(resp.Body).Decode(finalDashboards)

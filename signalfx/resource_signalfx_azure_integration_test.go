@@ -128,25 +128,3 @@ func TestValidateAzureService(t *testing.T) {
 	_, errors = validateAzureService("Fart", "")
 	assert.Equal(t, 1, len(errors), "Errors for invalid value")
 }
-
-func TestValidateAzureEnvironment(t *testing.T) {
-	_, errors := validateAzureEnvironment("azure", "")
-	assert.Equal(t, 0, len(errors), "No errors for valid value")
-
-	_, errors = validateAzureEnvironment("azure_us_government", "")
-	assert.Equal(t, 0, len(errors), "No errors for valid value")
-
-	_, errors = validateAzureEnvironment("Fart", "")
-	assert.Equal(t, 1, len(errors), "Errors for invalid value")
-}
-
-func TestValidateAzurePollRate(t *testing.T) {
-	_, errors := validateAzurePollRate(60, "")
-	assert.Equal(t, 0, len(errors), "No errors for valid value")
-
-	_, errors = validateAzurePollRate(300, "")
-	assert.Equal(t, 0, len(errors), "No errors for valid value")
-
-	_, errors = validateAzurePollRate(12, "")
-	assert.Equal(t, 1, len(errors), "Errors for invalid value")
-}

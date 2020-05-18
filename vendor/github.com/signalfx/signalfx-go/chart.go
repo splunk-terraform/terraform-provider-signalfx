@@ -134,6 +134,11 @@ func (c *Client) SearchCharts(limit int, name string, offset int, tags string) (
 		return nil, err
 	}
 
+	if resp.StatusCode != http.StatusOK {
+		message, _ := ioutil.ReadAll(resp.Body)
+		return nil, fmt.Errorf("Unexpected status code: %d: %s", resp.StatusCode, message)
+	}
+
 	finalCharts := &chart.SearchResult{}
 
 	err = json.NewDecoder(resp.Body).Decode(finalCharts)

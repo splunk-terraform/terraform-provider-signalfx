@@ -36,5 +36,5 @@ resource "signalfx_gcp_integration" "gcp_myteam" {
 * `name` - (Required) Name of the integration.
 * `enabled` - (Required) Whether the integration is enabled.
 * `poll_rate` - (Required) GCP integration poll rate in seconds. Can be set to either 60 or 300 (1 minute or 5 minutes).
-* `services` - (Optional) GCP service metrics to import. Can be an empty list, or not included, to import 'All services'.
+* `services` - (Optional) GCP service metrics to import. Can be an empty list, or not included, to import 'All services'. See the documentation for [Creating Integrations](https://developers.signalfx.com/integrations_reference.html#operation/Create%20Integration) for valida values.
 * `project_service_keys` - (Required) GCP projects to add.

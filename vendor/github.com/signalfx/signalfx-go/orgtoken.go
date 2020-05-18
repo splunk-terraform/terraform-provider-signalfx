@@ -132,6 +132,11 @@ func (c *Client) SearchOrgTokens(limit int, name string, offset int) (*orgtoken.
 		return nil, err
 	}
 
+	if resp.StatusCode != http.StatusOK {
+		message, _ := ioutil.ReadAll(resp.Body)
+		return nil, fmt.Errorf("Unexpected status code: %d: %s", resp.StatusCode, message)
+	}
+
 	finalTokens := &orgtoken.SearchResults{}
 
 	err = json.NewDecoder(resp.Body).Decode(finalTokens)
