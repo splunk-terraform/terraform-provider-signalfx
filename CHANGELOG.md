@@ -1,4 +1,11 @@
 ## 4.21.0 (Unreleased)
+
+IMPROVEMENTS:
+* provider: Added `signalfx_gcp_services` data source. [#207](https://github.com/terraform-providers/terraform-provider-signalfx/pull/207/)
+* resource/aws_integration: Adjusted validation of poll rate to use SDK validator. [#207](https://github.com/terraform-providers/terraform-provider-signalfx/pull/207/)
+* resource/azure_integration: Adjusted validation of poll rate and environment to use SDK validators. [#207](https://github.com/terraform-providers/terraform-provider-signalfx/pull/207/)
+* resource/gcp_integration: Adjusted validation of poll rate to use SDK validator. [#207](https://github.com/terraform-providers/terraform-provider-signalfx/pull/207/)
+
 ## 4.20.1 (May 12, 2020)
 
 BUGFIXES:
