@@ -101,7 +101,8 @@ func testAccCheckIntegrationGCPResourceExists(s *terraform.State) error {
 		switch rs.Type {
 		case "signalfx_gcp_integration":
 			integration, err := client.GetIntegration(rs.Primary.ID)
-			if integration["id"].(string) != rs.Primary.ID || err != nil {
+			id := integration["id"]
+			if id != nil && id.(string) != rs.Primary.ID || err != nil {
 				return fmt.Errorf("Error finding integration %s: %s", rs.Primary.ID, err)
 			}
 		default:
