@@ -57,6 +57,14 @@ func TestProviderConfigureFromNothing(t *testing.T) {
 	defer os.Setenv("SFX_AUTH_TOKEN", old)
 	os.Unsetenv("SFX_AUTH_TOKEN")
 
+	old = os.Getenv("SFX_API_URL")
+	defer os.Setenv("SFX_API_URL", old)
+	os.Unsetenv("SFX_API_URL")
+
+	old = os.Getenv("SFX_CUSTOM_APP_URL")
+	defer os.Setenv("SFX_CUSTOM_APP_URL", old)
+	os.Unsetenv("SFX_CUSTOM_APP_URL")
+
 	SystemConfigPath = "filedoesnotexist"
 	HomeConfigPath = "filedoesnotexist"
 	raw := make(map[string]interface{})
@@ -80,11 +88,23 @@ func TestProviderConfigureFromTerraform(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 	defer os.Remove(tmpfileHome.Name())
+
 	old := os.Getenv("SFX_AUTH_TOKEN")
 	os.Setenv("SFX_AUTH_TOKEN", "YYY")
 	defer os.Setenv("SFX_AUTH_TOKEN", old)
+
+	old = os.Getenv("SFX_API_URL")
+	os.Setenv("SFX_API_URL", "https://api.signalfx.com")
+	defer os.Setenv("SFX_API_URL", old)
+
+	old = os.Getenv("SFX_CUSTOM_APP_URL")
+	os.Setenv("SFX_CUSTOM_APP_URL", "https://mydomain.signalfx.com")
+	defer os.Setenv("SFX_CUSTOM_APP_URL", old)
+
 	raw := map[string]interface{}{
-		"auth_token": "XXX",
+		"auth_token":     "XXX",
+		"api_url":        "https://api.eu0.signalfx.com",
+		"custom_app_url": "https://myotherdomain.signalfx.com",
 	}
 
 	rp := Provider()
@@ -95,6 +115,8 @@ func TestProviderConfigureFromTerraform(t *testing.T) {
 	}
 	configuration := meta.(*signalfxConfig)
 	assert.Equal(t, "XXX", configuration.AuthToken)
+	assert.Equal(t, "https://api.eu0.signalfx.com", configuration.APIURL)
+	assert.Equal(t, "https://myotherdomain.signalfx.com", configuration.CustomAppURL)
 }
 
 func TestProviderConfigureFromTerraformOnly(t *testing.T) {
@@ -102,7 +124,9 @@ func TestProviderConfigureFromTerraformOnly(t *testing.T) {
 	SystemConfigPath = "filedoesnotexist"
 	HomeConfigPath = "filedoesnotexist"
 	raw := map[string]interface{}{
-		"auth_token": "XXX",
+		"auth_token":     "XXX",
+		"api_url":        "https://api.eu0.signalfx.com",
+		"custom_app_url": "https://myotherdomain.signalfx.com",
 	}
 
 	rp := Provider()
@@ -113,6 +137,8 @@ func TestProviderConfigureFromTerraformOnly(t *testing.T) {
 	}
 	configuration := meta.(*signalfxConfig)
 	assert.Equal(t, "XXX", configuration.AuthToken)
+	assert.Equal(t, "https://api.eu0.signalfx.com", configuration.APIURL)
+	assert.Equal(t, "https://myotherdomain.signalfx.com", configuration.CustomAppURL)
 }
 
 func TestProviderConfigureFromEnvironment(t *testing.T) {
@@ -128,9 +154,19 @@ func TestProviderConfigureFromEnvironment(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 	defer os.Remove(tmpfileHome.Name())
+
 	old := os.Getenv("SFX_AUTH_TOKEN")
 	os.Setenv("SFX_AUTH_TOKEN", "YYY")
 	defer os.Setenv("SFX_AUTH_TOKEN", old)
+
+	old = os.Getenv("SFX_API_URL")
+	os.Setenv("SFX_API_URL", "https://api.eu0.signalfx.com")
+	defer os.Setenv("SFX_API_URL", old)
+
+	old = os.Getenv("SFX_CUSTOM_APP_URL")
+	os.Setenv("SFX_CUSTOM_APP_URL", "https://mydomain.signalfx.com")
+	defer os.Setenv("SFX_CUSTOM_APP_URL", old)
+
 	raw := make(map[string]interface{})
 
 	rp := Provider()
@@ -141,15 +177,27 @@ func TestProviderConfigureFromEnvironment(t *testing.T) {
 	}
 	configuration := meta.(*signalfxConfig)
 	assert.Equal(t, "YYY", configuration.AuthToken)
+	assert.Equal(t, "https://api.eu0.signalfx.com", configuration.APIURL)
+	assert.Equal(t, "https://mydomain.signalfx.com", configuration.CustomAppURL)
 }
 
 func TestProviderConfigureFromEnvironmentOnly(t *testing.T) {
 	defer resetGlobals()
 	SystemConfigPath = "filedoesnotexist"
 	HomeConfigPath = "filedoesnotexist"
+
 	old := os.Getenv("SFX_AUTH_TOKEN")
 	os.Setenv("SFX_AUTH_TOKEN", "YYY")
 	defer os.Setenv("SFX_AUTH_TOKEN", old)
+
+	old = os.Getenv("SFX_API_URL")
+	os.Setenv("SFX_API_URL", "https://api.eu0.signalfx.com")
+	defer os.Setenv("SFX_API_URL", old)
+
+	old = os.Getenv("SFX_CUSTOM_APP_URL")
+	os.Setenv("SFX_CUSTOM_APP_URL", "https://mydomain.signalfx.com")
+	defer os.Setenv("SFX_CUSTOM_APP_URL", old)
+
 	raw := make(map[string]interface{})
 
 	rp := Provider()
@@ -160,6 +208,8 @@ func TestProviderConfigureFromEnvironmentOnly(t *testing.T) {
 	}
 	configuration := meta.(*signalfxConfig)
 	assert.Equal(t, "YYY", configuration.AuthToken)
+	assert.Equal(t, "https://api.eu0.signalfx.com", configuration.APIURL)
+	assert.Equal(t, "https://mydomain.signalfx.com", configuration.CustomAppURL)
 }
 
 func TestSignalFxConfigureFromHomeFile(t *testing.T) {
@@ -205,9 +255,18 @@ func TestSignalFxConfigureFromNetrcFile(t *testing.T) {
 	if err != nil {
 		t.Fatal(err.Error())
 	}
+
 	old := os.Getenv("SFX_AUTH_TOKEN")
 	defer os.Setenv("SFX_AUTH_TOKEN", old)
 	os.Unsetenv("SFX_AUTH_TOKEN")
+
+	old = os.Getenv("SFX_API_URL")
+	defer os.Setenv("SFX_API_URL", old)
+	os.Unsetenv("SFX_API_URL")
+
+	old = os.Getenv("SFX_CUSTOM_APP_URL")
+	defer os.Setenv("SFX_CUSTOM_APP_URL", old)
+	os.Unsetenv("SFX_CUSTOM_APP_URL")
 
 	defer os.Remove(tmpfileHome.Name())
 	os.Setenv("NETRC", tmpfileHome.Name())
@@ -222,6 +281,8 @@ func TestSignalFxConfigureFromNetrcFile(t *testing.T) {
 	}
 	configuration := meta.(*signalfxConfig)
 	assert.Equal(t, "WWW", configuration.AuthToken)
+	assert.Equal(t, "https://api.signalfx.com", configuration.APIURL)
+	assert.Equal(t, "https://app.signalfx.com", configuration.CustomAppURL)
 }
 
 func TestSignalFxConfigureFromHomeFileOnly(t *testing.T) {
@@ -236,6 +297,14 @@ func TestSignalFxConfigureFromHomeFileOnly(t *testing.T) {
 	defer os.Setenv("SFX_AUTH_TOKEN", old)
 	os.Unsetenv("SFX_AUTH_TOKEN")
 
+	old = os.Getenv("SFX_API_URL")
+	defer os.Setenv("SFX_API_URL", old)
+	os.Unsetenv("SFX_API_URL")
+
+	old = os.Getenv("SFX_CUSTOM_APP_URL")
+	defer os.Setenv("SFX_CUSTOM_APP_URL", old)
+	os.Unsetenv("SFX_CUSTOM_APP_URL")
+
 	defer os.Remove(tmpfileHome.Name())
 	HomeConfigPath = tmpfileHome.Name()
 	raw := make(map[string]interface{})
@@ -248,6 +317,8 @@ func TestSignalFxConfigureFromHomeFileOnly(t *testing.T) {
 	}
 	configuration := meta.(*signalfxConfig)
 	assert.Equal(t, "WWW", configuration.AuthToken)
+	assert.Equal(t, "https://api.signalfx.com", configuration.APIURL)
+	assert.Equal(t, "https://app.signalfx.com", configuration.CustomAppURL)
 }
 
 func TestSignalFxConfigureFromSystemFileOnly(t *testing.T) {
@@ -256,6 +327,14 @@ func TestSignalFxConfigureFromSystemFileOnly(t *testing.T) {
 	old := os.Getenv("SFX_AUTH_TOKEN")
 	defer os.Setenv("SFX_AUTH_TOKEN", old)
 	os.Unsetenv("SFX_AUTH_TOKEN")
+
+	old = os.Getenv("SFX_API_URL")
+	defer os.Setenv("SFX_API_URL", old)
+	os.Unsetenv("SFX_API_URL")
+
+	old = os.Getenv("SFX_CUSTOM_APP_URL")
+	defer os.Setenv("SFX_CUSTOM_APP_URL", old)
+	os.Unsetenv("SFX_CUSTOM_APP_URL")
 
 	tmpfileSystem, err := createTempConfigFile(`{"useless_config":"foo","auth_token":"ZZZ"}`, "signalfx.conf")
 	if err != nil {
@@ -274,6 +353,8 @@ func TestSignalFxConfigureFromSystemFileOnly(t *testing.T) {
 	}
 	configuration := meta.(*signalfxConfig)
 	assert.Equal(t, "ZZZ", configuration.AuthToken)
+	assert.Equal(t, "https://api.signalfx.com", configuration.APIURL)
+	assert.Equal(t, "https://app.signalfx.com", configuration.CustomAppURL)
 }
 
 func TestReadConfigFileFileNotFound(t *testing.T) {
