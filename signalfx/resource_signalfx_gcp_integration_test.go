@@ -19,6 +19,7 @@ resource "signalfx_gcp_integration" "gcp_myteamXX" {
     enabled = false
     poll_rate = 300
     services = ["compute"]
+    whitelist = ["labels"]
 
     project_service_keys {
 		    project_id = "gcp_project_id_1"
@@ -38,6 +39,8 @@ resource "signalfx_gcp_integration" "gcp_myteamXX" {
     enabled = false
     poll_rate = 300
     services = ["compute"]
+    whitelist = ["labels"]
+
     project_service_keys {
 		    project_id = "gcp_project_id_1"
 		    project_key = "secret_farts"
@@ -59,7 +62,16 @@ func TestAccCreateUpdateIntegrationGCP(t *testing.T) {
 			// Create It
 			{
 				Config: newIntegrationGCPConfig,
-				Check:  testAccCheckIntegrationGCPResourceExists,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckIntegrationGCPResourceExists,
+					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "project_service_keys.#", "2"),
+					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "project_service_keys.1428645045.project_id", "gcp_project_id_1"),
+					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "project_service_keys.1428645045.project_key", "secret_farts"),
+					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "project_service_keys.605621665.project_id", "gcp_project_id_2"),
+					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "project_service_keys.605621665.project_key", "secret_farts_2"),
+					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "whitelist.#", "1"),
+					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "whitelist.151844697", "labels"),
+				),
 			},
 			{
 				ResourceName:      "signalfx_gcp_integration.gcp_myteamXX",

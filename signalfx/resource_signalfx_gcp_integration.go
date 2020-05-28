@@ -58,6 +58,14 @@ func integrationGCPResource() *schema.Resource {
 					},
 				},
 			},
+			"whitelist": &schema.Schema{
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Description: "Compute Metadata Whitelist",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 		},
 
 		Create: integrationGCPCreate,
@@ -137,6 +145,10 @@ func getGCPPayloadIntegration(d *schema.ResourceData) *integration.GCPIntegratio
 		gcp.ProjectServiceKeys = serviceKeys
 	}
 
+	if val, ok := d.GetOk("whitelist"); ok {
+		gcp.Whitelist = expandStringSetToSlice(val.(*schema.Set))
+	}
+
 	return gcp
 }
 
@@ -163,8 +175,14 @@ func gcpIntegrationAPIToTF(d *schema.ResourceData, gcp *integration.GCPIntegrati
 			return err
 		}
 	}
+
 	// Note that the API doesn't return the project keys so we ignore them,
 	// because there's not much reason to poke at just the project id.
+
+	if err := d.Set("whitelist", flattenStringSliceToSet(gcp.Whitelist)); err != nil {
+		return err
+	}
+
 	return nil
 }
 
