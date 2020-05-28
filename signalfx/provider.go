@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/bgentry/go-netrc/netrc"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/logging"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	homedir "github.com/mitchellh/go-homedir"
@@ -146,7 +147,7 @@ func signalfxConfigure(data *schema.ResourceData) (interface{}, error) {
 		config.CustomAppURL = custom_app_url.(string)
 	}
 
-	var netTransport = &http.Transport{
+	var netTransport = logging.NewTransport("SignalFx", &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
 		Dial: (&net.Dialer{
 			Timeout: 5 * time.Second,
@@ -154,7 +155,7 @@ func signalfxConfigure(data *schema.ResourceData) (interface{}, error) {
 		TLSHandshakeTimeout: 5 * time.Second,
 		MaxIdleConns:        100,
 		MaxIdleConnsPerHost: 100,
-	}
+	})
 
 	pv := version.ProviderVersion
 	providerUserAgent := fmt.Sprintf("Terraform/%s terraform-provider-signalfx/%s", sfxProvider.TerraformVersion, pv)
