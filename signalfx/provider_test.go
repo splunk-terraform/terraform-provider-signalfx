@@ -8,6 +8,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	sfx "github.com/signalfx/signalfx-go"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -42,6 +43,12 @@ func createTempConfigFile(content string, name string) (*os.File, error) {
 	}
 
 	return tmpfile, nil
+}
+
+func newTestClient() *sfx.Client {
+	apiURL, _ := sfxProvider.Schema["api_url"].DefaultFunc()
+	client, _ := sfx.NewClient(os.Getenv("SFX_AUTH_TOKEN"), sfx.APIUrl(apiURL.(string)))
+	return client
 }
 
 func TestProvider(t *testing.T) {

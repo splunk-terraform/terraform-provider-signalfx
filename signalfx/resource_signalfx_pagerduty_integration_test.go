@@ -2,13 +2,10 @@ package signalfx
 
 import (
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
-
-	sfx "github.com/signalfx/signalfx-go"
 )
 
 const newIntegrationPagerDutyConfig = `
@@ -58,7 +55,7 @@ func TestAccCreateUpdateIntegrationPagerDuty(t *testing.T) {
 }
 
 func testAccCheckIntegrationPagerDutyResourceExists(s *terraform.State) error {
-	client, _ := sfx.NewClient(os.Getenv("SFX_AUTH_TOKEN"))
+	client := newTestClient()
 
 	for _, rs := range s.RootModule().Resources {
 		switch rs.Type {
@@ -76,7 +73,7 @@ func testAccCheckIntegrationPagerDutyResourceExists(s *terraform.State) error {
 }
 
 func testAccIntegrationPagerDutyDestroy(s *terraform.State) error {
-	client, _ := sfx.NewClient(os.Getenv("SFX_AUTH_TOKEN"))
+	client := newTestClient()
 	for _, rs := range s.RootModule().Resources {
 		switch rs.Type {
 		case "signalfx_pagerduty_integration":

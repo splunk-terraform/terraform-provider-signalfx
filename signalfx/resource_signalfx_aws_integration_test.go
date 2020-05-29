@@ -2,15 +2,12 @@ package signalfx
 
 import (
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 
 	"github.com/stretchr/testify/assert"
-
-	sfx "github.com/signalfx/signalfx-go"
 )
 
 const newIntegrationAWSConfig = `
@@ -163,7 +160,7 @@ func TestAccCreateUpdateIntegrationAWS(t *testing.T) {
 }
 
 func testAccCheckIntegrationAWSResourceExists(s *terraform.State) error {
-	client, _ := sfx.NewClient(os.Getenv("SFX_AUTH_TOKEN"))
+	client := newTestClient()
 
 	for _, rs := range s.RootModule().Resources {
 		switch rs.Type {
@@ -181,7 +178,7 @@ func testAccCheckIntegrationAWSResourceExists(s *terraform.State) error {
 }
 
 func testAccIntegrationAWSDestroy(s *terraform.State) error {
-	client, _ := sfx.NewClient(os.Getenv("SFX_AUTH_TOKEN"))
+	client := newTestClient()
 	for _, rs := range s.RootModule().Resources {
 		switch rs.Type {
 		case "signalfx_aws_integration", "signalfx_aws_external_integration", "signalfx_aws_token_integration":

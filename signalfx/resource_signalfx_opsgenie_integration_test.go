@@ -2,11 +2,8 @@ package signalfx
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
-
-	sfx "github.com/signalfx/signalfx-go"
 )
 
 const newIntegrationOpsgenieConfig = `
@@ -66,7 +63,7 @@ resource "signalfx_opsgenie_integration" "opsgenie_myteamXX" {
 // }
 
 func testAccCheckIntegrationOpsgenieResourceExists(s *terraform.State) error {
-	client, _ := sfx.NewClient(os.Getenv("SFX_AUTH_TOKEN"))
+	client := newTestClient()
 
 	for _, rs := range s.RootModule().Resources {
 		switch rs.Type {
@@ -84,7 +81,7 @@ func testAccCheckIntegrationOpsgenieResourceExists(s *terraform.State) error {
 }
 
 func testAccIntegrationOpsgenieDestroy(s *terraform.State) error {
-	client, _ := sfx.NewClient(os.Getenv("SFX_AUTH_TOKEN"))
+	client := newTestClient()
 	for _, rs := range s.RootModule().Resources {
 		switch rs.Type {
 		case "signalfx_opsgenie_integration":

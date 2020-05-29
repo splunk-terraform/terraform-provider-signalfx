@@ -2,15 +2,12 @@ package signalfx
 
 import (
 	"fmt"
-	"os"
 	"strconv"
 	"testing"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
-
-	sfx "github.com/signalfx/signalfx-go"
 )
 
 const newAlertMutingRuleConfig = `
@@ -110,7 +107,7 @@ func TestAccCreateUpdateAlertMutingRule(t *testing.T) {
 }
 
 func testAccCreateUpdateAlertMutingRuleResourceExists(s *terraform.State) error {
-	client, _ := sfx.NewClient(os.Getenv("SFX_AUTH_TOKEN"))
+	client := newTestClient()
 	for _, rs := range s.RootModule().Resources {
 		switch rs.Type {
 		case "signalfx_alert_muting_rule":
@@ -126,7 +123,7 @@ func testAccCreateUpdateAlertMutingRuleResourceExists(s *terraform.State) error 
 }
 
 func testAccAlertMutingRuleDestroy(s *terraform.State) error {
-	client, _ := sfx.NewClient(os.Getenv("SFX_AUTH_TOKEN"))
+	client := newTestClient()
 	for _, rs := range s.RootModule().Resources {
 		switch rs.Type {
 		case "signalfx_alert_muting_rule":
