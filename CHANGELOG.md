@@ -1,4 +1,4 @@
-## 4.22.0 (Unreleased)
+## 4.22.0 (May 29, 2020)
 
 IMPROVEMENTS:
 * provider: HTTP logging is now enabled in debug mode. Thanks [@pdecat](https://github.com/pdecat)! [#211](https://github.com/terraform-providers/terraform-provider-signalfx/pull/211)
