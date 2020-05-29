@@ -2,7 +2,6 @@ package signalfx
 
 import (
 	"fmt"
-	"os"
 	"reflect"
 	"testing"
 
@@ -10,8 +9,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/stretchr/testify/assert"
-
-	sfx "github.com/signalfx/signalfx-go"
 )
 
 func TestResourceRuleHash(t *testing.T) {
@@ -224,7 +221,7 @@ func TestAccCreateUpdateDetector(t *testing.T) {
 }
 
 func testAccCheckDetectorResourceExists(s *terraform.State) error {
-	client, _ := sfx.NewClient(os.Getenv("SFX_AUTH_TOKEN"))
+	client := newTestClient()
 	for _, rs := range s.RootModule().Resources {
 		switch rs.Type {
 		case "signalfx_detector":
@@ -240,7 +237,7 @@ func testAccCheckDetectorResourceExists(s *terraform.State) error {
 }
 
 func testAccDetectorDestroy(s *terraform.State) error {
-	client, _ := sfx.NewClient(os.Getenv("SFX_AUTH_TOKEN"))
+	client := newTestClient()
 	for _, rs := range s.RootModule().Resources {
 		switch rs.Type {
 		case "signalfx_detector":

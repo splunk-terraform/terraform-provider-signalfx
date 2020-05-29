@@ -2,11 +2,8 @@ package signalfx
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
-
-	sfx "github.com/signalfx/signalfx-go"
 )
 
 const newIntegrationVictorOpsConfig = `
@@ -64,7 +61,7 @@ resource "signalfx_victor_ops_integration" "victor_ops_myteamXX" {
 // }
 
 func testAccCheckIntegrationVictorOpsResourceExists(s *terraform.State) error {
-	client, _ := sfx.NewClient(os.Getenv("SFX_AUTH_TOKEN"))
+	client := newTestClient()
 
 	for _, rs := range s.RootModule().Resources {
 		switch rs.Type {
@@ -82,7 +79,7 @@ func testAccCheckIntegrationVictorOpsResourceExists(s *terraform.State) error {
 }
 
 func testAccIntegrationVictorOpsDestroy(s *terraform.State) error {
-	client, _ := sfx.NewClient(os.Getenv("SFX_AUTH_TOKEN"))
+	client := newTestClient()
 	for _, rs := range s.RootModule().Resources {
 		switch rs.Type {
 		case "signalfx_victor_ops_integration":

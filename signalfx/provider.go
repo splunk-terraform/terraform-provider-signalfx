@@ -46,13 +46,13 @@ func Provider() terraform.ResourceProvider {
 			"api_url": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
-				Default:     "https://api.signalfx.com",
+				DefaultFunc: schema.EnvDefaultFunc("SFX_API_URL", "https://api.signalfx.com"),
 				Description: "API URL for your SignalFx org, may include a realm",
 			},
 			"custom_app_url": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
-				Default:     "https://app.signalfx.com",
+				DefaultFunc: schema.EnvDefaultFunc("SFX_CUSTOM_APP_URL", "https://app.signalfx.com"),
 				Description: "Application URL for your SignalFx org, often customzied for organizations using SSO",
 			},
 			"timeout_seconds": &schema.Schema{

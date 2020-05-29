@@ -52,6 +52,6 @@ resource "signalfx_dashboard" "default" {
 The following arguments are supported:
 
 * `auth_token` - (Required) The auth token for [authentication](https://developers.signalfx.com/basics/authentication.html). This can also be set via the `SFX_AUTH_TOKEN` environment variable.
-* `api_url` - (Optional) The API URL to use for communicating with SignalFx. This is helpful for organizations who need to set their Realm or use a proxy. Note: You likely want to change `custom_app_url` too!
-* `custom_app_url` - (Optional)  The application URL that users should use to interact with assets in the browser. This is used by organizations using specific realms or those with a custom [SSO domain](https://docs.signalfx.com/en/latest/admin-guide/sso.html).
+* `api_url` - (Optional) The API URL to use for communicating with SignalFx. This is helpful for organizations who need to set their Realm or use a proxy. Note: You likely want to change `custom_app_url` too! This can also be set via the `SFX_API_URL` environment variable.
+* `custom_app_url` - (Optional)  The application URL that users should use to interact with assets in the browser. This is used by organizations using specific realms or those with a custom [SSO domain](https://docs.signalfx.com/en/latest/admin-guide/sso.html). This can also be set via the `SFX_CUSTOM_APP_URL` environment variable.
 * `timeout_seconds` - (Optional) The total timeout duration, in seconds, to wait when making HTTP API calls to SignalFx. Defaults to 120.
