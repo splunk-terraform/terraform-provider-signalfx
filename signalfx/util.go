@@ -119,6 +119,14 @@ func sendRequest(method string, url string, token string, payload []byte) (int, 
 	return resp.StatusCode, body, nil
 }
 
+func expandStringSetToSlice(set *schema.Set) []string {
+	result := make([]string, set.Len(), set.Len())
+	for i, s := range set.List() {
+		result[i] = s.(string)
+	}
+	return result
+}
+
 func flattenStringSliceToSet(slice []string) *schema.Set {
 	if len(slice) < 1 {
 		return nil
