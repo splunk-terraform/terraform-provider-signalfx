@@ -18,6 +18,7 @@ func integrationAWSResource() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "The ID of this integration",
+				ForceNew:    true,
 			},
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
@@ -250,6 +251,7 @@ func awsIntegrationAPIToTF(d *schema.ResourceData, aws *integration.AwsCloudWatc
 	if err := d.Set("use_get_metric_data_method", aws.UseGetMetricDataMethod); err != nil {
 		return err
 	}
+
 	if aws.Token != "" {
 		if err := d.Set("token", aws.Token); err != nil {
 			return err

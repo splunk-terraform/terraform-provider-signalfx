@@ -73,6 +73,12 @@ func integrationAzureResource() *schema.Resource {
 				Required:    true,
 				Description: "Azure ID of the Azure tenant.",
 			},
+			"named_token": &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "A named token to use for ingest",
+				ForceNew:    true,
+			},
 		},
 
 		Create: integrationAzureCreate,
@@ -130,6 +136,9 @@ func azureIntegrationAPIToTF(d *schema.ResourceData, azure *integration.AzureInt
 	if err := d.Set("tenant_id", azure.TenantId); err != nil {
 		return err
 	}
+	if err := d.Set("named_token", azure.NamedToken); err != nil {
+		return err
+	}
 	if len(azure.Services) > 0 {
 		services := make([]interface{}, len(azure.Services))
 		for i, v := range azure.Services {
@@ -162,6 +171,10 @@ func getPayloadAzureIntegration(d *schema.ResourceData) (*integration.AzureInteg
 		AzureEnvironment: integration.AzureEnvironment(strings.ToUpper(d.Get("environment").(string))),
 		SecretKey:        d.Get("secret_key").(string),
 		TenantId:         d.Get("tenant_id").(string),
+	}
+
+	if val, ok := d.GetOk("named_token"); ok {
+		azure.NamedToken = val.(string)
 	}
 
 	if val, ok := d.GetOk("poll_rate"); ok {

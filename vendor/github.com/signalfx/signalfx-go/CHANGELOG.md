@@ -1,4 +1,12 @@
-# 1.6.38, Pending
+# 1.6.40, Pending
+
+# 1.6.39, 2020-06-02
+
+## Improvements
+
+* Removed the go:generate comment out of the writer codegen template to make it
+  easier to consume in external projects
+* Added `NamedToken` to integrations.
 
 # 1.6.37, 2020-05-18
 

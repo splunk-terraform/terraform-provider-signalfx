@@ -31,6 +31,12 @@ func integrationAWSTokenResource() *schema.Resource {
 				Sensitive:   true,
 				Description: "The SignalFx AWS account ID to use with an AWS role.",
 			},
+			"named_token": &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "A named token to use for ingest",
+				ForceNew:    true,
+			},
 		},
 
 		Create: integrationAWSTokenCreate,
@@ -76,6 +82,10 @@ func getPayloadAWSTokenIntegration(d *schema.ResourceData) (*integration.AwsClou
 		PollRate:   &defaultPollRate,
 	}
 
+	if val, ok := d.GetOk("named_token"); ok {
+		aws.NamedToken = val.(string)
+	}
+
 	return aws, nil
 }
 
@@ -101,6 +111,9 @@ func integrationAWSTokenCreate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 	if err := d.Set("signalfx_aws_account", int.SfxAwsAccountArn); err != nil {
+		return err
+	}
+	if err := d.Set("named_token", int.NamedToken); err != nil {
 		return err
 	}
 

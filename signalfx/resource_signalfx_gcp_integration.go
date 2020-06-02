@@ -66,6 +66,12 @@ func integrationGCPResource() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
+			"named_token": &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "A named token to use for ingest",
+				ForceNew:    true,
+			},
 		},
 
 		Create: integrationGCPCreate,
@@ -109,6 +115,10 @@ func getGCPPayloadIntegration(d *schema.ResourceData) *integration.GCPIntegratio
 		Name:    d.Get("name").(string),
 		Enabled: d.Get("enabled").(bool),
 		Type:    "GCP",
+	}
+
+	if val, ok := d.GetOk("named_token"); ok {
+		gcp.NamedToken = val.(string)
 	}
 
 	if val, ok := d.GetOk("poll_rate"); ok {
@@ -163,6 +173,9 @@ func gcpIntegrationAPIToTF(d *schema.ResourceData, gcp *integration.GCPIntegrati
 		return err
 	}
 	if err := d.Set("poll_rate", *gcp.PollRate/1000); err != nil {
+		return err
+	}
+	if err := d.Set("named_token", gcp.NamedToken); err != nil {
 		return err
 	}
 
