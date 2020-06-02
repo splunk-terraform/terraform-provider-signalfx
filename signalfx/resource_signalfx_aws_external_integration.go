@@ -31,6 +31,12 @@ func integrationAWSExternalResource() *schema.Resource {
 				Sensitive:   true,
 				Description: "The SignalFx AWS account ID to use with an AWS role.",
 			},
+			"named_token": &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "A named token to use for ingest",
+				ForceNew:    true,
+			},
 		},
 
 		Create: integrationAWSExternalCreate,
@@ -71,6 +77,10 @@ func integrationAWSExternalRead(d *schema.ResourceData, meta interface{}) error 
 		return err
 	}
 
+	if err := d.Set("named_token", int.NamedToken); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -83,6 +93,10 @@ func getPayloadAWSExternalIntegration(d *schema.ResourceData) (*integration.AwsC
 		AuthMethod: integration.EXTERNAL_ID,
 		Name:       d.Get("name").(string),
 		PollRate:   &defaultPollRate,
+	}
+
+	if val, ok := d.GetOk("named_token"); ok {
+		aws.NamedToken = val.(string)
 	}
 
 	return aws, nil
