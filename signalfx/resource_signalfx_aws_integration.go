@@ -175,6 +175,12 @@ func integrationAWSResource() *schema.Resource {
 				Default:     false,
 				Description: "Enables the use of Amazon's GetMetricData API. Defaults to `false`.",
 			},
+			"named_token": &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "A named token to use for ingest",
+				ForceNew:    true,
+			},
 		},
 
 		Create: integrationAWSCreate,
@@ -250,6 +256,10 @@ func awsIntegrationAPIToTF(d *schema.ResourceData, aws *integration.AwsCloudWatc
 	if err := d.Set("use_get_metric_data_method", aws.UseGetMetricDataMethod); err != nil {
 		return err
 	}
+	if err := d.Set("named_token", aws.NamedToken); err != nil {
+		return err
+	}
+
 	if aws.Token != "" {
 		if err := d.Set("token", aws.Token); err != nil {
 			return err
@@ -344,6 +354,10 @@ func getPayloadAWSIntegration(d *schema.ResourceData) (*integration.AwsCloudWatc
 		EnableAwsUsage:         d.Get("enable_aws_usage").(bool),
 		ImportCloudWatch:       d.Get("import_cloud_watch").(bool),
 		UseGetMetricDataMethod: d.Get("use_get_metric_data_method").(bool),
+	}
+
+	if val, ok := d.GetOk("named_token"); ok {
+		aws.NamedToken = val.(string)
 	}
 
 	if d.Get("external_id").(string) != "" {

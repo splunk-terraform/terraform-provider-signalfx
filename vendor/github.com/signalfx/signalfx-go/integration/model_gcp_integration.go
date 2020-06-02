@@ -32,5 +32,6 @@ type GCPIntegration struct {
 	// List of GCP project that you want SignalFx to monitor, in the form of a JSON array of objects
 	ProjectServiceKeys []*GCPProject `json:"projectServiceKeys,omitempty"`
 	// List of GCP metadata names that you want SignalFx to collect from the data incoming from the GCP integration, in the form of a JSON array. Refer to Google's GCP documentation to find out the names you want to whitelist.
-	Whitelist []string `json:"whitelist,omitempty"`
+	Whitelist  []string `json:"whitelist,omitempty"`
+	NamedToken string   `json:"namedToken,omitempty"`
 }
