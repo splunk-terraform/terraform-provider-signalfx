@@ -1,6 +1,7 @@
 package signalfx
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -94,7 +95,7 @@ func integrationAzureResource() *schema.Resource {
 
 func integrationAzureExists(d *schema.ResourceData, meta interface{}) (bool, error) {
 	config := meta.(*signalfxConfig)
-	_, err := config.Client.GetAzureIntegration(d.Id())
+	_, err := config.Client.GetAzureIntegration(context.TODO(), d.Id())
 	if err != nil {
 		if strings.Contains(err.Error(), "404") {
 			return false, nil
@@ -106,7 +107,7 @@ func integrationAzureExists(d *schema.ResourceData, meta interface{}) (bool, err
 
 func integrationAzureRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	int, err := config.Client.GetAzureIntegration(d.Id())
+	int, err := config.Client.GetAzureIntegration(context.TODO(), d.Id())
 	if err != nil {
 		if strings.Contains(err.Error(), "404") {
 			d.SetId("")
@@ -221,7 +222,7 @@ func integrationAzureCreate(d *schema.ResourceData, meta interface{}) error {
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Create Azure Integration Payload: %s", string(debugOutput))
 
-	int, err := config.Client.CreateAzureIntegration(payload)
+	int, err := config.Client.CreateAzureIntegration(context.TODO(), payload)
 	if err != nil {
 		if strings.Contains(err.Error(), "40") {
 			err = fmt.Errorf("%s\nPlease verify you are using an admin token when working with integrations", err.Error())
@@ -243,7 +244,7 @@ func integrationAzureUpdate(d *schema.ResourceData, meta interface{}) error {
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Update Azure Integration Payload: %s", string(debugOutput))
 
-	int, err := config.Client.UpdateAzureIntegration(d.Id(), payload)
+	int, err := config.Client.UpdateAzureIntegration(context.TODO(), d.Id(), payload)
 	if err != nil {
 		if strings.Contains(err.Error(), "40") {
 			err = fmt.Errorf("%s\nPlease verify you are using an admin token when working with integrations", err.Error())
@@ -258,7 +259,7 @@ func integrationAzureUpdate(d *schema.ResourceData, meta interface{}) error {
 func integrationAzureDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 
-	return config.Client.DeleteAzureIntegration(d.Id())
+	return config.Client.DeleteAzureIntegration(context.TODO(), d.Id())
 }
 
 func validateAzureService(v interface{}, k string) (we []string, errors []error) {

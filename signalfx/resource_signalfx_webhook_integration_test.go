@@ -1,6 +1,7 @@
 package signalfx
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -76,7 +77,7 @@ func testAccCheckIntegrationWebhookResourceExists(s *terraform.State) error {
 	for _, rs := range s.RootModule().Resources {
 		switch rs.Type {
 		case "signalfx_webhook_integration":
-			integration, err := client.GetIntegration(rs.Primary.ID)
+			integration, err := client.GetIntegration(context.TODO(), rs.Primary.ID)
 			if integration["id"].(string) != rs.Primary.ID || err != nil {
 				return fmt.Errorf("Error finding integration %s: %s", rs.Primary.ID, err)
 			}
@@ -93,7 +94,7 @@ func testAccIntegrationWebhookDestroy(s *terraform.State) error {
 	for _, rs := range s.RootModule().Resources {
 		switch rs.Type {
 		case "signalfx_webhook_integration":
-			integration, _ := client.GetIntegration(rs.Primary.ID)
+			integration, _ := client.GetIntegration(context.TODO(), rs.Primary.ID)
 			if _, ok := integration["id"]; ok {
 				return fmt.Errorf("Found deleted integration %s", rs.Primary.ID)
 			}

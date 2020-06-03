@@ -2,6 +2,7 @@ package signalfx
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -12,13 +13,13 @@ import (
 )
 
 // CreateGCPIntegration creates a GCP integration.
-func (c *Client) CreateGCPIntegration(gcpi *integration.GCPIntegration) (*integration.GCPIntegration, error) {
+func (c *Client) CreateGCPIntegration(ctx context.Context, gcpi *integration.GCPIntegration) (*integration.GCPIntegration, error) {
 	payload, err := json.Marshal(gcpi)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := c.doRequest("POST", IntegrationAPIURL, nil, bytes.NewReader(payload))
+	resp, err := c.doRequest(ctx, "POST", IntegrationAPIURL, nil, bytes.NewReader(payload))
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -40,8 +41,8 @@ func (c *Client) CreateGCPIntegration(gcpi *integration.GCPIntegration) (*integr
 }
 
 // GetGCPIntegration retrieves a GCP integration.
-func (c *Client) GetGCPIntegration(id string) (*integration.GCPIntegration, error) {
-	resp, err := c.doRequest("GET", IntegrationAPIURL+"/"+id, nil, nil)
+func (c *Client) GetGCPIntegration(ctx context.Context, id string) (*integration.GCPIntegration, error) {
+	resp, err := c.doRequest(ctx, "GET", IntegrationAPIURL+"/"+id, nil, nil)
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -63,13 +64,13 @@ func (c *Client) GetGCPIntegration(id string) (*integration.GCPIntegration, erro
 }
 
 // UpdateGCPIntegration updates a GCP integration.
-func (c *Client) UpdateGCPIntegration(id string, gcpi *integration.GCPIntegration) (*integration.GCPIntegration, error) {
+func (c *Client) UpdateGCPIntegration(ctx context.Context, id string, gcpi *integration.GCPIntegration) (*integration.GCPIntegration, error) {
 	payload, err := json.Marshal(gcpi)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := c.doRequest("PUT", IntegrationAPIURL+"/"+id, nil, bytes.NewReader(payload))
+	resp, err := c.doRequest(ctx, "PUT", IntegrationAPIURL+"/"+id, nil, bytes.NewReader(payload))
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -91,8 +92,8 @@ func (c *Client) UpdateGCPIntegration(id string, gcpi *integration.GCPIntegratio
 }
 
 // DeleteGCPIntegration deletes a GCP integration.
-func (c *Client) DeleteGCPIntegration(id string) error {
-	resp, err := c.doRequest("DELETE", IntegrationAPIURL+"/"+id, nil, nil)
+func (c *Client) DeleteGCPIntegration(ctx context.Context, id string) error {
+	resp, err := c.doRequest(ctx, "DELETE", IntegrationAPIURL+"/"+id, nil, nil)
 	if resp != nil {
 		defer resp.Body.Close()
 	}

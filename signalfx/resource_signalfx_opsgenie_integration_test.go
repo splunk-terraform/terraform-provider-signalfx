@@ -1,6 +1,7 @@
 package signalfx
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
@@ -68,7 +69,7 @@ func testAccCheckIntegrationOpsgenieResourceExists(s *terraform.State) error {
 	for _, rs := range s.RootModule().Resources {
 		switch rs.Type {
 		case "signalfx_opsgenie_integration":
-			integration, err := client.GetIntegration(rs.Primary.ID)
+			integration, err := client.GetIntegration(context.TODO(), rs.Primary.ID)
 			if integration["id"].(string) != rs.Primary.ID || err != nil {
 				return fmt.Errorf("Error finding integration %s: %s", rs.Primary.ID, err)
 			}
@@ -85,7 +86,7 @@ func testAccIntegrationOpsgenieDestroy(s *terraform.State) error {
 	for _, rs := range s.RootModule().Resources {
 		switch rs.Type {
 		case "signalfx_opsgenie_integration":
-			integration, _ := client.GetIntegration(rs.Primary.ID)
+			integration, _ := client.GetIntegration(context.TODO(), rs.Primary.ID)
 			if _, ok := integration["id"]; ok {
 				return fmt.Errorf("Found deleted integration %s", rs.Primary.ID)
 			}

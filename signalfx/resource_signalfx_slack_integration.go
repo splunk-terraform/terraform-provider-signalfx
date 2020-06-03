@@ -1,6 +1,7 @@
 package signalfx
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -44,7 +45,7 @@ func integrationSlackResource() *schema.Resource {
 
 func integrationSlackExists(d *schema.ResourceData, meta interface{}) (bool, error) {
 	config := meta.(*signalfxConfig)
-	_, err := config.Client.GetSlackIntegration(d.Id())
+	_, err := config.Client.GetSlackIntegration(context.TODO(), d.Id())
 	if err != nil {
 		if strings.Contains(err.Error(), "404") {
 			return false, nil
@@ -65,7 +66,7 @@ func getSlackPayloadIntegration(d *schema.ResourceData) *integration.SlackIntegr
 
 func integrationSlackRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	int, err := config.Client.GetSlackIntegration(d.Id())
+	int, err := config.Client.GetSlackIntegration(context.TODO(), d.Id())
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "404") {
 			d.SetId("")
@@ -97,7 +98,7 @@ func integrationSlackCreate(d *schema.ResourceData, meta interface{}) error {
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Create Slack Integration Payload: %s", string(debugOutput))
 
-	int, err := config.Client.CreateSlackIntegration(payload)
+	int, err := config.Client.CreateSlackIntegration(context.TODO(), payload)
 	if err != nil {
 		if strings.Contains(err.Error(), "40") {
 			err = fmt.Errorf("%s\nPlease verify you are using an admin token when working with integrations", err.Error())
@@ -116,7 +117,7 @@ func integrationSlackUpdate(d *schema.ResourceData, meta interface{}) error {
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Update Slack Integration Payload: %s", string(debugOutput))
 
-	int, err := config.Client.UpdateSlackIntegration(d.Id(), payload)
+	int, err := config.Client.UpdateSlackIntegration(context.TODO(), d.Id(), payload)
 	if err != nil {
 		if strings.Contains(err.Error(), "40") {
 			err = fmt.Errorf("%s\nPlease verify you are using an admin token when working with integrations", err.Error())
@@ -131,5 +132,5 @@ func integrationSlackUpdate(d *schema.ResourceData, meta interface{}) error {
 func integrationSlackDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 
-	return config.Client.DeleteSlackIntegration(d.Id())
+	return config.Client.DeleteSlackIntegration(context.TODO(), d.Id())
 }

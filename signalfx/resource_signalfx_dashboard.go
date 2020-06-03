@@ -1,6 +1,7 @@
 package signalfx
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -720,7 +721,7 @@ func dashboardCreate(d *schema.ResourceData, meta interface{}) error {
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Dashboard Create Payload: %s", debugOutput)
 
-	dash, err := config.Client.CreateDashboard(payload)
+	dash, err := config.Client.CreateDashboard(context.TODO(), payload)
 	if err != nil {
 		return err
 	}
@@ -739,7 +740,7 @@ func dashboardCreate(d *schema.ResourceData, meta interface{}) error {
 
 func dashboardExists(d *schema.ResourceData, meta interface{}) (bool, error) {
 	config := meta.(*signalfxConfig)
-	_, err := config.Client.GetDashboard(d.Id())
+	_, err := config.Client.GetDashboard(context.TODO(), d.Id())
 	if err != nil {
 		if strings.Contains(err.Error(), "404") {
 			return false, nil
@@ -751,7 +752,7 @@ func dashboardExists(d *schema.ResourceData, meta interface{}) (bool, error) {
 
 func dashboardRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	dash, err := config.Client.GetDashboard(d.Id())
+	dash, err := config.Client.GetDashboard(context.TODO(), d.Id())
 	if err != nil {
 		return err
 	}
@@ -996,7 +997,7 @@ func dashboardUpdate(d *schema.ResourceData, meta interface{}) error {
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Update Dashboard Payload: %s", string(debugOutput))
 
-	dash, err := config.Client.UpdateDashboard(d.Id(), payload)
+	dash, err := config.Client.UpdateDashboard(context.TODO(), d.Id(), payload)
 	if err != nil {
 		return err
 	}
@@ -1016,7 +1017,7 @@ func dashboardUpdate(d *schema.ResourceData, meta interface{}) error {
 func dashboardDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 
-	err := config.Client.DeleteDashboard(d.Id())
+	err := config.Client.DeleteDashboard(context.TODO(), d.Id())
 	return err
 }
 

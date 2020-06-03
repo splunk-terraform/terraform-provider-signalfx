@@ -1,6 +1,7 @@
 package signalfx
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -89,7 +90,7 @@ func testAccCheckIntegrationAzureResourceExists(s *terraform.State) error {
 	for _, rs := range s.RootModule().Resources {
 		switch rs.Type {
 		case "signalfx_azure_integration":
-			integration, err := client.GetAzureIntegration(rs.Primary.ID)
+			integration, err := client.GetAzureIntegration(context.TODO(), rs.Primary.ID)
 			if integration == nil {
 				return fmt.Errorf("Error finding integration %s: %s", rs.Primary.ID, err)
 			}
@@ -106,7 +107,7 @@ func testAccIntegrationAzureDestroy(s *terraform.State) error {
 	for _, rs := range s.RootModule().Resources {
 		switch rs.Type {
 		case "signalfx_azure_integration":
-			integration, _ := client.GetAzureIntegration(rs.Primary.ID)
+			integration, _ := client.GetAzureIntegration(context.TODO(), rs.Primary.ID)
 			if integration != nil {
 				return fmt.Errorf("Found deleted integration %s", rs.Primary.ID)
 			}

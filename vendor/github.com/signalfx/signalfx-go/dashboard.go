@@ -2,6 +2,7 @@ package signalfx
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -19,13 +20,13 @@ import (
 const DashboardAPIURL = "/v2/dashboard"
 
 // CreateDashboard creates a dashboard.
-func (c *Client) CreateDashboard(dashboardRequest *dashboard.CreateUpdateDashboardRequest) (*dashboard.Dashboard, error) {
+func (c *Client) CreateDashboard(ctx context.Context, dashboardRequest *dashboard.CreateUpdateDashboardRequest) (*dashboard.Dashboard, error) {
 	payload, err := json.Marshal(dashboardRequest)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := c.doRequest("POST", DashboardAPIURL, nil, bytes.NewReader(payload))
+	resp, err := c.doRequest(ctx, "POST", DashboardAPIURL, nil, bytes.NewReader(payload))
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -47,8 +48,8 @@ func (c *Client) CreateDashboard(dashboardRequest *dashboard.CreateUpdateDashboa
 }
 
 // DeleteDashboard deletes a dashboard.
-func (c *Client) DeleteDashboard(id string) error {
-	resp, err := c.doRequest("DELETE", DashboardAPIURL+"/"+id, nil, nil)
+func (c *Client) DeleteDashboard(ctx context.Context, id string) error {
+	resp, err := c.doRequest(ctx, "DELETE", DashboardAPIURL+"/"+id, nil, nil)
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -66,8 +67,8 @@ func (c *Client) DeleteDashboard(id string) error {
 }
 
 // GetDashboard gets a dashboard.
-func (c *Client) GetDashboard(id string) (*dashboard.Dashboard, error) {
-	resp, err := c.doRequest("GET", DashboardAPIURL+"/"+id, nil, nil)
+func (c *Client) GetDashboard(ctx context.Context, id string) (*dashboard.Dashboard, error) {
+	resp, err := c.doRequest(ctx, "GET", DashboardAPIURL+"/"+id, nil, nil)
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -89,13 +90,13 @@ func (c *Client) GetDashboard(id string) (*dashboard.Dashboard, error) {
 }
 
 // UpdateDashboard updates a dashboard.
-func (c *Client) UpdateDashboard(id string, dashboardRequest *dashboard.CreateUpdateDashboardRequest) (*dashboard.Dashboard, error) {
+func (c *Client) UpdateDashboard(ctx context.Context, id string, dashboardRequest *dashboard.CreateUpdateDashboardRequest) (*dashboard.Dashboard, error) {
 	payload, err := json.Marshal(dashboardRequest)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := c.doRequest("PUT", DashboardAPIURL+"/"+id, nil, bytes.NewReader(payload))
+	resp, err := c.doRequest(ctx, "PUT", DashboardAPIURL+"/"+id, nil, bytes.NewReader(payload))
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -117,14 +118,14 @@ func (c *Client) UpdateDashboard(id string, dashboardRequest *dashboard.CreateUp
 }
 
 // SearchDashboard searches for dashboards, given a query string in `name`.
-func (c *Client) SearchDashboard(limit int, name string, offset int, tags string) (*dashboard.SearchResult, error) {
+func (c *Client) SearchDashboard(ctx context.Context, limit int, name string, offset int, tags string) (*dashboard.SearchResult, error) {
 	params := url.Values{}
 	params.Add("limit", strconv.Itoa(limit))
 	params.Add("name", name)
 	params.Add("offset", strconv.Itoa(offset))
 	params.Add("tags", tags)
 
-	resp, err := c.doRequest("GET", DashboardAPIURL, params, nil)
+	resp, err := c.doRequest(ctx, "GET", DashboardAPIURL, params, nil)
 	if resp != nil {
 		defer resp.Body.Close()
 	}

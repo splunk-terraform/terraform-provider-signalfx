@@ -1,6 +1,7 @@
 package signalfx
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -99,7 +100,7 @@ func integrationJiraResource() *schema.Resource {
 
 func integrationJiraExists(d *schema.ResourceData, meta interface{}) (bool, error) {
 	config := meta.(*signalfxConfig)
-	_, err := config.Client.GetJiraIntegration(d.Id())
+	_, err := config.Client.GetJiraIntegration(context.TODO(), d.Id())
 	if err != nil {
 		if strings.Contains(err.Error(), "404") {
 			return false, nil
@@ -111,7 +112,7 @@ func integrationJiraExists(d *schema.ResourceData, meta interface{}) (bool, erro
 
 func integrationJiraRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	int, err := config.Client.GetJiraIntegration(d.Id())
+	int, err := config.Client.GetJiraIntegration(context.TODO(), d.Id())
 	if err != nil {
 		if strings.Contains(err.Error(), "404") {
 			d.SetId("")
@@ -210,7 +211,7 @@ func integrationJiraCreate(d *schema.ResourceData, meta interface{}) error {
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Create Jira Integration Payload: %s", string(debugOutput))
 
-	int, err := config.Client.CreateJiraIntegration(payload)
+	int, err := config.Client.CreateJiraIntegration(context.TODO(), payload)
 	if err != nil {
 		if strings.Contains(err.Error(), "40") {
 			err = fmt.Errorf("%s\nPlease verify you are using an admin token when working with integrations", err.Error())
@@ -232,7 +233,7 @@ func integrationJiraUpdate(d *schema.ResourceData, meta interface{}) error {
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Update Jira Integration Payload: %s", string(debugOutput))
 
-	int, err := config.Client.UpdateJiraIntegration(d.Id(), payload)
+	int, err := config.Client.UpdateJiraIntegration(context.TODO(), d.Id(), payload)
 	if err != nil {
 		if strings.Contains(err.Error(), "40") {
 			err = fmt.Errorf("%s\nPlease verify you are using an admin token when working with integrations", err.Error())
@@ -247,5 +248,5 @@ func integrationJiraUpdate(d *schema.ResourceData, meta interface{}) error {
 func integrationJiraDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 
-	return config.Client.DeleteJiraIntegration(d.Id())
+	return config.Client.DeleteJiraIntegration(context.TODO(), d.Id())
 }

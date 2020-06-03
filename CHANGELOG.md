@@ -1,4 +1,8 @@
 ## 4.24.0 (Unreleased)
+
+IMPROVEMENTS:
+* Bumped signalfx-go dependency which requires the use of `context.Context` in many client calls. No material change otherwise.
+
 ## 4.23.0 (June 02, 2020)
 
 IMPROVEMENTS:

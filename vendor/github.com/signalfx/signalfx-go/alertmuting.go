@@ -2,6 +2,7 @@ package signalfx
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -17,13 +18,13 @@ import (
 const AlertMutingRuleAPIURL = "/v2/alertmuting"
 
 // CreateAlertMutingRule creates an alert muting rule.
-func (c *Client) CreateAlertMutingRule(muteRequest *alertmuting.CreateUpdateAlertMutingRuleRequest) (*alertmuting.AlertMutingRule, error) {
+func (c *Client) CreateAlertMutingRule(ctx context.Context, muteRequest *alertmuting.CreateUpdateAlertMutingRuleRequest) (*alertmuting.AlertMutingRule, error) {
 	payload, err := json.Marshal(muteRequest)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := c.doRequest("POST", AlertMutingRuleAPIURL, nil, bytes.NewReader(payload))
+	resp, err := c.doRequest(ctx, "POST", AlertMutingRuleAPIURL, nil, bytes.NewReader(payload))
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -45,8 +46,8 @@ func (c *Client) CreateAlertMutingRule(muteRequest *alertmuting.CreateUpdateAler
 }
 
 // DeleteAlertMutingRule deletes an alert muting rule.
-func (c *Client) DeleteAlertMutingRule(name string) error {
-	resp, err := c.doRequest("DELETE", AlertMutingRuleAPIURL+"/"+name, nil, nil)
+func (c *Client) DeleteAlertMutingRule(ctx context.Context, name string) error {
+	resp, err := c.doRequest(ctx, "DELETE", AlertMutingRuleAPIURL+"/"+name, nil, nil)
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -64,8 +65,8 @@ func (c *Client) DeleteAlertMutingRule(name string) error {
 }
 
 // GetAlertMutingRule gets an alert muting rule.
-func (c *Client) GetAlertMutingRule(id string) (*alertmuting.AlertMutingRule, error) {
-	resp, err := c.doRequest("GET", AlertMutingRuleAPIURL+"/"+id, nil, nil)
+func (c *Client) GetAlertMutingRule(ctx context.Context, id string) (*alertmuting.AlertMutingRule, error) {
+	resp, err := c.doRequest(ctx, "GET", AlertMutingRuleAPIURL+"/"+id, nil, nil)
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -87,13 +88,13 @@ func (c *Client) GetAlertMutingRule(id string) (*alertmuting.AlertMutingRule, er
 }
 
 // UpdateAlertMutingRule updates an alert muting rule.
-func (c *Client) UpdateAlertMutingRule(id string, muteRequest *alertmuting.CreateUpdateAlertMutingRuleRequest) (*alertmuting.AlertMutingRule, error) {
+func (c *Client) UpdateAlertMutingRule(ctx context.Context, id string, muteRequest *alertmuting.CreateUpdateAlertMutingRuleRequest) (*alertmuting.AlertMutingRule, error) {
 	payload, err := json.Marshal(muteRequest)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := c.doRequest("PUT", AlertMutingRuleAPIURL+"/"+id, nil, bytes.NewReader(payload))
+	resp, err := c.doRequest(ctx, "PUT", AlertMutingRuleAPIURL+"/"+id, nil, bytes.NewReader(payload))
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -115,14 +116,14 @@ func (c *Client) UpdateAlertMutingRule(id string, muteRequest *alertmuting.Creat
 }
 
 // SearchAlertMutingRules searches for alert muting rules given a query string in `name`.
-func (c *Client) SearchAlertMutingRules(include string, limit int, name string, offset int) (*alertmuting.SearchResult, error) {
+func (c *Client) SearchAlertMutingRules(ctx context.Context, include string, limit int, name string, offset int) (*alertmuting.SearchResult, error) {
 	params := url.Values{}
 	params.Add("include", include)
 	params.Add("limit", strconv.Itoa(limit))
 	params.Add("name", name)
 	params.Add("offset", strconv.Itoa(offset))
 
-	resp, err := c.doRequest("GET", AlertMutingRuleAPIURL, params, nil)
+	resp, err := c.doRequest(ctx, "GET", AlertMutingRuleAPIURL, params, nil)
 	if resp != nil {
 		defer resp.Body.Close()
 	}

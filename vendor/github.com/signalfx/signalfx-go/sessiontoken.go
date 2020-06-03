@@ -2,6 +2,7 @@ package signalfx
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -15,7 +16,7 @@ import (
 const SessionTokenAPIURL = "/v2/session"
 
 // CreateOrgToken creates a org token.
-func (c *Client) CreateSessionToken(tokenRequest *sessiontoken.CreateTokenRequest) (*sessiontoken.Token, error) {
+func (c *Client) CreateSessionToken(ctx context.Context, tokenRequest *sessiontoken.CreateTokenRequest) (*sessiontoken.Token, error) {
 	payload, err := json.Marshal(tokenRequest)
 	if err != nil {
 		return nil, err
@@ -23,7 +24,7 @@ func (c *Client) CreateSessionToken(tokenRequest *sessiontoken.CreateTokenReques
 
 	// we need to explicitly pass an empty token (which means it wont get set in the header)
 	// the API accepts either no token or a valid token, but not an empty token.
-	resp, err := c.doRequestWithToken("POST", SessionTokenAPIURL, nil, bytes.NewReader(payload), "")
+	resp, err := c.doRequestWithToken(ctx, "POST", SessionTokenAPIURL, nil, bytes.NewReader(payload), "")
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -45,8 +46,8 @@ func (c *Client) CreateSessionToken(tokenRequest *sessiontoken.CreateTokenReques
 }
 
 // DeleteOrgToken deletes a token.
-func (c *Client) DeleteSessionToken(token string) error {
-	resp, err := c.doRequestWithToken("DELETE", SessionTokenAPIURL, nil, nil, token)
+func (c *Client) DeleteSessionToken(ctx context.Context, token string) error {
+	resp, err := c.doRequestWithToken(ctx, "DELETE", SessionTokenAPIURL, nil, nil, token)
 	if resp != nil {
 		defer resp.Body.Close()
 	}

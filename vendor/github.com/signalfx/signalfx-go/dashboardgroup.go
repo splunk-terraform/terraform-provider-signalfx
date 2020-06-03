@@ -2,6 +2,7 @@ package signalfx
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -19,7 +20,7 @@ const DashboardGroupAPIURL = "/v2/dashboardgroup"
 // TODO Clone dashboard to group
 
 // CreateDashboardGroup creates a dashboard.
-func (c *Client) CreateDashboardGroup(dashboardGroupRequest *dashboard_group.CreateUpdateDashboardGroupRequest, skipImplicitDashboard bool) (*dashboard_group.DashboardGroup, error) {
+func (c *Client) CreateDashboardGroup(ctx context.Context, dashboardGroupRequest *dashboard_group.CreateUpdateDashboardGroupRequest, skipImplicitDashboard bool) (*dashboard_group.DashboardGroup, error) {
 	payload, err := json.Marshal(dashboardGroupRequest)
 	if err != nil {
 		return nil, err
@@ -30,7 +31,7 @@ func (c *Client) CreateDashboardGroup(dashboardGroupRequest *dashboard_group.Cre
 		params.Add("empty", "true")
 	}
 
-	resp, err := c.doRequest("POST", DashboardGroupAPIURL, params, bytes.NewReader(payload))
+	resp, err := c.doRequest(ctx, "POST", DashboardGroupAPIURL, params, bytes.NewReader(payload))
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -52,8 +53,8 @@ func (c *Client) CreateDashboardGroup(dashboardGroupRequest *dashboard_group.Cre
 }
 
 // DeleteDashboardGroup deletes a dashboard.
-func (c *Client) DeleteDashboardGroup(id string) error {
-	resp, err := c.doRequest("DELETE", DashboardGroupAPIURL+"/"+id, nil, nil)
+func (c *Client) DeleteDashboardGroup(ctx context.Context, id string) error {
+	resp, err := c.doRequest(ctx, "DELETE", DashboardGroupAPIURL+"/"+id, nil, nil)
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -71,8 +72,8 @@ func (c *Client) DeleteDashboardGroup(id string) error {
 }
 
 // GetDashboardGroup gets a dashboard group.
-func (c *Client) GetDashboardGroup(id string) (*dashboard_group.DashboardGroup, error) {
-	resp, err := c.doRequest("GET", DashboardGroupAPIURL+"/"+id, nil, nil)
+func (c *Client) GetDashboardGroup(ctx context.Context, id string) (*dashboard_group.DashboardGroup, error) {
+	resp, err := c.doRequest(ctx, "GET", DashboardGroupAPIURL+"/"+id, nil, nil)
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -94,13 +95,13 @@ func (c *Client) GetDashboardGroup(id string) (*dashboard_group.DashboardGroup, 
 }
 
 // UpdateDashboardGroup updates a dashboard group.
-func (c *Client) UpdateDashboardGroup(id string, dashboardGroupRequest *dashboard_group.CreateUpdateDashboardGroupRequest) (*dashboard_group.DashboardGroup, error) {
+func (c *Client) UpdateDashboardGroup(ctx context.Context, id string, dashboardGroupRequest *dashboard_group.CreateUpdateDashboardGroupRequest) (*dashboard_group.DashboardGroup, error) {
 	payload, err := json.Marshal(dashboardGroupRequest)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := c.doRequest("PUT", DashboardGroupAPIURL+"/"+id, nil, bytes.NewReader(payload))
+	resp, err := c.doRequest(ctx, "PUT", DashboardGroupAPIURL+"/"+id, nil, bytes.NewReader(payload))
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -122,13 +123,13 @@ func (c *Client) UpdateDashboardGroup(id string, dashboardGroupRequest *dashboar
 }
 
 // SearchDashboardGroup searches for dashboard groups, given a query string in `name`.
-func (c *Client) SearchDashboardGroups(limit int, name string, offset int) (*dashboard_group.SearchResult, error) {
+func (c *Client) SearchDashboardGroups(ctx context.Context, limit int, name string, offset int) (*dashboard_group.SearchResult, error) {
 	params := url.Values{}
 	params.Add("limit", strconv.Itoa(limit))
 	params.Add("name", name)
 	params.Add("offset", strconv.Itoa(offset))
 
-	resp, err := c.doRequest("GET", DashboardGroupAPIURL, params, nil)
+	resp, err := c.doRequest(ctx, "GET", DashboardGroupAPIURL, params, nil)
 	if resp != nil {
 		defer resp.Body.Close()
 	}

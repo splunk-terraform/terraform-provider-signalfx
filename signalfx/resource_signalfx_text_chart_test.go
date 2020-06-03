@@ -1,6 +1,7 @@
 package signalfx
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -65,7 +66,7 @@ func testAccCheckTextChartResourceExists(s *terraform.State) error {
 	for _, rs := range s.RootModule().Resources {
 		switch rs.Type {
 		case "signalfx_text_chart":
-			chart, err := client.GetChart(rs.Primary.ID)
+			chart, err := client.GetChart(context.TODO(), rs.Primary.ID)
 			if chart.Id != rs.Primary.ID || err != nil {
 				return fmt.Errorf("Error finding chart %s: %s", rs.Primary.ID, err)
 			}
@@ -81,7 +82,7 @@ func testAccTextChartDestroy(s *terraform.State) error {
 	for _, rs := range s.RootModule().Resources {
 		switch rs.Type {
 		case "signalfx_text_chart":
-			chart, _ := client.GetChart(rs.Primary.ID)
+			chart, _ := client.GetChart(context.TODO(), rs.Primary.ID)
 			if chart != nil {
 				return fmt.Errorf("Found deleted chart %s", rs.Primary.ID)
 			}

@@ -1,6 +1,7 @@
 package signalfx
 
 import (
+	"context"
 	"io"
 	"net/http"
 	"net/url"
@@ -76,11 +77,11 @@ func HTTPClient(httpClient *http.Client) ClientParam {
 	}
 }
 
-func (c *Client) doRequest(method string, path string, params url.Values, body io.Reader) (*http.Response, error) {
-	return c.doRequestWithToken(method, path, params, body, c.authToken)
+func (c *Client) doRequest(ctx context.Context, method string, path string, params url.Values, body io.Reader) (*http.Response, error) {
+	return c.doRequestWithToken(ctx, method, path, params, body, c.authToken)
 }
 
-func (c *Client) doRequestWithToken(method string, path string, params url.Values, body io.Reader, token string) (*http.Response, error) {
+func (c *Client) doRequestWithToken(ctx context.Context, method string, path string, params url.Values, body io.Reader, token string) (*http.Response, error) {
 	destURL, err := url.Parse(c.baseURL)
 	if err != nil {
 		return nil, err
@@ -90,7 +91,7 @@ func (c *Client) doRequestWithToken(method string, path string, params url.Value
 	if params != nil {
 		destURL.RawQuery = params.Encode()
 	}
-	req, err := http.NewRequest(method, destURL.String(), body)
+	req, err := http.NewRequestWithContext(ctx, method, destURL.String(), body)
 	if token != "" {
 		req.Header.Set(AuthHeaderKey, token)
 	}

@@ -2,6 +2,7 @@ package signalfx
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -17,13 +18,13 @@ import (
 const DetectorAPIURL = "/v2/detector"
 
 // CreateDetector creates a detector.
-func (c *Client) CreateDetector(detectorRequest *detector.CreateUpdateDetectorRequest) (*detector.Detector, error) {
+func (c *Client) CreateDetector(ctx context.Context, detectorRequest *detector.CreateUpdateDetectorRequest) (*detector.Detector, error) {
 	payload, err := json.Marshal(detectorRequest)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := c.doRequest("POST", DetectorAPIURL, nil, bytes.NewReader(payload))
+	resp, err := c.doRequest(ctx, "POST", DetectorAPIURL, nil, bytes.NewReader(payload))
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -45,8 +46,8 @@ func (c *Client) CreateDetector(detectorRequest *detector.CreateUpdateDetectorRe
 }
 
 // DeleteDetector deletes a detector.
-func (c *Client) DeleteDetector(id string) error {
-	resp, err := c.doRequest("DELETE", DetectorAPIURL+"/"+id, nil, nil)
+func (c *Client) DeleteDetector(ctx context.Context, id string) error {
+	resp, err := c.doRequest(ctx, "DELETE", DetectorAPIURL+"/"+id, nil, nil)
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -64,13 +65,13 @@ func (c *Client) DeleteDetector(id string) error {
 }
 
 // DisableDetector disables a detector.
-func (c *Client) DisableDetector(id string, labels []string) error {
+func (c *Client) DisableDetector(ctx context.Context, id string, labels []string) error {
 	payload, err := json.Marshal(labels)
 	if err != nil {
 		return err
 	}
 
-	resp, err := c.doRequest("PUT", DetectorAPIURL+"/"+id+"/disable", nil, bytes.NewReader(payload))
+	resp, err := c.doRequest(ctx, "PUT", DetectorAPIURL+"/"+id+"/disable", nil, bytes.NewReader(payload))
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -88,13 +89,13 @@ func (c *Client) DisableDetector(id string, labels []string) error {
 }
 
 // EnableDetector enables a detector.
-func (c *Client) EnableDetector(id string, labels []string) error {
+func (c *Client) EnableDetector(ctx context.Context, id string, labels []string) error {
 	payload, err := json.Marshal(labels)
 	if err != nil {
 		return err
 	}
 
-	resp, err := c.doRequest("PUT", DetectorAPIURL+"/"+id+"/enable", nil, bytes.NewReader(payload))
+	resp, err := c.doRequest(ctx, "PUT", DetectorAPIURL+"/"+id+"/enable", nil, bytes.NewReader(payload))
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -112,8 +113,8 @@ func (c *Client) EnableDetector(id string, labels []string) error {
 }
 
 // GetDetector gets a detector.
-func (c *Client) GetDetector(id string) (*detector.Detector, error) {
-	resp, err := c.doRequest("GET", DetectorAPIURL+"/"+id, nil, nil)
+func (c *Client) GetDetector(ctx context.Context, id string) (*detector.Detector, error) {
+	resp, err := c.doRequest(ctx, "GET", DetectorAPIURL+"/"+id, nil, nil)
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -135,13 +136,13 @@ func (c *Client) GetDetector(id string) (*detector.Detector, error) {
 }
 
 // UpdateDetector updates a detector.
-func (c *Client) UpdateDetector(id string, detectorRequest *detector.CreateUpdateDetectorRequest) (*detector.Detector, error) {
+func (c *Client) UpdateDetector(ctx context.Context, id string, detectorRequest *detector.CreateUpdateDetectorRequest) (*detector.Detector, error) {
 	payload, err := json.Marshal(detectorRequest)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := c.doRequest("PUT", DetectorAPIURL+"/"+id, nil, bytes.NewReader(payload))
+	resp, err := c.doRequest(ctx, "PUT", DetectorAPIURL+"/"+id, nil, bytes.NewReader(payload))
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -163,7 +164,7 @@ func (c *Client) UpdateDetector(id string, detectorRequest *detector.CreateUpdat
 }
 
 // SearchDetectors searches for detectors, given a query string in `name`.
-func (c *Client) SearchDetectors(limit int, name string, offset int, tags string) (*detector.SearchResults, error) {
+func (c *Client) SearchDetectors(ctx context.Context, limit int, name string, offset int, tags string) (*detector.SearchResults, error) {
 	params := url.Values{}
 	params.Add("limit", strconv.Itoa(limit))
 	params.Add("name", name)
@@ -172,7 +173,7 @@ func (c *Client) SearchDetectors(limit int, name string, offset int, tags string
 		params.Add("tags", tags)
 	}
 
-	resp, err := c.doRequest("GET", DetectorAPIURL, params, nil)
+	resp, err := c.doRequest(ctx, "GET", DetectorAPIURL, params, nil)
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -194,13 +195,13 @@ func (c *Client) SearchDetectors(limit int, name string, offset int, tags string
 }
 
 // GetDetectorEvents gets a detector's events.
-func (c *Client) GetDetectorEvents(id string, from int, to int, offset int, limit int) ([]*detector.Event, error) {
+func (c *Client) GetDetectorEvents(ctx context.Context, id string, from int, to int, offset int, limit int) ([]*detector.Event, error) {
 	params := url.Values{}
 	params.Add("from", strconv.Itoa(from))
 	params.Add("to", strconv.Itoa(to))
 	params.Add("offset", strconv.Itoa(offset))
 	params.Add("limit", strconv.Itoa(limit))
-	resp, err := c.doRequest("GET", DetectorAPIURL+"/"+id+"/events", params, nil)
+	resp, err := c.doRequest(ctx, "GET", DetectorAPIURL+"/"+id+"/events", params, nil)
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -222,11 +223,11 @@ func (c *Client) GetDetectorEvents(id string, from int, to int, offset int, limi
 }
 
 // GetDetectorIncidents gets a detector's incidents.
-func (c *Client) GetDetectorIncidents(id string, offset int, limit int) ([]*detector.Incident, error) {
+func (c *Client) GetDetectorIncidents(ctx context.Context, id string, offset int, limit int) ([]*detector.Incident, error) {
 	params := url.Values{}
 	params.Add("offset", strconv.Itoa(offset))
 	params.Add("limit", strconv.Itoa(limit))
-	resp, err := c.doRequest("GET", DetectorAPIURL+"/"+id+"/incidents", params, nil)
+	resp, err := c.doRequest(ctx, "GET", DetectorAPIURL+"/"+id+"/incidents", params, nil)
 	if resp != nil {
 		defer resp.Body.Close()
 	}

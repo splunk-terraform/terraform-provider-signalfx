@@ -1,6 +1,7 @@
 package signalfx
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -81,7 +82,7 @@ func testAccCheckIntegrationJiraResourceExists(s *terraform.State) error {
 	for _, rs := range s.RootModule().Resources {
 		switch rs.Type {
 		case "signalfx_jira_integration":
-			integration, err := client.GetJiraIntegration(rs.Primary.ID)
+			integration, err := client.GetJiraIntegration(context.TODO(), rs.Primary.ID)
 			if integration == nil {
 				return fmt.Errorf("Error finding integration %s: %s", rs.Primary.ID, err)
 			}
@@ -98,7 +99,7 @@ func testAccIntegrationJiraDestroy(s *terraform.State) error {
 	for _, rs := range s.RootModule().Resources {
 		switch rs.Type {
 		case "signalfx_jira_integration":
-			integration, _ := client.GetJiraIntegration(rs.Primary.ID)
+			integration, _ := client.GetJiraIntegration(context.TODO(), rs.Primary.ID)
 			if integration != nil {
 				return fmt.Errorf("Found deleted integration %s", rs.Primary.ID)
 			}

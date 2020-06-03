@@ -2,6 +2,7 @@ package signalfx
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -18,13 +19,13 @@ import (
 const TeamAPIURL = "/v2/team"
 
 // CreateTeam creates a team.
-func (c *Client) CreateTeam(t *team.CreateUpdateTeamRequest) (*team.Team, error) {
+func (c *Client) CreateTeam(ctx context.Context, t *team.CreateUpdateTeamRequest) (*team.Team, error) {
 	payload, err := json.Marshal(t)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := c.doRequest("POST", TeamAPIURL, nil, bytes.NewReader(payload))
+	resp, err := c.doRequest(ctx, "POST", TeamAPIURL, nil, bytes.NewReader(payload))
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -46,8 +47,8 @@ func (c *Client) CreateTeam(t *team.CreateUpdateTeamRequest) (*team.Team, error)
 }
 
 // DeleteTeam deletes a team.
-func (c *Client) DeleteTeam(id string) error {
-	resp, err := c.doRequest("DELETE", TeamAPIURL+"/"+id, nil, nil)
+func (c *Client) DeleteTeam(ctx context.Context, id string) error {
+	resp, err := c.doRequest(ctx, "DELETE", TeamAPIURL+"/"+id, nil, nil)
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -64,8 +65,8 @@ func (c *Client) DeleteTeam(id string) error {
 }
 
 // GetTeam gets a team.
-func (c *Client) GetTeam(id string) (*team.Team, error) {
-	resp, err := c.doRequest("GET", TeamAPIURL+"/"+id, nil, nil)
+func (c *Client) GetTeam(ctx context.Context, id string) (*team.Team, error) {
+	resp, err := c.doRequest(ctx, "GET", TeamAPIURL+"/"+id, nil, nil)
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -86,13 +87,13 @@ func (c *Client) GetTeam(id string) (*team.Team, error) {
 }
 
 // UpdateTeam updates a team.
-func (c *Client) UpdateTeam(id string, t *team.CreateUpdateTeamRequest) (*team.Team, error) {
+func (c *Client) UpdateTeam(ctx context.Context, id string, t *team.CreateUpdateTeamRequest) (*team.Team, error) {
 	payload, err := json.Marshal(t)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := c.doRequest("PUT", TeamAPIURL+"/"+id, nil, bytes.NewReader(payload))
+	resp, err := c.doRequest(ctx, "PUT", TeamAPIURL+"/"+id, nil, bytes.NewReader(payload))
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -113,14 +114,14 @@ func (c *Client) UpdateTeam(id string, t *team.CreateUpdateTeamRequest) (*team.T
 }
 
 // SearchTeam searches for teams, given a query string in `name`.
-func (c *Client) SearchTeam(limit int, name string, offset int, tags string) (*team.SearchResults, error) {
+func (c *Client) SearchTeam(ctx context.Context, limit int, name string, offset int, tags string) (*team.SearchResults, error) {
 	params := url.Values{}
 	params.Add("limit", strconv.Itoa(limit))
 	params.Add("name", name)
 	params.Add("offset", strconv.Itoa(offset))
 	params.Add("tags", tags)
 
-	resp, err := c.doRequest("GET", TeamAPIURL, params, nil)
+	resp, err := c.doRequest(ctx, "GET", TeamAPIURL, params, nil)
 	if resp != nil {
 		defer resp.Body.Close()
 	}

@@ -1,6 +1,7 @@
 package signalfx
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"strings"
@@ -169,7 +170,7 @@ func dashboardGroupResource() *schema.Resource {
 
 func dashboardgroupExists(d *schema.ResourceData, meta interface{}) (bool, error) {
 	config := meta.(*signalfxConfig)
-	_, err := config.Client.GetDashboardGroup(d.Id())
+	_, err := config.Client.GetDashboardGroup(context.TODO(), d.Id())
 	if err != nil {
 		if strings.Contains(err.Error(), "404") {
 			return false, nil
@@ -353,7 +354,7 @@ func dashboardgroupCreate(d *schema.ResourceData, meta interface{}) error {
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Dashboard Group Create Payload: %s", debugOutput)
 
-	dg, err := config.Client.CreateDashboardGroup(payload, true)
+	dg, err := config.Client.CreateDashboardGroup(context.TODO(), payload, true)
 	if err != nil {
 		return err
 	}
@@ -477,7 +478,7 @@ func dashboardGroupAPIToTF(d *schema.ResourceData, dg *dashboard_group.Dashboard
 
 func dashboardgroupRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	dg, err := config.Client.GetDashboardGroup(d.Id())
+	dg, err := config.Client.GetDashboardGroup(context.TODO(), d.Id())
 	if err != nil {
 		return err
 	}
@@ -491,7 +492,7 @@ func dashboardgroupUpdate(d *schema.ResourceData, meta interface{}) error {
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Update Dashboard Group Payload: %s", string(debugOutput))
 
-	dg, err := config.Client.UpdateDashboardGroup(d.Id(), payload)
+	dg, err := config.Client.UpdateDashboardGroup(context.TODO(), d.Id(), payload)
 	if err != nil {
 		return err
 	}
@@ -505,5 +506,5 @@ func dashboardgroupUpdate(d *schema.ResourceData, meta interface{}) error {
 func dashboardgroupDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 
-	return config.Client.DeleteDashboardGroup(d.Id())
+	return config.Client.DeleteDashboardGroup(context.TODO(), d.Id())
 }

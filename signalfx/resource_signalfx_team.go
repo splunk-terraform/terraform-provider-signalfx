@@ -1,6 +1,7 @@
 package signalfx
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"strings"
@@ -260,7 +261,7 @@ func teamCreate(d *schema.ResourceData, meta interface{}) error {
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Create Team Payload: %s", string(debugOutput))
 
-	c, err := config.Client.CreateTeam(payload)
+	c, err := config.Client.CreateTeam(context.TODO(), payload)
 	if err != nil {
 		return err
 	}
@@ -358,7 +359,7 @@ func getNotificationsFromAPI(nots []*notification.Notification) ([]string, error
 
 func teamRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	c, err := config.Client.GetTeam(d.Id())
+	c, err := config.Client.GetTeam(context.TODO(), d.Id())
 	if err != nil {
 		return err
 	}
@@ -375,7 +376,7 @@ func teamUpdate(d *schema.ResourceData, meta interface{}) error {
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Update Team Payload: %s", string(debugOutput))
 
-	c, err := config.Client.UpdateTeam(d.Id(), payload)
+	c, err := config.Client.UpdateTeam(context.TODO(), d.Id(), payload)
 	if err != nil {
 		return err
 	}
@@ -388,12 +389,12 @@ func teamUpdate(d *schema.ResourceData, meta interface{}) error {
 func teamDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 
-	return config.Client.DeleteTeam(d.Id())
+	return config.Client.DeleteTeam(context.TODO(), d.Id())
 }
 
 func teamExists(d *schema.ResourceData, meta interface{}) (bool, error) {
 	config := meta.(*signalfxConfig)
-	_, err := config.Client.GetTeam(d.Id())
+	_, err := config.Client.GetTeam(context.TODO(), d.Id())
 	if err != nil {
 		if strings.Contains(err.Error(), "404") {
 			return false, nil

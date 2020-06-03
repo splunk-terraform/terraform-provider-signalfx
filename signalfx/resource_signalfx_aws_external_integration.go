@@ -1,6 +1,7 @@
 package signalfx
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -48,7 +49,7 @@ func integrationAWSExternalResource() *schema.Resource {
 
 func integrationAWSExternalExists(d *schema.ResourceData, meta interface{}) (bool, error) {
 	config := meta.(*signalfxConfig)
-	_, err := config.Client.GetAWSCloudWatchIntegration(d.Id())
+	_, err := config.Client.GetAWSCloudWatchIntegration(context.TODO(), d.Id())
 	if err != nil {
 		if strings.Contains(err.Error(), "404") {
 			return false, nil
@@ -60,7 +61,7 @@ func integrationAWSExternalExists(d *schema.ResourceData, meta interface{}) (boo
 
 func integrationAWSExternalRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	int, err := config.Client.GetAWSCloudWatchIntegration(d.Id())
+	int, err := config.Client.GetAWSCloudWatchIntegration(context.TODO(), d.Id())
 	if err != nil {
 		if strings.Contains(err.Error(), "404") {
 			d.SetId("")
@@ -112,7 +113,7 @@ func integrationAWSExternalCreate(d *schema.ResourceData, meta interface{}) erro
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Create AWS External Integration Payload: %s", string(debugOutput))
 
-	int, err := config.Client.CreateAWSCloudWatchIntegration(payload)
+	int, err := config.Client.CreateAWSCloudWatchIntegration(context.TODO(), payload)
 	if err != nil {
 		if strings.Contains(err.Error(), "40") {
 			err = fmt.Errorf("%s\nPlease verify you are using an admin token when working with integrations", err.Error())
@@ -138,5 +139,5 @@ func integrationAWSExternalCreate(d *schema.ResourceData, meta interface{}) erro
 func integrationAWSExternalDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 
-	return config.Client.DeleteAWSCloudWatchIntegration(d.Id())
+	return config.Client.DeleteAWSCloudWatchIntegration(context.TODO(), d.Id())
 }

@@ -1,6 +1,7 @@
 package signalfx
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -131,7 +132,7 @@ func alertMutingRuleCreate(d *schema.ResourceData, meta interface{}) error {
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Create Alert Muting Rule Payload: %s", string(debugOutput))
 
-	amr, err := config.Client.CreateAlertMutingRule(payload)
+	amr, err := config.Client.CreateAlertMutingRule(context.TODO(), payload)
 	if err != nil {
 		return err
 	}
@@ -142,7 +143,7 @@ func alertMutingRuleCreate(d *schema.ResourceData, meta interface{}) error {
 
 func alertMutingRuleExists(d *schema.ResourceData, meta interface{}) (bool, error) {
 	config := meta.(*signalfxConfig)
-	_, err := config.Client.GetAlertMutingRule(d.Id())
+	_, err := config.Client.GetAlertMutingRule(context.TODO(), d.Id())
 	if err != nil {
 		if strings.Contains(err.Error(), "404") {
 			return false, nil
@@ -154,7 +155,7 @@ func alertMutingRuleExists(d *schema.ResourceData, meta interface{}) (bool, erro
 
 func alertMutingRuleRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	amr, err := config.Client.GetAlertMutingRule(d.Id())
+	amr, err := config.Client.GetAlertMutingRule(context.TODO(), d.Id())
 	if err != nil {
 		if strings.Contains(err.Error(), "404") {
 			d.SetId("")
@@ -243,7 +244,7 @@ func alertMutingRuleUpdate(d *schema.ResourceData, meta interface{}) error {
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Update Alert Muting Rule Payload: %s", string(debugOutput))
 
-	det, err := config.Client.UpdateAlertMutingRule(d.Id(), payload)
+	det, err := config.Client.UpdateAlertMutingRule(context.TODO(), d.Id(), payload)
 	if err != nil {
 		return err
 	}
@@ -256,5 +257,5 @@ func alertMutingRuleUpdate(d *schema.ResourceData, meta interface{}) error {
 func alertMutingRuleDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 
-	return config.Client.DeleteAlertMutingRule(d.Id())
+	return config.Client.DeleteAlertMutingRule(context.TODO(), d.Id())
 }

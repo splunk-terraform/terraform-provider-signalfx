@@ -1,6 +1,7 @@
 package signalfx
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -44,7 +45,7 @@ func integrationPagerDutyResource() *schema.Resource {
 
 func integrationPagerDutyExists(d *schema.ResourceData, meta interface{}) (bool, error) {
 	config := meta.(*signalfxConfig)
-	_, err := config.Client.GetPagerDutyIntegration(d.Id())
+	_, err := config.Client.GetPagerDutyIntegration(context.TODO(), d.Id())
 	if err != nil {
 		if strings.Contains(err.Error(), "404") {
 			return false, nil
@@ -56,7 +57,7 @@ func integrationPagerDutyExists(d *schema.ResourceData, meta interface{}) (bool,
 
 func integrationPagerDutyRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	int, err := config.Client.GetPagerDutyIntegration(d.Id())
+	int, err := config.Client.GetPagerDutyIntegration(context.TODO(), d.Id())
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "404") {
 			d.SetId("")
@@ -98,7 +99,7 @@ func integrationPagerDutyCreate(d *schema.ResourceData, meta interface{}) error 
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Create PagerDuty Integration Payload: %s", string(debugOutput))
 
-	int, err := config.Client.CreatePagerDutyIntegration(payload)
+	int, err := config.Client.CreatePagerDutyIntegration(context.TODO(), payload)
 	if err != nil {
 		if strings.Contains(err.Error(), "40") {
 			err = fmt.Errorf("%s\nPlease verify you are using an admin token when working with integrations", err.Error())
@@ -116,7 +117,7 @@ func integrationPagerDutyUpdate(d *schema.ResourceData, meta interface{}) error 
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Update PagerDuty Integration Payload: %s", string(debugOutput))
 
-	int, err := config.Client.UpdatePagerDutyIntegration(d.Id(), payload)
+	int, err := config.Client.UpdatePagerDutyIntegration(context.TODO(), d.Id(), payload)
 	if err != nil {
 		if strings.Contains(err.Error(), "40") {
 			err = fmt.Errorf("%s\nPlease verify you are using an admin token when working with integrations", err.Error())
@@ -130,5 +131,5 @@ func integrationPagerDutyUpdate(d *schema.ResourceData, meta interface{}) error 
 func integrationPagerDutyDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 
-	return config.Client.DeletePagerDutyIntegration(d.Id())
+	return config.Client.DeletePagerDutyIntegration(context.TODO(), d.Id())
 }

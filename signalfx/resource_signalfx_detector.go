@@ -2,6 +2,7 @@ package signalfx
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -422,7 +423,7 @@ func detectorCreate(d *schema.ResourceData, meta interface{}) error {
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Create Detector Payload: %s", string(debugOutput))
 
-	det, err := config.Client.CreateDetector(payload)
+	det, err := config.Client.CreateDetector(context.TODO(), payload)
 	if err != nil {
 		return err
 	}
@@ -441,7 +442,7 @@ func detectorCreate(d *schema.ResourceData, meta interface{}) error {
 
 func detectorExists(d *schema.ResourceData, meta interface{}) (bool, error) {
 	config := meta.(*signalfxConfig)
-	_, err := config.Client.GetDetector(d.Id())
+	_, err := config.Client.GetDetector(context.TODO(), d.Id())
 	if err != nil {
 		if strings.Contains(err.Error(), "404") {
 			return false, nil
@@ -453,7 +454,7 @@ func detectorExists(d *schema.ResourceData, meta interface{}) (bool, error) {
 
 func detectorRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	det, err := config.Client.GetDetector(d.Id())
+	det, err := config.Client.GetDetector(context.TODO(), d.Id())
 	if err != nil {
 		if strings.Contains(err.Error(), "404") {
 			d.SetId("")
@@ -602,7 +603,7 @@ func detectorUpdate(d *schema.ResourceData, meta interface{}) error {
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Update Detector Payload: %s", string(debugOutput))
 
-	det, err := config.Client.UpdateDetector(d.Id(), payload)
+	det, err := config.Client.UpdateDetector(context.TODO(), d.Id(), payload)
 	if err != nil {
 		return err
 	}
@@ -622,7 +623,7 @@ func detectorUpdate(d *schema.ResourceData, meta interface{}) error {
 func detectorDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 
-	return config.Client.DeleteDetector(d.Id())
+	return config.Client.DeleteDetector(context.TODO(), d.Id())
 }
 
 func getPerSignalDetectorVizOptions(d *schema.ResourceData) []*detector.PublishLabelOptions {
