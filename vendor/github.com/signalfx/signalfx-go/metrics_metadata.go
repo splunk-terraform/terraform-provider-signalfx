@@ -2,6 +2,7 @@ package signalfx
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -26,8 +27,8 @@ const MetricTimeSeriesAPIURL = "/v2/metrictimeseries"
 const TagAPIURL = "/v2/tag"
 
 // GetDimension gets a dimension.
-func (c *Client) GetDimension(key string, value string) (*metrics_metadata.Dimension, error) {
-	resp, err := c.doRequest("GET", DimensionAPIURL+"/"+key+"/"+value, nil, nil)
+func (c *Client) GetDimension(ctx context.Context, key string, value string) (*metrics_metadata.Dimension, error) {
+	resp, err := c.doRequest(ctx, "GET", DimensionAPIURL+"/"+key+"/"+value, nil, nil)
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -48,13 +49,13 @@ func (c *Client) GetDimension(key string, value string) (*metrics_metadata.Dimen
 }
 
 // UpdateDimension updates a dimension.
-func (c *Client) UpdateDimension(key string, value string, dim *metrics_metadata.Dimension) (*metrics_metadata.Dimension, error) {
+func (c *Client) UpdateDimension(ctx context.Context, key string, value string, dim *metrics_metadata.Dimension) (*metrics_metadata.Dimension, error) {
 	payload, err := json.Marshal(dim)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := c.doRequest("PUT", DimensionAPIURL+"/"+key+"/"+value, nil, bytes.NewReader(payload))
+	resp, err := c.doRequest(ctx, "PUT", DimensionAPIURL+"/"+key+"/"+value, nil, bytes.NewReader(payload))
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -76,7 +77,7 @@ func (c *Client) UpdateDimension(key string, value string, dim *metrics_metadata
 }
 
 // SearchDimension searches for dimensions, given a query string in `query`.
-func (c *Client) SearchDimension(query string, orderBy string, limit int, offset int) (*metrics_metadata.DimensionQueryResponseModel, error) {
+func (c *Client) SearchDimension(ctx context.Context, query string, orderBy string, limit int, offset int) (*metrics_metadata.DimensionQueryResponseModel, error) {
 	params := url.Values{}
 	params.Add("query", query)
 	if orderBy != "" {
@@ -85,7 +86,7 @@ func (c *Client) SearchDimension(query string, orderBy string, limit int, offset
 	params.Add("limit", strconv.Itoa(limit))
 	params.Add("offset", strconv.Itoa(offset))
 
-	resp, err := c.doRequest("GET", DimensionAPIURL, params, nil)
+	resp, err := c.doRequest(ctx, "GET", DimensionAPIURL, params, nil)
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -107,14 +108,14 @@ func (c *Client) SearchDimension(query string, orderBy string, limit int, offset
 }
 
 // SearchMetric searches for metrics, given a query string in `query`.
-func (c *Client) SearchMetric(query string, orderBy string, limit int, offset int) (*metrics_metadata.RetrieveMetricMetadataResponseModel, error) {
+func (c *Client) SearchMetric(ctx context.Context, query string, orderBy string, limit int, offset int) (*metrics_metadata.RetrieveMetricMetadataResponseModel, error) {
 	params := url.Values{}
 	params.Add("query", query)
 	params.Add("orderBy", orderBy)
 	params.Add("limit", strconv.Itoa(limit))
 	params.Add("offset", strconv.Itoa(offset))
 
-	resp, err := c.doRequest("GET", MetricAPIURL, params, nil)
+	resp, err := c.doRequest(ctx, "GET", MetricAPIURL, params, nil)
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -136,8 +137,8 @@ func (c *Client) SearchMetric(query string, orderBy string, limit int, offset in
 }
 
 // GetMetric retrieves a single metric by name.
-func (c *Client) GetMetric(name string) (*metrics_metadata.Metric, error) {
-	resp, err := c.doRequest("GET", MetricAPIURL+"/"+name, nil, nil)
+func (c *Client) GetMetric(ctx context.Context, name string) (*metrics_metadata.Metric, error) {
+	resp, err := c.doRequest(ctx, "GET", MetricAPIURL+"/"+name, nil, nil)
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -159,8 +160,8 @@ func (c *Client) GetMetric(name string) (*metrics_metadata.Metric, error) {
 }
 
 // GetMetricTimeSeries retrieves a metric time series by id.
-func (c *Client) GetMetricTimeSeries(id string) (*metrics_metadata.MetricTimeSeries, error) {
-	resp, err := c.doRequest("GET", MetricTimeSeriesAPIURL+"/"+id, nil, nil)
+func (c *Client) GetMetricTimeSeries(ctx context.Context, id string) (*metrics_metadata.MetricTimeSeries, error) {
+	resp, err := c.doRequest(ctx, "GET", MetricTimeSeriesAPIURL+"/"+id, nil, nil)
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -182,14 +183,14 @@ func (c *Client) GetMetricTimeSeries(id string) (*metrics_metadata.MetricTimeSer
 }
 
 // SearchMetricTimeSeries searches for metric time series, given a query string in `query`.
-func (c *Client) SearchMetricTimeSeries(query string, orderBy string, limit int, offset int) (*metrics_metadata.MetricTimeSeriesRetrieveResponseModel, error) {
+func (c *Client) SearchMetricTimeSeries(ctx context.Context, query string, orderBy string, limit int, offset int) (*metrics_metadata.MetricTimeSeriesRetrieveResponseModel, error) {
 	params := url.Values{}
 	params.Add("query", query)
 	params.Add("orderBy", orderBy)
 	params.Add("limit", strconv.Itoa(limit))
 	params.Add("offset", strconv.Itoa(offset))
 
-	resp, err := c.doRequest("GET", MetricTimeSeriesAPIURL, params, nil)
+	resp, err := c.doRequest(ctx, "GET", MetricTimeSeriesAPIURL, params, nil)
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -211,14 +212,14 @@ func (c *Client) SearchMetricTimeSeries(query string, orderBy string, limit int,
 }
 
 // SearchTag searches for tags, given a query string in `query`.
-func (c *Client) SearchTag(query string, orderBy string, limit int, offset int) (*metrics_metadata.TagRetrieveResponseModel, error) {
+func (c *Client) SearchTag(ctx context.Context, query string, orderBy string, limit int, offset int) (*metrics_metadata.TagRetrieveResponseModel, error) {
 	params := url.Values{}
 	params.Add("query", query)
 	params.Add("orderBy", orderBy)
 	params.Add("limit", strconv.Itoa(limit))
 	params.Add("offset", strconv.Itoa(offset))
 
-	resp, err := c.doRequest("GET", TagAPIURL, params, nil)
+	resp, err := c.doRequest(ctx, "GET", TagAPIURL, params, nil)
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -240,8 +241,8 @@ func (c *Client) SearchTag(query string, orderBy string, limit int, offset int) 
 }
 
 // GetTag gets a tag by name
-func (c *Client) GetTag(name string) (*metrics_metadata.Tag, error) {
-	resp, err := c.doRequest("GET", TagAPIURL+"/"+name, nil, nil)
+func (c *Client) GetTag(ctx context.Context, name string) (*metrics_metadata.Tag, error) {
+	resp, err := c.doRequest(ctx, "GET", TagAPIURL+"/"+name, nil, nil)
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -263,8 +264,8 @@ func (c *Client) GetTag(name string) (*metrics_metadata.Tag, error) {
 }
 
 // DeleteTag deletes a tag.
-func (c *Client) DeleteTag(id string) error {
-	resp, err := c.doRequest("DELETE", TagAPIURL+"/"+id, nil, nil)
+func (c *Client) DeleteTag(ctx context.Context, id string) error {
+	resp, err := c.doRequest(ctx, "DELETE", TagAPIURL+"/"+id, nil, nil)
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -282,13 +283,13 @@ func (c *Client) DeleteTag(id string) error {
 }
 
 // CreateUpdateTag creates or updates a dimension.
-func (c *Client) CreateUpdateTag(name string, cutr *metrics_metadata.CreateUpdateTagRequest) (*metrics_metadata.Tag, error) {
+func (c *Client) CreateUpdateTag(ctx context.Context, name string, cutr *metrics_metadata.CreateUpdateTagRequest) (*metrics_metadata.Tag, error) {
 	payload, err := json.Marshal(cutr)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := c.doRequest("PUT", TagAPIURL+"/"+name, nil, bytes.NewReader(payload))
+	resp, err := c.doRequest(ctx, "PUT", TagAPIURL+"/"+name, nil, bytes.NewReader(payload))
 	if resp != nil {
 		defer resp.Body.Close()
 	}

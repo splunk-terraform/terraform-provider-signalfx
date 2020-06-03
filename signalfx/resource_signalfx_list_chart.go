@@ -1,6 +1,7 @@
 package signalfx
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -350,7 +351,7 @@ func listchartCreate(d *schema.ResourceData, meta interface{}) error {
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Create List Chart Payload: %s", string(debugOutput))
 
-	c, err := config.Client.CreateChart(payload)
+	c, err := config.Client.CreateChart(context.TODO(), payload)
 	if err != nil {
 		return err
 	}
@@ -476,7 +477,7 @@ func listchartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 
 func listchartRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	c, err := config.Client.GetChart(d.Id())
+	c, err := config.Client.GetChart(context.TODO(), d.Id())
 	if err != nil {
 		return err
 	}
@@ -501,7 +502,7 @@ func listchartUpdate(d *schema.ResourceData, meta interface{}) error {
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Update List Chart Payload: %s", string(debugOutput))
 
-	c, err := config.Client.UpdateChart(d.Id(), payload)
+	c, err := config.Client.UpdateChart(context.TODO(), d.Id(), payload)
 	if err != nil {
 		return err
 	}
@@ -514,5 +515,5 @@ func listchartUpdate(d *schema.ResourceData, meta interface{}) error {
 func listchartDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 
-	return config.Client.DeleteChart(d.Id())
+	return config.Client.DeleteChart(context.TODO(), d.Id())
 }

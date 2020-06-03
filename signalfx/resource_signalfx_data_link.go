@@ -1,6 +1,7 @@
 package signalfx
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -264,7 +265,7 @@ func dataLinkCreate(d *schema.ResourceData, meta interface{}) error {
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Create Data Link Payload: %s", string(debugOutput))
 
-	dl, err := config.Client.CreateDataLink(payload)
+	dl, err := config.Client.CreateDataLink(context.TODO(), payload)
 	if err != nil {
 		return err
 	}
@@ -343,7 +344,7 @@ func dataLinkAPIToTF(d *schema.ResourceData, dl *datalink.DataLink) error {
 func dataLinkRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 	fmt.Printf("[DEBUG] SignalFx: Looking for data link %s", d.Id())
-	dl, err := config.Client.GetDataLink(d.Id())
+	dl, err := config.Client.GetDataLink(context.TODO(), d.Id())
 	if err != nil {
 		return err
 	}
@@ -360,7 +361,7 @@ func dataLinkUpdate(d *schema.ResourceData, meta interface{}) error {
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Update Data Link Payload: %s", string(debugOutput))
 
-	dl, err := config.Client.UpdateDataLink(d.Id(), payload)
+	dl, err := config.Client.UpdateDataLink(context.TODO(), d.Id(), payload)
 	if err != nil {
 		return err
 	}
@@ -373,12 +374,12 @@ func dataLinkUpdate(d *schema.ResourceData, meta interface{}) error {
 func dataLinkDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 
-	return config.Client.DeleteDataLink(d.Id())
+	return config.Client.DeleteDataLink(context.TODO(), d.Id())
 }
 
 func dataLinkExists(d *schema.ResourceData, meta interface{}) (bool, error) {
 	config := meta.(*signalfxConfig)
-	_, err := config.Client.GetDataLink(d.Id())
+	_, err := config.Client.GetDataLink(context.TODO(), d.Id())
 	if err != nil {
 		if strings.Contains(err.Error(), "404") {
 			return false, nil

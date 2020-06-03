@@ -2,6 +2,7 @@ package signalfx
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -12,13 +13,13 @@ import (
 )
 
 // CreateSlackIntegration creates a Slack integration.
-func (c *Client) CreateSlackIntegration(si *integration.SlackIntegration) (*integration.SlackIntegration, error) {
+func (c *Client) CreateSlackIntegration(ctx context.Context, si *integration.SlackIntegration) (*integration.SlackIntegration, error) {
 	payload, err := json.Marshal(si)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := c.doRequest("POST", IntegrationAPIURL, nil, bytes.NewReader(payload))
+	resp, err := c.doRequest(ctx, "POST", IntegrationAPIURL, nil, bytes.NewReader(payload))
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -40,8 +41,8 @@ func (c *Client) CreateSlackIntegration(si *integration.SlackIntegration) (*inte
 }
 
 // GetSlackIntegration retrieves a Slack integration.
-func (c *Client) GetSlackIntegration(id string) (*integration.SlackIntegration, error) {
-	resp, err := c.doRequest("GET", IntegrationAPIURL+"/"+id, nil, nil)
+func (c *Client) GetSlackIntegration(ctx context.Context, id string) (*integration.SlackIntegration, error) {
+	resp, err := c.doRequest(ctx, "GET", IntegrationAPIURL+"/"+id, nil, nil)
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -63,13 +64,13 @@ func (c *Client) GetSlackIntegration(id string) (*integration.SlackIntegration, 
 }
 
 // UpdateSlackIntegration updates a Slack integration.
-func (c *Client) UpdateSlackIntegration(id string, si *integration.SlackIntegration) (*integration.SlackIntegration, error) {
+func (c *Client) UpdateSlackIntegration(ctx context.Context, id string, si *integration.SlackIntegration) (*integration.SlackIntegration, error) {
 	payload, err := json.Marshal(si)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := c.doRequest("PUT", IntegrationAPIURL+"/"+id, nil, bytes.NewReader(payload))
+	resp, err := c.doRequest(ctx, "PUT", IntegrationAPIURL+"/"+id, nil, bytes.NewReader(payload))
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -91,8 +92,8 @@ func (c *Client) UpdateSlackIntegration(id string, si *integration.SlackIntegrat
 }
 
 // DeleteSlackIntegration deletes a Slack integration.
-func (c *Client) DeleteSlackIntegration(id string) error {
-	resp, err := c.doRequest("DELETE", IntegrationAPIURL+"/"+id, nil, nil)
+func (c *Client) DeleteSlackIntegration(ctx context.Context, id string) error {
+	resp, err := c.doRequest(ctx, "DELETE", IntegrationAPIURL+"/"+id, nil, nil)
 	if resp != nil {
 		defer resp.Body.Close()
 	}

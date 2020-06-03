@@ -1,6 +1,7 @@
 package signalfx
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -68,7 +69,7 @@ func integrationWebhookResource() *schema.Resource {
 
 func integrationWebhookExists(d *schema.ResourceData, meta interface{}) (bool, error) {
 	config := meta.(*signalfxConfig)
-	_, err := config.Client.GetWebhookIntegration(d.Id())
+	_, err := config.Client.GetWebhookIntegration(context.TODO(), d.Id())
 	if err != nil {
 		if strings.Contains(err.Error(), "404") {
 			return false, nil
@@ -105,7 +106,7 @@ func getWebhookPayloadIntegration(d *schema.ResourceData) *integration.WebhookIn
 
 func integrationWebhookRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	int, err := config.Client.GetWebhookIntegration(d.Id())
+	int, err := config.Client.GetWebhookIntegration(context.TODO(), d.Id())
 	if err != nil {
 		if strings.Contains(err.Error(), "404") {
 			d.SetId("")
@@ -156,7 +157,7 @@ func integrationWebhookCreate(d *schema.ResourceData, meta interface{}) error {
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Create Webhook Integration Payload: %s", string(debugOutput))
 
-	int, err := config.Client.CreateWebhookIntegration(payload)
+	int, err := config.Client.CreateWebhookIntegration(context.TODO(), payload)
 	if err != nil {
 		if strings.Contains(err.Error(), "40") {
 			err = fmt.Errorf("%s\nPlease verify you are using an admin token when working with integrations", err.Error())
@@ -175,7 +176,7 @@ func integrationWebhookUpdate(d *schema.ResourceData, meta interface{}) error {
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Update Webhook Integration Payload: %s", string(debugOutput))
 
-	int, err := config.Client.UpdateWebhookIntegration(d.Id(), payload)
+	int, err := config.Client.UpdateWebhookIntegration(context.TODO(), d.Id(), payload)
 	if err != nil {
 		if strings.Contains(err.Error(), "40") {
 			err = fmt.Errorf("%s\nPlease verify you are using an admin token when working with integrations", err.Error())
@@ -190,5 +191,5 @@ func integrationWebhookUpdate(d *schema.ResourceData, meta interface{}) error {
 func integrationWebhookDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 
-	return config.Client.DeleteWebhookIntegration(d.Id())
+	return config.Client.DeleteWebhookIntegration(context.TODO(), d.Id())
 }

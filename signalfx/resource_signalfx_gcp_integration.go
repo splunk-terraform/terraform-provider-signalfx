@@ -1,6 +1,7 @@
 package signalfx
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -87,7 +88,7 @@ func integrationGCPResource() *schema.Resource {
 
 func integrationGCPExists(d *schema.ResourceData, meta interface{}) (bool, error) {
 	config := meta.(*signalfxConfig)
-	_, err := config.Client.GetGCPIntegration(d.Id())
+	_, err := config.Client.GetGCPIntegration(context.TODO(), d.Id())
 	if err != nil {
 		if strings.Contains(err.Error(), "404") {
 			return false, nil
@@ -99,7 +100,7 @@ func integrationGCPExists(d *schema.ResourceData, meta interface{}) (bool, error
 
 func integrationGCPRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	int, err := config.Client.GetGCPIntegration(d.Id())
+	int, err := config.Client.GetGCPIntegration(context.TODO(), d.Id())
 	if err != nil {
 		if strings.Contains(err.Error(), "404") {
 			d.SetId("")
@@ -206,7 +207,7 @@ func integrationGCPCreate(d *schema.ResourceData, meta interface{}) error {
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Create GCP Integration Payload: %s", string(debugOutput))
 
-	int, err := config.Client.CreateGCPIntegration(payload)
+	int, err := config.Client.CreateGCPIntegration(context.TODO(), payload)
 	if err != nil {
 		if strings.Contains(err.Error(), "40") {
 			err = fmt.Errorf("%s\nPlease verify you are using an admin token when working with integrations", err.Error())
@@ -225,7 +226,7 @@ func integrationGCPUpdate(d *schema.ResourceData, meta interface{}) error {
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Update GCP Integration Payload: %s", string(debugOutput))
 
-	int, err := config.Client.UpdateGCPIntegration(d.Id(), payload)
+	int, err := config.Client.UpdateGCPIntegration(context.TODO(), d.Id(), payload)
 	if err != nil {
 		if strings.Contains(err.Error(), "40") {
 			err = fmt.Errorf("%s\nPlease verify you are using an admin token when working with integrations", err.Error())
@@ -240,7 +241,7 @@ func integrationGCPUpdate(d *schema.ResourceData, meta interface{}) error {
 func integrationGCPDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 
-	return config.Client.DeleteGCPIntegration(d.Id())
+	return config.Client.DeleteGCPIntegration(context.TODO(), d.Id())
 }
 
 func validateGcpService(v interface{}, k string) (we []string, errors []error) {

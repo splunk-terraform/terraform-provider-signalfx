@@ -1,6 +1,7 @@
 package signalfx
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -82,7 +83,7 @@ func testAccCheckTeamResourceExists(s *terraform.State) error {
 	for _, rs := range s.RootModule().Resources {
 		switch rs.Type {
 		case "signalfx_team":
-			team, err := client.GetTeam(rs.Primary.ID)
+			team, err := client.GetTeam(context.TODO(), rs.Primary.ID)
 			if team.Id != rs.Primary.ID || err != nil {
 				return fmt.Errorf("Error finding team %s: %s", rs.Primary.ID, err)
 			}
@@ -98,7 +99,7 @@ func testAccTeamDestroy(s *terraform.State) error {
 	for _, rs := range s.RootModule().Resources {
 		switch rs.Type {
 		case "signalfx_team":
-			team, _ := client.GetTeam(rs.Primary.ID)
+			team, _ := client.GetTeam(context.TODO(), rs.Primary.ID)
 			if team != nil {
 				return fmt.Errorf("Found deleted team %s", rs.Primary.ID)
 			}

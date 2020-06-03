@@ -1,6 +1,7 @@
 package signalfx
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -224,7 +225,7 @@ func orgTokenCreate(d *schema.ResourceData, meta interface{}) error {
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Create Org Token Payload: %s", string(debugOutput))
 
-	t, err := config.Client.CreateOrgToken(payload)
+	t, err := config.Client.CreateOrgToken(context.TODO(), payload)
 	if err != nil {
 		return err
 	}
@@ -320,7 +321,7 @@ func orgTokenAPIToTF(d *schema.ResourceData, t *orgtoken.Token) error {
 func orgTokenRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 	fmt.Printf("[DEBUG] SignalFx: Looking for org token %s\n", d.Id())
-	t, err := config.Client.GetOrgToken(d.Id())
+	t, err := config.Client.GetOrgToken(context.TODO(), d.Id())
 	if err != nil {
 		return err
 	}
@@ -337,7 +338,7 @@ func orgTokenUpdate(d *schema.ResourceData, meta interface{}) error {
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Update Org Token Payload: %s", string(debugOutput))
 
-	t, err := config.Client.UpdateOrgToken(d.Id(), payload)
+	t, err := config.Client.UpdateOrgToken(context.TODO(), d.Id(), payload)
 	if err != nil {
 		return err
 	}
@@ -350,12 +351,12 @@ func orgTokenUpdate(d *schema.ResourceData, meta interface{}) error {
 func orgTokenDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 
-	return config.Client.DeleteOrgToken(d.Id())
+	return config.Client.DeleteOrgToken(context.TODO(), d.Id())
 }
 
 func orgTokenExists(d *schema.ResourceData, meta interface{}) (bool, error) {
 	config := meta.(*signalfxConfig)
-	_, err := config.Client.GetOrgToken(d.Id())
+	_, err := config.Client.GetOrgToken(context.TODO(), d.Id())
 	if err != nil {
 		if strings.Contains(err.Error(), "404") {
 			return false, nil

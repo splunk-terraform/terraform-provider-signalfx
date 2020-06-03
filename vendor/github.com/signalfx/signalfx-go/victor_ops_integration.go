@@ -2,6 +2,7 @@ package signalfx
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -12,13 +13,13 @@ import (
 )
 
 // CreateVictorOpsIntegration creates an VictorOps integration.
-func (c *Client) CreateVictorOpsIntegration(oi *integration.VictorOpsIntegration) (*integration.VictorOpsIntegration, error) {
+func (c *Client) CreateVictorOpsIntegration(ctx context.Context, oi *integration.VictorOpsIntegration) (*integration.VictorOpsIntegration, error) {
 	payload, err := json.Marshal(oi)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := c.doRequest("POST", IntegrationAPIURL, nil, bytes.NewReader(payload))
+	resp, err := c.doRequest(ctx, "POST", IntegrationAPIURL, nil, bytes.NewReader(payload))
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -40,8 +41,8 @@ func (c *Client) CreateVictorOpsIntegration(oi *integration.VictorOpsIntegration
 }
 
 // GetVictorOpsIntegration retrieves an VictorOps integration.
-func (c *Client) GetVictorOpsIntegration(id string) (*integration.VictorOpsIntegration, error) {
-	resp, err := c.doRequest("GET", IntegrationAPIURL+"/"+id, nil, nil)
+func (c *Client) GetVictorOpsIntegration(ctx context.Context, id string) (*integration.VictorOpsIntegration, error) {
+	resp, err := c.doRequest(ctx, "GET", IntegrationAPIURL+"/"+id, nil, nil)
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -63,13 +64,13 @@ func (c *Client) GetVictorOpsIntegration(id string) (*integration.VictorOpsInteg
 }
 
 // UpdateVictorOpsIntegration updates an VictorOps integration.
-func (c *Client) UpdateVictorOpsIntegration(id string, oi *integration.VictorOpsIntegration) (*integration.VictorOpsIntegration, error) {
+func (c *Client) UpdateVictorOpsIntegration(ctx context.Context, id string, oi *integration.VictorOpsIntegration) (*integration.VictorOpsIntegration, error) {
 	payload, err := json.Marshal(oi)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := c.doRequest("PUT", IntegrationAPIURL+"/"+id, nil, bytes.NewReader(payload))
+	resp, err := c.doRequest(ctx, "PUT", IntegrationAPIURL+"/"+id, nil, bytes.NewReader(payload))
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -91,8 +92,8 @@ func (c *Client) UpdateVictorOpsIntegration(id string, oi *integration.VictorOps
 }
 
 // DeleteVictorOpsIntegration deletes an VictorOps integration.
-func (c *Client) DeleteVictorOpsIntegration(id string) error {
-	resp, err := c.doRequest("DELETE", IntegrationAPIURL+"/"+id, nil, nil)
+func (c *Client) DeleteVictorOpsIntegration(ctx context.Context, id string) error {
+	resp, err := c.doRequest(ctx, "DELETE", IntegrationAPIURL+"/"+id, nil, nil)
 	if resp != nil {
 		defer resp.Body.Close()
 	}

@@ -2,6 +2,7 @@ package signalfx
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -12,13 +13,13 @@ import (
 )
 
 // CreateOpsgenieIntegration creates an Opsgenie integration.
-func (c *Client) CreateOpsgenieIntegration(oi *integration.OpsgenieIntegration) (*integration.OpsgenieIntegration, error) {
+func (c *Client) CreateOpsgenieIntegration(ctx context.Context, oi *integration.OpsgenieIntegration) (*integration.OpsgenieIntegration, error) {
 	payload, err := json.Marshal(oi)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := c.doRequest("POST", IntegrationAPIURL, nil, bytes.NewReader(payload))
+	resp, err := c.doRequest(ctx, "POST", IntegrationAPIURL, nil, bytes.NewReader(payload))
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -40,8 +41,8 @@ func (c *Client) CreateOpsgenieIntegration(oi *integration.OpsgenieIntegration) 
 }
 
 // GetOpsgenieIntegration retrieves an Opsgenie integration.
-func (c *Client) GetOpsgenieIntegration(id string) (*integration.OpsgenieIntegration, error) {
-	resp, err := c.doRequest("GET", IntegrationAPIURL+"/"+id, nil, nil)
+func (c *Client) GetOpsgenieIntegration(ctx context.Context, id string) (*integration.OpsgenieIntegration, error) {
+	resp, err := c.doRequest(ctx, "GET", IntegrationAPIURL+"/"+id, nil, nil)
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -63,13 +64,13 @@ func (c *Client) GetOpsgenieIntegration(id string) (*integration.OpsgenieIntegra
 }
 
 // UpdateOpsgenieIntegration updates an Opsgenie integration.
-func (c *Client) UpdateOpsgenieIntegration(id string, oi *integration.OpsgenieIntegration) (*integration.OpsgenieIntegration, error) {
+func (c *Client) UpdateOpsgenieIntegration(ctx context.Context, id string, oi *integration.OpsgenieIntegration) (*integration.OpsgenieIntegration, error) {
 	payload, err := json.Marshal(oi)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := c.doRequest("PUT", IntegrationAPIURL+"/"+id, nil, bytes.NewReader(payload))
+	resp, err := c.doRequest(ctx, "PUT", IntegrationAPIURL+"/"+id, nil, bytes.NewReader(payload))
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -91,8 +92,8 @@ func (c *Client) UpdateOpsgenieIntegration(id string, oi *integration.OpsgenieIn
 }
 
 // DeleteOpsgenieIntegration deletes an Opsgenie integration.
-func (c *Client) DeleteOpsgenieIntegration(id string) error {
-	resp, err := c.doRequest("DELETE", IntegrationAPIURL+"/"+id, nil, nil)
+func (c *Client) DeleteOpsgenieIntegration(ctx context.Context, id string) error {
+	resp, err := c.doRequest(ctx, "DELETE", IntegrationAPIURL+"/"+id, nil, nil)
 	if resp != nil {
 		defer resp.Body.Close()
 	}

@@ -2,6 +2,7 @@ package signalfx
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -17,13 +18,13 @@ import (
 const TokenAPIURL = "/v2/token"
 
 // CreateOrgToken creates a org token.
-func (c *Client) CreateOrgToken(tokenRequest *orgtoken.CreateUpdateTokenRequest) (*orgtoken.Token, error) {
+func (c *Client) CreateOrgToken(ctx context.Context, tokenRequest *orgtoken.CreateUpdateTokenRequest) (*orgtoken.Token, error) {
 	payload, err := json.Marshal(tokenRequest)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := c.doRequest("POST", TokenAPIURL, nil, bytes.NewReader(payload))
+	resp, err := c.doRequest(ctx, "POST", TokenAPIURL, nil, bytes.NewReader(payload))
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -45,9 +46,9 @@ func (c *Client) CreateOrgToken(tokenRequest *orgtoken.CreateUpdateTokenRequest)
 }
 
 // DeleteOrgToken deletes a token.
-func (c *Client) DeleteOrgToken(name string) error {
+func (c *Client) DeleteOrgToken(ctx context.Context, name string) error {
 	encodedName := url.PathEscape(name)
-	resp, err := c.doRequest("DELETE", TokenAPIURL+"/"+encodedName, nil, nil)
+	resp, err := c.doRequest(ctx, "DELETE", TokenAPIURL+"/"+encodedName, nil, nil)
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -65,9 +66,9 @@ func (c *Client) DeleteOrgToken(name string) error {
 }
 
 // GetOrgToken gets a token.
-func (c *Client) GetOrgToken(id string) (*orgtoken.Token, error) {
+func (c *Client) GetOrgToken(ctx context.Context, id string) (*orgtoken.Token, error) {
 	encodedName := url.PathEscape(id)
-	resp, err := c.doRequest("GET", TokenAPIURL+"/"+encodedName, nil, nil)
+	resp, err := c.doRequest(ctx, "GET", TokenAPIURL+"/"+encodedName, nil, nil)
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -89,14 +90,14 @@ func (c *Client) GetOrgToken(id string) (*orgtoken.Token, error) {
 }
 
 // UpdateOrgToken updates a token.
-func (c *Client) UpdateOrgToken(id string, tokenRequest *orgtoken.CreateUpdateTokenRequest) (*orgtoken.Token, error) {
+func (c *Client) UpdateOrgToken(ctx context.Context, id string, tokenRequest *orgtoken.CreateUpdateTokenRequest) (*orgtoken.Token, error) {
 	payload, err := json.Marshal(tokenRequest)
 	if err != nil {
 		return nil, err
 	}
 
 	encodedName := url.PathEscape(id)
-	resp, err := c.doRequest("PUT", TokenAPIURL+"/"+encodedName, nil, bytes.NewReader(payload))
+	resp, err := c.doRequest(ctx, "PUT", TokenAPIURL+"/"+encodedName, nil, bytes.NewReader(payload))
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -117,14 +118,14 @@ func (c *Client) UpdateOrgToken(id string, tokenRequest *orgtoken.CreateUpdateTo
 	return finalToken, err
 }
 
-// SearchOrgToken searches for tokens given a query string in `name`.
-func (c *Client) SearchOrgTokens(limit int, name string, offset int) (*orgtoken.SearchResults, error) {
+// SearchOrgTokens searches for tokens given a query string in `name`.
+func (c *Client) SearchOrgTokens(ctx context.Context, limit int, name string, offset int) (*orgtoken.SearchResults, error) {
 	params := url.Values{}
 	params.Add("limit", strconv.Itoa(limit))
 	params.Add("name", url.PathEscape(name))
 	params.Add("offset", strconv.Itoa(offset))
 
-	resp, err := c.doRequest("GET", TokenAPIURL, params, nil)
+	resp, err := c.doRequest(ctx, "GET", TokenAPIURL, params, nil)
 	if resp != nil {
 		defer resp.Body.Close()
 	}

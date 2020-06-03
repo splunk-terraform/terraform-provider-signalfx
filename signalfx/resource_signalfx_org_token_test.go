@@ -1,6 +1,7 @@
 package signalfx
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -86,7 +87,7 @@ func testAccCheckOrgTokenResourceExists(s *terraform.State) error {
 	for _, rs := range s.RootModule().Resources {
 		switch rs.Type {
 		case "signalfx_org_token":
-			tok, err := client.GetOrgToken(rs.Primary.ID)
+			tok, err := client.GetOrgToken(context.TODO(), rs.Primary.ID)
 			if err != nil || tok.Name != rs.Primary.ID {
 				return fmt.Errorf("Error finding org token %s: %s", rs.Primary.ID, err)
 			}
@@ -102,7 +103,7 @@ func testAccOrgTokenDestroy(s *terraform.State) error {
 	for _, rs := range s.RootModule().Resources {
 		switch rs.Type {
 		case "signalfx_org_token":
-			tok, _ := client.GetOrgToken(rs.Primary.ID)
+			tok, _ := client.GetOrgToken(context.TODO(), rs.Primary.ID)
 			if tok != nil {
 				return fmt.Errorf("Found deleted org token %s", rs.Primary.ID)
 			}

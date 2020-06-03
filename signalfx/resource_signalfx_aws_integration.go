@@ -1,6 +1,7 @@
 package signalfx
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -188,7 +189,7 @@ func integrationAWSResource() *schema.Resource {
 
 func integrationAWSExists(d *schema.ResourceData, meta interface{}) (bool, error) {
 	config := meta.(*signalfxConfig)
-	_, err := config.Client.GetAWSCloudWatchIntegration(d.Get("integration_id").(string))
+	_, err := config.Client.GetAWSCloudWatchIntegration(context.TODO(), d.Get("integration_id").(string))
 	if err != nil {
 		if strings.Contains(err.Error(), "404") {
 			return false, nil
@@ -201,7 +202,7 @@ func integrationAWSExists(d *schema.ResourceData, meta interface{}) (bool, error
 func integrationAWSRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 
-	int, err := config.Client.GetAWSCloudWatchIntegration(d.Get("integration_id").(string))
+	int, err := config.Client.GetAWSCloudWatchIntegration(context.TODO(), d.Get("integration_id").(string))
 	if err != nil {
 		if strings.Contains(err.Error(), "404") {
 			d.SetId("")
@@ -481,7 +482,7 @@ func getNamespaceRules(tfRules []interface{}) []*integration.AwsNameSpaceSyncRul
 func integrationAWSCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 
-	preInt, err := config.Client.GetAWSCloudWatchIntegration(d.Get("integration_id").(string))
+	preInt, err := config.Client.GetAWSCloudWatchIntegration(context.TODO(), d.Get("integration_id").(string))
 	if err != nil {
 		return fmt.Errorf("Error fetching existing integration for integration %s, %s", d.Get("integration_id").(string), err.Error())
 	}
@@ -501,7 +502,7 @@ func integrationAWSCreate(d *schema.ResourceData, meta interface{}) error {
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Create (Update) AWS Integration Payload: %s", string(debugOutput))
 
-	int, err := config.Client.UpdateAWSCloudWatchIntegration(d.Get("integration_id").(string), payload)
+	int, err := config.Client.UpdateAWSCloudWatchIntegration(context.TODO(), d.Get("integration_id").(string), payload)
 	if err != nil {
 		if strings.Contains(err.Error(), "40") {
 			err = fmt.Errorf("%s\nPlease verify you are using an admin token when working with integrations", err.Error())
@@ -524,7 +525,7 @@ func integrationAWSUpdate(d *schema.ResourceData, meta interface{}) error {
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Update AWS Integration Payload: %s", string(debugOutput))
 
-	int, err := config.Client.UpdateAWSCloudWatchIntegration(d.Id(), payload)
+	int, err := config.Client.UpdateAWSCloudWatchIntegration(context.TODO(), d.Id(), payload)
 	if err != nil {
 		if strings.Contains(err.Error(), "40") {
 			err = fmt.Errorf("%s\nPlease verify you are using an admin token when working with integrations", err.Error())

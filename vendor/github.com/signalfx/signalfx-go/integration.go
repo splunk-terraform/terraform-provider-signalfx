@@ -1,6 +1,7 @@
 package signalfx
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -12,8 +13,8 @@ import (
 const IntegrationAPIURL = "/v2/integration"
 
 // DeleteIntegration deletes an integration.
-func (c *Client) DeleteIntegration(id string) error {
-	resp, err := c.doRequest("DELETE", IntegrationAPIURL+"/"+id, nil, nil)
+func (c *Client) DeleteIntegration(ctx context.Context, id string) error {
+	resp, err := c.doRequest(ctx, "DELETE", IntegrationAPIURL+"/"+id, nil, nil)
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -31,8 +32,8 @@ func (c *Client) DeleteIntegration(id string) error {
 }
 
 // GetIntegration gets a integration.
-func (c *Client) GetIntegration(id string) (map[string]interface{}, error) {
-	resp, err := c.doRequest("GET", IntegrationAPIURL+"/"+id, nil, nil)
+func (c *Client) GetIntegration(ctx context.Context, id string) (map[string]interface{}, error) {
+	resp, err := c.doRequest(ctx, "GET", IntegrationAPIURL+"/"+id, nil, nil)
 	if resp != nil {
 		defer resp.Body.Close()
 	}

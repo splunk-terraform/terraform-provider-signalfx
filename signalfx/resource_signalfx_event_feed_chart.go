@@ -1,6 +1,7 @@
 package signalfx
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 
@@ -106,7 +107,7 @@ func eventFeedChartCreate(d *schema.ResourceData, meta interface{}) error {
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Create Event Feed Chart Payload: %s", string(debugOutput))
 
-	c, err := config.Client.CreateChart(payload)
+	c, err := config.Client.CreateChart(context.TODO(), payload)
 	if err != nil {
 		return err
 	}
@@ -164,7 +165,7 @@ func eventfeedchartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 
 func eventFeedChartRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	c, err := config.Client.GetChart(d.Id())
+	c, err := config.Client.GetChart(context.TODO(), d.Id())
 	if err != nil {
 		return err
 	}
@@ -186,7 +187,7 @@ func eventFeedChartUpdate(d *schema.ResourceData, meta interface{}) error {
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Update Event Feed Chart Payload: %s", string(debugOutput))
 
-	c, err := config.Client.UpdateChart(d.Id(), payload)
+	c, err := config.Client.UpdateChart(context.TODO(), d.Id(), payload)
 	if err != nil {
 		return err
 	}
@@ -199,5 +200,5 @@ func eventFeedChartUpdate(d *schema.ResourceData, meta interface{}) error {
 func eventFeedChartDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 
-	return config.Client.DeleteChart(d.Id())
+	return config.Client.DeleteChart(context.TODO(), d.Id())
 }

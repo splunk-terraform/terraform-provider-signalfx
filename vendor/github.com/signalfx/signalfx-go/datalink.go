@@ -2,6 +2,7 @@ package signalfx
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -17,13 +18,13 @@ import (
 const DataLinkAPIURL = "/v2/crosslink"
 
 // CreateDataLink creates a data link.
-func (c *Client) CreateDataLink(dataLinkRequest *datalink.CreateUpdateDataLinkRequest) (*datalink.DataLink, error) {
+func (c *Client) CreateDataLink(ctx context.Context, dataLinkRequest *datalink.CreateUpdateDataLinkRequest) (*datalink.DataLink, error) {
 	payload, err := json.Marshal(dataLinkRequest)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := c.doRequest("POST", DataLinkAPIURL, nil, bytes.NewReader(payload))
+	resp, err := c.doRequest(ctx, "POST", DataLinkAPIURL, nil, bytes.NewReader(payload))
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -45,8 +46,8 @@ func (c *Client) CreateDataLink(dataLinkRequest *datalink.CreateUpdateDataLinkRe
 }
 
 // DeleteDataLink deletes a data link.
-func (c *Client) DeleteDataLink(id string) error {
-	resp, err := c.doRequest("DELETE", DataLinkAPIURL+"/"+id, nil, nil)
+func (c *Client) DeleteDataLink(ctx context.Context, id string) error {
+	resp, err := c.doRequest(ctx, "DELETE", DataLinkAPIURL+"/"+id, nil, nil)
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -66,8 +67,8 @@ func (c *Client) DeleteDataLink(id string) error {
 }
 
 // GetDataLink gets a data link.
-func (c *Client) GetDataLink(id string) (*datalink.DataLink, error) {
-	resp, err := c.doRequest("GET", DataLinkAPIURL+"/"+id, nil, nil)
+func (c *Client) GetDataLink(ctx context.Context, id string) (*datalink.DataLink, error) {
+	resp, err := c.doRequest(ctx, "GET", DataLinkAPIURL+"/"+id, nil, nil)
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -89,14 +90,14 @@ func (c *Client) GetDataLink(id string) (*datalink.DataLink, error) {
 }
 
 // UpdateDataLink updates a data link.
-func (c *Client) UpdateDataLink(id string, dataLinkRequest *datalink.CreateUpdateDataLinkRequest) (*datalink.DataLink, error) {
+func (c *Client) UpdateDataLink(ctx context.Context, id string, dataLinkRequest *datalink.CreateUpdateDataLinkRequest) (*datalink.DataLink, error) {
 	payload, err := json.Marshal(dataLinkRequest)
 	if err != nil {
 		return nil, err
 	}
 
 	encodedName := url.PathEscape(id)
-	resp, err := c.doRequest("PUT", DataLinkAPIURL+"/"+encodedName, nil, bytes.NewReader(payload))
+	resp, err := c.doRequest(ctx, "PUT", DataLinkAPIURL+"/"+encodedName, nil, bytes.NewReader(payload))
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -118,13 +119,13 @@ func (c *Client) UpdateDataLink(id string, dataLinkRequest *datalink.CreateUpdat
 }
 
 // SearchDataLinks searches for data links given a query string in `name`.
-func (c *Client) SearchDataLinks(limit int, context string, offset int) (*datalink.SearchResults, error) {
+func (c *Client) SearchDataLinks(ctx context.Context, limit int, context string, offset int) (*datalink.SearchResults, error) {
 	params := url.Values{}
 	params.Add("limit", strconv.Itoa(limit))
 	params.Add("context", context)
 	params.Add("offset", strconv.Itoa(offset))
 
-	resp, err := c.doRequest("GET", DataLinkAPIURL, params, nil)
+	resp, err := c.doRequest(ctx, "GET", DataLinkAPIURL, params, nil)
 	if resp != nil {
 		defer resp.Body.Close()
 	}

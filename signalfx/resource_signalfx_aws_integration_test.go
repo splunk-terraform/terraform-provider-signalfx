@@ -1,6 +1,7 @@
 package signalfx
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -165,7 +166,7 @@ func testAccCheckIntegrationAWSResourceExists(s *terraform.State) error {
 	for _, rs := range s.RootModule().Resources {
 		switch rs.Type {
 		case "signalfx_aws_integration", "signalfx_aws_external_integration", "signalfx_aws_token_integration":
-			integration, err := client.GetAWSCloudWatchIntegration(rs.Primary.ID)
+			integration, err := client.GetAWSCloudWatchIntegration(context.TODO(), rs.Primary.ID)
 			if integration == nil {
 				return fmt.Errorf("Error finding integration %s: %s", rs.Primary.ID, err)
 			}
@@ -182,7 +183,7 @@ func testAccIntegrationAWSDestroy(s *terraform.State) error {
 	for _, rs := range s.RootModule().Resources {
 		switch rs.Type {
 		case "signalfx_aws_integration", "signalfx_aws_external_integration", "signalfx_aws_token_integration":
-			integration, _ := client.GetAWSCloudWatchIntegration(rs.Primary.ID)
+			integration, _ := client.GetAWSCloudWatchIntegration(context.TODO(), rs.Primary.ID)
 			if integration != nil {
 				return fmt.Errorf("Found deleted integration %s", rs.Primary.ID)
 			}

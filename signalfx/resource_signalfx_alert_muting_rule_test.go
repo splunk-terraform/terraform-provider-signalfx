@@ -1,6 +1,7 @@
 package signalfx
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"testing"
@@ -111,7 +112,7 @@ func testAccCreateUpdateAlertMutingRuleResourceExists(s *terraform.State) error 
 	for _, rs := range s.RootModule().Resources {
 		switch rs.Type {
 		case "signalfx_alert_muting_rule":
-			amr, err := client.GetAlertMutingRule(rs.Primary.ID)
+			amr, err := client.GetAlertMutingRule(context.TODO(), rs.Primary.ID)
 			if amr.Id != rs.Primary.ID || err != nil {
 				return fmt.Errorf("Error finding alert muting rule %s: %s", rs.Primary.ID, err)
 			}
@@ -127,7 +128,7 @@ func testAccAlertMutingRuleDestroy(s *terraform.State) error {
 	for _, rs := range s.RootModule().Resources {
 		switch rs.Type {
 		case "signalfx_alert_muting_rule":
-			amr, _ := client.GetAlertMutingRule(rs.Primary.ID)
+			amr, _ := client.GetAlertMutingRule(context.TODO(), rs.Primary.ID)
 			if amr != nil {
 				return fmt.Errorf("Found deleted alert muting rule %s", rs.Primary.ID)
 			}

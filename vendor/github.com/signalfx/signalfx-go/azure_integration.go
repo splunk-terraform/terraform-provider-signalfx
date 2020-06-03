@@ -2,6 +2,7 @@ package signalfx
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -12,13 +13,13 @@ import (
 )
 
 // CreateAzureIntegration creates an Azure integration.
-func (c *Client) CreateAzureIntegration(acwi *integration.AzureIntegration) (*integration.AzureIntegration, error) {
+func (c *Client) CreateAzureIntegration(ctx context.Context, acwi *integration.AzureIntegration) (*integration.AzureIntegration, error) {
 	payload, err := json.Marshal(acwi)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := c.doRequest("POST", IntegrationAPIURL, nil, bytes.NewReader(payload))
+	resp, err := c.doRequest(ctx, "POST", IntegrationAPIURL, nil, bytes.NewReader(payload))
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -40,8 +41,8 @@ func (c *Client) CreateAzureIntegration(acwi *integration.AzureIntegration) (*in
 }
 
 // GetAzureIntegration retrieves an Azure integration.
-func (c *Client) GetAzureIntegration(id string) (*integration.AzureIntegration, error) {
-	resp, err := c.doRequest("GET", IntegrationAPIURL+"/"+id, nil, nil)
+func (c *Client) GetAzureIntegration(ctx context.Context, id string) (*integration.AzureIntegration, error) {
+	resp, err := c.doRequest(ctx, "GET", IntegrationAPIURL+"/"+id, nil, nil)
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -63,13 +64,13 @@ func (c *Client) GetAzureIntegration(id string) (*integration.AzureIntegration, 
 }
 
 // UpdateAzureIntegration updates an Azure integration.
-func (c *Client) UpdateAzureIntegration(id string, acwi *integration.AzureIntegration) (*integration.AzureIntegration, error) {
+func (c *Client) UpdateAzureIntegration(ctx context.Context, id string, acwi *integration.AzureIntegration) (*integration.AzureIntegration, error) {
 	payload, err := json.Marshal(acwi)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := c.doRequest("PUT", IntegrationAPIURL+"/"+id, nil, bytes.NewReader(payload))
+	resp, err := c.doRequest(ctx, "PUT", IntegrationAPIURL+"/"+id, nil, bytes.NewReader(payload))
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -91,8 +92,8 @@ func (c *Client) UpdateAzureIntegration(id string, acwi *integration.AzureIntegr
 }
 
 // DeleteAzureIntegration deletes an Azure integration.
-func (c *Client) DeleteAzureIntegration(id string) error {
-	resp, err := c.doRequest("DELETE", IntegrationAPIURL+"/"+id, nil, nil)
+func (c *Client) DeleteAzureIntegration(ctx context.Context, id string) error {
+	resp, err := c.doRequest(ctx, "DELETE", IntegrationAPIURL+"/"+id, nil, nil)
 	if resp != nil {
 		defer resp.Body.Close()
 	}

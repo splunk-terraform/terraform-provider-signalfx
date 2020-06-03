@@ -1,6 +1,7 @@
 package signalfx
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"testing"
@@ -225,7 +226,7 @@ func testAccCheckDetectorResourceExists(s *terraform.State) error {
 	for _, rs := range s.RootModule().Resources {
 		switch rs.Type {
 		case "signalfx_detector":
-			detector, err := client.GetDetector(rs.Primary.ID)
+			detector, err := client.GetDetector(context.TODO(), rs.Primary.ID)
 			if detector.Id != rs.Primary.ID || err != nil {
 				return fmt.Errorf("Error finding detector %s: %s", rs.Primary.ID, err)
 			}
@@ -241,7 +242,7 @@ func testAccDetectorDestroy(s *terraform.State) error {
 	for _, rs := range s.RootModule().Resources {
 		switch rs.Type {
 		case "signalfx_detector":
-			detector, _ := client.GetDetector(rs.Primary.ID)
+			detector, _ := client.GetDetector(context.TODO(), rs.Primary.ID)
 			if detector != nil {
 				return fmt.Errorf("Found deleted detector %s", rs.Primary.ID)
 			}

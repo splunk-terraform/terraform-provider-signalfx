@@ -1,6 +1,7 @@
 package signalfx
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -49,7 +50,7 @@ func integrationOpsgenieResource() *schema.Resource {
 
 func integrationOpsgenieExists(d *schema.ResourceData, meta interface{}) (bool, error) {
 	config := meta.(*signalfxConfig)
-	_, err := config.Client.GetOpsgenieIntegration(d.Id())
+	_, err := config.Client.GetOpsgenieIntegration(context.TODO(), d.Id())
 	if err != nil {
 		if strings.Contains(err.Error(), "404") {
 			return false, nil
@@ -71,7 +72,7 @@ func getOpsgeniePayloadIntegration(d *schema.ResourceData) *integration.Opsgenie
 
 func integrationOpsgenieRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	int, err := config.Client.GetOpsgenieIntegration(d.Id())
+	int, err := config.Client.GetOpsgenieIntegration(context.TODO(), d.Id())
 	if err != nil {
 		if strings.Contains(err.Error(), "404") {
 			d.SetId("")
@@ -103,7 +104,7 @@ func integrationOpsgenieCreate(d *schema.ResourceData, meta interface{}) error {
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Create Opsgenie Integration Payload: %s", string(debugOutput))
 
-	int, err := config.Client.CreateOpsgenieIntegration(payload)
+	int, err := config.Client.CreateOpsgenieIntegration(context.TODO(), payload)
 	if err != nil {
 		if strings.Contains(err.Error(), "40") {
 			err = fmt.Errorf("%s\nPlease verify you are using an admin token when working with integrations", err.Error())
@@ -122,7 +123,7 @@ func integrationOpsgenieUpdate(d *schema.ResourceData, meta interface{}) error {
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Update Opsgenie Integration Payload: %s", string(debugOutput))
 
-	int, err := config.Client.UpdateOpsgenieIntegration(d.Id(), payload)
+	int, err := config.Client.UpdateOpsgenieIntegration(context.TODO(), d.Id(), payload)
 	if err != nil {
 		if strings.Contains(err.Error(), "40") {
 			err = fmt.Errorf("%s\nPlease verify you are using an admin token when working with integrations", err.Error())
@@ -137,5 +138,5 @@ func integrationOpsgenieUpdate(d *schema.ResourceData, meta interface{}) error {
 func integrationOpsgenieDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 
-	return config.Client.DeleteOpsgenieIntegration(d.Id())
+	return config.Client.DeleteOpsgenieIntegration(context.TODO(), d.Id())
 }

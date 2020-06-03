@@ -1,6 +1,7 @@
 package signalfx
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"testing"
@@ -460,22 +461,22 @@ func testAccCheckDashboardGroupResourceExists(s *terraform.State) error {
 	for _, rs := range s.RootModule().Resources {
 		switch rs.Type {
 		case "signalfx_time_chart", "signalfx_list_chart", "signalfx_single_value_chart", "signalfx_heatmap_chart", "signalfx_text_chart", "signalfx_event_feed_chart":
-			chart, err := client.GetChart(rs.Primary.ID)
+			chart, err := client.GetChart(context.TODO(), rs.Primary.ID)
 			if chart.Id != rs.Primary.ID || err != nil {
 				return fmt.Errorf("Error finding chart %s: %s", rs.Primary.ID, err)
 			}
 		case "signalfx_dashboard":
-			dash, err := client.GetDashboard(rs.Primary.ID)
+			dash, err := client.GetDashboard(context.TODO(), rs.Primary.ID)
 			if dash.Id != rs.Primary.ID || err != nil {
 				return fmt.Errorf("Error finding dashboard %s: %s", rs.Primary.ID, err)
 			}
 		case "signalfx_dashboard_group":
-			dashgroup, err := client.GetDashboardGroup(rs.Primary.ID)
+			dashgroup, err := client.GetDashboardGroup(context.TODO(), rs.Primary.ID)
 			if dashgroup.Id != rs.Primary.ID || err != nil {
 				return fmt.Errorf("Error finding dashboard group %s: %s", rs.Primary.ID, err)
 			}
 		case "signalfx_data_link":
-			dl, err := client.GetDataLink(rs.Primary.ID)
+			dl, err := client.GetDataLink(context.TODO(), rs.Primary.ID)
 			if err != nil || dl.Id != rs.Primary.ID {
 				return fmt.Errorf("Error finding data link %s: %s", rs.Primary.ID, err)
 			}
@@ -491,22 +492,22 @@ func testAccDashboardGroupDestroy(s *terraform.State) error {
 	for _, rs := range s.RootModule().Resources {
 		switch rs.Type {
 		case "signalfx_time_chart", "signalfx_list_chart", "signalfx_single_value_chart", "signalfx_heatmap_chart", "signalfx_text_chart", "signalfx_event_feed_chart":
-			chart, _ := client.GetChart(rs.Primary.ID)
+			chart, _ := client.GetChart(context.TODO(), rs.Primary.ID)
 			if chart != nil {
 				return fmt.Errorf("Found deleted chart %s", rs.Primary.ID)
 			}
 		case "signalfx_dashboard":
-			dash, _ := client.GetDashboard(rs.Primary.ID)
+			dash, _ := client.GetDashboard(context.TODO(), rs.Primary.ID)
 			if dash != nil {
 				return fmt.Errorf("Found deleted dashboard %s", rs.Primary.ID)
 			}
 		case "signalfx_dashboard_group":
-			dashgroup, _ := client.GetDashboardGroup(rs.Primary.ID)
+			dashgroup, _ := client.GetDashboardGroup(context.TODO(), rs.Primary.ID)
 			if dashgroup != nil {
 				return fmt.Errorf("Found deleted dashboard group %s", rs.Primary.ID)
 			}
 		case "signalfx_data_link":
-			dl, _ := client.GetDataLink(rs.Primary.ID)
+			dl, _ := client.GetDataLink(context.TODO(), rs.Primary.ID)
 			if dl != nil {
 				return fmt.Errorf("Found deleted data link %s", rs.Primary.ID)
 			}

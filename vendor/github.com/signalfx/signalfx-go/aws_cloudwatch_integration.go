@@ -2,6 +2,7 @@ package signalfx
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -12,13 +13,13 @@ import (
 )
 
 // CreateAWSCloudWatchIntegration creates an AWS CloudWatch integration.
-func (c *Client) CreateAWSCloudWatchIntegration(acwi *integration.AwsCloudWatchIntegration) (*integration.AwsCloudWatchIntegration, error) {
+func (c *Client) CreateAWSCloudWatchIntegration(ctx context.Context, acwi *integration.AwsCloudWatchIntegration) (*integration.AwsCloudWatchIntegration, error) {
 	payload, err := json.Marshal(acwi)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := c.doRequest("POST", IntegrationAPIURL, nil, bytes.NewReader(payload))
+	resp, err := c.doRequest(ctx, "POST", IntegrationAPIURL, nil, bytes.NewReader(payload))
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -40,8 +41,8 @@ func (c *Client) CreateAWSCloudWatchIntegration(acwi *integration.AwsCloudWatchI
 }
 
 // GetAWSCloudWatchIntegration retrieves an AWS CloudWatch integration.
-func (c *Client) GetAWSCloudWatchIntegration(id string) (*integration.AwsCloudWatchIntegration, error) {
-	resp, err := c.doRequest("GET", IntegrationAPIURL+"/"+id, nil, nil)
+func (c *Client) GetAWSCloudWatchIntegration(ctx context.Context, id string) (*integration.AwsCloudWatchIntegration, error) {
+	resp, err := c.doRequest(ctx, "GET", IntegrationAPIURL+"/"+id, nil, nil)
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -63,13 +64,13 @@ func (c *Client) GetAWSCloudWatchIntegration(id string) (*integration.AwsCloudWa
 }
 
 // UpdateAWSCloudWatchIntegration updates an AWS CloudWatch integration.
-func (c *Client) UpdateAWSCloudWatchIntegration(id string, acwi *integration.AwsCloudWatchIntegration) (*integration.AwsCloudWatchIntegration, error) {
+func (c *Client) UpdateAWSCloudWatchIntegration(ctx context.Context, id string, acwi *integration.AwsCloudWatchIntegration) (*integration.AwsCloudWatchIntegration, error) {
 	payload, err := json.Marshal(acwi)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := c.doRequest("PUT", IntegrationAPIURL+"/"+id, nil, bytes.NewReader(payload))
+	resp, err := c.doRequest(ctx, "PUT", IntegrationAPIURL+"/"+id, nil, bytes.NewReader(payload))
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -91,8 +92,8 @@ func (c *Client) UpdateAWSCloudWatchIntegration(id string, acwi *integration.Aws
 }
 
 // DeleteAWSCloudWatchIntegration deletes an AWS CloudWatch integration.
-func (c *Client) DeleteAWSCloudWatchIntegration(id string) error {
-	resp, err := c.doRequest("DELETE", IntegrationAPIURL+"/"+id, nil, nil)
+func (c *Client) DeleteAWSCloudWatchIntegration(ctx context.Context, id string) error {
+	resp, err := c.doRequest(ctx, "DELETE", IntegrationAPIURL+"/"+id, nil, nil)
 	if resp != nil {
 		defer resp.Body.Close()
 	}

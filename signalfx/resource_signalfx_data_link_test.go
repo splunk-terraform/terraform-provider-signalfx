@@ -1,6 +1,7 @@
 package signalfx
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"testing"
@@ -144,7 +145,7 @@ func testAccCheckDataLinkResourceExists(s *terraform.State) error {
 		switch rs.Type {
 		case "signalfx_data_link":
 			fmt.Printf("[DEBUG] SignalFx: GETTING DATA LINK %s", rs.Primary.ID)
-			dl, err := client.GetDataLink(rs.Primary.ID)
+			dl, err := client.GetDataLink(context.TODO(), rs.Primary.ID)
 			if err != nil || dl.Id != rs.Primary.ID {
 				return fmt.Errorf("Error finding data link %s: %s", rs.Primary.ID, err)
 			}
@@ -160,7 +161,7 @@ func testAccDataLinkDestroy(s *terraform.State) error {
 	for _, rs := range s.RootModule().Resources {
 		switch rs.Type {
 		case "signalfx_data_link":
-			dl, _ := client.GetDataLink(rs.Primary.ID)
+			dl, _ := client.GetDataLink(context.TODO(), rs.Primary.ID)
 			if dl != nil {
 				return fmt.Errorf("Found deleted data link %s", rs.Primary.ID)
 			}

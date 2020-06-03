@@ -1,6 +1,7 @@
 package signalfx
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -37,7 +38,7 @@ func dataSourceReadSignalFxDimensionValue(d *schema.ResourceData, meta interface
 	query := d.Get("query").(string)
 
 	log.Printf("[DEBUG] SignalFx: Requesting dimension search: query=%s, limit=%d", query, PAGE_LIMIT)
-	resp, err := config.Client.SearchDimension(query, "", int(PAGE_LIMIT), 0)
+	resp, err := config.Client.SearchDimension(context.TODO(), query, "", int(PAGE_LIMIT), 0)
 	if err != nil {
 		return err
 	}
@@ -61,7 +62,7 @@ func dataSourceReadSignalFxDimensionValue(d *schema.ResourceData, meta interface
 			// If this isn't the first in the loop, fetch the next batch
 			offset := i + int(PAGE_LIMIT) + 1
 			log.Printf("[DEBUG] SignalFx: Requesting dimension search: query=%s, limit=%d, offset=%d", query, PAGE_LIMIT, offset)
-			resp, err = config.Client.SearchDimension(query, "", int(PAGE_LIMIT), offset)
+			resp, err = config.Client.SearchDimension(context.TODO(), query, "", int(PAGE_LIMIT), offset)
 			if err != nil {
 				return err
 			}

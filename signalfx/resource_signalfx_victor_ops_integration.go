@@ -1,6 +1,7 @@
 package signalfx
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -43,7 +44,7 @@ func integrationVictorOpsResource() *schema.Resource {
 
 func integrationVictorOpsExists(d *schema.ResourceData, meta interface{}) (bool, error) {
 	config := meta.(*signalfxConfig)
-	_, err := config.Client.GetVictorOpsIntegration(d.Id())
+	_, err := config.Client.GetVictorOpsIntegration(context.TODO(), d.Id())
 	if err != nil {
 		if strings.Contains(err.Error(), "404") {
 			return false, nil
@@ -64,7 +65,7 @@ func getVictorOpsPayloadIntegration(d *schema.ResourceData) *integration.VictorO
 
 func integrationVictorOpsRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	int, err := config.Client.GetVictorOpsIntegration(d.Id())
+	int, err := config.Client.GetVictorOpsIntegration(context.TODO(), d.Id())
 	if err != nil {
 		if strings.Contains(err.Error(), "404") {
 			d.SetId("")
@@ -96,7 +97,7 @@ func integrationVictorOpsCreate(d *schema.ResourceData, meta interface{}) error 
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Create VictorOps Integration Payload: %s", string(debugOutput))
 
-	int, err := config.Client.CreateVictorOpsIntegration(payload)
+	int, err := config.Client.CreateVictorOpsIntegration(context.TODO(), payload)
 	if err != nil {
 		if strings.Contains(err.Error(), "40") {
 			err = fmt.Errorf("%s\nPlease verify you are using an admin token when working with integrations", err.Error())
@@ -115,7 +116,7 @@ func integrationVictorOpsUpdate(d *schema.ResourceData, meta interface{}) error 
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Update VictorOps Integration Payload: %s", string(debugOutput))
 
-	int, err := config.Client.UpdateVictorOpsIntegration(d.Id(), payload)
+	int, err := config.Client.UpdateVictorOpsIntegration(context.TODO(), d.Id(), payload)
 	if err != nil {
 		if strings.Contains(err.Error(), "40") {
 			err = fmt.Errorf("%s\nPlease verify you are using an admin token when working with integrations", err.Error())
@@ -130,5 +131,5 @@ func integrationVictorOpsUpdate(d *schema.ResourceData, meta interface{}) error 
 func integrationVictorOpsDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 
-	return config.Client.DeleteVictorOpsIntegration(d.Id())
+	return config.Client.DeleteVictorOpsIntegration(context.TODO(), d.Id())
 }

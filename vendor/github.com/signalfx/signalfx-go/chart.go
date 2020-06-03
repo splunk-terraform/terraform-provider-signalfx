@@ -2,6 +2,7 @@ package signalfx
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -18,13 +19,13 @@ import (
 const ChartAPIURL = "/v2/chart"
 
 // CreateChart creates a chart.
-func (c *Client) CreateChart(chartRequest *chart.CreateUpdateChartRequest) (*chart.Chart, error) {
+func (c *Client) CreateChart(ctx context.Context, chartRequest *chart.CreateUpdateChartRequest) (*chart.Chart, error) {
 	payload, err := json.Marshal(chartRequest)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := c.doRequest("POST", ChartAPIURL, nil, bytes.NewReader(payload))
+	resp, err := c.doRequest(ctx, "POST", ChartAPIURL, nil, bytes.NewReader(payload))
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -46,8 +47,8 @@ func (c *Client) CreateChart(chartRequest *chart.CreateUpdateChartRequest) (*cha
 }
 
 // DeleteChart deletes a chart.
-func (c *Client) DeleteChart(id string) error {
-	resp, err := c.doRequest("DELETE", ChartAPIURL+"/"+id, nil, nil)
+func (c *Client) DeleteChart(ctx context.Context, id string) error {
+	resp, err := c.doRequest(ctx, "DELETE", ChartAPIURL+"/"+id, nil, nil)
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -64,8 +65,8 @@ func (c *Client) DeleteChart(id string) error {
 }
 
 // GetChart gets a chart.
-func (c *Client) GetChart(id string) (*chart.Chart, error) {
-	resp, err := c.doRequest("GET", ChartAPIURL+"/"+id, nil, nil)
+func (c *Client) GetChart(ctx context.Context, id string) (*chart.Chart, error) {
+	resp, err := c.doRequest(ctx, "GET", ChartAPIURL+"/"+id, nil, nil)
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -87,13 +88,13 @@ func (c *Client) GetChart(id string) (*chart.Chart, error) {
 }
 
 // UpdateChart updates a chart.
-func (c *Client) UpdateChart(id string, chartRequest *chart.CreateUpdateChartRequest) (*chart.Chart, error) {
+func (c *Client) UpdateChart(ctx context.Context, id string, chartRequest *chart.CreateUpdateChartRequest) (*chart.Chart, error) {
 	payload, err := json.Marshal(chartRequest)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := c.doRequest("PUT", ChartAPIURL+"/"+id, nil, bytes.NewReader(payload))
+	resp, err := c.doRequest(ctx, "PUT", ChartAPIURL+"/"+id, nil, bytes.NewReader(payload))
 	if resp != nil {
 		defer resp.Body.Close()
 	}
@@ -115,7 +116,7 @@ func (c *Client) UpdateChart(id string, chartRequest *chart.CreateUpdateChartReq
 }
 
 // SearchCharts searches for charts, given a query string in `name`.
-func (c *Client) SearchCharts(limit int, name string, offset int, tags string) (*chart.SearchResult, error) {
+func (c *Client) SearchCharts(ctx context.Context, limit int, name string, offset int, tags string) (*chart.SearchResult, error) {
 	params := url.Values{}
 	params.Add("limit", strconv.Itoa(limit))
 	if name != "" {
@@ -126,7 +127,7 @@ func (c *Client) SearchCharts(limit int, name string, offset int, tags string) (
 		params.Add("tags", tags)
 	}
 
-	resp, err := c.doRequest("GET", ChartAPIURL, params, nil)
+	resp, err := c.doRequest(ctx, "GET", ChartAPIURL, params, nil)
 	if resp != nil {
 		defer resp.Body.Close()
 	}
