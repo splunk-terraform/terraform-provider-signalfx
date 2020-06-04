@@ -1,7 +1,8 @@
 ## 4.24.0 (Unreleased)
 
 IMPROVEMENTS:
-* Bumped signalfx-go dependency which requires the use of `context.Context` in many client calls. No material change otherwise.
+* provider: Bumped signalfx-go dependency which requires the use of `context.Context` in many client calls. No material change otherwise.
+* provider: Various doc improvements around formatting, syntax, and more. Thanks [@pdecat](https://github.com/pdecat)! [#217](https://github.com/terraform-providers/terraform-provider-signalfx/pull/217)
 
 ## 4.23.0 (June 02, 2020)
 
