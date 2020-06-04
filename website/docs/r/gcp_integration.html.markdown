@@ -31,10 +31,49 @@ resource "signalfx_gcp_integration" "gcp_myteam" {
 }
 ```
 
+## Example with a named token per GCP project
+
+```tf
+resource "signalfx_gcp_integration" "gcp_project_1" {
+  name        = "GCP - My project 1"
+  enabled     = true
+  named_token = signalfx_org_token.myprojectkey1.name
+  poll_rate   = 300000
+  services    = ["compute"]
+  project_service_keys {
+    project_id  = "gcp_project_id_1"
+    project_key = "${file("/path/to/gcp_credentials_1.json")}"
+  }
+}
+
+resource "signalfx_org_token" "myprojectkey1" {
+  name        = "ProjectIDKey1"
+  description = "My project's key 1"
+}
+
+resource "signalfx_gcp_integration" "gcp_project_2" {
+  name        = "GCP - My project 2"
+  enabled     = true
+  named_token = signalfx_org_token.myprojectkey2.name
+  poll_rate   = 300000
+  services    = ["compute"]
+  project_service_keys {
+    project_id  = "gcp_project_id_2"
+    project_key = "${file("/path/to/gcp_credentials_2.json")}"
+  }
+}
+
+resource "signalfx_org_token" "myprojectkey2" {
+  name        = "ProjectIDKey2"
+  description = "My project's key 2"
+}
+```
+
 ## Argument Reference
 
 * `name` - (Required) Name of the integration.
 * `enabled` - (Required) Whether the integration is enabled.
+* `named_token` - (Optional) The named token to use for ingest via this integration.
 * `poll_rate` - (Required) GCP integration poll rate in seconds. Can be set to either 60 or 300 (1 minute or 5 minutes).
 * `services` - (Optional) GCP service metrics to import. Can be an empty list, or not included, to import 'All services'. See the documentation for [Creating Integrations](https://developers.signalfx.com/integrations_reference.html#operation/Create%20Integration) for valid values.
 * `project_service_keys` - (Required) GCP projects to add.
