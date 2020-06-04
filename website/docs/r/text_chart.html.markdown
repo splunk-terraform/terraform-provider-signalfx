@@ -12,12 +12,12 @@ This special type of chart doesn’t display any metric data. Rather, it lets yo
 
 ## Example Usage
 
-```terraform
+```tf
 resource "signalfx_text_chart" "mynote0" {
-    name = "Important Dashboard Note"
-    description = "Lorem ipsum dolor sit amet, laudem tibique iracundia at mea. Nam posse dolores ex, nec cu adhuc putent honestatis"
+  name        = "Important Dashboard Note"
+  description = "Lorem ipsum dolor sit amet, laudem tibique iracundia at mea. Nam posse dolores ex, nec cu adhuc putent honestatis"
 
-    markdown = <<-EOF
+  markdown = <<-EOF
     1. First ordered list item
     2. Another item
       * Unordered sub-list.

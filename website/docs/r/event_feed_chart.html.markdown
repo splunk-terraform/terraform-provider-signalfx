@@ -12,16 +12,16 @@ Displays a listing of events as a widget in a dashboard.
 
 ## Example Usage
 
-```terraform
+```tf
 resource "signalfx_event_feed_chart" "mynote0" {
-    name = "Important Dashboard Note"
-    description = "Lorem ipsum dolor sit amet"
-    program_text = "A = events(eventType='Fart Testing').publish(label='A')"
+  name         = "Important Dashboard Note"
+  description  = "Lorem ipsum dolor sit amet"
+  program_text = "A = events(eventType='Fart Testing').publish(label='A')"
 
-    viz_options {
-        label = "A"
-        color = "orange"
-    }
+  viz_options {
+    label = "A"
+    color = "orange"
+  }
 }
 ```
 

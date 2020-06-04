@@ -14,32 +14,32 @@ A dashboard is a curated collection of specific charts and supports dimensional 
 
 ## Example Usage
 
-```terraform
+```tf
 resource "signalfx_dashboard" "mydashboard0" {
-    name = "My Dashboard"
-    dashboard_group = signalfx_dashboard_group.mydashboardgroup0.id
+  name            = "My Dashboard"
+  dashboard_group = signalfx_dashboard_group.mydashboardgroup0.id
 
-    time_range = "-30m"
+  time_range = "-30m"
 
-    filter {
-        property = "collector"
-        values = ["cpu", "Diamond"]
-    }
-    variable {
-        property = "region"
-        alias = "region"
-        values = ["uswest-1-"]
-    }
-    chart {
-        chart_id = signalfx_time_chart.mychart0.id
-        width = 12
-        height = 1
-    }
-    chart {
-        chart_id = signalfx_time_chart.mychart1.id
-        width = 5
-        height = 2
-    }
+  filter {
+    property = "collector"
+    values   = ["cpu", "Diamond"]
+  }
+  variable {
+    property = "region"
+    alias    = "region"
+    values   = ["uswest-1-"]
+  }
+  chart {
+    chart_id = signalfx_time_chart.mychart0.id
+    width    = 12
+    height   = 1
+  }
+  chart {
+    chart_id = signalfx_time_chart.mychart1.id
+    width    = 5
+    height   = 2
+  }
 }
 ```
 
@@ -117,21 +117,25 @@ The are a bunch of use cases where this layout makes things too verbose and hard
 
 The dashboard is divided into equal-sized charts (defined by `width` and `height`). If a chart does not fit in the same row (because the total width > max allowed by the dashboard), this and the next ones will be place in the next row(s).
 
-```terraform
+```tf
 resource "signalfx_dashboard" "grid_example" {
-    name = "Grid"
-    dashboard_group = "${signalfx_dashboard_group.example.id}"
-    time_range = "-15m"
+  name            = "Grid"
+  dashboard_group = signalfx_dashboard_group.example.id
+  time_range      = "-15m"
 
-    grid {
-        chart_ids = ["${concat(signalfx_time_chart.rps.*.id,
-                signalfx_time_chart.50ths.*.id,
-                signalfx_time_chart.99ths.*.id,
-                signalfx_time_chart.idle_workers.*.id,
-                signalfx_time_chart.cpu_idle.*.id)}"]
-        width = 3
-        height = 1
-    }
+  grid {
+    chart_ids = [
+      concat(
+        signalfx_time_chart.rps.*.id,
+        signalfx_time_chart.p50ths.*.id,
+        signalfx_time_chart.p99ths.*.id,
+        signalfx_time_chart.idle_workers.*.id,
+        signalfx_time_chart.cpu_idle.*.id,
+      )
+    ]
+    width  = 3
+    height = 1
+  }
 }
 ```
 
@@ -139,19 +143,19 @@ resource "signalfx_dashboard" "grid_example" {
 
 The dashboard is divided into equal-sized charts (defined by `width` and `height`). The charts are placed in the grid by column (column number is called `column`).
 
-```terraform
+```tf
 resource "signalfx_dashboard" "load" {
-    name = "Load"
-    dashboard_group = "${signalfx_dashboard_group.example.id}"
+  name            = "Load"
+  dashboard_group = signalfx_dashboard_group.example.id
 
-    column {
-        chart_ids = ["${signalfx_single_value_chart.rps.*.id}"]
-        width = 2
-    }
-    column {
-        chart_ids = ["${signalfx_time_chart.cpu_capacity.*.id}"]
-        column = 2
-        width = 4
-    }
+  column {
+    chart_ids = [signalfx_single_value_chart.rps.*.id]
+    width     = 2
+  }
+  column {
+    chart_ids = [signalfx_time_chart.cpu_capacity.*.id]
+    column    = 2
+    width     = 4
+  }
 }
 ```

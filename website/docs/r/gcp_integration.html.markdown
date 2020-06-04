@@ -14,20 +14,20 @@ SignalFx GCP Integration
 
 ## Example Usage
 
-```terraform
+```tf
 resource "signalfx_gcp_integration" "gcp_myteam" {
-    name = "GCP - My Team"
-    enabled = true
-    poll_rate = 300000
-    services = ["compute"]
-    project_service_keys {
-        project_id = "gcp_project_id_1"
-        project_key = "${file("/path/to/gcp_credentials_1.json")}"
-    }
-    project_service_keys {
-        project_id = "gcp_project_id_2"
-        project_key = "${file("/path/to/gcp_credentials_2.json")}"
-    }
+  name      = "GCP - My Team"
+  enabled   = true
+  poll_rate = 300000
+  services  = ["compute"]
+  project_service_keys {
+    project_id  = "gcp_project_id_1"
+    project_key = "${file("/path/to/gcp_credentials_1.json")}"
+  }
+  project_service_keys {
+    project_id  = "gcp_project_id_2"
+    project_key = "${file("/path/to/gcp_credentials_2.json")}"
+  }
 }
 ```
 

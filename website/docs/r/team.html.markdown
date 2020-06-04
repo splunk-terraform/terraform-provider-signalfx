@@ -14,20 +14,24 @@ You can configure [team notification policies](https://docs.signalfx.com/en/late
 
 ## Example Usage
 
-```terraform
+```tf
 resource "signalfx_team" "myteam0" {
-    name = "Best Team Ever"
-    description = "Super great team no jerks definitely"
+  name        = "Best Team Ever"
+  description = "Super great team no jerks definitely"
 
-    members = [ "userid1", "userid2", …]
+  members = [
+    "userid1",
+    "userid2",
+    # …
+  ]
 
-    notifications_critical = [
-      "PagerDuty,credentialId"
-    ]
+  notifications_critical = [
+    "PagerDuty,credentialId"
+  ]
 
-    notifications_info = [
-      "Email,notify@example.com"
-    ]
+  notifications_info = [
+    "Email,notify@example.com"
+  ]
 }
 ```
 
