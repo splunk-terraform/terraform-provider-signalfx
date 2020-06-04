@@ -14,29 +14,29 @@ SignalFx Azure integrations. For help with this integration see [Monitoring Micr
 
 ## Example Usage
 
-```terraform
+```tf
 resource "signalfx_azure_integration" "azure_myteam" {
-    name = "Azure Foo"
-    enabled = true
+  name    = "Azure Foo"
+  enabled = true
 
-    resource "signalfx_azure_integration" "azure_myteamXX" {
-        name = "AzureFoo"
-        enabled = false
+  resource "signalfx_azure_integration" "azure_myteamXX" {
+    name    = "AzureFoo"
+    enabled = false
 
-        environment = "azure"
+    environment = "azure"
 
-    		poll_rate = 300
+    poll_rate = 300
 
-        secret_key = "XXX"
+    secret_key = "XXX"
 
-        app_id = "YYY"
+    app_id = "YYY"
 
-        tenant_id = "ZZZ"
+    tenant_id = "ZZZ"
 
-        services = [ "microsoft.sql/servers/elasticpools" ]
+    services = ["microsoft.sql/servers/elasticpools"]
 
-        subscriptions = [ "sub-guid-here" ]
-    }
+    subscriptions = ["sub-guid-here"]
+  }
 }
 ```
 

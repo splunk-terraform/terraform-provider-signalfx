@@ -14,12 +14,12 @@ SignalFx Opsgenie integration.
 
 ## Example Usage
 
-```terraform
+```tf
 resource "signalfx_opsgenie_integration" "opgenie_myteam" {
-    name = "Opsgenie - My Team"
-    enabled = true
-    api_key = "farts"
-    api_url = "https://api.opsgenie.com"
+  name    = "Opsgenie - My Team"
+  enabled = true
+  api_key = "farts"
+  api_url = "https://api.opsgenie.com"
 }
 ```
 

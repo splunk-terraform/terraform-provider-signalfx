@@ -16,9 +16,9 @@ SignalFx AWS CloudWatch integrations using Role ARNs. For help with this integra
 
 ## Example Usage
 
-```terraform
+```tf
 resource "signalfx_aws_external_integration" "aws_myteam_extern" {
-   name = "AWSFooNEW"
+  name = "AWSFooNEW"
 }
 
 data "aws_iam_policy_document" "signalfx_assume_policy" {
@@ -27,7 +27,7 @@ data "aws_iam_policy_document" "signalfx_assume_policy" {
 
     principals {
       type        = "AWS"
-			identifiers = [signalfx_aws_external_integration.aws_myteam_extern.signalfx_aws_account]
+      identifiers = [signalfx_aws_external_integration.aws_myteam_extern.signalfx_aws_account]
     }
 
     condition {
@@ -39,15 +39,15 @@ data "aws_iam_policy_document" "signalfx_assume_policy" {
 }
 
 resource "aws_iam_role" "aws_sfx_role" {
-	name               = "signalfx-reads-from-cloudwatch2"
+  name               = "signalfx-reads-from-cloudwatch2"
   description        = "signalfx integration to read out data and send it to signalfxs aws account"
-	assume_role_policy = data.aws_iam_policy_document.signalfx_assume_policy.json
+  assume_role_policy = data.aws_iam_policy_document.signalfx_assume_policy.json
 }
 
 resource "aws_iam_policy" "aws_read_permissions" {
-	name = "SignalFxReadPermissionsPolicy"
-	description = "farts"
-	policy = <<EOF
+  name        = "SignalFxReadPermissionsPolicy"
+  description = "farts"
+  policy      = <<EOF
 {
 	"Version": "2012-10-17",
 	"Statement": [
@@ -114,23 +114,23 @@ EOF
 }
 
 resource "aws_iam_role_policy_attachment" "sfx-read-attach" {
-	role = aws_iam_role.aws_sfx_role.name
-	policy_arn = aws_iam_policy.aws_read_permissions.arn
+  role       = aws_iam_role.aws_sfx_role.name
+  policy_arn = aws_iam_policy.aws_read_permissions.arn
 }
 
 
 resource "signalfx_aws_integration" "aws_myteam" {
-   enabled = true
+  enabled = true
 
-		integration_id = signalfx_aws_external_integration.aws_myteam_extern.id
-		external_id = signalfx_aws_external_integration.aws_myteam_extern.external_id
-		role_arn = aws_iam_role.aws_sfx_role.arn
-		# token = "abc123"
-		# key = "abc123"
-		regions = ["us-east-1"]
-		poll_rate = 300
-		import_cloud_watch = true
-		enable_aws_usage = true
+  integration_id = signalfx_aws_external_integration.aws_myteam_extern.id
+  external_id    = signalfx_aws_external_integration.aws_myteam_extern.external_id
+  role_arn       = aws_iam_role.aws_sfx_role.arn
+  # token = "abc123"
+  # key = "abc123"
+  regions            = ["us-east-1"]
+  poll_rate          = 300
+  import_cloud_watch = true
+  enable_aws_usage   = true
 }
 
 ```

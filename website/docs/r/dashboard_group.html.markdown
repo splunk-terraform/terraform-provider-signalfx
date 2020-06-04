@@ -14,45 +14,45 @@ In the SignalFx web UI, a [dashboard group](https://developers.signalfx.com/dash
 
 ## Example Usage
 
-```terraform
+```tf
 resource "signalfx_dashboard_group" "mydashboardgroup0" {
-    name = "My team dashboard group"
-    description = "Cool dashboard group"
+  name        = "My team dashboard group"
+  description = "Cool dashboard group"
 
-    # Note that if you use these features, you must use a user's
-    # admin key to authenticate the provider, lest Terraform not be able
-    # to modify the dashboard group in the future!
-    authorized_writer_teams = [ signalfx_team.mycoolteam.id ]
-    authorized_writer_users = [ "abc123" ]
+  # Note that if you use these features, you must use a user's
+  # admin key to authenticate the provider, lest Terraform not be able
+  # to modify the dashboard group in the future!
+  authorized_writer_teams = [signalfx_team.mycoolteam.id]
+  authorized_writer_users = ["abc123"]
 }
 ```
 
 ## Example Usage With Mirrored Dashboards
 
-```terraform
+```tf
 resource "signalfx_dashboard_group" "mydashboardgroup_withmirrors" {
-    name = "My team dashboard group"
-    description = "Cool dashboard group"
+  name        = "My team dashboard group"
+  description = "Cool dashboard group"
 
-    // You can add as many of these as you like. Make sure your account
-    // supports this feature!
-    dashboard {
-      dashboard_id = signalfx_dashboard.gc_dashboard.id
-      name_override = "GC For My Service"
-      description_override = "Garbage Collection dashboard maintained by JVM team"
+  // You can add as many of these as you like. Make sure your account
+  // supports this feature!
+  dashboard {
+    dashboard_id         = signalfx_dashboard.gc_dashboard.id
+    name_override        = "GC For My Service"
+    description_override = "Garbage Collection dashboard maintained by JVM team"
 
-      filter_override {
-        property = "service"
-        values = [ "myservice" ]
-        negated = false
-      }
-
-      variable_override {
-        property = "region"
-        values = ["us-west1"]
-        values_suggested = ["us-west-1", "us-east-1"]
-      }
+    filter_override {
+      property = "service"
+      values   = ["myservice"]
+      negated  = false
     }
+
+    variable_override {
+      property         = "region"
+      values           = ["us-west1"]
+      values_suggested = ["us-west-1", "us-east-1"]
+    }
+  }
 }
 ```
 

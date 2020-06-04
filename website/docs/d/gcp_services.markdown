@@ -19,10 +19,10 @@ data "signalfx_gcp_services" "gcp_services" {
 # Leaves out most of the integration bits, see the docs
 # for signalfx_gcp_integration for more
 resource "signalfx_gcp_integration" "gcp_myteam" {
-   # …
+  # …
 
-   # All supported services!
-   services = data.signalfx_gcp_services.gcp_services.services.*.name
+  # All supported services!
+  services = data.signalfx_gcp_services.gcp_services.services.*.name
 }
 ```
 

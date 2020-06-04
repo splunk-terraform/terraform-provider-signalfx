@@ -14,11 +14,11 @@ SignalFx VictorOps integration.
 
 ## Example Usage
 
-```terraform
+```tf
 resource "signalfx_victor_ops_resource" "vioctor_ops_myteam" {
-    name = "VictorOps - My Team"
-    enabled = true
-    post_url = "https://alert.victorops.com/integrations/generic/1234/alert/$key/$routing_key"
+  name     = "VictorOps - My Team"
+  enabled  = true
+  post_url = "https://alert.victorops.com/integrations/generic/1234/alert/$key/$routing_key"
 }
 ```
 

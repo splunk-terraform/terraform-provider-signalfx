@@ -14,11 +14,11 @@ SignalFx PagerDuty integrations
 
 ## Example Usage
 
-```terraform
+```tf
 resource "signalfx_pagerduty_integration" "pagerduty_myteam" {
-    name = "PD - My Team"
-    enabled = true
-    api_key = "1234567890"
+  name    = "PD - My Team"
+  enabled = true
+  api_key = "1234567890"
 }
 ```
 ## Argument Reference
