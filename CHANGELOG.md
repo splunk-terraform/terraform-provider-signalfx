@@ -1,4 +1,4 @@
-## 4.24.0 (Unreleased)
+## 4.23.1 (Unreleased)
 
 IMPROVEMENTS:
 * provider: Bumped signalfx-go dependency which requires the use of `context.Context` in many client calls. No material change otherwise.
