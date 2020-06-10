@@ -19,6 +19,8 @@ type CreateUpdateDetectorRequest struct {
 	MaxDelay *int32 `json:"maxDelay,omitempty"`
 	// The displayed name of the detector in the dashboard
 	Name string `json:"name,omitempty"`
+	// The package spec. Should default to "" so is not `omitempty`
+	PackageSpecification string `json:"packageSpecifications"`
 	// The SignalFlow program that populates the detector. The program must include one or more detect functions and each detect function must be modified by a publish stream method with a label that's unique across the program. If you wish to support custom notification messages that include input data you must use variables to assign the detect conditions . If more than one line of SignalFlow is included, each line should be separated by either semicolons (\";\") or new line characters (\"\\n\"). See the [Detectors Overview](https://developers.signalfx.com/v2/reference.html#detectors-overview) for more information.
 	ProgramText string `json:"programText,omitempty"`
 	// An array of *rules* that define aspects of an alert. These include the alert\\'s severity and the specification of how notifications are sent when the alert is triggered. Each rule is connected to a specific detect function in the programText property by the value of the label in its publish method. The connection is to a set of one or more notification directives and an severity indicator. A single condition can be used in multiple rules if different severity indicators are desired for different notification methods. <p> To see the properties for a rule, expand the definition of the rules array. What you see is the \"rules\" object that specifies a single rule.
