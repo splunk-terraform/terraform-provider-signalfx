@@ -1,3 +1,6 @@
+# 1.7.1, 2020-06-10
+* Added `packageSpecifications` field to Detector`
+
 # 1.7.0, 2020-06-02
 
 * Added contexts to everything, switch to `NewRequestWithContext` for HTTP.

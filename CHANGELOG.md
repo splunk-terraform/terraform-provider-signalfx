@@ -3,6 +3,7 @@
 IMPROVEMENTS:
 * provider: Bumped signalfx-go dependency which requires the use of `context.Context` in many client calls. No material change otherwise.
 * provider: Various doc improvements around formatting, syntax, and more. Thanks [@pdecat](https://github.com/pdecat)! [#217](https://github.com/terraform-providers/terraform-provider-signalfx/pull/217)
+* provider/detector: Now sets the `packageSpecifications` field to an empty string, which is an API requirement for some advanced program text use cases. [#220](https://github.com/terraform-providers/terraform-provider-signalfx/pull/220)
 
 ## 4.23.0 (June 02, 2020)
 
