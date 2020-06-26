@@ -1,4 +1,4 @@
-## 4.23.2 (Unreleased)
+## 4.23.2 (June 26, 2020)
 
 IMPROVEMENTS:
 * provider: Adjusted the HTTP User-Agent supplied by the provider when making API calls. [#221](https://github.com/terraform-providers/terraform-provider-signalfx/pull/221)
