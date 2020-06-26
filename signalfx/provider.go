@@ -158,7 +158,10 @@ func signalfxConfigure(data *schema.ResourceData) (interface{}, error) {
 	})
 
 	pv := version.ProviderVersion
-	providerUserAgent := fmt.Sprintf("Terraform/%s terraform-provider-signalfx/%s", sfxProvider.TerraformVersion, pv)
+	// This U-A prefix is hardcoded (rather than using some programmatic accessor)
+	// because doing so fixes #208, a slow down in HTTP POSTs for dashboards.
+	// Might be safe to remove later.
+	providerUserAgent := fmt.Sprintf("Go-http-client/1.1 Terraform/%s terraform-provider-signalfx/%s", sfxProvider.TerraformVersion, pv)
 
 	totalTimeoutSeconds := data.Get("timeout_seconds").(int)
 	log.Printf("[DEBUG] SignalFx: HTTP Timeout is %d seconds", totalTimeoutSeconds)
