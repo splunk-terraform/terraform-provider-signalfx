@@ -158,7 +158,7 @@ func signalfxConfigure(data *schema.ResourceData) (interface{}, error) {
 	})
 
 	pv := version.ProviderVersion
-	providerUserAgent := fmt.Sprintf("Terraform/%s terraform-provider-signalfx/%s", sfxProvider.TerraformVersion, pv)
+	providerUserAgent := fmt.Sprintf("Go-http-client/1.1 Terraform/%s terraform-provider-signalfx/%s", sfxProvider.TerraformVersion, pv)
 
 	totalTimeoutSeconds := data.Get("timeout_seconds").(int)
 	log.Printf("[DEBUG] SignalFx: HTTP Timeout is %d seconds", totalTimeoutSeconds)
