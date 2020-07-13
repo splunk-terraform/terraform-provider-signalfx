@@ -122,7 +122,7 @@ func listChartResource() *schema.Resource {
 						"color": &schema.Schema{
 							Type:         schema.TypeString,
 							Required:     true,
-							Description:  "The color to use. Must be either \"gray\", \"blue\", \"navy\", \"orange\", \"yellow\", \"magenta\", \"purple\", \"violet\", \"lilac\", \"green\", \"aquamarine\"",
+							Description:  "The color to use. Must be one of gray, blue, light_blue, navy, dark_orange, orange, dark_yellow, magenta, cerise, pink, violet, purple, gray_blue, dark_green, green, aquamarine, red, yellow, vivid_yellow, light_green, or lime_green.",
 							ValidateFunc: validateHeatmapChartColor,
 						},
 						"gt": &schema.Schema{
