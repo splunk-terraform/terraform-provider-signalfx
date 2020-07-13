@@ -1,4 +1,8 @@
-## 4.24.0 (Unreleased)
+## 4.23.3 (Unreleased)
+
+IMPROVEMENTS:
+* provider: Improved documentation to reflect all available color choices. [#223](https://github.com/terraform-providers/terraform-provider-signalfx/pull/223)
+
 ## 4.23.2 (June 26, 2020)
 
 IMPROVEMENTS:
