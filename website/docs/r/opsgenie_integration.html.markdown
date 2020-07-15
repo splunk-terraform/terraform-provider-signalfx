@@ -29,3 +29,9 @@ resource "signalfx_opsgenie_integration" "opgenie_myteam" {
 * `enabled` - (Required) Whether the integration is enabled.
 * `api_key` - (Required) The API key
 * `api_url` - (Optional) Opsgenie API URL. Will default to `https://api.opsgenie.com`. You might also want `https://api.eu.opsgenie.com`.
+
+## Attributes Reference
+
+In a addition to all arguments above, the following attributes are exported:
+
+* `id` - The ID of the integration.

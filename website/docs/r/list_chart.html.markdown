@@ -12,7 +12,6 @@ This chart type displays current data values in a list format.
 
 The name of each value in the chart reflects the name of the plot and any associated dimensions. We recommend you click the Pencil icon and give the plot a meaningful name, as in plot B below. Otherwise, just the raw metric name will be displayed on the chart, as in plot A below.
 
-
 ## Example Usage
 
 ```tf
@@ -91,3 +90,10 @@ The following arguments are supported in the resource block:
 * `time_range` - (Optional) How many seconds ago from which to display data. For example, the last hour would be `3600`, etc. Conflicts with `start_time` and `end_time`.
 * `start_time` - (Optional) Seconds since epoch. Used for visualization. Conflicts with `time_range`.
 * `end_time` - (Optional) Seconds since epoch. Used for visualization. Conflicts with `time_range`.
+
+## Attributes Reference
+
+In a addition to all arguments above, the following attributes are exported:
+
+* `id` - The ID of the chart.
+* `url` - The URL of the chart.

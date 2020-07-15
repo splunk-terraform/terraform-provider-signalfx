@@ -37,3 +37,9 @@ resource "signalfx_webhook_resource" "webhook_myteam" {
 * `headers` - (Optional) A header to send with the request
   * `header_key` - (Required) The key of the header to send
   * `header_value` - (Required) The value of the header to send
+
+## Attributes Reference
+
+In a addition to all arguments above, the following attributes are exported:
+
+* `id` - The ID of the integration.

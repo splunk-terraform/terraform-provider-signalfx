@@ -26,3 +26,9 @@ resource "signalfx_pagerduty_integration" "pagerduty_myteam" {
 * `name` - (Required) Name of the integration.
 * `enabled` - (Required) Whether the integration is enabled.
 * `api_key` - (Required) PagerDuty API key.
+
+## Attributes Reference
+
+In a addition to all arguments above, the following attributes are exported:
+
+* `id` - The ID of the integration.

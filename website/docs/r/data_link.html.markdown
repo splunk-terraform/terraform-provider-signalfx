@@ -67,3 +67,9 @@ The following arguments are supported in the resource block:
   * `name` (Required) User-assigned target name. Use this value to differentiate between the link targets for a data link object.
   * `is_default` - (Optional) Flag that designates a target as the default for a data link object. `true` by default
   * `property_key_mapping` - Describes the relationship between SignalFx metadata keys and external system properties when the key names are different.
+
+## Attributes Reference
+
+In a addition to all arguments above, the following attributes are exported:
+
+* `id` - The ID of the link.

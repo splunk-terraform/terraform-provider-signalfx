@@ -27,3 +27,9 @@ resource "signalfx_slack_integration" "slack_myteam" {
 * `name` - (Required) Name of the integration.
 * `enabled` - (Required) Whether the integration is enabled.
 * `webhook_url` - (Required) Slack incoming webhook URL.
+
+## Attributes Reference
+
+In a addition to all arguments above, the following attributes are exported:
+
+* `id` - The ID of the integration.

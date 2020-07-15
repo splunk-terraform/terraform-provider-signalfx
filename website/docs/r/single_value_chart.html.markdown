@@ -61,3 +61,10 @@ The following arguments are supported in the resource block:
 * `is_timestamp_hidden` - (Optional) Whether to hide the timestamp in the chart. `false` by default.
 * `secondary_visualization` - (Optional) The type of secondary visualization. Can be `None`, `Radial`, `Linear`, or `Sparkline`. If unset, the SignalFx default is used (`None`).
 * `show_spark_line` - (Optional) Whether to show a trend line below the current value. `false` by default.
+
+## Attributes Reference
+
+In a addition to all arguments above, the following attributes are exported:
+
+* `id` - The ID of the chart.
+* `url` - The URL of the chart.

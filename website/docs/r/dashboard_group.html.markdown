@@ -77,3 +77,9 @@ The following arguments are supported in the resource block:
     * `property` - (Required) A metric time series dimension or property name.
     * `values` - (Optional) (Optional) List of of strings (which will be treated as an OR filter on the property).
     * `values_suggested` - (Optional) A list of strings of suggested values for this variable; these suggestions will receive priority when values are autosuggested for this variable.
+
+## Attributes Reference
+
+In a addition to all arguments above, the following attributes are exported:
+
+* `id` - The ID of the integration.

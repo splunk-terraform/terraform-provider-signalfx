@@ -102,6 +102,12 @@ The following arguments are supported in the resource block:
       * `values` - A list of values to be used with the `property`, they will be combined via `OR`.
       * `negated` - (Optional) If true,  only data that does not match the specified value of the specified property appear in the event overlay. Defaults to `false`.
 
+## Attributes Reference
+
+In a addition to all arguments above, the following attributes are exported:
+
+* `id` - The ID of the dashboard.
+* `url` - The URL of the dashboard.
 
 ## Dashboard Layout Information
 

@@ -40,3 +40,10 @@ resource "signalfx_alert_muting_rule" "rool_mooter_one" {
   * `property` - (Required) The property to filter.
   * `property_value` - (Required) The property value to filter.
   * `negated` - (Optional) Determines if this is a "not" filter. Defaults to `false`.
+
+## Attributes Reference
+
+In a addition to all arguments above, the following attributes are exported:
+
+* `id` - The ID of the alert muting rule.
+* `effective_start_time`

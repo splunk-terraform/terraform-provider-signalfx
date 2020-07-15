@@ -52,3 +52,9 @@ resource "signalfx_jira_integration" "jira_myteamXX" {
 * `project_key` - (Required) Jira key of an existing project. When Jira creates a new ticket for a detector notification, the ticket is assigned to this project.
 * `assignee_name` - (Required) Jira user name for the assignee.
 * `assignee_display_name` - (Optional) Jira display name for the assignee.
+
+## Attributes Reference
+
+In a addition to all arguments above, the following attributes are exported:
+
+* `id` - The ID of the integration.

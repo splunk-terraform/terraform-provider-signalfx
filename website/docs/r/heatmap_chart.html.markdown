@@ -77,3 +77,10 @@ The following arguments are supported in the resource block:
     * `lt` - (Optional) Indicates the upper threshold non-inclusive value for this range.
     * `lte` - (Optional) Indicates the upper threshold inclusive value for this range.
     * `color` - (Required) The color range to use. Hex values are not supported here. Must be one of gray, blue, light_blue, navy, dark_orange, orange, dark_yellow, magenta, cerise, pink, violet, purple, gray_blue, dark_green, green, aquamarine, red, yellow, vivid_yellow, light_green, or lime_green.
+
+## Attributes Reference
+
+In a addition to all arguments above, the following attributes are exported:
+
+* `id` - The ID of the chart.
+* `url` - The URL of the chart.

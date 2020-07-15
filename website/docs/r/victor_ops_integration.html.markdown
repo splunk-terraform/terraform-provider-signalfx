@@ -27,3 +27,9 @@ resource "signalfx_victor_ops_resource" "vioctor_ops_myteam" {
 * `name` - (Required) Name of the integration.
 * `enabled` - (Required) Whether the integration is enabled.
 * `post_url` - (Optional) Victor Ops REST API URL.
+
+## Attributes Reference
+
+In a addition to all arguments above, the following attributes are exported:
+
+* `id` - The ID of the integration.

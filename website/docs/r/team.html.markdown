@@ -48,3 +48,10 @@ The following arguments are supported in the resource block:
 * `notifications_major` - (Optional) Where to send notifications for major alerts
 * `notifications_minor` - (Optional) Where to send notifications for minor alerts
 * `notifications_warning` - (Optional) Where to send notifications for warning alerts
+
+## Attributes Reference
+
+In a addition to all arguments above, the following attributes are exported:
+
+* `id` - The ID of the team.
+* `url` - The URL of the team.

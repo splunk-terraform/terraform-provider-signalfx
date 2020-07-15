@@ -45,3 +45,10 @@ The following arguments are supported in the resource block:
 * `name` - (Required) Name of the text note.
 * `markdown` - (Required) Markdown text to display.
 * `description` - (Optional) Description of the text note.
+
+## Attributes Reference
+
+In a addition to all arguments above, the following attributes are exported:
+
+* `id` - The ID of the chart.
+* `url` - The URL of the chart.

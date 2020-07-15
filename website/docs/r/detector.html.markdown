@@ -180,9 +180,10 @@ See [Delayed Datapoints](https://signalfx-product-docs.readthedocs-hosted.com/en
 
 ## Attributes Reference
 
-The following attributes are exported:
+In a addition to all arguments above, the following attributes are exported:
 
-* `id` - ID of the SignalFx detector
+* `id` - The ID of the detector.
+* `url` - The URL of the detector.
 
 ## Import
 
