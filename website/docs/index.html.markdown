@@ -24,6 +24,16 @@ which covers the basic usage.
 
 Once you got the basics of working with Terraform down, using this provider is much easier. You'll probably want to check out the docs on the [SignalFlow programming language](https://developers.signalfx.com/signalflow_analytics/signalflow_overview.html#_signalflow_programming_language) as all charts and detectors will require you to provide the `program_text` in SignalFlow. Also keep in mind that you can open any chart or in SignalFx and click "Show SignalFlow" if you prefer to use the UI.
 
+# Authentication
+
+When authenticating you have [two options](https://developers.signalfx.com/basics/authentication.html): an Org token or a User token.
+
+Org tokens are long-lived and give the capability to manipulate dashboards, charts, and the like. The long-lived nature means you can set them up and forget them for a long time.
+
+User tokens are short-lived and provide administrative permissions to edit integrations. These expire relatively quickly (30 days at the time of this writing) but allow the manipulation of some more sensitive resources. Resources that require this are flagged in their documentation.
+
+~> **NOTE** Per the above, it is beneficial to separate the less sensitive resources (dashboards, etc) from the more sensitive (integrations) such that you don't have to reup the token all the time.
+
 ## Example Usage
 
 ```hcl
