@@ -39,6 +39,28 @@ func integrationAzureResource() *schema.Resource {
 				Sensitive:   true,
 				Description: "Azure application ID for the SignalFx app.",
 			},
+			"custom_namespaces_per_service": &schema.Schema{
+				Type:     schema.TypeSet,
+				Optional: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"service": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "The name of the service",
+						},
+						"namespaces": {
+							Type:     schema.TypeSet,
+							Required: true,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+							Description: "The namespaces to sync",
+						},
+					},
+				},
+				Description: "Allows for more fine-grained control of syncing of custom namespaces, should the boolean convenience parameter `sync_guest_os_namespaces` be not enough. The customer may specify a map of services to custom namespaces. If they do so, for each service which is a key in this map, we will attempt to sync metrics from namespaces in the value list in addition to the default namespaces.",
+			},
 			"secret_key": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
@@ -68,6 +90,12 @@ func integrationAzureResource() *schema.Resource {
 					Type: schema.TypeString,
 				},
 				Description: "List of Azure subscriptions that SignalFx should monitor.",
+			},
+			"sync_guest_os_namespaces": &schema.Schema{
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "If enabled, SignalFx will try to sync additional namespaces for VMs (including VMs in scale sets): telegraf/mem, telegraf/cpu, azure.vm.windows.guest (these are namespaces recommended by Azure when enabling their Diagnostic Extension). If there are no metrics there, no new datapoints will be ingested.",
 			},
 			"tenant_id": &schema.Schema{
 				Type:        schema.TypeString,
@@ -140,6 +168,9 @@ func azureIntegrationAPIToTF(d *schema.ResourceData, azure *integration.AzureInt
 	if err := d.Set("named_token", azure.NamedToken); err != nil {
 		return err
 	}
+	if err := d.Set("sync_guest_os_namespaces", azure.SyncGuestOsNamespaces); err != nil {
+		return err
+	}
 	if len(azure.Services) > 0 {
 		services := make([]interface{}, len(azure.Services))
 		for i, v := range azure.Services {
@@ -158,6 +189,22 @@ func azureIntegrationAPIToTF(d *schema.ResourceData, azure *integration.AzureInt
 			return err
 		}
 	}
+	if len(azure.CustomNamespacesPerService) > 0 {
+		var customs []map[string]interface{}
+		for k, v := range azure.CustomNamespacesPerService {
+			namespaces := make([]interface{}, len(v))
+			for i, ns := range v {
+				namespaces[i] = ns
+			}
+			customs = append(customs, map[string]interface{}{
+				"service":    k,
+				"namespaces": schema.NewSet(schema.HashString, namespaces),
+			})
+		}
+		if err := d.Set("custom_namespaces_per_service", customs); err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
@@ -165,13 +212,14 @@ func azureIntegrationAPIToTF(d *schema.ResourceData, azure *integration.AzureInt
 func getPayloadAzureIntegration(d *schema.ResourceData) (*integration.AzureIntegration, error) {
 
 	azure := &integration.AzureIntegration{
-		Name:             d.Get("name").(string),
-		Type:             "Azure",
-		Enabled:          d.Get("enabled").(bool),
-		AppId:            d.Get("app_id").(string),
-		AzureEnvironment: integration.AzureEnvironment(strings.ToUpper(d.Get("environment").(string))),
-		SecretKey:        d.Get("secret_key").(string),
-		TenantId:         d.Get("tenant_id").(string),
+		Name:                  d.Get("name").(string),
+		Type:                  "Azure",
+		Enabled:               d.Get("enabled").(bool),
+		AppId:                 d.Get("app_id").(string),
+		AzureEnvironment:      integration.AzureEnvironment(strings.ToUpper(d.Get("environment").(string))),
+		SecretKey:             d.Get("secret_key").(string),
+		TenantId:              d.Get("tenant_id").(string),
+		SyncGuestOsNamespaces: d.Get("sync_guest_os_namespaces").(bool),
 	}
 
 	if val, ok := d.GetOk("named_token"); ok {
@@ -207,6 +255,20 @@ func getPayloadAzureIntegration(d *schema.ResourceData) (*integration.AzureInteg
 			subs[i] = s
 		}
 		azure.Subscriptions = subs
+	}
+
+	if val, ok := d.GetOk("custom_namespaces_per_service"); ok {
+		customServiceNS := map[string][]string{}
+		for _, csnsTF := range val.(*schema.Set).List() {
+			csnsTF := csnsTF.(map[string]interface{})
+			service := csnsTF["service"].(string)
+			namespaces := csnsTF["namespaces"].(*schema.Set).List()
+			customServiceNS[service] = make([]string, len(namespaces))
+			for i, ns := range namespaces {
+				customServiceNS[service][i] = ns.(string)
+			}
+		}
+		azure.CustomNamespacesPerService = customServiceNS
 	}
 
 	return azure, nil

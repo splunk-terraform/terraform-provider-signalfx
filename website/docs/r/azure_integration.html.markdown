@@ -19,23 +19,24 @@ resource "signalfx_azure_integration" "azure_myteam" {
   name    = "Azure Foo"
   enabled = true
 
-  resource "signalfx_azure_integration" "azure_myteamXX" {
-    name    = "AzureFoo"
-    enabled = false
+  environment = "azure"
 
-    environment = "azure"
+  poll_rate = 300
 
-    poll_rate = 300
+  secret_key = "XXX"
 
-    secret_key = "XXX"
+  app_id = "YYY"
 
-    app_id = "YYY"
+  tenant_id = "ZZZ"
 
-    tenant_id = "ZZZ"
+  services = ["microsoft.sql/servers/elasticpools"]
 
-    services = ["microsoft.sql/servers/elasticpools"]
+  subscriptions = ["sub-guid-here"]
 
-    subscriptions = ["sub-guid-here"]
+  # Optional
+  custom_namespaces_per_service {
+    service = "Microsoft.Compute/virtualMachines"
+    namespaces = [ "monitoringAgent", "customNamespace" ]
   }
 }
 ```
@@ -49,11 +50,15 @@ resource "signalfx_azure_integration" "azure_myteam" {
 * `name` - (Required) Name of the integration.
 * `enabled` - (Required) Whether the integration is enabled.
 * `app_id` - (Required) Azure application ID for the SignalFx app. To learn how to get this ID, see the topic [Connect to Microsoft Azure](https://docs.signalfx.com/en/latest/getting-started/send-data.html#connect-to-microsoft-azure) in the product documentation.
+* `custom_namespaces_per_service` - (Optional) Allows for more fine-grained control of syncing of custom namespaces, should the boolean convenience parameter `sync_guest_os_namespaces` be not enough. The customer may specify a map of services to custom namespaces. If they do so, for each service which is a key in this map, we will attempt to sync metrics from namespaces in the value list in addition to the default namespaces.
+  * `service` - (Required) The name of the service.
+  * `namespaces` - (Required) The additional namespaces.
 * `environment` (Optional) What type of Azure integration this is. The allowed values are `\"azure_us_government\"` and `\"azure\"`. Defaults to `\"azure\"`.
 * `poll_rate` - (Optional) AWS poll rate (in seconds). One of `60` or `300`.
 * `secret_key` - (Required) Azure secret key that associates the SignalFx app in Azure with the Azure tenant ID. To learn how to get this ID, see the topic [Connect to Microsoft Azure](https://docs.signalfx.com/en/latest/integrations/azure-info.html#connect-to-azure) in the product documentation.
 * `services` - (Required) List of Microsoft Azure service names for the Azure services you want SignalFx to monitor. See the documentation for [Creating Integrations](https://developers.signalfx.com/integrations_reference.html#operation/Create%20Integration) for valida values.
 * `subscriptions` - (Required) List of Azure subscriptions that SignalFx should monitor.
+* `sync_guest_os_namespaces` - (Optional) If enabled, SignalFx will try to sync additional namespaces for VMs (including VMs in scale sets): telegraf/mem, telegraf/cpu, azure.vm.windows.guest (these are namespaces recommended by Azure when enabling their Diagnostic Extension). If there are no metrics there, no new datapoints will be ingested. Defaults to false.
 * `tenant_id` (Required) Azure ID of the Azure tenant. To learn how to get this ID, see the topic [Connect to Microsoft Azure](https://docs.signalfx.com/en/latest/integrations/azure-info.html#connect-to-azure) in the product documentation.
 
 ## Attributes Reference
