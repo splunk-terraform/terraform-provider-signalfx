@@ -6,10 +6,12 @@ import (
 )
 
 const (
-	JobRunningResolution = "JOB_RUNNING_RESOLUTION"
-	JobDetectedLag       = "JOB_DETECTED_LAG"
-	JobInitialMaxDelay   = "JOB_INITIAL_MAX_DELAY"
-	FindLimitedResultSet = "FIND_LIMITED_RESULT_SET"
+	JobRunningResolution    = "JOB_RUNNING_RESOLUTION"
+	JobDetectedLag          = "JOB_DETECTED_LAG"
+	JobInitialMaxDelay      = "JOB_INITIAL_MAX_DELAY"
+	FindLimitedResultSet    = "FIND_LIMITED_RESULT_SET"
+	FindMatchedNoTimeseries = "FIND_MATCHED_NO_TIMESERIES"
+	GroupByMissingProperty  = "GROUPBY_MISSING_PROPERTY"
 )
 
 type MessageBlock struct {
@@ -47,6 +49,10 @@ func (im *InfoMessage) UnmarshalJSON(raw []byte) error {
 		mb.Contents = JobInitialMaxDelayContents(mb.ContentsRaw)
 	case FindLimitedResultSet:
 		mb.Contents = FindLimitedResultSetContents(mb.ContentsRaw)
+	case FindMatchedNoTimeseries:
+		mb.Contents = FindMatchedNoTimeseriesContents(mb.ContentsRaw)
+	case GroupByMissingProperty:
+		mb.Contents = GroupByMissingPropertyContents(mb.ContentsRaw)
 	default:
 		mb.Contents = mb.ContentsRaw
 	}
@@ -89,6 +95,23 @@ func (jm FindLimitedResultSetContents) MatchedSize() int {
 func (jm FindLimitedResultSetContents) LimitSize() int {
 	field, _ := jm["limitSize"].(float64)
 	return int(field)
+}
+
+type FindMatchedNoTimeseriesContents map[string]interface{}
+
+func (jm FindMatchedNoTimeseriesContents) MatchedNoTimeseriesQuery() string {
+	field, _ := jm["query"].(string)
+	return field
+}
+
+type GroupByMissingPropertyContents map[string]interface{}
+
+func (jm GroupByMissingPropertyContents) GroupByMissingProperties() []string {
+	propNames := make([]string, len(jm["propertyNames"].([]interface{})))
+	for i, v := range jm["propertyNames"].([]interface{}) {
+		propNames[i] = v.(string)
+	}
+	return propNames
 }
 
 // ExpiredTSIDMessage is received when a timeseries has expired and is no
