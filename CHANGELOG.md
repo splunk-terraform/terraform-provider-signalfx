@@ -1,7 +1,10 @@
-## 4.23.3 (Unreleased)
+## 4.23.4 (Unreleased)
+
+## 4.23.3 (July 27, 2020)
 
 IMPROVEMENTS:
 * provider: Improved documentation to reflect all available color choices. [#223](https://github.com/terraform-providers/terraform-provider-signalfx/pull/223)
+* provider: Add goreleaser bits and move to new organization for Terraform 0.13 compatability. [#225](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/225)
 
 ## 4.23.2 (June 26, 2020)
 
