@@ -7,3 +7,4 @@ crash.log
 *.swp
 *.swo
 terraform-provider-signalfx
+dist
