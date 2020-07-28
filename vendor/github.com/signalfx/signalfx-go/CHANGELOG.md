@@ -1,4 +1,18 @@
-# 1.7.1, 2020-06-10
+# 1.7.7,  2020-07-22
+* Added new fields to Azure integration.
+* Fix race condition in SignalFlow client Close operation that could cause
+  panics.
+
+# 1.7.5, 2020-06-11
+* Fix busted accessor.
+
+# 1.7.4, 2020-06-11
+* Finish support for additional computation fields for job metadata. Thanks [shrivu-stripe](https://github.com/shrivu-stripe)! [#93](https://github.com/signalfx/signalfx-go/pull/93)
+
+# 1.7.3, 2020-06-11
+* Added additional computation fields for job metadata. Thanks [shrivu-stripe](https://github.com/shrivu-stripe)! [#92](https://github.com/signalfx/signalfx-go/pull/92)
+
+# 1.7.2, 2020-06-10
 * Added `packageSpecifications` field to Detector`
 
 # 1.7.0, 2020-06-02

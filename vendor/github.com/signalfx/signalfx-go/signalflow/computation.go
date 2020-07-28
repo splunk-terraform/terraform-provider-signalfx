@@ -26,11 +26,13 @@ type Computation struct {
 	updateSignal       updateSignal
 	lastError          error
 
-	resolutionMS *int
-	lagMS        *int
-	maxDelayMS   *int
-	matchedSize  *int
-	limitSize    *int
+	resolutionMS             *int
+	lagMS                    *int
+	maxDelayMS               *int
+	matchedSize              *int
+	limitSize                *int
+	matchedNoTimeseriesQuery *string
+	groupByMissingProperties []string
 
 	tsidMetadata map[idtool.ID]*messages.MetadataProperties
 
@@ -116,6 +118,8 @@ func (c *Computation) Resolution() time.Duration {
 	if err := c.waitForMetadata(func() bool { return c.resolutionMS != nil }); err != nil {
 		return 0
 	}
+	c.updateSignal.Lock()
+	defer c.updateSignal.Unlock()
 	return time.Duration(*c.resolutionMS) * time.Millisecond
 }
 
@@ -126,6 +130,8 @@ func (c *Computation) Lag() time.Duration {
 	if err := c.waitForMetadata(func() bool { return c.lagMS != nil }); err != nil {
 		return 0
 	}
+	c.updateSignal.Lock()
+	defer c.updateSignal.Unlock()
 	return time.Duration(*c.lagMS) * time.Millisecond
 }
 
@@ -136,6 +142,8 @@ func (c *Computation) MaxDelay() time.Duration {
 	if err := c.waitForMetadata(func() bool { return c.maxDelayMS != nil }); err != nil {
 		return 0
 	}
+	c.updateSignal.Lock()
+	defer c.updateSignal.Unlock()
 	return time.Duration(*c.maxDelayMS) * time.Millisecond
 }
 
@@ -146,6 +154,8 @@ func (c *Computation) MatchedSize() int {
 	if err := c.waitForMetadata(func() bool { return c.matchedSize != nil }); err != nil {
 		return 0
 	}
+	c.updateSignal.Lock()
+	defer c.updateSignal.Unlock()
 	return *c.matchedSize
 }
 
@@ -156,7 +166,35 @@ func (c *Computation) LimitSize() int {
 	if err := c.waitForMetadata(func() bool { return c.limitSize != nil }); err != nil {
 		return 0
 	}
+	c.updateSignal.Lock()
+	defer c.updateSignal.Unlock()
 	return *c.limitSize
+}
+
+// MatchedNoTimeseriesQuery if it matched no active timeseries.
+// This will wait for a short while for the limit
+// size message to come on the websocket, but will return "" after a timeout if
+// it does not come.
+func (c *Computation) MatchedNoTimeseriesQuery() string {
+	if err := c.waitForMetadata(func() bool { return c.matchedNoTimeseriesQuery != nil }); err != nil {
+		return ""
+	}
+	c.updateSignal.Lock()
+	defer c.updateSignal.Unlock()
+	return *c.matchedNoTimeseriesQuery
+}
+
+// GroupByMissingProperties are timeseries that don't contain the required dimensions.
+// This will wait for a short while for the limit
+// size message to come on the websocket, but will return nil after a timeout if
+// it does not come.
+func (c *Computation) GroupByMissingProperties() []string {
+	if err := c.waitForMetadata(func() bool { return c.groupByMissingProperties != nil }); err != nil {
+		return nil
+	}
+	c.updateSignal.Lock()
+	defer c.updateSignal.Unlock()
+	return c.groupByMissingProperties
 }
 
 // TSIDMetadata for a particular tsid.  This will wait for a short while for
@@ -166,6 +204,8 @@ func (c *Computation) TSIDMetadata(tsid idtool.ID) *messages.MetadataProperties 
 	if err := c.waitForMetadata(func() bool { return c.tsidMetadata[tsid] != nil }); err != nil {
 		return nil
 	}
+	c.updateSignal.Lock()
+	defer c.updateSignal.Unlock()
 	return c.tsidMetadata[tsid]
 }
 
@@ -185,7 +225,6 @@ func (c *Computation) watchMessages() {
 	for {
 		select {
 		case <-c.ctx.Done():
-			close(c.dataCh)
 			return
 		case m, ok := <-c.channel.Messages():
 			if !ok {
@@ -199,7 +238,8 @@ func (c *Computation) watchMessages() {
 
 func (c *Computation) processMessage(m messages.Message) {
 	defer c.updateSignal.SignalAll()
-
+	c.updateSignal.Lock()
+	defer c.updateSignal.Unlock()
 	switch v := m.(type) {
 	case *messages.JobStartControlMessage:
 		c.handle = v.Handle
@@ -224,6 +264,10 @@ func (c *Computation) processMessage(m messages.Message) {
 		case messages.FindLimitedResultSet:
 			c.matchedSize = pointer.Int(v.MessageBlock.Contents.(messages.FindLimitedResultSetContents).MatchedSize())
 			c.limitSize = pointer.Int(v.MessageBlock.Contents.(messages.FindLimitedResultSetContents).LimitSize())
+		case messages.FindMatchedNoTimeseries:
+			c.matchedNoTimeseriesQuery = pointer.String(v.MessageBlock.Contents.(messages.FindMatchedNoTimeseriesContents).MatchedNoTimeseriesQuery())
+		case messages.GroupByMissingProperty:
+			c.groupByMissingProperties = v.MessageBlock.Contents.(messages.GroupByMissingPropertyContents).GroupByMissingProperties()
 		}
 	case *messages.ErrorMessage:
 		rawData := v.RawData()
@@ -256,6 +300,7 @@ func (c *Computation) bufferDataMessages() {
 			}
 			select {
 			case <-c.ctx.Done():
+				close(c.dataCh)
 				return
 			case c.dataCh <- nextMessage:
 				nextMessage = nil

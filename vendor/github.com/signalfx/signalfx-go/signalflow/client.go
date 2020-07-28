@@ -237,12 +237,16 @@ func (c *Client) handleMessage(msgBytes []byte, msgTyp int) error {
 		channelName := cm.Channel()
 		c.Lock()
 		channel, ok := c.channelsByName[channelName]
-		c.Unlock()
-		if !ok || channelName == "" {
+		if !ok {
+			// The channel should have existed before, but now doesn't,
+			// probably because it was closed.
+			return nil
+		} else if channelName == "" {
 			c.acceptMessage(message)
 			return nil
 		}
 		channel.AcceptMessage(message)
+		c.Unlock()
 	} else {
 		return c.acceptMessage(message)
 	}
@@ -314,6 +318,7 @@ func (c *Client) closeRegisteredChannels() {
 	for _, ch := range c.channelsByName {
 		ch.Close()
 	}
+	c.channelsByName = map[string]*Channel{}
 	c.Unlock()
 }
 

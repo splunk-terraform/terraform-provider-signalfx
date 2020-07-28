@@ -14,14 +14,16 @@ type Channel struct {
 	name     string
 	messages chan messages.Message
 	ctx      context.Context
-	closed   bool
+	cancel   context.CancelFunc
 }
 
 func newChannel(ctx context.Context, name string) *Channel {
+	chanCtx, cancel := context.WithCancel(ctx)
 	c := &Channel{
 		name:     name,
 		messages: make(chan messages.Message),
-		ctx:      ctx,
+		ctx:      chanCtx,
+		cancel:   cancel,
 	}
 	return c
 }
@@ -32,7 +34,7 @@ func (c *Channel) AcceptMessage(msg messages.Message) {
 	select {
 	case c.messages <- msg:
 	case <-c.ctx.Done():
-		c.Close()
+		return
 	}
 }
 
@@ -45,10 +47,6 @@ func (c *Channel) Messages() <-chan messages.Message {
 // Close the channel.  This does not actually stop a job in SignalFlow, for
 // that use Computation.Stop().
 func (c *Channel) Close() {
-	c.Lock()
-	if !c.closed {
-		close(c.messages)
-		c.closed = true
-	}
-	c.Unlock()
+	c.cancel()
+	close(c.messages)
 }

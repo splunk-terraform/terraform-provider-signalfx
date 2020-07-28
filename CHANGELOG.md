@@ -1,4 +1,7 @@
-## 4.23.4 (Unreleased)
+## 4.24.0 (Unreleased)
+
+FEATURES:
+* resource/azure_integration: Added `custom_namespaces_per_service` and `sync_guest_os_namespaces`. [#226](https://github.com/signalfx/terraform-provider-signalfx/pull/226)
 
 ## 4.23.3 (July 27, 2020)
 

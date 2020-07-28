@@ -27,15 +27,17 @@ type AzureIntegration struct {
 	Name string `json:"name,omitempty"`
 	Type Type   `json:"type"`
 	// Azure application ID for the SignalFx app. To learn how to get this ID, see the topic (https://docs.signalfx.com/en/latest/getting-started/send-data.html#connect-to-microsoft-azure)[Connect to Microsoft Azure] in the product documentation.<br> **NOTE:** To ensure security, SignalFx doesn't return this property in response objects.
-	AppId            string           `json:"appId,omitempty"`
-	AzureEnvironment AzureEnvironment `json:"azureEnvironment,omitempty"`
-	PollRate         *PollRate        `json:"pollRate,omitempty"`
+	AppId                      string              `json:"appId,omitempty"`
+	AzureEnvironment           AzureEnvironment    `json:"azureEnvironment,omitempty"`
+	CustomNamespacesPerService map[string][]string `json:"customNamespacesPerService,omitempty"`
+	PollRate                   *PollRate           `json:"pollRate,omitempty"`
 	// Azure secret key that associates the SignalFx app in Azure with the Azure tenant ID. To learn how to get this ID, see the topic (https://docs.signalfx.com/en/latest/getting-started/send-data.html#connect-to-microsoft-azure)[Connect to Microsoft Azure] in the product documentation.<br> **NOTE:** To ensure security, SignalFx doesn't return this property in response objects.
 	SecretKey string `json:"secretKey,omitempty"`
 	// Array of Microsoft Azure service names for the Azure services you want SignalFx to monitor. SignalFx only supports certain services, and if you specify an unsupported one, you receive an API error.  The supported services are:   * microsoft.sql/servers/elasticpools   * microsoft.storage/storageaccounts   * microsoft.storage/storageaccountsservices/tableservices   * microsoft.storage/storageaccountsservices/blobservices   * microsoft.storage/storageaccounts/queueservices   * microsoft.storage/storageaccounts/fileservices   * microsoft.compute/virtualmachinescalesets   * microsoft.compute/virtualmachinescalesets/virtualmachines   * microsoft.compute/virtualmachines   * microsoft.devices/iothubs   * microsoft.eventHub/namespaces   * microsoft.batch/batchaccounts   * microsoft.sql/servers/databases   * microsoft.cache/redis   * microsoft.logic/workflows
 	Services []AzureService `json:"services,omitempty"`
 	// List of Azure subscriptions that SignalFx should monitor, in the form of a JSON array
-	Subscriptions []string `json:"subscriptions,omitempty"`
+	Subscriptions         []string `json:"subscriptions,omitempty"`
+	SyncGuestOsNamespaces bool     `json:"syncGuestOsNamespaces"`
 	// Azure ID of the Azure tenant. To learn how to get this ID, see the topic (https://docs.signalfx.com/en/latest/getting-started/send-data.html#connect-to-microsoft-azure)[Connect to Microsoft Azure] in the product documentation.
 	TenantId   string `json:"tenantId,omitempty"`
 	NamedToken string `json:"namedToken,omitempty"`
