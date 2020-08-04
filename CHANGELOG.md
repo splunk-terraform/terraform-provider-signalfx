@@ -1,3 +1,8 @@
+## 4.25.0 (August 4, 2020)
+
+BUGFIXES:
+* resource/aws_integration: Moved `named_token` to `signalfx_aws_integration`. [#231](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/231)
+
 ## 4.24.0 (July 28, 2020)
 
 FEATURES:
