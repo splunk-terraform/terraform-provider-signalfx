@@ -179,9 +179,8 @@ func integrationAWSResource() *schema.Resource {
 			},
 			"named_token": &schema.Schema{
 				Type:        schema.TypeString,
-				Optional:    true,
+				Computed:    true,
 				Description: "A named token to use for ingest",
-				ForceNew:    true,
 			},
 		},
 
