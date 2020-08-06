@@ -388,7 +388,7 @@ func getPayloadAWSIntegration(d *schema.ResourceData) (*integration.AwsCloudWatc
 	}
 
 	if val, ok := d.GetOk("poll_rate"); ok {
-		aws.PollRate = val.(int64)
+		aws.PollRate = int64(val.(int)) * 1000
 	}
 
 	if val, ok := d.GetOk("regions"); ok {
