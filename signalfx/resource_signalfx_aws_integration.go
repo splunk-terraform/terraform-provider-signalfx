@@ -251,7 +251,7 @@ func awsIntegrationAPIToTF(d *schema.ResourceData, aws *integration.AwsCloudWatc
 	if err := d.Set("import_cloud_watch", aws.ImportCloudWatch); err != nil {
 		return err
 	}
-	if err := d.Set("poll_rate", *aws.PollRate/1000); err != nil {
+	if err := d.Set("poll_rate", aws.PollRate/1000); err != nil {
 		return err
 	}
 	if err := d.Set("use_get_metric_data_method", aws.UseGetMetricDataMethod); err != nil {
@@ -388,14 +388,7 @@ func getPayloadAWSIntegration(d *schema.ResourceData) (*integration.AwsCloudWatc
 	}
 
 	if val, ok := d.GetOk("poll_rate"); ok {
-		val := val.(int)
-		if val != 0 {
-			pollRate := integration.OneMinutely
-			if val == 300 {
-				pollRate = integration.FiveMinutely
-			}
-			aws.PollRate = &pollRate
-		}
+		aws.PollRate = val.(int64)
 	}
 
 	if val, ok := d.GetOk("regions"); ok {

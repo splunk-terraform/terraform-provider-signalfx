@@ -69,12 +69,11 @@ func integrationAWSTokenRead(d *schema.ResourceData, meta interface{}) error {
 func getPayloadAWSTokenIntegration(d *schema.ResourceData) (*integration.AwsCloudWatchIntegration, error) {
 
 	// We can't leave this empty, even though we don't need it yet
-	defaultPollRate := integration.FiveMinutely
 	aws := &integration.AwsCloudWatchIntegration{
 		Type:       "AWSCloudWatch",
 		AuthMethod: integration.SECURITY_TOKEN,
 		Name:       d.Get("name").(string),
-		PollRate:   &defaultPollRate,
+		PollRate:   300000,
 	}
 
 	return aws, nil
