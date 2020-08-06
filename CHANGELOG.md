@@ -1,3 +1,11 @@
+## 4.26.0 (August 8, 2020)
+
+FEATURES:
+* resource/aws_integration: Add `enable_check_large_volume` option. [#234](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/234)
+
+IMPROVEMENTS:
+* resource/aws_integration: Allow `poll_rate` to be a range from 60 to 300. [#234](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/234)
+
 ## 4.25.0 (August 4, 2020)
 
 BUGFIXES:
