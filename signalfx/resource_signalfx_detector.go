@@ -85,7 +85,7 @@ func detectorResource() *schema.Resource {
 			"teams": &schema.Schema{
 				Type:        schema.TypeList,
 				Optional:    true,
-				Deprecated:  "TKTK",
+				Deprecated:  "Setting the team in a detector has been deprecated, please see the team resource's detectors argument.",
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "Team IDs to associate the detector to",
 			},
