@@ -182,6 +182,12 @@ func integrationAWSResource() *schema.Resource {
 				Optional:    true,
 				Description: "A named token to use for ingest",
 			},
+			"enable_check_large_volume": &schema.Schema{
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Controls how SignalFx checks for large amounts of data for this AWS integration. If true, SignalFx monitors the amount of data coming in from the integration.",
+			},
 		},
 
 		Create: integrationAWSCreate,
@@ -255,6 +261,9 @@ func awsIntegrationAPIToTF(d *schema.ResourceData, aws *integration.AwsCloudWatc
 		return err
 	}
 	if err := d.Set("use_get_metric_data_method", aws.UseGetMetricDataMethod); err != nil {
+		return err
+	}
+	if err := d.Set("enable_check_large_volume", aws.EnableCheckLargeVolume); err != nil {
 		return err
 	}
 	if err := d.Set("named_token", aws.NamedToken); err != nil {
@@ -355,6 +364,7 @@ func getPayloadAWSIntegration(d *schema.ResourceData) (*integration.AwsCloudWatc
 		EnableAwsUsage:         d.Get("enable_aws_usage").(bool),
 		ImportCloudWatch:       d.Get("import_cloud_watch").(bool),
 		UseGetMetricDataMethod: d.Get("use_get_metric_data_method").(bool),
+		EnableCheckLargeVolume: d.Get("enable_check_large_volume").(bool),
 	}
 
 	if d.Get("external_id").(string) != "" {
