@@ -80,5 +80,6 @@ resource "signalfx_aws_integration" "aws_myteam" {
 * `regions` - (Optional) List of AWS regions that SignalFx should monitor.
 * `role_arn` - (Optional) Role ARN that you add to an existing AWS integration object. **Note**: Ensure you use the `arn` property of your role, not the id!
 * `services` - (Optional) List of AWS services that you want SignalFx to monitor. Each element is a string designating an AWS service. Conflicts with `namespace_sync_rule`. See the documentation for [Creating Integrations](https://developers.signalfx.com/integrations_reference.html#operation/Create%20Integration) for valida values.
-* `poll_rate` - (Optional) AWS poll rate (in seconds). One of `60` or `300`.
+* `poll_rate` - (Optional) AWS poll rate (in seconds). Value between `60` and `300`.
 * `use_get_metric_data_method` - (Optional) Enable the use of Amazon's `GetMetricData` for collecting metrics. Note that this requires the inclusion of the `"cloudwatch:GetMetricData"` permission.
+* `enable_check_large_volume` - (Optional) Controls how SignalFx checks for large amounts of data for this AWS integration. If `true`, SignalFx monitors the amount of data coming in from the integration.

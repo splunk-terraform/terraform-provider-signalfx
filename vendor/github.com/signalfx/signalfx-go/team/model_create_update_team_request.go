@@ -18,4 +18,6 @@ type CreateUpdateTeamRequest struct {
 	// List of organization members IDs that belong to this team
 	Members           []string          `json:"members,omitempty"`
 	NotificationLists NotificationLists `json:"notificationLists,omitempty"`
+	DashboardGroups   []string          `json:"dashboardGroups,omitempty"`
+	Detectors         []string          `json:"detectors,omitempty"`
 }
