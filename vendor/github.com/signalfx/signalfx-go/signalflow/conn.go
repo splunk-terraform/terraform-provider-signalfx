@@ -153,13 +153,19 @@ func (c *wsConn) postConnect(conn *websocket.Conn) error {
 
 func (c *wsConn) readNextMessage(conn *websocket.Conn) {
 	if err := conn.SetReadDeadline(time.Now().Add(c.ReadTimeout)); err != nil {
-		c.readErrCh <- fmt.Errorf("could not set read timeout in SignalFlow client: %v", err)
+		select {
+		case c.readErrCh <- fmt.Errorf("could not set read timeout in SignalFlow client: %v", err):
+		case <-c.ctx.Done():
+		}
 		return
 	}
 
 	typ, bytes, err := conn.ReadMessage()
 	if err != nil {
-		c.readErrCh <- err
+		select {
+		case c.readErrCh <- err:
+		case <-c.ctx.Done():
+		}
 		return
 	}
 	if typ == websocket.TextMessage {

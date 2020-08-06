@@ -308,7 +308,13 @@ func (c *Computation) bufferDataMessages() {
 				buffer = append(buffer, msg)
 			}
 		} else {
-			buffer = append(buffer, <-c.dataChBuffer)
+			select {
+			case <-c.ctx.Done():
+				close(c.dataCh)
+				return
+			case msg := <-c.dataChBuffer:
+				buffer = append(buffer, msg)
+			}
 		}
 	}
 }
@@ -323,6 +329,7 @@ func (c *Computation) bufferExpirationMessages() {
 			if nextMessage == nil {
 				nextMessage, buffer = buffer[0], buffer[1:]
 			}
+
 			select {
 			case <-c.ctx.Done():
 				return
@@ -332,7 +339,12 @@ func (c *Computation) bufferExpirationMessages() {
 				buffer = append(buffer, msg)
 			}
 		} else {
-			buffer = append(buffer, <-c.expirationChBuffer)
+			select {
+			case <-c.ctx.Done():
+				return
+			case msg := <-c.expirationChBuffer:
+				buffer = append(buffer, msg)
+			}
 		}
 	}
 }
