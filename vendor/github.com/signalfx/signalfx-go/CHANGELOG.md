@@ -1,3 +1,6 @@
+# 1.7.10, 2020-08-06
+* Don't omit chart.description from JSON, as API doesn't clear it if absent. [#107](https://github.com/signalfx/signalfx-go/pull/107)
+
 # 1.7.9, 2020-08-06
 * Allow AWS poll rate to be an int64. [#106](https://github.com/signalfx/signalfx-go/pull/106)
 

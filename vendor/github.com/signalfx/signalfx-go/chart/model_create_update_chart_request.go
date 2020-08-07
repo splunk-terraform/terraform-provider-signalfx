@@ -13,7 +13,7 @@ type CreateUpdateChartRequest struct {
 	// User-defined JSON object containing metadata
 	CustomProperties string `json:"customProperties,omitempty"`
 	// Description of the chart. This value appears underneath the chart name in the SignalFx web UI.
-	Description string `json:"description,omitempty"`
+	Description string `json:"description"`
 	// The displayed name of the chart in the dashboard
 	Name    string   `json:"name,omitempty"`
 	Options *Options `json:"options,omitempty"`
