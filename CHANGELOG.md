@@ -1,4 +1,4 @@
-## 4.27.0 (August 8, 2020)
+## 4.26.1 (August 8, 2020)
 
 BUGFIXES:
 * provider: Removing a description from a chart now properly unsets that description, fixing unclean plans. [#236](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/236)
