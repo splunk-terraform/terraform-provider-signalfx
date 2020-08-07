@@ -1,3 +1,8 @@
+## 4.27.0 (August 8, 2020)
+
+BUGFIXES:
+* provider: Removing a description from a chart now properly unsets that description, fixing unclean plans. [#236](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/236)
+
 ## 4.26.0 (August 8, 2020)
 
 FEATURES:
@@ -150,7 +155,6 @@ IMPROVEMENTS:
 ## 4.18.2 (March 13, 2020)
 
 BUGFIXES:
-
 * resource/aws_integration: Corrected bad service name for `AWS/VPN`.
 
 ## 4.18.1 (March 11, 2020)
