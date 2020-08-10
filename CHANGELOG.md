@@ -1,3 +1,8 @@
+## 4.26.2 (August 10, 2020)
+
+IMPROVEMENTS:
+* provider: Bump Terraform SDK to v1.15.0. [#237](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/237)
+
 ## 4.26.1 (August 8, 2020)
 
 BUGFIXES:
