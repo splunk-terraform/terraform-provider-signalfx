@@ -539,12 +539,14 @@ func detectorAPIToTF(d *schema.ResourceData, det *detector.Detector) error {
 				if err := d.Set("time_range", *tr.Range/1000); err != nil {
 					return err
 				}
-			}
-			if err := d.Set("start_time", tr.Start); err != nil {
-				return err
-			}
-			if err := d.Set("end_time", tr.End); err != nil {
-				return err
+			} else {
+				// Only set start/end if we didn't have a range
+				if err := d.Set("start_time", tr.Start); err != nil {
+					return err
+				}
+				if err := d.Set("end_time", tr.End); err != nil {
+					return err
+				}
 			}
 		}
 
