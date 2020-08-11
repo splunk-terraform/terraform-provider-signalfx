@@ -1,7 +1,8 @@
 ## 4.26.4 (August 11, 2020)
 
 IMPROVEMENTS:
-* resource/dashboard: Document `authorized_writer_teams` and `authorized_writer_users` options. []()
+* resource/dashboard: Document `authorized_writer_teams` and `authorized_writer_users` options. [#239](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/239)
+* provider: User-Agent has been reverted back to the older, more information version. [#240](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/240)
 
 ## 4.26.3 (August 10, 2020)
 
