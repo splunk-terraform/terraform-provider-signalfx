@@ -1,7 +1,12 @@
+## 4.26.4 (August 11, 2020)
+
+IMPROVEMENTS:
+* resource/dashboard: Document `authorized_writer_teams` and `authorized_writer_users` options. []()
+
 ## 4.26.3 (August 10, 2020)
 
 BUGFIXES:
-* resources/detector: Only "set" a start/end time when there isn't a time range. Fixes conflicting options on import of detectors. [#238](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/238)
+* resource/detector: Only "set" a start/end time when there isn't a time range. Fixes conflicting options on import of detectors. [#238](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/238)
 
 ## 4.26.2 (August 10, 2020)
 
