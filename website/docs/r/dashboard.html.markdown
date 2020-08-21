@@ -54,8 +54,8 @@ The following arguments are supported in the resource block:
 * `authorized_writer_users` - (Optional) User IDs that have write access to this dashboard group. Remember to use an admin's token if using this feature and to include that admin's user id (or team id in `authorized_writer_teams`).
 * `charts_resolution` - (Optional) Specifies the chart data display resolution for charts in this dashboard. Value can be one of `"default"`,  `"low"`, `"high"`, or  `"highest"`.
 * `time_range` - (Optional) The time range prior to now to visualize. SignalFx time syntax (e.g. `"-5m"`, `"-1h"`).
-* `start_time` - (Optional) Seconds since epoch. Used for visualization. You must specify time_span_type = `"absolute"` too.
-* `end_time` - (Optional) Seconds since epoch. Used for visualization. You must specify time_span_type = `"absolute"` too.
+* `start_time` - (Optional) Seconds since epoch. Used for visualization.
+* `end_time` - (Optional) Seconds since epoch. Used for visualization.
 * `filter` - (Optional) Filter to apply to the charts when displaying the dashboard.
     * `property` - (Required) A metric time series dimension or property name.
     * `negated` - (Optional) Whether this filter should be a not filter. `false` by default.
