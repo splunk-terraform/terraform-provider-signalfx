@@ -82,13 +82,6 @@ func detectorResource() *schema.Resource {
 				Description:   "Seconds since epoch. Used for visualization",
 				ValidateFunc:  validation.IntAtLeast(0),
 			},
-			"teams": &schema.Schema{
-				Type:        schema.TypeList,
-				Optional:    true,
-				Deprecated:  "Setting the team in a detector has been deprecated, please see the team resource's detectors argument.",
-				Elem:        &schema.Schema{Type: schema.TypeString},
-				Description: "Team IDs to associate the detector to",
-			},
 			"rule": &schema.Schema{
 				Type:        schema.TypeSet,
 				Required:    true,
@@ -342,14 +335,6 @@ func getPayloadDetector(d *schema.ResourceData) (*detector.CreateUpdateDetectorR
 
 	cudr.VisualizationOptions = getVisualizationOptionsDetector(d)
 
-	if val, ok := d.GetOk("teams"); ok {
-		teams := []string{}
-		for _, t := range val.([]interface{}) {
-			teams = append(teams, t.(string))
-		}
-		cudr.Teams = teams
-	}
-
 	return cudr, nil
 }
 
@@ -493,9 +478,6 @@ func detectorAPIToTF(d *schema.ResourceData, det *detector.Detector) error {
 		if err := d.Set("max_delay", *det.MaxDelay/1000); err != nil {
 			return err
 		}
-	}
-	if err := d.Set("teams", det.Teams); err != nil {
-		return err
 	}
 
 	if det.AuthorizedWriters != nil {
