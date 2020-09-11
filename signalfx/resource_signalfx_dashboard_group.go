@@ -23,12 +23,6 @@ func dashboardGroupResource() *schema.Resource {
 				Optional:    true,
 				Description: "Description of the dashboard group",
 			},
-			"teams": &schema.Schema{
-				Type:        schema.TypeList,
-				Optional:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
-				Description: "Team IDs to associate the dashboard group to",
-			},
 			"dashboard": &schema.Schema{
 				Type:        schema.TypeList,
 				Optional:    true,
@@ -188,14 +182,6 @@ func getPayloadDashboardGroup(d *schema.ResourceData) *dashboard_group.CreateUpd
 		Name:              d.Get("name").(string),
 		Description:       d.Get("description").(string),
 		AuthorizedWriters: &dashboard_group.AuthorizedWriters{},
-	}
-
-	if val, ok := d.GetOk("teams"); ok {
-		teams := []string{}
-		for _, t := range val.([]interface{}) {
-			teams = append(teams, t.(string))
-		}
-		cudgr.Teams = teams
 	}
 
 	if val, ok := d.GetOk("authorized_writer_teams"); ok {
@@ -371,9 +357,6 @@ func dashboardGroupAPIToTF(d *schema.ResourceData, dg *dashboard_group.Dashboard
 		return err
 	}
 	if err := d.Set("description", dg.Description); err != nil {
-		return err
-	}
-	if err := d.Set("teams", dg.Teams); err != nil {
 		return err
 	}
 

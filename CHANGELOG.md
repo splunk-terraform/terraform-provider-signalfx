@@ -1,3 +1,12 @@
+## 5.0.0 (September 10, 2020)
+
+BREAKING CHANGES:
+* resource/dashboard_group: The field `teams` have been removed, please use the `team` resource's `dashboard_groups` argument. [#244](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/244)
+* resource/detector: The field `teams` has been removed, please use the `team` resource's `detectors` argument. [#244](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/244)
+
+IMPROVEMENTS:
+* resource/team: The new arguments `detectors` and `dashboard_groups` have been added. [#244](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/244)
+
 ## 4.26.4 (August 11, 2020)
 
 IMPROVEMENTS:
