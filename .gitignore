@@ -8,3 +8,4 @@ crash.log
 *.swo
 terraform-provider-signalfx
 dist
+.idea
