@@ -62,7 +62,6 @@ The following arguments are supported in the resource block:
 
 * `name` - (Required) Name of the dashboard group.
 * `description` - (Required) Description of the dashboard group.
-* `teams` - (Optional) Team IDs to associate the dashboard group to.
 * `authorized_writer_teams` - (Optional) Team IDs that have write access to this dashboard group. Remember to use an admin's token if using this feature and to include that admin's team (or user id in `authorized_writer_teams`).
 * `authorized_writer_users` - (Optional) User IDs that have write access to this dashboard group. Remember to use an admin's token if using this feature and to include that admin's user id (or team id in `authorized_writer_teams`).
 * `dashboard` - (Optional) [Mirrored dashboards](https://docs.signalfx.com/en/latest/dashboards/dashboard-mirrors.html) in this dashboard group. **Note:** This feature is not present in all accounts. Please contact support if you are unsure.
