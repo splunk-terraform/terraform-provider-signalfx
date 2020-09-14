@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/plugin"
-	"github.com/terraform-providers/terraform-provider-signalfx/signalfx"
+	"github.com/splunk-terraform/terraform-provider-signalfx/signalfx"
 )
 
 func main() {
