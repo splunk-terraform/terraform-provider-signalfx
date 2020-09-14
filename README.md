@@ -16,16 +16,16 @@ Requirements
 Building The Provider
 ---------------------
 
-Clone repository to: `$GOPATH/src/github.com/terraform-providers/terraform-provider-signalfx`
+Clone repository to: `$GOPATH/src/github.com/splunk-terraform/terraform-provider-signalfx`
 
 ```sh
-$ git clone git@github.com:terraform-providers/terraform-provider-signalfx $GOPATH/src/github.com/terraform-providers/terraform-provider-signalfx
+$ git clone git@github.com:terraform-providers/terraform-provider-signalfx $GOPATH/src/github.com/splunk-terraform/terraform-provider-signalfx
 ```
 
 Enter the provider directory and build the provider
 
 ```sh
-$ cd $GOPATH/src/github.com/terraform-providers/terraform-provider-signalfx
+$ cd $GOPATH/src/github.com/splunk-terraform/terraform-provider-signalfx
 $ make build
 ```
 

@@ -18,7 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	homedir "github.com/mitchellh/go-homedir"
 	sfx "github.com/signalfx/signalfx-go"
-	"github.com/terraform-providers/terraform-provider-signalfx/version"
+	"github.com/splunk-terraform/terraform-provider-signalfx/version"
 )
 
 var SystemConfigPath = "/etc/signalfx.conf"
