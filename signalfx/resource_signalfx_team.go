@@ -39,12 +39,14 @@ func teamResource() *schema.Resource {
 				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "Detectors that belong to this team",
+				Deprecated:  "Use signalfx_team_links resource",
 			},
 			"dashboard_groups": &schema.Schema{
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "Dashboard Groups that belong to this team",
+				Deprecated:  "Use signalfx_team_links resource",
 			},
 			"notifications_critical": &schema.Schema{
 				Type:     schema.TypeList,

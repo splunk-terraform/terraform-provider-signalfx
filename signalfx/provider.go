@@ -18,6 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	homedir "github.com/mitchellh/go-homedir"
 	sfx "github.com/signalfx/signalfx-go"
+
 	"github.com/splunk-terraform/terraform-provider-signalfx/version"
 )
 
@@ -92,6 +93,7 @@ func Provider() terraform.ResourceProvider {
 			"signalfx_text_chart":               textChartResource(),
 			"signalfx_victor_ops_integration":   integrationVictorOpsResource(),
 			"signalfx_webhook_integration":      integrationWebhookResource(),
+			"signalfx_team_links":               teamLinksResource(),
 		},
 		ConfigureFunc: signalfxConfigure,
 	}
