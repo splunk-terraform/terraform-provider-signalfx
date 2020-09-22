@@ -118,7 +118,7 @@ func dashboardGroupResource() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"metric": &schema.Schema{
 							Type:     schema.TypeString,
-							Required: true,
+							Optional: true,
 						},
 						"filters": &schema.Schema{
 							Type:        schema.TypeSet,
