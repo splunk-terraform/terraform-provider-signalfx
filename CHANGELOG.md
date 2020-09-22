@@ -1,3 +1,11 @@
+## 6.0.0 (October 2, 2020)
+
+FEATURES:
+* resource/signalfx_team_links: This new resource can be used to manage linking of detectors and dashboard groups to teams. Multiple links can be used to a single team.
+
+BREAKING CHANGES:
+* resource/signalfx_team: The recently added dashboard group and detector entries have been removed from teams and must now be managed with the `signalfx_team_links` resource. 
+
 ## 5.0.1 (September 23, 2020)
 
 BUGFIXES:

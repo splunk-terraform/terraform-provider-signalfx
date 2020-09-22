@@ -34,20 +34,6 @@ func teamResource() *schema.Resource {
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "Members of team",
 			},
-			"detectors": &schema.Schema{
-				Type:        schema.TypeSet,
-				Optional:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
-				Description: "Detectors that belong to this team",
-				Deprecated:  "Use signalfx_team_links resource",
-			},
-			"dashboard_groups": &schema.Schema{
-				Type:        schema.TypeSet,
-				Optional:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
-				Description: "Dashboard Groups that belong to this team",
-				Deprecated:  "Use signalfx_team_links resource",
-			},
 			"notifications_critical": &schema.Schema{
 				Type:     schema.TypeList,
 				Optional: true,
@@ -137,24 +123,6 @@ func getPayloadTeam(d *schema.ResourceData) (*team.CreateUpdateTeamRequest, erro
 		}
 	}
 	t.Members = members
-
-	var dashboardGroups []string
-	if val, ok := d.GetOk("dashboard_groups"); ok {
-		tfValues := val.(*schema.Set).List()
-		for _, v := range tfValues {
-			dashboardGroups = append(dashboardGroups, v.(string))
-		}
-	}
-	t.DashboardGroups = dashboardGroups
-
-	var detectors []string
-	if val, ok := d.GetOk("detectors"); ok {
-		tfValues := val.(*schema.Set).List()
-		for _, v := range tfValues {
-			detectors = append(detectors, v.(string))
-		}
-	}
-	t.Detectors = detectors
 
 	if val, ok := d.GetOk("notifications_critical"); ok {
 		nots, err := getNotificationList(val.([]interface{}))
@@ -327,26 +295,6 @@ func teamAPIToTF(d *schema.ResourceData, t *team.Team) error {
 			members[i] = v
 		}
 		if err := d.Set("members", schema.NewSet(schema.HashString, members)); err != nil {
-			return err
-		}
-	}
-
-	if len(t.Detectors) > 0 {
-		detectors := make([]interface{}, len(t.Detectors))
-		for i, v := range t.Detectors {
-			detectors[i] = v
-		}
-		if err := d.Set("detectors", schema.NewSet(schema.HashString, detectors)); err != nil {
-			return err
-		}
-	}
-
-	if len(t.DashboardGroups) > 0 {
-		dashGroups := make([]interface{}, len(t.DashboardGroups))
-		for i, v := range t.DashboardGroups {
-			dashGroups[i] = v
-		}
-		if err := d.Set("dashboard_groups", schema.NewSet(schema.HashString, dashGroups)); err != nil {
 			return err
 		}
 	}

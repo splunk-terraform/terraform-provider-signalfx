@@ -25,16 +25,6 @@ resource "signalfx_team" "myteam0" {
     # …
   ]
 
-  detectors = [
-    "detectorId1",
-    "detectorId2",
-  ]
-
-  dashboard_groups = [
-    "dashboardGroupId1",
-    "dashboardGroupId2",
-  ]
-
   notifications_critical = [
     "PagerDuty,credentialId"
   ]
