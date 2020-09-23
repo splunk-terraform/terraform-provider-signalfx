@@ -1,3 +1,24 @@
+## UNRELEASED
+
+BUGFIXES:
+* resource/dashboard_group: The field `import_qualifiers` would not resolve to a clean plan if the dashboard group had an entry like:
+
+    ```json
+    "importQualifiers" : [ {
+      "filters" : [ ],
+      "metric" : ""
+    } ]
+    ```
+
+  With this change the plan will at least be clean when the empty resource is included in tf:
+
+    ```
+    import_qualifiers {
+    }
+    ```
+
+    This can be removed by sending a manual API request to update the dashboard group by setting `importQualifiers: []`. However if you modify the dashboard group in the UI the empty importQualifiers entry will return.
+
 ## 5.0.0 (September 10, 2020)
 
 BREAKING CHANGES:
