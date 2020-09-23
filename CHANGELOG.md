@@ -1,4 +1,4 @@
-## UNRELEASED
+## 5.0.1 (September 23, 2020)
 
 BUGFIXES:
 * resource/dashboard_group: The field `import_qualifiers` would not resolve to a clean plan if the dashboard group had an entry like:
