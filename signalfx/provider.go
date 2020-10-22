@@ -114,10 +114,10 @@ func signalfxConfigure(data *schema.ResourceData) (interface{}, error) {
 	// this additional variable is used for mocking purposes in tests
 	if HomeConfigPath == "" {
 		usr, err := user.Current()
-		HomeConfigPath = usr.HomeDir + HomeConfigSuffix
 		if err != nil {
 			return nil, fmt.Errorf("Failed to get user environment %s", err.Error())
 		}
+		HomeConfigPath = usr.HomeDir + HomeConfigSuffix
 	}
 	if _, err := os.Stat(HomeConfigPath); err == nil {
 		err = readConfigFile(HomeConfigPath, &config)
