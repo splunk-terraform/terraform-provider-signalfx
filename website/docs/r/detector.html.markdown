@@ -150,6 +150,7 @@ notifications = ["Webhook,,secret,url"]
 * `time_range` - (Optional) Seconds to display in the visualization. This is a rolling range from the current time. Example: `3600` corresponds to `-1h` in web UI. `3600` by default.
 * `start_time` - (Optional) Seconds since epoch. Used for visualization. Conflicts with `time_range`.
 * `end_time` - (Optional) Seconds since epoch. Used for visualization. Conflicts with `time_range`.
+* `teams` - (Optional) Team IDs to associate the detector to.
 * `rule` - (Required) Set of rules used for alerting.
     * `detect_label` - (Required) A detect label which matches a detect label within `program_text`.
     * `severity` - (Required) The severity of the rule, must be one of: `"Critical"`, `"Major"`, `"Minor"`, `"Warning"`, `"Info"`.
