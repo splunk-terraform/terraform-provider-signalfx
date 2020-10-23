@@ -1,3 +1,8 @@
+## 5.0.2 (October 23, 2020)
+
+BUGFIXES:
+* provider: Fix nil panic due to nil user in configuration method ([#260](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/260)
+
 ## 5.0.1 (September 23, 2020)
 
 BUGFIXES:
