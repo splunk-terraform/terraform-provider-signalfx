@@ -20,12 +20,11 @@ resource "signalfx_time_chart" "mytimechartX0" {
 resource "signalfx_dashboard_group" "mydashboardgroupX0" {
     name = "My team dashboard group"
     description = "Cool dashboard group"
-		// No teams test cuz there's no teams resource yet!
 }
 
 resource "signalfx_dashboard" "mydashboardX0" {
     name = "My Dashboard Test 1"
-		description = "Cool dashboard"
+    description = "Cool dashboard"
     dashboard_group = "${signalfx_dashboard_group.mydashboardgroupX0.id}"
 
     time_range = "-30m"

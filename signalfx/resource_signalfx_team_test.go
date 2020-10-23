@@ -9,10 +9,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
 
-const newTeamConfig = `
+const (
+	newTeamConfig = `
 resource "signalfx_team" "myteamXX" {
     name = "Super Cool Team"
-		description = "Fart noise"
+    description = "Fart noise"
 
     notifications_critical = [ "Email,test@example.com" ]
     notifications_default = [ "Webhook,,secret,https://www.example.com" ]
@@ -23,10 +24,10 @@ resource "signalfx_team" "myteamXX" {
 }
 `
 
-const updatedTeamConfig = `
+	updatedTeamConfig = `
 resource "signalfx_team" "myteamXX" {
     name = "Super Cool Team NEW"
-		description = "Fart noise NEW"
+    description = "Fart noise NEW"
 
     notifications_critical = [ "Email,test@example.com" ]
     notifications_default = [ "Webhook,,secret,https://www.example.com" ]
@@ -36,6 +37,7 @@ resource "signalfx_team" "myteamXX" {
     notifications_warning = [ "Webhook,,secret,https://www.example.com/5" ]
 }
 `
+)
 
 func TestAccCreateUpdateTeam(t *testing.T) {
 	resource.Test(t, resource.TestCase{
