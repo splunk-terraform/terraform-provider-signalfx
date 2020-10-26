@@ -25,16 +25,6 @@ resource "signalfx_team" "myteam0" {
     # …
   ]
 
-  detectors = [
-    "detectorId1",
-    "detectorId2",
-  ]
-
-  dashboard_groups = [
-    "dashboardGroupId1",
-    "dashboardGroupId2",
-  ]
-
   notifications_critical = [
     "PagerDuty,credentialId"
   ]
@@ -52,8 +42,6 @@ The following arguments are supported in the resource block:
 * `name` - (Required) Name of the team.
 * `description` - (Optional) Description of the team.
 * `members` - (Optional) List of user IDs to include in the team.
-* `detectors` - (Optional) List of detector IDs to include in the team.
-* `dashboardGroups` - (Optional) List of dashboard group IDs to include in the team.
 * `notifications_critical` - (Optional) Where to send notifications for critical alerts
 * `notifications_default` - (Optional) Where to send notifications for default alerts
 * `notifications_info` - (Optional) Where to send notifications for info alerts

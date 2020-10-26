@@ -24,7 +24,7 @@ resource "signalfx_dashboard_group" "mydashboardgroupX0" {
 
 resource "signalfx_dashboard" "mydashboardX0" {
     name = "My Dashboard Test 1"
-		description = "Cool dashboard"
+    description = "Cool dashboard"
     dashboard_group = "${signalfx_dashboard_group.mydashboardgroupX0.id}"
 
     time_range = "-30m"

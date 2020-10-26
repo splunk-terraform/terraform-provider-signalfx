@@ -1,3 +1,12 @@
+## 6.0.0 (October 23, 2020)
+
+IMPROVEMENTS:
+* resource/detector: Added back old method for setting teams.
+* resource/dashboard_group: Added back old method for setting teams.
+
+BREAKING CHANGES:
+* resource/team: Removed short-lived method of setting detectors and dashboard_groups on team object.
+
 ## 5.0.2 (October 23, 2020)
 
 BUGFIXES:

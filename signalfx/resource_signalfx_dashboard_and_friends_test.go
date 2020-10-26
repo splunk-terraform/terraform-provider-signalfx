@@ -480,6 +480,11 @@ func testAccCheckDashboardGroupResourceExists(s *terraform.State) error {
 			if err != nil || dl.Id != rs.Primary.ID {
 				return fmt.Errorf("Error finding data link %s: %s", rs.Primary.ID, err)
 			}
+		case "signalfx_team":
+			team, err := client.GetTeam(context.TODO(), rs.Primary.ID)
+			if team.Id != rs.Primary.ID || err != nil {
+				return fmt.Errorf("Error finding team %s: %s", rs.Primary.ID, err)
+			}
 		default:
 			return fmt.Errorf("Unexpected resource of type: %s", rs.Type)
 		}
@@ -510,6 +515,11 @@ func testAccDashboardGroupDestroy(s *terraform.State) error {
 			dl, _ := client.GetDataLink(context.TODO(), rs.Primary.ID)
 			if dl != nil {
 				return fmt.Errorf("Found deleted data link %s", rs.Primary.ID)
+			}
+		case "signalfx_team":
+			team, _ := client.GetTeam(context.TODO(), rs.Primary.ID)
+			if team != nil {
+				return fmt.Errorf("Found deleted team %s", rs.Primary.ID)
 			}
 		default:
 			return fmt.Errorf("Unexpected resource of type: %s", rs.Type)

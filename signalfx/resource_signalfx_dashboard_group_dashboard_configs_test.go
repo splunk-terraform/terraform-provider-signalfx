@@ -15,6 +15,18 @@ resource "signalfx_time_chart" "mytimechartX0" {
         EOF
 }
 
+resource "signalfx_team" "dashboardGroupTeam" {
+    name = "Super Cool Team"
+    description = "Dashboard Group Team"
+
+    notifications_critical = [ "Email,test@example.com" ]
+    notifications_default = [ "Webhook,,secret,https://www.example.com" ]
+    notifications_info = [ "Webhook,,secret,https://www.example.com/2" ]
+    notifications_major = [ "Webhook,,secret,https://www.example.com/3" ]
+    notifications_minor = [ "Webhook,,secret,https://www.example.com/4" ]
+    notifications_warning = [ "Webhook,,secret,https://www.example.com/5" ]
+}
+
 resource "signalfx_dashboard_group" "mydashboardgroupX0" {
     name = "My team dashboard group"
     description = "Cool dashboard group"
@@ -22,7 +34,7 @@ resource "signalfx_dashboard_group" "mydashboardgroupX0" {
 
 resource "signalfx_dashboard" "mydashboardX0" {
     name = "My Dashboard Test 1"
-		description = "Cool dashboard"
+    description = "Cool dashboard"
     dashboard_group = "${signalfx_dashboard_group.mydashboardgroupX0.id}"
 
     time_range = "-30m"
@@ -55,6 +67,7 @@ resource "signalfx_dashboard" "mydashboardX0" {
 resource "signalfx_dashboard_group" "mydashboardgroupX1" {
     name = "My team dashboard group"
     description = "Cool dashboard group"
+    teams = [signalfx_team.dashboardGroupTeam.id]
 
     // Test Mirrors!
     dashboard {
@@ -77,12 +90,11 @@ resource "signalfx_time_chart" "mytimechartX0" {
 resource "signalfx_dashboard_group" "mydashboardgroupX0" {
     name = "My team dashboard group"
     description = "Cool dashboard group"
-		// No teams test cuz there's no teams resource yet!
 }
 
 resource "signalfx_dashboard" "mydashboardX0" {
     name = "My Dashboard Test 1"
-		description = "Cool dashboard"
+    description = "Cool dashboard"
     dashboard_group = "${signalfx_dashboard_group.mydashboardgroupX0.id}"
 
     time_range = "-30m"
@@ -153,6 +165,7 @@ func TestAccCreateUpdateDashboardGroupWithConfig(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_dashboard_group.mydashboardgroupX1", "dashboard.#", "1"),
 					resource.TestCheckResourceAttr("signalfx_dashboard_group.mydashboardgroupX1", "dashboard.0.filter_override.#", "0"),
 					resource.TestCheckResourceAttr("signalfx_dashboard_group.mydashboardgroupX1", "dashboard.0.variable_override.#", "0"),
+					resource.TestCheckResourceAttr("signalfx_dashboard_group.mydashboardgroupX1", "teams.#", "1"),
 				),
 			},
 			// Update Everything
