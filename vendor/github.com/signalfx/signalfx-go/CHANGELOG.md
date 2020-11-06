@@ -1,3 +1,8 @@
+# Unreleased
+
+## Improvements
+* Added `hideMissingValues` to chart.Options to show or hide missing values in the chart. [#111](https://github.com/signalfx/signalfx-go/pull/111)
+
 # 1.7.10, 2020-08-06
 * Don't omit chart.description from JSON, as API doesn't clear it if absent. [#107](https://github.com/signalfx/signalfx-go/pull/107)
 

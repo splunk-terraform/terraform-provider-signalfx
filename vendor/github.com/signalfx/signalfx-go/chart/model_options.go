@@ -31,6 +31,8 @@ type Options struct {
 	IncludeZero      bool              `json:"includeZero,omitempty"`
 	LegendOptions    *DataTableOptions `json:"legendOptions,omitempty"`
 	LineChartOptions *LineChartOptions `json:"lineChartOptions,omitempty"`
+	// Determines whether to hide missing data points in the chart. If `true`, missing data points in the chart would be hidden.
+	HideMissingValues bool `json:"hideMissingValues,omitempty"`
 	// The contents of a text chart, using GitHub-Flavored Markdown (**GFM**) or HTML.<br> **Note** Only available if `options.type` is set to `Text`.
 	Markdown string `json:"markdown,omitempty"`
 	// Indicates the number of significant digits to the right of the decimal point to use for plotted datapoints. The integer part of the datapoint is used, regardless of the specified precision. Choose a value so that variations in the data are visible for the specified precision. For example, if data values are in the range 0.001 to 0.01, set `maximumPrecision` to 4. If you don't specify a value, SignalFx adjusts the precision to fit the available display area.<br> **Note** Only available if `options.type` is `List` or `SingleValue`.

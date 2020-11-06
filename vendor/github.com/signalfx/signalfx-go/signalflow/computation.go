@@ -244,7 +244,7 @@ func (c *Computation) processMessage(m messages.Message) {
 	case *messages.JobStartControlMessage:
 		c.handle = v.Handle
 	case *messages.BaseControlMessage:
-		switch v.Type() {
+		switch v.Event {
 		case messages.ChannelAbortEvent, messages.EndOfChannelEvent:
 			c.cancel()
 		}

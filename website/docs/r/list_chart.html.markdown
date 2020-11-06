@@ -29,6 +29,7 @@ resource "signalfx_list_chart" "mylistchart0" {
   max_delay        = 2
   disable_sampling = true
   refresh_interval = 1
+  hide_missing_values = true
 
   legend_options_fields {
     property = "collector"
@@ -68,6 +69,7 @@ The following arguments are supported in the resource block:
 * `max_delay` - (Optional) How long (in seconds) to wait for late datapoints.
 * `disable_sampling` - (Optional) If `false`, samples a subset of the output MTS, which improves UI performance. `false` by default.
 * `refresh_interval` - (Optional) How often (in seconds) to refresh the values of the list.
+* `hide_missing_values` - (Optional) Determines whether to hide missing data points in the chart. If `true`, missing data points in the chart would be hidden. `false` by default.
 * `viz_options` - (Optional) Plot-level customization options, associated with a publish statement.
     * `label` - (Required) Label used in the publish statement that displays the plot (metric time series data) you want to customize.
     * `display_name` - (Optional) Specifies an alternate value for the Plot Name column of the Data Table associated with the chart.

@@ -145,7 +145,7 @@ func (f *FakeBackend) handleMessage(ctx context.Context, message map[string]inte
 		ch, _ := message["channel"].(string)
 
 		if errMsg := f.programErrors[program]; errMsg != "" {
-			textMsgs <- fmt.Sprintf(`{"type": "error", "message": "%s"}`, errMsg)
+			textMsgs <- fmt.Sprintf(`{"type": "error", "message": "%s", "channel": "%s"}`, errMsg, ch)
 		}
 
 		programTSIDs := f.tsidsByProgram[program]

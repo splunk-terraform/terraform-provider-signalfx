@@ -61,6 +61,12 @@ func listChartResource() *schema.Resource {
 				Default:     false,
 				Description: "(false by default) If false, samples a subset of the output MTS, which improves UI performance",
 			},
+			"hide_missing_values": &schema.Schema{
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "(false by default) If `true`, missing data points in the chart would be hidden",
+			},
 			"sort_by": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
@@ -327,6 +333,9 @@ func getListChartOptions(d *schema.ResourceData) (*chart.Options, error) {
 		ri := int32(refreshInterval.(int) * 1000)
 		options.RefreshInterval = &ri
 	}
+	if hideMissingValues, ok := d.GetOk("hide_missing_values"); ok {
+		options.HideMissingValues = hideMissingValues.(bool)
+	}
 	if maxPrecision, ok := d.GetOk("max_precision"); ok {
 		mp := int32(maxPrecision.(int))
 		options.MaximumPrecision = &mp
@@ -470,6 +479,10 @@ func listchartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 		if err := d.Set("disable_sampling", options.ProgramOptions.DisableSampling); err != nil {
 			return err
 		}
+	}
+
+	if err := d.Set("hide_missing_values", options.HideMissingValues); err != nil {
+		return err
 	}
 
 	return nil
