@@ -1,4 +1,4 @@
-## Unreleased
+## 6.1.0 (November 6, 2020)
 
 IMPROVEMENTS:
 * resource/list_chart: Added `hideMissingValues` argument to show or hide missing values in the chart.
