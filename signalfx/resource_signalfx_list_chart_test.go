@@ -20,6 +20,7 @@ resource "signalfx_list_chart" "mychartLX" {
 
   max_delay = 15
   disable_sampling = true
+  hide_missing_values = true
   refresh_interval = 1
   max_precision = 2
   sort_by = "-value"
@@ -64,6 +65,7 @@ resource "signalfx_list_chart" "mychartLX" {
 
   max_delay = 15
   disable_sampling = true
+  hide_missing_values = true
   refresh_interval = 1
   max_precision = 2
   sort_by = "-value"
@@ -115,6 +117,7 @@ func TestAccCreateUpdateListChart(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_list_chart.mychartLX", "color_by", "Scale"),
 					resource.TestCheckResourceAttr("signalfx_list_chart.mychartLX", "max_delay", "15"),
 					resource.TestCheckResourceAttr("signalfx_list_chart.mychartLX", "disable_sampling", "true"),
+					resource.TestCheckResourceAttr("signalfx_list_chart.mychartLX", "hide_missing_values", "true"),
 					resource.TestCheckResourceAttr("signalfx_list_chart.mychartLX", "refresh_interval", "1"),
 					resource.TestCheckResourceAttr("signalfx_list_chart.mychartLX", "max_precision", "2"),
 					resource.TestCheckResourceAttr("signalfx_list_chart.mychartLX", "secondary_visualization", "Sparkline"),
