@@ -1,3 +1,6 @@
+IMPROVEMENTS:
+* List Chart: Added hideMissingValues argument to show or hide missing values in the chart
+
 ## 6.0.0 (October 23, 2020)
 
 IMPROVEMENTS:
