@@ -16,7 +16,6 @@ resource "signalfx_data_link" "big_test_data_link" {
     property_value = "pvalue"
 
     target_external_url {
-      is_default = false
       name = "ex_url"
       time_format = "ISO8601"
       url = "https://www.example.com"
@@ -32,7 +31,6 @@ resource "signalfx_data_link" "big_test_data_link" {
     property_name = "pname"
 
     target_external_url {
-      is_default = false
       name = "ex_url"
       time_format = "ISO8601"
       url = "https://www.example.com"
@@ -60,7 +58,6 @@ resource "signalfx_data_link" "big_test_data_link" {
     property_value = "pvalue_new"
 
     target_external_url {
-      is_default = false
       name = "ex_url"
       time_format = "ISO8601"
       url = "https://www.example.com"
