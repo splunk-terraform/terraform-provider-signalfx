@@ -230,9 +230,12 @@ func getPayloadDataLink(d *schema.ResourceData) (*datalink.CreateUpdateDataLinkR
 				Type:              datalink.EXTERNAL_LINK,
 			}
 
-			if tfLink["time_format"].(string) == "Epoch" {
+			switch tfLink["time_format"].(string) {
+			case "Epoch":
 				dl.TimeFormat = datalink.Epoch
-			} else {
+			case "EpochSeconds":
+				dl.TimeFormat = datalink.EpochSeconds
+			default:
 				dl.TimeFormat = datalink.ISO8601
 			}
 
