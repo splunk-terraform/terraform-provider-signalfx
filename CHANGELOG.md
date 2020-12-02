@@ -1,7 +1,7 @@
 ## Unreleased
 
 IMPROVEMENTS:
-* resource/time_chart/timezone: Removed default value as it updates calendar timezone of time charts to UTC. It should be kept empty so that system/profile timezone would be used as calendar timezone.
+* resource/time_chart/timezone: Removed default value of time_chart/timezone property as it updates calendar timezone of time charts to UTC. It should be kept empty so that system/profile timezone would be used as calendar timezone.
 
 ## 6.1.0 (November 6, 2020)
 
