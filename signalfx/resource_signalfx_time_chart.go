@@ -145,7 +145,6 @@ func timeChartResource() *schema.Resource {
 			"timezone": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
-				Default:     "UTC",
 				Description: "The property value is a string that denotes the geographic region associated with the time zone, (e.g. Australia/Sydney)",
 			},
 			"disable_sampling": &schema.Schema{
