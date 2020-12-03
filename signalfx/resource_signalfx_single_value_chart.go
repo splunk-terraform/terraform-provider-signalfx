@@ -54,6 +54,12 @@ func singleValueChartResource() *schema.Resource {
 				Description:  "How long (in seconds) to wait for late datapoints",
 				ValidateFunc: validation.IntBetween(0, 900),
 			},
+			"timezone": &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				Default:     "UTC",
+				Description: "The property value is a string that denotes the geographic region associated with the time zone, (e.g. Australia/Sydney)",
+			},
 			"refresh_interval": &schema.Schema{
 				Type:        schema.TypeInt,
 				Optional:    true,
@@ -219,12 +225,15 @@ func getSingleValueChartOptions(d *schema.ResourceData) *chart.Options {
 	}
 
 	var programOptions *chart.GeneralOptions
+	if programOptions == nil {
+		programOptions = &chart.GeneralOptions{}
+	}
 	if val, ok := d.GetOk("max_delay"); ok {
-		if programOptions == nil {
-			programOptions = &chart.GeneralOptions{}
-		}
 		md := int32(val.(int) * 1000)
 		programOptions.MaxDelay = &md
+	}
+	if val, ok := d.GetOk("timezone"); ok {
+		programOptions.Timezone = val.(string)
 	}
 	options.ProgramOptions = programOptions
 
@@ -319,6 +328,9 @@ func singlevaluechartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 			if err := d.Set("max_delay", *options.ProgramOptions.MaxDelay/1000); err != nil {
 				return err
 			}
+		}
+		if err := d.Set("timezone", options.ProgramOptions.Timezone); err != nil {
+			return err
 		}
 	}
 
