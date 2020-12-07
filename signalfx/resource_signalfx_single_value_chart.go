@@ -225,14 +225,17 @@ func getSingleValueChartOptions(d *schema.ResourceData) *chart.Options {
 	}
 
 	var programOptions *chart.GeneralOptions
-	if programOptions == nil {
-		programOptions = &chart.GeneralOptions{}
-	}
 	if val, ok := d.GetOk("max_delay"); ok {
+		if programOptions == nil {
+			programOptions = &chart.GeneralOptions{}
+		}
 		md := int32(val.(int) * 1000)
 		programOptions.MaxDelay = &md
 	}
 	if val, ok := d.GetOk("timezone"); ok {
+		if programOptions == nil {
+			programOptions = &chart.GeneralOptions{}
+		}
 		programOptions.Timezone = val.(string)
 	}
 	options.ProgramOptions = programOptions
