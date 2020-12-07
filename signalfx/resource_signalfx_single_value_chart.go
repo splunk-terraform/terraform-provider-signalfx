@@ -224,7 +224,10 @@ func getSingleValueChartOptions(d *schema.ResourceData) *chart.Options {
 		}
 	}
 
-	var programOptions = &chart.GeneralOptions{}
+	var programOptions *chart.GeneralOptions
+	if programOptions == nil {
+		programOptions = &chart.GeneralOptions{}
+	}
 	if val, ok := d.GetOk("max_delay"); ok {
 		md := int32(val.(int) * 1000)
 		programOptions.MaxDelay = &md
