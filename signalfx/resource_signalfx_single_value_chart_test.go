@@ -39,6 +39,7 @@ resource "signalfx_single_value_chart" "mychartSVX" {
 	}
 
   max_delay = 15
+  timezone = "Europe/Paris"
   refresh_interval = 1
   max_precision = 2
   unit_prefix = "Binary"
@@ -78,6 +79,7 @@ resource "signalfx_single_value_chart" "mychartSVX" {
 	}
 
   max_delay = 15
+  timezone = "Europe/Paris"
   refresh_interval = 1
   max_precision = 2
   unit_prefix = "Binary"
@@ -104,6 +106,7 @@ func TestAccCreateUpdateSingleValueChart(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_single_value_chart.mychartSVX", "unit_prefix", "Binary"),
 					resource.TestCheckResourceAttr("signalfx_single_value_chart.mychartSVX", "color_by", "Scale"),
 					resource.TestCheckResourceAttr("signalfx_single_value_chart.mychartSVX", "max_delay", "15"),
+					resource.TestCheckResourceAttr("signalfx_single_value_chart.mychartSVX", "timezone", "Europe/Paris"),
 					resource.TestCheckResourceAttr("signalfx_single_value_chart.mychartSVX", "refresh_interval", "1"),
 					resource.TestCheckResourceAttr("signalfx_single_value_chart.mychartSVX", "max_precision", "2"),
 					resource.TestCheckResourceAttr("signalfx_single_value_chart.mychartSVX", "secondary_visualization", "Sparkline"),
