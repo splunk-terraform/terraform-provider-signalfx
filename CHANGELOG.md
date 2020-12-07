@@ -1,4 +1,4 @@
-## Unreleased
+## 6.2.0 (December 7, 2020)
 
 IMPROVEMENTS:
 * resource/single_value_chart: Added `timezone` argument to set Calendar Window Time Zone in the chart.
