@@ -12,7 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/hashcode"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
-	detector "github.com/signalfx/signalfx-go/detector"
+	"github.com/signalfx/signalfx-go/detector"
 )
 
 const (
@@ -42,7 +42,14 @@ func detectorResource() *schema.Resource {
 				Type:         schema.TypeInt,
 				Optional:     true,
 				Default:      0,
-				Description:  "How long (in seconds) to wait for late datapoints. Max value 900 (15m)",
+				Description:  "Maximum time (in seconds) to wait for late datapoints. Max value is 900 (15m)",
+				ValidateFunc: validation.IntBetween(0, 900),
+			},
+			"min_delay": &schema.Schema{
+				Type:         schema.TypeInt,
+				Optional:     true,
+				Default:      0,
+				Description:  "Minimum time (in seconds) for the computation to wait even if the datapoints are arriving in a timely fashion. Max value is 900 (15m)",
 				ValidateFunc: validation.IntBetween(0, 900),
 			},
 			"show_data_markers": &schema.Schema{
@@ -312,11 +319,13 @@ func getPayloadDetector(d *schema.ResourceData) (*detector.CreateUpdateDetectorR
 	}
 
 	maxDelay := int32(d.Get("max_delay").(int) * 1000)
+	minDelay := int32(d.Get("min_delay").(int) * 1000)
 
 	cudr := &detector.CreateUpdateDetectorRequest{
 		Name:              d.Get("name").(string),
 		Description:       d.Get("description").(string),
 		MaxDelay:          &maxDelay,
+		MinDelay:          &minDelay,
 		ProgramText:       d.Get("program_text").(string),
 		Rules:             rulesList,
 		AuthorizedWriters: &detector.AuthorizedWriters{},
@@ -490,6 +499,11 @@ func detectorAPIToTF(d *schema.ResourceData, det *detector.Detector) error {
 	// seconds
 	if det.MaxDelay != nil {
 		if err := d.Set("max_delay", *det.MaxDelay/1000); err != nil {
+			return err
+		}
+	}
+	if det.MinDelay != nil {
+		if err := d.Set("min_delay", *det.MinDelay/1000); err != nil {
 			return err
 		}
 	}

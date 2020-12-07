@@ -79,6 +79,7 @@ resource "signalfx_detector" "application_delay" {
     name = "max average delay"
     description = "your application is slow"
     max_delay = 30
+    min_delay = 15
     teams = [signalfx_team.detectorTeam.id]
 
     program_text = <<-EOF
@@ -112,11 +113,12 @@ resource "signalfx_detector" "application_delay" {
     name = "max average delay UPDATED"
     description = "your application is slowER"
     max_delay = 60
+    min_delay = 30
 
-		show_data_markers = true
-		show_event_lines = true
-		disable_sampling = true
-		time_range = 3600
+    show_data_markers = true
+    show_event_lines = true
+    disable_sampling = true
+    time_range = 3600
 
     program_text = <<-EOF
         signal = data('app.delay2').max().publish('app delay')
@@ -162,6 +164,7 @@ func TestAccCreateUpdateDetector(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "description", "your application is slow"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "teams.#", "1"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "max_delay", "30"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "min_delay", "15"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "program_text", "signal = data('app.delay').max().publish('app delay')\ndetect(when(signal > 60, '5m')).publish('Processing old messages 5m')\ndetect(when(signal > 60, '30m')).publish('Processing old messages 30m')\n"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.#", "2"),
 					// Rule #1
@@ -202,7 +205,9 @@ func TestAccCreateUpdateDetector(t *testing.T) {
 					testAccCheckDetectorResourceExists,
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "name", "max average delay UPDATED"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "description", "your application is slowER"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "teams.#", "0"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "max_delay", "60"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "min_delay", "30"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay",
 						"time_range", "3600"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "program_text", "signal = data('app.delay2').max().publish('app delay')\ndetect(when(signal > 60, '5m')).publish('Processing old messages 5m')\ndetect(when(signal > 60, '30m')).publish('Processing old messages 30m')\n"),
@@ -241,12 +246,12 @@ func testAccCheckDetectorResourceExists(s *terraform.State) error {
 		switch rs.Type {
 		case "signalfx_detector":
 			detector, err := client.GetDetector(context.TODO(), rs.Primary.ID)
-			if detector.Id != rs.Primary.ID || err != nil {
+			if err != nil || detector.Id != rs.Primary.ID {
 				return fmt.Errorf("Error finding detector %s: %s", rs.Primary.ID, err)
 			}
 		case "signalfx_team":
-			detector, err := client.GetTeam(context.TODO(), rs.Primary.ID)
-			if detector.Id != rs.Primary.ID || err != nil {
+			team, err := client.GetTeam(context.TODO(), rs.Primary.ID)
+			if err != nil || team.Id != rs.Primary.ID {
 				return fmt.Errorf("Error finding team %s: %s", rs.Primary.ID, err)
 			}
 		default:
@@ -266,8 +271,8 @@ func testAccDetectorDestroy(s *terraform.State) error {
 				return fmt.Errorf("Found deleted detector %s", rs.Primary.ID)
 			}
 		case "signalfx_team":
-			detector, _ := client.GetTeam(context.TODO(), rs.Primary.ID)
-			if detector != nil {
+			team, _ := client.GetTeam(context.TODO(), rs.Primary.ID)
+			if team != nil {
 				return fmt.Errorf("Found deleted team %s", rs.Primary.ID)
 			}
 		default:

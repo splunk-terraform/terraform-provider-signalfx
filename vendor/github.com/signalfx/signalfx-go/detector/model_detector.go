@@ -30,6 +30,8 @@ type Detector struct {
 	Locked bool `json:"locked,omitempty"`
 	// The number of milliseconds to wait for late datapoints before rejecting them for inclusion in the detector analysis. The default is to detect and apply a sensible value automatically (this option can also be explicitly chosen by setting the property to 0).
 	MaxDelay *int32 `json:"maxDelay,omitempty"`
+	// When set, this value forces the computation to always wait for the specified duration even if the datapoints are arriving in a timely fashion. This value is in milliseconds.
+	MinDelay *int32 `json:"minDelay,omitempty"`
 	// The displayed name of the detector in the dashboard
 	Name string `json:"name,omitempty"`
 	// If true one, or more statements in the detector matched too many time series and the matched set was forcefully limited. In this case, the detector is most likely looking at incomplete data or an incomplete aggregation. If this flag is set to true, you can use a series of partition_filter functions to split the data set into manageable pieces then use the union function to rejoin the results in a subsequent computation. Note that the union function still observes the time series limit; some type of aggregation on the partial streams must limit the data set prior to recombining the streams for this approach to work.

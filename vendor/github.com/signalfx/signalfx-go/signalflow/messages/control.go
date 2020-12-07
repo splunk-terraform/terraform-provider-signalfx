@@ -20,3 +20,11 @@ type JobStartControlMessage struct {
 	BaseControlMessage
 	Handle string `json:"handle"`
 }
+
+type EndOfChannelControlMessage struct {
+	BaseControlMessage
+}
+
+type ChannelAbortControlMessage struct {
+	BaseControlMessage
+}
