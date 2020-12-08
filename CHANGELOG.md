@@ -1,3 +1,8 @@
+## Unreleased
+
+IMPROVEMENTS:
+* resource/detector: Add `min_delay` argument.
+
 ## 6.2.0 (December 7, 2020)
 
 IMPROVEMENTS:

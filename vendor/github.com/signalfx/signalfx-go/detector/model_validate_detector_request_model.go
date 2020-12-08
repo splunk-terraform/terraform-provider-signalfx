@@ -16,6 +16,8 @@ type ValidateDetectorRequestModel struct {
 	Description string `json:"description,omitempty"`
 	// The number of milliseconds to wait for late datapoints before rejecting them for inclusion in the detector analysis. The default is to detect and apply a sensible value automatically (this option can also be explicitly chosen by setting the property to 0).
 	MaxDelay int32 `json:"maxDelay,omitempty"`
+	// When set, this value forces the computation to always wait for the specified duration even if the datapoints are arriving in a timely fashion. This value is in milliseconds.
+	MinDelay *int32 `json:"minDelay,omitempty"`
 	// The displayed name of the detector in the dashboard
 	Name string `json:"name,omitempty"`
 	// The package spec. Should default to "" so is not `omitempty`

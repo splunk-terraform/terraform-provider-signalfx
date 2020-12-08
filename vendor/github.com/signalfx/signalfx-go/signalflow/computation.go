@@ -240,14 +240,12 @@ func (c *Computation) processMessage(m messages.Message) {
 	defer c.updateSignal.SignalAll()
 	c.updateSignal.Lock()
 	defer c.updateSignal.Unlock()
+
 	switch v := m.(type) {
 	case *messages.JobStartControlMessage:
 		c.handle = v.Handle
-	case *messages.BaseControlMessage:
-		switch v.Event {
-		case messages.ChannelAbortEvent, messages.EndOfChannelEvent:
-			c.cancel()
-		}
+	case *messages.EndOfChannelControlMessage, *messages.ChannelAbortControlMessage:
+		c.cancel()
 	case *messages.DataMessage:
 		c.dataChBuffer <- v
 	case *messages.ExpiredTSIDMessage:

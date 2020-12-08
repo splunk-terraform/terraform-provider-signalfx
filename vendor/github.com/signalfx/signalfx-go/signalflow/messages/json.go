@@ -18,6 +18,10 @@ func parseJSONMessage(baseMessage Message, msg []byte) (JSONMessage, error) {
 		switch base.Event {
 		case JobStartEvent:
 			out = &JobStartControlMessage{}
+		case EndOfChannelEvent:
+			out = &EndOfChannelControlMessage{}
+		case ChannelAbortEvent:
+			out = &ChannelAbortControlMessage{}
 		default:
 			return &base, nil
 		}
