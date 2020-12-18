@@ -3,6 +3,9 @@
 IMPROVEMENTS:
 * resource/detector: Add `min_delay` argument.
 
+FEATURES:
+* provider: Added data source `signalfx_pagerduty_integration`. [#274](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/274)
+
 ## 6.2.0 (December 7, 2020)
 
 IMPROVEMENTS:

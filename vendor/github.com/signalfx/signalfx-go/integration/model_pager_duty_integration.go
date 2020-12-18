@@ -29,3 +29,10 @@ type PagerDutyIntegration struct {
 	// A key you get from PagerDuty that lets you integrate SignalFx with PagerDuty. PagerDuty refers to this property as the `integrationKey`. <br> **NOTE:** To ensure security, SignalFx doesn't return this property in response objects.
 	ApiKey string `json:"apiKey,omitempty"`
 }
+
+type PagerDutyIntegrationList struct {
+	// Number of integrations in the result set
+	Count int `json:"count,omitempty"`
+	// List of returned integration objects
+	Results []PagerDutyIntegration `json:"results,omitempty"`
+}
