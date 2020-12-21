@@ -63,9 +63,10 @@ func Provider() terraform.ResourceProvider {
 			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
-			"signalfx_aws_services":     dataSourceAwsServices(),
-			"signalfx_azure_services":   dataSourceAzureServices(),
-			"signalfx_dimension_values": dataSourceDimensionValues(),
+			"signalfx_aws_services":          dataSourceAwsServices(),
+			"signalfx_azure_services":        dataSourceAzureServices(),
+			"signalfx_dimension_values":      dataSourceDimensionValues(),
+			"signalfx_pagerduty_integration": dataSourcePagerDutyIntegration(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"signalfx_alert_muting_rule":        alertMutingRuleResource(),
