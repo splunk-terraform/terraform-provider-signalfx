@@ -8,7 +8,7 @@ description: |-
 
 # Data Source: signalfx_pagerduty_integration
 
-Use this data source to get information on an existing PagerDuty integration;
+Use this data source to get information on an existing PagerDuty integration.
 
 ## Example Usage
 
