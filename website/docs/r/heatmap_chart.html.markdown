@@ -27,6 +27,7 @@ resource "signalfx_heatmap_chart" "myheatmapchart0" {
   sort_by          = "+host"
   group_by         = ["hostname", "host"]
   hide_timestamp   = true
+  timezone         = "Europe/Paris"
 
   color_range {
     min_value = 0
@@ -62,6 +63,7 @@ The following arguments are supported in the resource block:
 * `unit_prefix` - (Optional) Must be `"Metric"` or `"Binary`". `"Metric"` by default.
 * `minimum_resolution` - (Optional) The minimum resolution (in seconds) to use for computing the underlying program.
 * `max_delay` - (Optional) How long (in seconds) to wait for late datapoints.
+* `timezone` - (Optional) The property value is a string that denotes the geographic region associated with the time zone, (default UTC).
 * `refresh_interval` - (Optional) How often (in seconds) to refresh the values of the heatmap.
 * `disable_sampling` - (Optional) If `false`, samples a subset of the output MTS, which improves UI performance. `false` by default.
 * `group_by` - (Optional) Properties to group by in the heatmap (in nesting order).
