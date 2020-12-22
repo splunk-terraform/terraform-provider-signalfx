@@ -19,6 +19,7 @@ resource "signalfx_list_chart" "mychartLX" {
   EOF
 
   max_delay = 15
+  timezone = "Europe/Paris"
   disable_sampling = true
   hide_missing_values = true
   refresh_interval = 1
@@ -64,6 +65,7 @@ resource "signalfx_list_chart" "mychartLX" {
   EOF
 
   max_delay = 15
+  timezone = "Europe/Paris"
   disable_sampling = true
   hide_missing_values = true
   refresh_interval = 1
@@ -116,6 +118,7 @@ func TestAccCreateUpdateListChart(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_list_chart.mychartLX", "unit_prefix", "Binary"),
 					resource.TestCheckResourceAttr("signalfx_list_chart.mychartLX", "color_by", "Scale"),
 					resource.TestCheckResourceAttr("signalfx_list_chart.mychartLX", "max_delay", "15"),
+					resource.TestCheckResourceAttr("signalfx_list_chart.mychartLX", "timezone", "Europe/Paris"),
 					resource.TestCheckResourceAttr("signalfx_list_chart.mychartLX", "disable_sampling", "true"),
 					resource.TestCheckResourceAttr("signalfx_list_chart.mychartLX", "hide_missing_values", "true"),
 					resource.TestCheckResourceAttr("signalfx_list_chart.mychartLX", "refresh_interval", "1"),

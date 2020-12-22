@@ -18,6 +18,7 @@ resource "signalfx_heatmap_chart" "mychartHX" {
 	program_text = "data('cpu.total.idle').publish(label='CPU Idle')"
 
 	disable_sampling = true
+	timezone = "Europe/Paris"
 	hide_timestamp = true
 	sort_by = "-foo"
 	group_by = ["a", "b"]
@@ -37,6 +38,7 @@ resource "signalfx_heatmap_chart" "mychartHX" {
 	program_text = "data('cpu.total.idle').publish(label='CPU Idle')"
 
 	disable_sampling = true
+	timezone = "Europe/Paris"
 	hide_timestamp = true
 	sort_by = "-foo"
 	group_by = ["a", "b"]
@@ -64,6 +66,7 @@ func TestAccCreateUpdateHeatmapChart(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_heatmap_chart.mychartHX", "description", "Farts"),
 					resource.TestCheckResourceAttr("signalfx_heatmap_chart.mychartHX", "program_text", "data('cpu.total.idle').publish(label='CPU Idle')"),
 					resource.TestCheckResourceAttr("signalfx_heatmap_chart.mychartHX", "disable_sampling", "true"),
+					resource.TestCheckResourceAttr("signalfx_heatmap_chart.mychartHX", "timezone", "Europe/Paris"),
 					resource.TestCheckResourceAttr("signalfx_heatmap_chart.mychartHX", "hide_timestamp", "true"),
 					resource.TestCheckResourceAttr("signalfx_heatmap_chart.mychartHX", "sort_by", "-foo"),
 					resource.TestCheckResourceAttr("signalfx_heatmap_chart.mychartHX", "color_range.#", "1"),
