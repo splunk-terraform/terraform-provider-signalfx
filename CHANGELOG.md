@@ -1,4 +1,4 @@
-## Unreleased
+## 6.4.0
 
 IMPROVEMENTS:
 * resource/list_chart: Added `timezone` argument to set Calendar Window Time Zone in the chart.
