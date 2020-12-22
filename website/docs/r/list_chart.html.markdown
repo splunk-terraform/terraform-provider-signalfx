@@ -27,6 +27,7 @@ resource "signalfx_list_chart" "mylistchart0" {
 
   color_by         = "Metric"
   max_delay        = 2
+  timezone         = "Europe/Paris"
   disable_sampling = true
   refresh_interval = 1
   hide_missing_values = true
@@ -67,6 +68,7 @@ The following arguments are supported in the resource block:
 * `unit_prefix` - (Optional) Must be `"Metric"` or `"Binary`". `"Metric"` by default.
 * `color_by` - (Optional) Must be one of `"Scale"`, `"Dimension"` or `"Metric"`. `"Dimension"` by default.
 * `max_delay` - (Optional) How long (in seconds) to wait for late datapoints.
+* `timezone` - (Optional) The property value is a string that denotes the geographic region associated with the time zone, (default UTC).
 * `disable_sampling` - (Optional) If `false`, samples a subset of the output MTS, which improves UI performance. `false` by default.
 * `refresh_interval` - (Optional) How often (in seconds) to refresh the values of the list.
 * `hide_missing_values` - (Optional) Determines whether to hide missing data points in the chart. If `true`, missing data points in the chart would be hidden. `false` by default.

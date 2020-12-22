@@ -55,6 +55,12 @@ func listChartResource() *schema.Resource {
 				Description:  "How long (in seconds) to wait for late datapoints",
 				ValidateFunc: validation.IntBetween(0, 900),
 			},
+			"timezone": &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				Default:     "UTC",
+				Description: "The property value is a string that denotes the geographic region associated with the time zone, (e.g. Australia/Sydney)",
+			},
 			"disable_sampling": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
@@ -297,6 +303,12 @@ func getListChartOptions(d *schema.ResourceData) (*chart.Options, error) {
 		md := int32(val.(int) * 1000)
 		programOptions.MaxDelay = &md
 	}
+	if val, ok := d.GetOk("timezone"); ok {
+		if programOptions == nil {
+			programOptions = &chart.GeneralOptions{}
+		}
+		programOptions.Timezone = val.(string)
+	}
 	if val, ok := d.GetOk("disable_sampling"); ok {
 		if programOptions == nil {
 			programOptions = &chart.GeneralOptions{}
@@ -475,6 +487,9 @@ func listchartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 			if err := d.Set("max_delay", *options.ProgramOptions.MaxDelay/1000); err != nil {
 				return err
 			}
+		}
+		if err := d.Set("timezone", options.ProgramOptions.Timezone); err != nil {
+			return err
 		}
 		if err := d.Set("disable_sampling", options.ProgramOptions.DisableSampling); err != nil {
 			return err

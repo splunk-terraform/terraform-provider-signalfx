@@ -1,3 +1,9 @@
+## Unreleased
+
+IMPROVEMENTS:
+* resource/list_chart: Added `timezone` argument to set Calendar Window Time Zone in the chart.
+* resource/heat_map_chart: Added `timezone` argument to set Calendar Window Time Zone in the chart.
+
 ## 6.3.0 (December 21, 2020)
 
 IMPROVEMENTS:
