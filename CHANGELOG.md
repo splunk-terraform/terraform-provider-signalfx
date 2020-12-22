@@ -1,9 +1,13 @@
+## Unreleased
+
+IMPROVEMENTS:
+* resource/list_chart: Added `timezone` argument to set Calendar Window Time Zone in the chart.
+* resource/heat_map_chart: Added `timezone` argument to set Calendar Window Time Zone in the chart.
+
 ## 6.3.0 (December 21, 2020)
 
 IMPROVEMENTS:
 * resource/detector: Add `min_delay` argument.
-* resource/list_chart: Added `timezone` argument to set Calendar Window Time Zone in the chart.
-* resource/heat_map_chart: Added `timezone` argument to set Calendar Window Time Zone in the chart.
 
 FEATURES:
 * provider: Added data source `signalfx_pagerduty_integration`. [#274](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/274)
