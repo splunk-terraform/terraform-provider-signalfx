@@ -18,6 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	homedir "github.com/mitchellh/go-homedir"
 	sfx "github.com/signalfx/signalfx-go"
+
 	"github.com/splunk-terraform/terraform-provider-signalfx/version"
 )
 
@@ -65,6 +66,7 @@ func Provider() terraform.ResourceProvider {
 		DataSourcesMap: map[string]*schema.Resource{
 			"signalfx_aws_services":          dataSourceAwsServices(),
 			"signalfx_azure_services":        dataSourceAzureServices(),
+			"signalfx_gcp_services":          dataSourceGcpServices(),
 			"signalfx_dimension_values":      dataSourceDimensionValues(),
 			"signalfx_pagerduty_integration": dataSourcePagerDutyIntegration(),
 		},
