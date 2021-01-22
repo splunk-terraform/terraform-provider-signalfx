@@ -89,6 +89,12 @@ func detectorResource() *schema.Resource {
 				Description:   "Seconds since epoch. Used for visualization",
 				ValidateFunc:  validation.IntAtLeast(0),
 			},
+			"tags": &schema.Schema{
+				Type:        schema.TypeList,
+				Optional:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "Tags associated with the detector",
+			},
 			"teams": &schema.Schema{
 				Type:        schema.TypeList,
 				Optional:    true,
@@ -321,6 +327,14 @@ func getPayloadDetector(d *schema.ResourceData) (*detector.CreateUpdateDetectorR
 	maxDelay := int32(d.Get("max_delay").(int) * 1000)
 	minDelay := int32(d.Get("min_delay").(int) * 1000)
 
+	var tags []string
+	if val, ok := d.GetOk("tags"); ok {
+		tags := []string{}
+		for _, tag := range val.([]interface{}) {
+			tags = append(tags, tag.(string))
+		}
+	}
+
 	cudr := &detector.CreateUpdateDetectorRequest{
 		Name:              d.Get("name").(string),
 		Description:       d.Get("description").(string),
@@ -329,6 +343,7 @@ func getPayloadDetector(d *schema.ResourceData) (*detector.CreateUpdateDetectorR
 		ProgramText:       d.Get("program_text").(string),
 		Rules:             rulesList,
 		AuthorizedWriters: &detector.AuthorizedWriters{},
+		Tags:              tags,
 	}
 
 	if val, ok := d.GetOk("authorized_writer_teams"); ok {
@@ -506,6 +521,9 @@ func detectorAPIToTF(d *schema.ResourceData, det *detector.Detector) error {
 		if err := d.Set("min_delay", *det.MinDelay/1000); err != nil {
 			return err
 		}
+	}
+	if err := d.Set("tags", det.Tags); err != nil {
+		return err
 	}
 	if err := d.Set("teams", det.Teams); err != nil {
 		return err
