@@ -80,6 +80,7 @@ resource "signalfx_detector" "application_delay" {
     description = "your application is slow"
     max_delay = 30
     min_delay = 15
+    tags = ["tag-1","tag-2"]
     teams = [signalfx_team.detectorTeam.id]
 
     program_text = <<-EOF
@@ -162,6 +163,7 @@ func TestAccCreateUpdateDetector(t *testing.T) {
 					testAccCheckDetectorResourceExists,
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "name", "max average delay"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "description", "your application is slow"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "tags.#", "2"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "teams.#", "1"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "max_delay", "30"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "min_delay", "15"),
@@ -205,6 +207,7 @@ func TestAccCreateUpdateDetector(t *testing.T) {
 					testAccCheckDetectorResourceExists,
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "name", "max average delay UPDATED"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "description", "your application is slowER"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "tags.#", "0"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "teams.#", "0"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "max_delay", "60"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "min_delay", "30"),
