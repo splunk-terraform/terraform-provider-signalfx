@@ -21,6 +21,7 @@ resource "signalfx_detector" "application_delay" {
   name        = " max average delay - ${var.clusters[count.index]}"
   description = "your application is slow - ${var.clusters[count.index]}"
   max_delay   = 30
+  tags        = ["app-backend", "staging"]
 
   # Note that if you use these features, you must use a user's
   # admin key to authenticate the provider, lest Terraform not be able
@@ -151,6 +152,7 @@ notifications = ["Webhook,,secret,url"]
 * `time_range` - (Optional) Seconds to display in the visualization. This is a rolling range from the current time. Example: `3600` corresponds to `-1h` in web UI. `3600` by default.
 * `start_time` - (Optional) Seconds since epoch. Used for visualization. Conflicts with `time_range`.
 * `end_time` - (Optional) Seconds since epoch. Used for visualization. Conflicts with `time_range`.
+* `tags` - (Optional) Tags associated with the detector.
 * `teams` - (Optional) Team IDs to associate the detector to.
 * `rule` - (Required) Set of rules used for alerting.
     * `detect_label` - (Required) A detect label which matches a detect label within `program_text`.
