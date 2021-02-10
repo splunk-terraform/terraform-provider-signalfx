@@ -1,9 +1,26 @@
 # Unreleased
 
-## Improvements
+# 1.7.15, 2021-02-10
+
+* Added `TimeZone` property to Detector. [#119](https://github.com/signalfx/signalfx-go/pull/119)
+
+# 1.7.14, 2021-01-28
+
+* Return events/alerts from signalflow events/alerts queries
+
+# 1.7.13, 2020-12-07
+
+*  signalflow: Fix channel end/abort control message handling
+
+# 1.7.12, 2021-02-10
+
 * Added `hideMissingValues` to chart.Options to show or hide missing values in the chart. [#111](https://github.com/signalfx/signalfx-go/pull/111)
 * Added `minDelay` field to detector.
 * Added `PagerDutyIntegrationGetByName` method.
+
+# 1.7.11, 2020-10-19
+
+* Fix processing ControlMessage in signalflow.Computation
 
 # 1.7.10, 2020-08-06
 * Don't omit chart.description from JSON, as API doesn't clear it if absent. [#107](https://github.com/signalfx/signalfx-go/pull/107)
