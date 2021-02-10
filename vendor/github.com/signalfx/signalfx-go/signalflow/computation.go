@@ -35,6 +35,7 @@ type Computation struct {
 	groupByMissingProperties []string
 
 	tsidMetadata map[idtool.ID]*messages.MetadataProperties
+	events       []*messages.EventMessage
 
 	handle string
 
@@ -209,6 +210,16 @@ func (c *Computation) TSIDMetadata(tsid idtool.ID) *messages.MetadataProperties 
 	return c.tsidMetadata[tsid]
 }
 
+// Events returns the results from events or alerts queries.
+func (c *Computation) Events() []*messages.EventMessage {
+	if err := c.waitForMetadata(func() bool { return c.events != nil }); err != nil {
+		return nil
+	}
+	c.updateSignal.Lock()
+	defer c.updateSignal.Unlock()
+	return c.events
+}
+
 // Done passes through the computation context's Done channel for use in select
 // statements to know when the computation is finished or an error occurred.
 func (c *Computation) Done() <-chan struct{} {
@@ -273,7 +284,7 @@ func (c *Computation) processMessage(m messages.Message) {
 		if code, ok := rawData["error"]; ok {
 			computationError.Code = int(code.(float64))
 		}
-		if msg, ok := rawData["message"]; ok {
+		if msg, ok := rawData["message"]; ok && msg != nil {
 			computationError.Message = msg.(string)
 		}
 		if errType, ok := rawData["errorType"]; ok {
@@ -283,6 +294,8 @@ func (c *Computation) processMessage(m messages.Message) {
 		c.cancel()
 	case *messages.MetadataMessage:
 		c.tsidMetadata[v.TSID] = &v.Properties
+	case *messages.EventMessage:
+		c.events = append(c.events, v)
 	}
 }
 

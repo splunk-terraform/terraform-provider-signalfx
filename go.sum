@@ -207,6 +207,8 @@ github.com/signalfx/golib/v3 v3.0.0/go.mod h1:p+krygP/cDlWvCBEgdkQp3H16rbP4NW7YQ
 github.com/signalfx/gomemcache v0.0.0-20180823214636-4f7ef64c72a9/go.mod h1:Ytb8KfCSyuwy/VILnROdgCvbQLA5ch0nkbG7lKT0BXw=
 github.com/signalfx/signalfx-go v1.7.14-0.20201218154707-ae1dca54849a h1:Nz9TOMCnBfPxD3JV8OBxpDuOCfS+217EPPzlgK+IGEo=
 github.com/signalfx/signalfx-go v1.7.14-0.20201218154707-ae1dca54849a/go.mod h1:CeCGXKT2wqqky0Nz8eV0NH/CpMPE7tzYUcV8eQS1U1s=
+github.com/signalfx/signalfx-go v1.7.15 h1:t6y1xMav1EKplwJvxZHy5tn7yoiHqZJhnFNPR7ZZdrY=
+github.com/signalfx/signalfx-go v1.7.15/go.mod h1:CeCGXKT2wqqky0Nz8eV0NH/CpMPE7tzYUcV8eQS1U1s=
 github.com/signalfx/thrift v0.0.0-20181211001559-3838fa316492/go.mod h1:Xv29nl9fxdk0hmeqcUHgAZZwvYrOhduNW+9qk4H+6K0=
 github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d/go.mod h1:OnSkiWE9lh6wB0YB77sQom3nweQdgAjqCqsofrRNTgc=
 github.com/smartystreets/assertions v0.0.0-20190215210624-980c5ac6f3ac h1:wbW+Bybf9pXxnCFAOWZTqkRjAc7rAIwo2e1ArUhiHxg=

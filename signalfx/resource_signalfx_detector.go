@@ -38,6 +38,12 @@ func detectorResource() *schema.Resource {
 				Optional:    true,
 				Description: "Description of the detector",
 			},
+			"timezone": &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				Default:     "UTC",
+				Description: "The property value is a string that denotes the geographic region associated with the time zone, (e.g. Australia/Sydney)",
+			},
 			"max_delay": &schema.Schema{
 				Type:         schema.TypeInt,
 				Optional:     true,
@@ -338,6 +344,7 @@ func getPayloadDetector(d *schema.ResourceData) (*detector.CreateUpdateDetectorR
 	cudr := &detector.CreateUpdateDetectorRequest{
 		Name:              d.Get("name").(string),
 		Description:       d.Get("description").(string),
+		TimeZone:          d.Get("timezone").(string),
 		MaxDelay:          &maxDelay,
 		MinDelay:          &minDelay,
 		ProgramText:       d.Get("program_text").(string),
@@ -508,6 +515,9 @@ func detectorAPIToTF(d *schema.ResourceData, det *detector.Detector) error {
 		return err
 	}
 	if err := d.Set("program_text", det.ProgramText); err != nil {
+		return err
+	}
+	if err := d.Set("timezone", det.TimeZone); err != nil {
 		return err
 	}
 	// We divide by 1000 because the API uses millis, but this provider uses

@@ -15,6 +15,8 @@ type CreateUpdateDetectorRequest struct {
 	CustomProperties string `json:"customProperties,omitempty"`
 	// Description of the detector. It appears in the Detector window displayed from the web UI Actions menu
 	Description string `json:"description,omitempty"`
+	// Calendar Time Zone property of the detector. Denotes the geographic region associated with the time zone, (e.g. Australia/Sydney)
+	TimeZone string `json:"timezone,omitempty"`
 	// The number of milliseconds to wait for late datapoints before rejecting them for inclusion in the detector analysis. The default is to detect and apply a sensible value automatically (this option can also be explicitly chosen by setting the property to 0).
 	MaxDelay *int32 `json:"maxDelay,omitempty"`
 	// When set, this value forces the computation to always wait for the specified duration even if the datapoints are arriving in a timely fashion. This value is in milliseconds.

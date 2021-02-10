@@ -19,6 +19,8 @@ type Detector struct {
 	CustomProperties *interface{} `json:"customProperties,omitempty"`
 	// Description of the detector. It appears in the Detector window displayed from the web UI Actions menu
 	Description string `json:"description,omitempty"`
+	// Calendar Time Zone property of the detector. Denotes the geographic region associated with the time zone, (e.g. Australia/Sydney)
+	TimeZone string `json:"timezone,omitempty"`
 	// System-defined identifier for the detector
 	Id              string          `json:"id,omitempty"`
 	LabelResolution LabelResolution `json:"labelResolution,omitempty"`
