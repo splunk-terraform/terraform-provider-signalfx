@@ -67,12 +67,6 @@ func dataLinkResource() *schema.Resource {
 				Description: "Link to an external URL",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"is_default": &schema.Schema{
-							Type:        schema.TypeBool,
-							Default:     true,
-							Optional:    true,
-							Description: "Flag that designates a target as the default for a data link object.",
-						},
 						"name": &schema.Schema{
 							Type:        schema.TypeString,
 							Required:    true,
@@ -115,12 +109,6 @@ func dataLinkResource() *schema.Resource {
 				Description: "Link to a Splunk instance",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"is_default": &schema.Schema{
-							Type:        schema.TypeBool,
-							Default:     true,
-							Optional:    true,
-							Description: "Flag that designates a target as the default for a data link object.",
-						},
 						"name": &schema.Schema{
 							Type:        schema.TypeString,
 							Required:    true,
@@ -201,7 +189,6 @@ func getPayloadDataLink(d *schema.ResourceData) (*datalink.CreateUpdateDataLinkR
 			tfLink := tfLink.(map[string]interface{})
 			dl := &datalink.Target{
 				Name:      tfLink["name"].(string),
-				IsDefault: tfLink["is_default"].(bool),
 				Type:      datalink.SPLUNK_LINK,
 			}
 
@@ -224,7 +211,6 @@ func getPayloadDataLink(d *schema.ResourceData) (*datalink.CreateUpdateDataLinkR
 
 			dl := &datalink.Target{
 				Name:              tfLink["name"].(string),
-				IsDefault:         tfLink["is_default"].(bool),
 				MinimumTimeWindow: util.StringOrInteger(tfLink["minimum_time_window"].(string)),
 				URL:               tfLink["url"].(string),
 				Type:              datalink.EXTERNAL_LINK,
@@ -307,7 +293,6 @@ func dataLinkAPIToTF(d *schema.ResourceData, dl *datalink.DataLink) error {
 		case datalink.EXTERNAL_LINK:
 			tfTarget := map[string]interface{}{
 				"name":                 t.Name,
-				"is_default":           t.IsDefault,
 				"minimum_time_window":  t.MinimumTimeWindow,
 				"time_format":          t.TimeFormat,
 				"url":                  t.URL,
@@ -317,7 +302,6 @@ func dataLinkAPIToTF(d *schema.ResourceData, dl *datalink.DataLink) error {
 		case datalink.SPLUNK_LINK:
 			tfTarget := map[string]interface{}{
 				"name":                 t.Name,
-				"is_default":           t.IsDefault,
 				"property_key_mapping": t.PropertyKeyMapping,
 			}
 			splunkLinks = append(splunkLinks, tfTarget)
