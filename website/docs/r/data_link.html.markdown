@@ -33,7 +33,6 @@ resource "signalfx_data_link" "my_data_link_dash" {
   property_value       = "pvalue"
 
   target_external_url {
-    is_default  = false
     name        = "ex_url"
     time_format = "ISO8601"
     url         = "https://www.example.com"
