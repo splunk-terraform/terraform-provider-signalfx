@@ -62,3 +62,14 @@ In order to run the full suite of Acceptance tests, run `make testacc`.
 ```sh
 $ make testacc
 ```
+
+Releasing the Provider
+----------------------
+
+Install https://goreleaser.com/install/ if you don't already have it.
+
+ - Update changelog and create release in GH (vx.y.z format) in pre-release state
+ - `git pull` (Locally)
+ - `export GPG_TTY=$(tty)` (avoid gpg terminal issues if using iTerm2)
+ - `GITHUB_TOKEN=xxx GPG_FINGERPRINT=xxx goreleaser --rm-dist` (github token must have `repo` scope)
+ - Go back to release in github and mark as released/published
