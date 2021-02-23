@@ -1,3 +1,8 @@
+## 6.7.1
+
+IMPROVEMENTS:
+* data_source/pagerduty: Update signalfx-go to fix query parameter issue and add enabled flag.
+
 ## 6.7.0
 
 IMPROVEMENTS:
