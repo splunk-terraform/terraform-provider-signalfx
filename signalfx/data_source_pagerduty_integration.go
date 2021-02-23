@@ -14,6 +14,10 @@ func dataSourcePagerDutyIntegration() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
+			"enabled": {
+				Type:     schema.TypeBool,
+				Computed: true,
+			},
 		},
 	}
 }

@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 
 	"github.com/signalfx/signalfx-go/integration"
 )
@@ -65,7 +66,11 @@ func (c *Client) GetPagerDutyIntegration(ctx context.Context, id string) (*integ
 
 // GetPagerDutyIntegrationByName retrieves a PagerDuty integration by name.
 func (c *Client) GetPagerDutyIntegrationByName(ctx context.Context, name string) (*integration.PagerDutyIntegration, error) {
-	resp, err := c.doRequest(ctx, "GET", IntegrationAPIURL+"?type=PagerDuty&name="+name, nil, nil)
+	params := url.Values{}
+	params.Add("type", "PagerDuty")
+	params.Add("name", name)
+
+	resp, err := c.doRequest(ctx, "GET", IntegrationAPIURL, params, nil)
 	if resp != nil {
 		defer resp.Body.Close()
 	}
