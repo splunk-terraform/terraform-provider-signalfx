@@ -1,12 +1,12 @@
 ---
 layout: "signalfx"
-page_title: "SignalFx: signalfx_victor_ops_resource"
+page_title: "SignalFx: signalfx_victor_ops_integration"
 sidebar_current: "docs-signalfx-resource-victor-ops-integration"
 description: |-
   Allows Terraform to create and manage SignalFx VictorOps Integrations
 ---
 
-# Resource: signalfx_victor_ops_resource
+# Resource: signalfx_victor_ops_integration
 
 SignalFx VictorOps integration.
 
@@ -15,7 +15,7 @@ SignalFx VictorOps integration.
 ## Example Usage
 
 ```tf
-resource "signalfx_victor_ops_resource" "vioctor_ops_myteam" {
+resource "signalfx_victor_ops_integration" "vioctor_ops_myteam" {
   name     = "VictorOps - My Team"
   enabled  = true
   post_url = "https://alert.victorops.com/integrations/generic/1234/alert/$key/$routing_key"
