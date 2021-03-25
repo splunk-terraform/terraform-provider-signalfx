@@ -1,3 +1,8 @@
+## 6.7.2
+
+IMPROVEMENTS:
+* data_source/azure_services: Update signalfx-go to add missing azure services (see [related PR](https://github.com/signalfx/signalfx-go/pull/123)).
+
 ## 6.7.1
 
 IMPROVEMENTS:
