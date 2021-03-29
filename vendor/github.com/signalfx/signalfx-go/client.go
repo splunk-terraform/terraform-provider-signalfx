@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	stdpath "path"
 	"time"
 
 	"github.com/signalfx/signalfx-go/signalflow"
@@ -86,7 +87,7 @@ func (c *Client) doRequestWithToken(ctx context.Context, method string, path str
 	if err != nil {
 		return nil, err
 	}
-	destURL.Path = path
+	destURL.Path = stdpath.Join(destURL.Path, path)
 
 	if params != nil {
 		destURL.RawQuery = params.Encode()
