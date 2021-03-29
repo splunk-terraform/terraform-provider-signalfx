@@ -116,11 +116,11 @@ func (c *Client) UpdateAlertMutingRule(ctx context.Context, id string, muteReque
 }
 
 // SearchAlertMutingRules searches for alert muting rules given a query string in `name`.
-func (c *Client) SearchAlertMutingRules(ctx context.Context, include string, limit int, name string, offset int) (*alertmuting.SearchResult, error) {
+func (c *Client) SearchAlertMutingRules(ctx context.Context, include string, limit int, query string, offset int) (*alertmuting.SearchResult, error) {
 	params := url.Values{}
 	params.Add("include", include)
 	params.Add("limit", strconv.Itoa(limit))
-	params.Add("name", name)
+	params.Add("query", query)
 	params.Add("offset", strconv.Itoa(offset))
 
 	resp, err := c.doRequest(ctx, "GET", AlertMutingRuleAPIURL, params, nil)
