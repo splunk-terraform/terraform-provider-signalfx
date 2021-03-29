@@ -1,3 +1,8 @@
+## 6.7.3
+
+IMPROVEMENTS:
+* Upgrade signalfx-go to get better base URL handling with paths
+
 ## 6.7.2
 
 IMPROVEMENTS:
