@@ -441,7 +441,7 @@ func getCustomNamespaceRules(tfRules []interface{}) []*integration.AwsCustomName
 			da := da.(string)
 			if da == string(integration.INCLUDE) {
 				defaultAction = integration.INCLUDE
-			} else {
+			} else if da == string(integration.EXCLUDE) {
 				defaultAction = integration.EXCLUDE
 			}
 		}
