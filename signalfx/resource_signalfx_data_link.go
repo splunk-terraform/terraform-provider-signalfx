@@ -188,8 +188,8 @@ func getPayloadDataLink(d *schema.ResourceData) (*datalink.CreateUpdateDataLinkR
 		for _, tfLink := range splkDashes {
 			tfLink := tfLink.(map[string]interface{})
 			dl := &datalink.Target{
-				Name:      tfLink["name"].(string),
-				Type:      datalink.SPLUNK_LINK,
+				Name: tfLink["name"].(string),
+				Type: datalink.SPLUNK_LINK,
 			}
 
 			if v, ok := tfLink["property_key_mapping"]; ok {

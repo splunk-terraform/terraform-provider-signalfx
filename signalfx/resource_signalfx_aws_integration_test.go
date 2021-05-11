@@ -34,6 +34,10 @@ resource "signalfx_aws_integration" "aws_myteamXX" {
 			namespace = "fart"
 		}
 
+		custom_namespace_sync_rule {
+			namespace = "custom"
+		}
+
 		namespace_sync_rule {
 			default_action = "Exclude"
 			filter_action = "Include"
@@ -63,6 +67,10 @@ resource "signalfx_aws_integration" "aws_myteam_tokXX" {
 			filter_action = "Include"
 			filter_source = "filter('code', '200')"
 			namespace = "fart"
+		}
+
+		custom_namespace_sync_rule {
+			namespace = "custom"
 		}
 
 		namespace_sync_rule {
@@ -97,6 +105,10 @@ resource "signalfx_aws_integration" "aws_myteamXX" {
 			namespace = "fart"
 		}
 
+		custom_namespace_sync_rule {
+			namespace = "custom"
+		}
+
 		namespace_sync_rule {
 			default_action = "Exclude"
 			filter_action = "Include"
@@ -126,6 +138,10 @@ resource "signalfx_aws_integration" "aws_myteam_tokXX" {
 			filter_action = "Include"
 			filter_source = "filter('code', '200')"
 			namespace = "fart"
+		}
+
+		custom_namespace_sync_rule {
+			namespace = "custom"
 		}
 
 		namespace_sync_rule {
