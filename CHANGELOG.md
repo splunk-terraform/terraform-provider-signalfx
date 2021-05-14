@@ -1,4 +1,4 @@
-## Unreleased Changes
+## 6.7.4
 
 BUGFIXES
 * resource/signalfx_aws_integration: Custom namespaces listed using `custom_namespace_sync_rule` will now correctly emit metrics. [#300](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/300)
