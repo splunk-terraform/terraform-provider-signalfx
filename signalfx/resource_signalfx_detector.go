@@ -96,7 +96,7 @@ func detectorResource() *schema.Resource {
 				ValidateFunc:  validation.IntAtLeast(0),
 			},
 			"tags": &schema.Schema{
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "Tags associated with the detector",
@@ -335,10 +335,10 @@ func getPayloadDetector(d *schema.ResourceData) (*detector.CreateUpdateDetectorR
 
 	var tags []string
 	if val, ok := d.GetOk("tags"); ok {
-		tags := []string{}
-		for _, tag := range val.([]interface{}) {
+		for _, tag := range val.(*schema.Set).List() {
 			tags = append(tags, tag.(string))
 		}
+		log.Printf("[DEBUG] SignalFx the following tags will be set: %s", tags)
 	}
 
 	cudr := &detector.CreateUpdateDetectorRequest{
