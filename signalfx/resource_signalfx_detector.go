@@ -469,6 +469,9 @@ func detectorCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 	d.SetId(det.Id)
 
+    // Gives time to the API to properly update info before read them again
+    // required to make the acceptance tests always passing, see:
+    // https://github.com/splunk-terraform/terraform-provider-signalfx/pull/306#issuecomment-870417521
 	time.Sleep(1 * time.Second)
 	return detectorAPIToTF(d, det)
 }
@@ -664,6 +667,9 @@ func detectorUpdate(d *schema.ResourceData, meta interface{}) error {
 	}
 	d.SetId(det.Id)
 
+    // Gives time to the API to properly update info before read them again
+    // required to make the acceptance tests always passing, see:
+    // https://github.com/splunk-terraform/terraform-provider-signalfx/pull/306#issuecomment-870417521
 	time.Sleep(1 * time.Second)
 	return detectorAPIToTF(d, det)
 }
