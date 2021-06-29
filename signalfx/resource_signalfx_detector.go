@@ -8,6 +8,7 @@ import (
 	"log"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/hashcode"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -468,6 +469,7 @@ func detectorCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 	d.SetId(det.Id)
 
+	time.Sleep(1 * time.Second)
 	return detectorAPIToTF(d, det)
 }
 
@@ -661,6 +663,8 @@ func detectorUpdate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 	d.SetId(det.Id)
+
+	time.Sleep(1 * time.Second)
 	return detectorAPIToTF(d, det)
 }
 
