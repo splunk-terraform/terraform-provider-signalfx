@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
@@ -60,7 +61,7 @@ resource "signalfx_data_link" "big_test_data_link" {
     target_external_url {
       name = "ex_url"
       time_format = "ISO8601"
-      url = "https://www.example.com"
+      url = "https://www.example.net"
       property_key_mapping = {
         foo = "bar"
       }
@@ -110,6 +111,7 @@ func TestAccCreateUpdateDataLink(t *testing.T) {
 					testAccCheckDataLinkResourceExists,
 					resource.TestCheckResourceAttr("signalfx_data_link.big_test_data_link", "property_name", "pname"),
 					resource.TestCheckResourceAttr("signalfx_data_link.big_test_data_link", "property_value", "pvalue_new"),
+					testDataLinkUpdated,
 				),
 			},
 		},
@@ -133,6 +135,29 @@ func TestAccCreateUpdateDataLinkWithoutPropertyValue(t *testing.T) {
 			},
 		},
 	})
+}
+
+func testDataLinkUpdated(s *terraform.State) error {
+	for _, rs := range s.RootModule().Resources {
+		switch rs.Type {
+		case "signalfx_data_link":
+			for key, val := range rs.Primary.Attributes {
+				parts := strings.Split(key, ".")
+				if len(parts) != 3 {
+					continue
+				}
+				if parts[0] == "target_external_url" && parts[2] == "url" {
+					if val != "https://www.example.net" {
+						return fmt.Errorf("Did not update target link correctly")
+					}
+				}
+			}
+			fmt.Printf("[DEBUG] SignalFx: GETTING DATA LINK %s", rs.Primary.ID)
+		default:
+			return fmt.Errorf("Unexpected resource of type: %s", rs.Type)
+		}
+	}
+	return nil
 }
 
 func testAccCheckDataLinkResourceExists(s *terraform.State) error {
