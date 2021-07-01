@@ -1,3 +1,8 @@
+## 6.7.5
+
+BUGFIXES
+* resource/signalfx_aws_integration: Allow specifying a poll rate for AWS integration to up to 10 minutes. [#307](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/307)
+
 ## 6.7.4
 
 BUGFIXES
