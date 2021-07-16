@@ -8,6 +8,7 @@ import (
 	"log"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/hashcode"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -96,7 +97,7 @@ func detectorResource() *schema.Resource {
 				ValidateFunc:  validation.IntAtLeast(0),
 			},
 			"tags": &schema.Schema{
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "Tags associated with the detector",
@@ -335,10 +336,10 @@ func getPayloadDetector(d *schema.ResourceData) (*detector.CreateUpdateDetectorR
 
 	var tags []string
 	if val, ok := d.GetOk("tags"); ok {
-		tags := []string{}
-		for _, tag := range val.([]interface{}) {
+		for _, tag := range val.(*schema.Set).List() {
 			tags = append(tags, tag.(string))
 		}
+		log.Printf("[DEBUG] SignalFx the following tags will be set: %s", tags)
 	}
 
 	cudr := &detector.CreateUpdateDetectorRequest{
@@ -468,6 +469,10 @@ func detectorCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 	d.SetId(det.Id)
 
+    // Gives time to the API to properly update info before read them again
+    // required to make the acceptance tests always passing, see:
+    // https://github.com/splunk-terraform/terraform-provider-signalfx/pull/306#issuecomment-870417521
+	time.Sleep(1 * time.Second)
 	return detectorAPIToTF(d, det)
 }
 
@@ -661,6 +666,11 @@ func detectorUpdate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 	d.SetId(det.Id)
+
+    // Gives time to the API to properly update info before read them again
+    // required to make the acceptance tests always passing, see:
+    // https://github.com/splunk-terraform/terraform-provider-signalfx/pull/306#issuecomment-870417521
+	time.Sleep(1 * time.Second)
 	return detectorAPIToTF(d, det)
 }
 

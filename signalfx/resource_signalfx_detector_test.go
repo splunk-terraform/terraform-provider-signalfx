@@ -167,6 +167,8 @@ func TestAccCreateUpdateDetector(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "description", "your application is slow"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "timezone", "Europe/Paris"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "tags.#", "2"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "tags.1678853142", "tag-1"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "tags.1329338325", "tag-2"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "teams.#", "1"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "max_delay", "30"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "min_delay", "15"),
