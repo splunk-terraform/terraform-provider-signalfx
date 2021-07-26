@@ -216,6 +216,14 @@ func getPayloadDataLink(d *schema.ResourceData) (*datalink.CreateUpdateDataLinkR
 				Type:              datalink.EXTERNAL_LINK,
 			}
 
+			// When changes are made to an existing target, the Terraform plugin SDK seems
+			// to be creating an extraneous target with all empty values. Since name is a
+			// required field on targets, skip when we encounter empty names. Ideally this
+			// issue would be fixed at the Terraform SDK level - this is only a workaround.
+			if dl.Name == "" {
+				continue
+			}
+
 			switch tfLink["time_format"].(string) {
 			case "Epoch":
 				dl.TimeFormat = datalink.Epoch
