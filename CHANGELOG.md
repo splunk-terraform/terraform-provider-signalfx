@@ -2,7 +2,7 @@
 
 BUGFIXES:
 * resource/signalfx_data_link: Handle extraneous empty targets [#309](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/309)
-* resource/signalfx_data_link: Skip invalid target in data links [#306](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/306)
+* resource/signalfx_data_link: Convert tags from list to set and fix set field [#306](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/306)
 
 ## 6.7.5
 
