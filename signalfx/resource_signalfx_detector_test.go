@@ -251,7 +251,7 @@ func TestAccCreateUpdateDetector(t *testing.T) {
 	})
 }
 
-func waitBeforeTest(s *terraform.State) error {
+func waitBeforeTestStepPlanRefresh(s *terraform.State) error {
 	// Gives time to the API to properly update info before read them again
 	// required to make the acceptance tests always passing, see:
 	// https://github.com/splunk-terraform/terraform-provider-signalfx/pull/306#issuecomment-870417521
