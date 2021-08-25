@@ -199,7 +199,7 @@ func TestAccCreateUpdateDetector(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1714348016.severity", "Critical"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1714348016.tip", ""),
 
-                    // Force sleep before refresh at the end of test execution
+					// Force sleep before refresh at the end of test execution
 					waitBeforeTestStepPlanRefresh,
 				),
 			},
