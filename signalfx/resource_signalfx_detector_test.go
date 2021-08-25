@@ -164,7 +164,6 @@ func TestAccCreateUpdateDetector(t *testing.T) {
 				Config: newDetectorConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckDetectorResourceExists,
-					waitBeforeTest,
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "name", "max average delay"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "description", "your application is slow"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "timezone", "Europe/Paris"),
@@ -199,6 +198,9 @@ func TestAccCreateUpdateDetector(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1714348016.runbook_url", ""),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1714348016.severity", "Critical"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1714348016.tip", ""),
+
+                    // Force sleep before refresh at the end of test execution
+					waitBeforeTestStepPlanRefresh,
 				),
 			},
 			{
