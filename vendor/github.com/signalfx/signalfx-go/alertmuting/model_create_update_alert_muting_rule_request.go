@@ -15,6 +15,8 @@ type CreateUpdateAlertMutingRuleRequest struct {
 	Description string `json:"description,omitempty"`
 	// List of alert muting filters for this rule, in the form of a JSON array of alert muting filter objects. Each object is a set of conditions for an alert muting rule. Each object property (name-value pair)  specifies a dimension or custom property to match to alert events. **read/write**
 	Filters []*AlertMutingRuleFilter `json:"filters,omitempty"`
+	// Toggle if alerts should be sent once the muting period is over.  If not specified, defaults to true **read/write**
+	SendAlertsOnceMutingPeriodHasEnded bool `json:"sendAlertsOnceMutingPeriodHasEnded,omitempty"`
 	// Starting time of an alert muting rule, in Unix time format UTC. If not specified, defaults to the current time. **read/write**.
 	StartTime int64 `json:"startTime,omitempty"`
 	// Stop time of an alert muting rule, in Unix time format UTC. If set to 0, detectors that match this rule are muted indefinitely. The default value is 0. **read/write**

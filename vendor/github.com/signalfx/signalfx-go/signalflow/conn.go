@@ -82,6 +82,11 @@ func (c *wsConn) Run() {
 				c.PostDisconnectCallback()
 			}
 
+			if c.ctx.Err() == context.Canceled {
+				log.Printf("Context cancelled, stop reconnecting.")
+				return
+			}
+
 			var err error
 			conn, err = c.connect()
 			if err != nil {

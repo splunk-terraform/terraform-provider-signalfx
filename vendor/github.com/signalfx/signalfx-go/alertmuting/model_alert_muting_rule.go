@@ -25,6 +25,8 @@ type AlertMutingRule struct {
 	LastUpdated int64 `json:"lastUpdated,omitempty"`
 	// The SignalFx-assigned user ID of the last user who updated the alert muting rule, in the form of a JSON string. If the system made the  last update, the value is \"AAAAAAAAAA\". **This property is read-only;  it's always set by the system.**
 	LastUpdatedBy string `json:"lastUpdatedBy,omitempty"`
+	// Toggle if alerts should be sent once the muting period is over.  If not specified, defaults to true
+	SendAlertsOnceMutingPeriodHasEnded bool `json:"sendAlertsOnceMutingPeriodHasEnded,omitempty"`
 	// Starting time of an alert muting rule, in Unix time format UTC. If not specified, defaults to the current time. **read/write**.
 	StartTime int64 `json:"startTime,omitempty"`
 	// Stop time of an alert muting rule, in Unix time format UTC. If set to 0, detectors that match this rule are muted indefinitely. The default value is 0. **read/write**
