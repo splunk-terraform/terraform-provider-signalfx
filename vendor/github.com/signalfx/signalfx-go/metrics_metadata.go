@@ -111,7 +111,9 @@ func (c *Client) SearchDimension(ctx context.Context, query string, orderBy stri
 func (c *Client) SearchMetric(ctx context.Context, query string, orderBy string, limit int, offset int) (*metrics_metadata.RetrieveMetricMetadataResponseModel, error) {
 	params := url.Values{}
 	params.Add("query", query)
-	params.Add("orderBy", orderBy)
+	if orderBy != "" {
+		params.Add("orderBy", orderBy)
+	}
 	params.Add("limit", strconv.Itoa(limit))
 	params.Add("offset", strconv.Itoa(offset))
 
@@ -159,6 +161,34 @@ func (c *Client) GetMetric(ctx context.Context, name string) (*metrics_metadata.
 	return finalMetric, err
 }
 
+// UpdateMetric creates or updates a metric
+func (c *Client) CreateUpdateMetric(ctx context.Context, name string, cumr *metrics_metadata.CreateUpdateMetricRequest) (*metrics_metadata.Metric, error) {
+	payload, err := json.Marshal(cumr)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := c.doRequest(ctx, "PUT", MetricAPIURL+"/"+name, nil, bytes.NewReader(payload))
+	if resp != nil {
+		defer resp.Body.Close()
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		message, _ := ioutil.ReadAll(resp.Body)
+		return nil, fmt.Errorf("Bad status %d: %s", resp.StatusCode, message)
+	}
+
+	finalMetric := &metrics_metadata.Metric{}
+
+	err = json.NewDecoder(resp.Body).Decode(finalMetric)
+	_, _ = io.Copy(ioutil.Discard, resp.Body)
+
+	return finalMetric, err
+}
+
 // GetMetricTimeSeries retrieves a metric time series by id.
 func (c *Client) GetMetricTimeSeries(ctx context.Context, id string) (*metrics_metadata.MetricTimeSeries, error) {
 	resp, err := c.doRequest(ctx, "GET", MetricTimeSeriesAPIURL+"/"+id, nil, nil)
@@ -186,7 +216,9 @@ func (c *Client) GetMetricTimeSeries(ctx context.Context, id string) (*metrics_m
 func (c *Client) SearchMetricTimeSeries(ctx context.Context, query string, orderBy string, limit int, offset int) (*metrics_metadata.MetricTimeSeriesRetrieveResponseModel, error) {
 	params := url.Values{}
 	params.Add("query", query)
-	params.Add("orderBy", orderBy)
+	if orderBy != "" {
+		params.Add("orderBy", orderBy)
+	}
 	params.Add("limit", strconv.Itoa(limit))
 	params.Add("offset", strconv.Itoa(offset))
 
@@ -215,7 +247,9 @@ func (c *Client) SearchMetricTimeSeries(ctx context.Context, query string, order
 func (c *Client) SearchTag(ctx context.Context, query string, orderBy string, limit int, offset int) (*metrics_metadata.TagRetrieveResponseModel, error) {
 	params := url.Values{}
 	params.Add("query", query)
-	params.Add("orderBy", orderBy)
+	if orderBy != "" {
+		params.Add("orderBy", orderBy)
+	}
 	params.Add("limit", strconv.Itoa(limit))
 	params.Add("offset", strconv.Itoa(offset))
 

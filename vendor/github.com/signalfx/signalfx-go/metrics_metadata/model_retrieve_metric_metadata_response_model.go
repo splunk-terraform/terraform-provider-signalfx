@@ -12,7 +12,7 @@ package metrics_metadata
 // The results of the metrics metadata request
 type RetrieveMetricMetadataResponseModel struct {
 	// An array of metrics metadata results
-	Result []*Metric `json:"result,omitempty"`
+	Results []*Metric `json:"results,omitempty"`
 	// Number of result objects returned. This value is the same as the size of the `result` value array.
 	Count int32 `json:"count,omitempty"`
 }

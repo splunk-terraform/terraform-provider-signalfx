@@ -1,5 +1,10 @@
 # Unreleased
 
+# 1.8.0, 2021-05-11
+
+* Don't send empty orderBy query parameter for metric metadata calls [#127](https://github.com/signalfx/signalfx-go/pull/127).
+* Replace nonfunctioning `RetrieveMetricMetadataResponseModel.Result` field with `Results` [#127](https://github.com/signalfx/signalfx-go/pull/127).
+
 # 1.7.18, 2021-03-29
 
 * Fix handling of client base URLs that have paths in them
