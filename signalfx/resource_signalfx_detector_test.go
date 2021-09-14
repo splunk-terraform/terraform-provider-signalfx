@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/hashcode"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
@@ -197,6 +198,9 @@ func TestAccCreateUpdateDetector(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1714348016.runbook_url", ""),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1714348016.severity", "Critical"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.1714348016.tip", ""),
+
+					// Force sleep before refresh at the end of test execution
+					waitBeforeTestStepPlanRefresh,
 				),
 			},
 			{
@@ -247,6 +251,14 @@ func TestAccCreateUpdateDetector(t *testing.T) {
 			},
 		},
 	})
+}
+
+func waitBeforeTestStepPlanRefresh(s *terraform.State) error {
+	// Gives time to the API to properly update info before read them again
+	// required to make the acceptance tests always passing, see:
+	// https://github.com/splunk-terraform/terraform-provider-signalfx/pull/306#issuecomment-870417521
+	time.Sleep(1 * time.Second)
+	return nil
 }
 
 func testAccCheckDetectorResourceExists(s *terraform.State) error {
