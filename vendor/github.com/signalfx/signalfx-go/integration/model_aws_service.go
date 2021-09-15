@@ -70,7 +70,7 @@ const (
 	AWSPOLLY                     AwsService = "AWS/Polly"
 	AWSREDSHIFT                  AwsService = "AWS/Redshift"
 	AWSRDS                       AwsService = "AWS/RDS"
-	AWSROBOMAKER                 AwsService = "AWS/RoboMaker"
+	AWSROBOMAKER                 AwsService = "AWS/Robomaker"
 	AWSROUTE53                   AwsService = "AWS/Route53"
 	AWSSAGE_MAKER                AwsService = "AWS/SageMaker"
 	AWSSAGE_MAKER_TRAINING_JOBS  AwsService = "aws/sagemaker/TrainingJobs"
@@ -95,7 +95,7 @@ const (
 	AWSWORK_MAIL                 AwsService = "AWS/WorkMail"
 	AWSWORK_SPACES               AwsService = "AWS/WorkSpaces"
 	AWSNEPTUNE                   AwsService = "AWS/Neptune"
-	AWSMEDIA_LIVE                AwsService = "AWS/MediaLive"
+	AWSMEDIA_LIVE                AwsService = "MediaLive"
 	AWS_SYSTEM_LINUX             AwsService = "System/Linux"
 )
 
@@ -156,7 +156,7 @@ var AWSServiceNames = map[string]AwsService{
 	"AWS/Polly":                   AWSPOLLY,
 	"AWS/Redshift":                AWSREDSHIFT,
 	"AWS/RDS":                     AWSRDS,
-	"AWS/RoboMaker":               AWSROBOMAKER,
+	"AWS/Robomaker":               AWSROBOMAKER,
 	"AWS/Route53":                 AWSROUTE53,
 	"AWS/SageMaker":               AWSSAGE_MAKER,
 	"aws/sagemaker/TrainingJobs":  AWSSAGE_MAKER_TRAINING_JOBS,
@@ -181,6 +181,6 @@ var AWSServiceNames = map[string]AwsService{
 	"AWS/WorkMail":                AWSWORK_MAIL,
 	"AWS/WorkSpaces":              AWSWORK_SPACES,
 	"AWS/Neptune":                 AWSNEPTUNE,
-	"AWS/MediaLive":               AWSMEDIA_LIVE,
+	"MediaLive":                   AWSMEDIA_LIVE,
 	"System/Linux":                AWS_SYSTEM_LINUX,
 }
