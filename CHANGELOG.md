@@ -1,8 +1,14 @@
+## 6.7.7
+
+BUGFIXES:
+* resource/aws_integration: Fix AWS namespaces [#314](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/314) and [#315](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/315)
+* resource/signalfx_detector: Remove unnecessary sleep [#313](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/313)
+
 ## 6.7.6
 
 BUGFIXES:
 * resource/signalfx_data_link: Handle extraneous empty targets [#309](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/309)
-* resource/signalfx_data_link: Convert tags from list to set and fix set field [#306](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/306)
+* resource/signalfx_detector: Convert tags from list to set and fix set field [#306](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/306)
 
 ## 6.7.5
 
