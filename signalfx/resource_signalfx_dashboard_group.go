@@ -497,7 +497,7 @@ func dashboardgroupUpdate(d *schema.ResourceData, meta interface{}) error {
 	// non-mirrored dashboards from the backend and append it to the list of dashboards.
 	// This behavior is noted in step 4 of the API docs here:
 	// https://dev.splunk.com/observability/docs/chartsdashboards/dashboard_groups_overview#Add-the-mirrored-dashboard
-	nonMirroredDashes, err := getNonMirroredDashes(config, d.Id())
+	nonMirroredDashes, err := getNonMirroredDashes(config, d)
 	if err != nil {
 		return fmt.Errorf("failed to get current dashboard list for %s: %v", d.Id(), err)
 	}
@@ -517,20 +517,50 @@ func dashboardgroupUpdate(d *schema.ResourceData, meta interface{}) error {
 	return dashboardGroupAPIToTF(d, dg)
 }
 
-func getNonMirroredDashes(config *signalfxConfig, groupID string) ([]*dashboard_group.DashboardConfig, error) {
-	dg, err := config.Client.GetDashboardGroup(context.TODO(), groupID)
+func getNonMirroredDashes(config *signalfxConfig, d *schema.ResourceData) ([]*dashboard_group.DashboardConfig, error) {
+	oldDashboardList, newDashboardList := d.GetChange("dashboard")
+	mirrorIDsToBeOmitted := getMirrorsToBeOmitted(oldDashboardList, newDashboardList)
+
+	dg, err := config.Client.GetDashboardGroup(context.TODO(), d.Id())
 	if err != nil {
 		return nil, err
 	}
 
 	out := make([]*dashboard_group.DashboardConfig, 0, len(dg.DashboardConfigs))
 	for _, dc := range dg.DashboardConfigs {
-		if !isMirroredDashboard(dc) {
+		if !isMirroredDashboard(dc) && !mirrorIDsToBeOmitted[dc.DashboardId] {
 			out = append(out, &dashboard_group.DashboardConfig{DashboardId: dc.DashboardId})
 		}
 	}
 
 	return out, nil
+}
+
+// getMirrorsToBeOmitted gets the difference of dashboard IDs from the current state
+// and desired state. The result will be dashboards that need to be omitted from the
+// final result before making the update API call. In other words, keep track of any
+// IDs that in the current state but not the target state. Such IDs will have to be
+// removed from final list of dashboard IDs.
+func getMirrorsToBeOmitted(oldDashboardList interface{}, newDashboardList interface{}) map[string]bool {
+	oldDashIDs := getDashboardIDs(oldDashboardList)
+	newDashIDs := getDashboardIDs(newDashboardList)
+	mirrorIDsToBeOmitted := map[string]bool{}
+	for old := range oldDashIDs {
+		if !newDashIDs[old] {
+			mirrorIDsToBeOmitted[old] = true
+		}
+	}
+	return mirrorIDsToBeOmitted
+}
+
+func getDashboardIDs(dashboardList interface{}) map[string]bool {
+	dashes := dashboardList.([]interface{})
+	dashIDs := map[string]bool{}
+	for _, d := range dashes {
+		dash := d.(map[string]interface{})
+		dashIDs[dash["dashboard_id"].(string)] = true
+	}
+	return dashIDs
 }
 
 func isMirroredDashboard(dc *dashboard_group.DashboardConfig) bool {
