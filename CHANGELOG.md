@@ -1,3 +1,8 @@
+## 6.7.8
+
+BUGFIXES:
+* resource/signalfx_dashboard_group: Correctly handle mirrored dashboards [#319](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/319)
+
 ## 6.7.7
 
 BUGFIXES:

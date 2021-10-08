@@ -518,8 +518,11 @@ func dashboardgroupUpdate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func getNonMirroredDashes(config *signalfxConfig, d *schema.ResourceData) ([]*dashboard_group.DashboardConfig, error) {
-	oldDashboardList, newDashboardList := d.GetChange("dashboard")
-	mirrorIDsToBeOmitted := getMirrorsToBeOmitted(oldDashboardList, newDashboardList)
+	var mirrorIDsToBeOmitted map[string]bool
+	if d.HasChange("dashboard") {
+		oldDashboardList, newDashboardList := d.GetChange("dashboard")
+		mirrorIDsToBeOmitted = getMirrorsToBeOmitted(oldDashboardList, newDashboardList)
+	}
 
 	dg, err := config.Client.GetDashboardGroup(context.TODO(), d.Id())
 	if err != nil {
