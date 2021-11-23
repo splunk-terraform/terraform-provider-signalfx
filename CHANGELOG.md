@@ -1,3 +1,8 @@
+## 6.7.10
+
+BUGFIXES:
+* data_source_aws_services, data_source_azure_services, data_source_gcp_services: add new services [#328](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/328)
+
 ## 6.7.9
 
 BUGFIXES:

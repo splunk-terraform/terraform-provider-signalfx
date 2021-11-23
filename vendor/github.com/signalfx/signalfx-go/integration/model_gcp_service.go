@@ -31,6 +31,10 @@ const (
 	GCP_STORAGE          GcpService = "storage"
 	GCP_VPN              GcpService = "vpn"
 	GCP_FILE             GcpService = "file"
+	GCP_KNATIVE          GcpService = "knative"
+	GCP_KUBERNETES       GcpService = "kubernetes"
+	GCP_REDIS            GcpService = "redis"
+	GCP_RUN              GcpService = "run"
 )
 
 var GcpServiceNames = map[string]GcpService{
@@ -61,4 +65,8 @@ var GcpServiceNames = map[string]GcpService{
 	"storage":          GCP_STORAGE,
 	"vpn":              GCP_VPN,
 	"file":             GCP_FILE,
+	"knative":          GCP_KNATIVE,
+	"kubernetes":       GCP_KUBERNETES,
+	"redis":            GCP_REDIS,
+	"run":              GCP_RUN,
 }

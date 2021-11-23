@@ -40,6 +40,7 @@ const (
 	AZURE_MICROSOFT_DATAFACTORY_FACTORIES                        AzureService = "microsoft.datafactory/factories"
 	AZURE_MICROSOFT_DATALAKEANALYTICS_ACCOUNTS                   AzureService = "microsoft.datalakeanalytics/accounts"
 	AZURE_MICROSOFT_DATALAKESTORE_ACCOUNTS                       AzureService = "microsoft.datalakestore/accounts"
+	AZURE_MICROSOFT_DBFORMARIADB_SERVERS                         AzureService = "microsoft.dbformariadb/servers"
 	AZURE_MICROSOFT_DBFORMYSQL_SERVERS                           AzureService = "microsoft.dbformysql/servers"
 	AZURE_MICROSOFT_DBFORPOSTGRESQL_SERVERS                      AzureService = "microsoft.dbforpostgresql/servers"
 	AZURE_MICROSOFT_DOCUMENTDB_DATABASEACCOUNTS                  AzureService = "microsoft.documentdb/databaseaccounts"
@@ -59,6 +60,7 @@ const (
 	AZURE_MICROSOFT_SQL_SERVERS                                  AzureService = "microsoft.sql/servers"
 	AZURE_MICROSOFT_STREAMANALYTICS_STREAMINGJOBS                AzureService = "microsoft.streamanalytics/streamingjobs"
 	AZURE_MICROSOFT_NETWORK_DNSZONES                             AzureService = "microsoft.network/dnszones"
+	AZURE_MICROSOFT_INSIGHTS_AUTOSCALESETTINGS                   AzureService = "microsoft.insights/autoscalesettings"
 	AZURE_MICROSOFT_HDINSIGHT_CLUSTERS                           AzureService = "microsoft.hdinsight/clusters"
 	AZURE_MICROSOFT_CONTAINERINSTANCE_CONTAINERGROUPS            AzureService = "microsoft.containerinstance/containergroups"
 	AZURE_MICROSOFT_CONTAINERINSTANCE_MANAGEDCLUSTERS            AzureService = "microsoft.containerservice/managedclusters"
@@ -73,6 +75,12 @@ const (
 	AZURE_MICROSOFT_NETWORK_AZUREFIREWALLS                       AzureService = "microsoft.network/azurefirewalls"
 	AZURE_MICROSOFT_MAPS_ACCOUNTS                                AzureService = "microsoft.maps/accounts"
 	AZURE_MICROSOFT_NETWORK_NETWORKINTERFACES                    AzureService = "microsoft.network/networkinterfaces"
+	AZURE_MICROSOFT_CDN_CDNWEBAPPLICATIONFIREWALLPOLICIES        AzureService = "microsoft.cdn/cdnwebapplicationfirewallpolicies"
+	AZURE_MICROSOFT_CONTAINERREGISTRY_REGISTRIES                 AzureService = "microsoft.containerregistry/registries"
+	AZURE_MICROSOFT_DEVICES_PROVISIONINGSERVICES                 AzureService = "microsoft.devices/provisioningservices"
+	AZURE_MICROSOFT_SIGNALRSERVICE_SIGNALR                       AzureService = "microsoft.signalrservice/signalr"
+	AZURE_MICROSOFT_SIGNALRSERVICE_WEBPUBSUB                     AzureService = "microsoft.signalrservice/webpubsub"
+	AZURE_MICROSOFT_SQL_MANAGED_INSTANCES                        AzureService = "microsoft.sql/managedinstances"
 )
 
 // AzureServiceNames is a list of Azure service names
@@ -112,6 +120,7 @@ var AzureServiceNames = map[string]AzureService{
 	"microsoft.datafactory/factories":                           AZURE_MICROSOFT_DATAFACTORY_FACTORIES,
 	"microsoft.datalakeanalytics/accounts":                      AZURE_MICROSOFT_DATALAKEANALYTICS_ACCOUNTS,
 	"microsoft.datalakestore/accounts":                          AZURE_MICROSOFT_DATALAKESTORE_ACCOUNTS,
+	"microsoft.dbformariadb/servers":                            AZURE_MICROSOFT_DBFORMARIADB_SERVERS,
 	"microsoft.dbformysql/servers":                              AZURE_MICROSOFT_DBFORMYSQL_SERVERS,
 	"microsoft.dbforpostgresql/servers":                         AZURE_MICROSOFT_DBFORPOSTGRESQL_SERVERS,
 	"microsoft.documentdb/databaseaccounts":                     AZURE_MICROSOFT_DOCUMENTDB_DATABASEACCOUNTS,
@@ -131,6 +140,7 @@ var AzureServiceNames = map[string]AzureService{
 	"microsoft.sql/servers":                                     AZURE_MICROSOFT_SQL_SERVERS,
 	"microsoft.streamanalytics/streamingjobs":                   AZURE_MICROSOFT_STREAMANALYTICS_STREAMINGJOBS,
 	"microsoft.network/dnszones":                                AZURE_MICROSOFT_NETWORK_DNSZONES,
+	"microsoft.insights/autoscalesettings":                      AZURE_MICROSOFT_INSIGHTS_AUTOSCALESETTINGS,
 	"microsoft.hdinsight/clusters":                              AZURE_MICROSOFT_HDINSIGHT_CLUSTERS,
 	"microsoft.containerinstance/containergroups":               AZURE_MICROSOFT_CONTAINERINSTANCE_CONTAINERGROUPS,
 	"microsoft.containerservice/managedclusters":                AZURE_MICROSOFT_CONTAINERINSTANCE_MANAGEDCLUSTERS,
@@ -145,4 +155,10 @@ var AzureServiceNames = map[string]AzureService{
 	"microsoft.network/azurefirewalls":                          AZURE_MICROSOFT_NETWORK_AZUREFIREWALLS,
 	"microsoft.maps/accounts":                                   AZURE_MICROSOFT_MAPS_ACCOUNTS,
 	"microsoft.network/networkinterfaces":                       AZURE_MICROSOFT_NETWORK_NETWORKINTERFACES,
+	"microsoft.cdn/cdnwebapplicationfirewallpolicies":           AZURE_MICROSOFT_CDN_CDNWEBAPPLICATIONFIREWALLPOLICIES,
+	"microsoft.containerregistry/registries":                    AZURE_MICROSOFT_CONTAINERREGISTRY_REGISTRIES,
+	"microsoft.devices/provisioningservices":                    AZURE_MICROSOFT_DEVICES_PROVISIONINGSERVICES,
+	"microsoft.signalrservice/signalr":                          AZURE_MICROSOFT_SIGNALRSERVICE_SIGNALR,
+	"microsoft.signalrservice/webpubsub":                        AZURE_MICROSOFT_SIGNALRSERVICE_WEBPUBSUB,
+	"microsoft.sql/managedinstances":                            AZURE_MICROSOFT_SQL_MANAGED_INSTANCES,
 }
