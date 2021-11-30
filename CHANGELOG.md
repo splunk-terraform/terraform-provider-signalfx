@@ -1,3 +1,8 @@
+## 6.7.9
+
+BUGFIXES:
+* resource/signalfx_dashboard_group: Teams should not impose ordering on dashboard_groups by using list [#329](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/329)
+
 ## 6.7.8
 
 BUGFIXES:
