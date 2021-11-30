@@ -25,7 +25,7 @@ func dashboardGroupResource() *schema.Resource {
 				Description: "Description of the dashboard group",
 			},
 			"teams": &schema.Schema{
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "Team IDs to associate the dashboard group to",
