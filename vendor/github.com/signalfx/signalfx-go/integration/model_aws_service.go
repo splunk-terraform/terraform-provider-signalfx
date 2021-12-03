@@ -9,7 +9,7 @@
 
 package integration
 
-// AwsService : An AWS service that you want SignalFx to collect data from. SignalFx supports the following AWS services:<br>   * AWS/ApiGateway   * AWS/AppStream   * AWS/AutoScaling   * AWS/Billing   * AWS/CloudFront   * AWS/CloudSearch   * AWS/Events   * AWS/Logs   * AWS/Connect   * AWS/DMS   * AWS/DX   * AWS/DynamoDB   * AWS/EC2   * AWS/EC2Spot   * AWS/ECS   * AWS/ElasticBeanstalk   * AWS/EBS   * AWS/EFS   * AWS/ELB   * AWS/ApplicationELB   * AWS/NetworkELB   * AWS/ElasticTranscoder   * AWS/ElastiCache   * AWS/ES   * AWS/ElasticMapReduce   * AWS/GameLift   * AWS/Inspector   * AWS/IoT   * AWS/KMS   * AWS/KinesisAnalytics   * AWS/Firehose   * AWS/Kinesis   * AWS/KinesisVideo   * AWS/Lambda   * AWS/Lex   * AWS/ML   * AWS/OpsWorks   * AWS/Polly   * AWS/Redshift   * AWS/RDS   * AWS/Route53   * AWS/SageMaker   * AWS/DDoSProtection   * AWS/SES   * AWS/SNS   * AWS/SQS   * AWS/S3   * AWS/SWF   * AWS/States   * AWS/StorageGateway   * AWS/Translate   * AWS/NATGateway   * AWS/VPN   * WAF   * AWS/WorkSpaces
+// AwsService : An AWS service that you want SignalFx to collect data from. SignalFx supports the following AWS services:<br>   * AWS/ApiGateway   * AWS/AppStream   * AWS/AutoScaling   * AWS/Backup   * AWS/Billing   * AWS/CloudFront   * AWS/CloudSearch   * AWS/Events   * AWS/Logs   * AWS/Connect   * AWS/DMS   * AWS/DX   * AWS/DynamoDB   * AWS/EC2   * AWS/EC2Spot   * AWS/ECS   * AWS/ElasticBeanstalk   * AWS/EBS   * AWS/EFS   * AWS/ELB   * AWS/ApplicationELB   * AWS/NetworkELB   * AWS/ElasticTranscoder   * AWS/ElastiCache   * AWS/ES   * AWS/ElasticMapReduce   * AWS/GameLift   * AWS/Inspector   * AWS/IoT   * AWS/KMS   * AWS/KinesisAnalytics   * AWS/Firehose   * AWS/Kinesis   * AWS/KinesisVideo   * AWS/Lambda   * AWS/Lex   * AWS/ML   * AWS/OpsWorks   * AWS/Polly   * AWS/Redshift   * AWS/RDS   * AWS/Route53   * AWS/SageMaker   * AWS/DDoSProtection   * AWS/SES   * AWS/SNS   * AWS/SQS   * AWS/S3   * AWS/SWF   * AWS/States   * AWS/StorageGateway   * AWS/Translate   * AWS/NATGateway   * AWS/VPN   * AWS/WAFV2   * WAF   * AWS/WorkSpaces   * CWAgent
 type AwsService string
 
 // List of AWSService
@@ -18,8 +18,10 @@ const (
 	AWSAPP_STREAM                AwsService = "AWS/AppStream"
 	AWSATHENA                    AwsService = "AWS/Athena"
 	AWSAUTO_SCALING              AwsService = "AWS/AutoScaling"
+	AWSBACKUP                    AwsService = "AWS/Backup"
 	AWSBILLING                   AwsService = "AWS/Billing"
 	AWSACP_PRIVATE_CA            AwsService = "AWS/ACMPrivateCA"
+	AWSCERT_MANAGER              AwsService = "AWS/CertificateManager"
 	AWSCLOUD_FRONT               AwsService = "AWS/CloudFront"
 	AWSCLOUD_HSM                 AwsService = "AWS/CloudHSM"
 	AWSCLOUD_SEARCH              AwsService = "AWS/CloudSearch"
@@ -39,6 +41,7 @@ const (
 	AWSELASTIC_INTERFACE         AwsService = "AWS/ElasticInterface"
 	AWSEBS                       AwsService = "AWS/EBS"
 	AWSEFS                       AwsService = "AWS/EFS"
+	AWSEKS                       AwsService = "AWS/EKS"
 	AWSELB                       AwsService = "AWS/ELB"
 	AWSAPPLICATION_ELB           AwsService = "AWS/ApplicationELB"
 	AWSNETWORK_ELB               AwsService = "AWS/NetworkELB"
@@ -91,12 +94,14 @@ const (
 	AWSTRUSTED_ADVISOR           AwsService = "AWS/TrustedAdvisor"
 	AWSNAT_GATEWAY               AwsService = "AWS/NATGateway"
 	AWSVPN                       AwsService = "AWS/VPN"
+	AWSWAFV2                     AwsService = "AWS/WAFV2"
 	WAF                          AwsService = "WAF"
 	AWSWORK_MAIL                 AwsService = "AWS/WorkMail"
 	AWSWORK_SPACES               AwsService = "AWS/WorkSpaces"
 	AWSNEPTUNE                   AwsService = "AWS/Neptune"
 	AWSMEDIA_LIVE                AwsService = "MediaLive"
 	AWS_SYSTEM_LINUX             AwsService = "System/Linux"
+	CWAGENT                      AwsService = "CWAgent"
 )
 
 var AWSServiceNames = map[string]AwsService{
@@ -104,8 +109,10 @@ var AWSServiceNames = map[string]AwsService{
 	"AWS/AppStream":               AWSAPP_STREAM,
 	"AWS/Athena":                  AWSATHENA,
 	"AWS/AutoScaling":             AWSAUTO_SCALING,
+	"AWS/Backup":                  AWSBACKUP,
 	"AWS/Billing":                 AWSBILLING,
 	"AWS/ACMPrivateCA":            AWSACP_PRIVATE_CA,
+	"AWS/CertificateManager":      AWSCERT_MANAGER,
 	"AWS/CloudFront":              AWSCLOUD_FRONT,
 	"AWS/CloudHSM":                AWSCLOUD_HSM,
 	"AWS/CloudSearch":             AWSCLOUD_SEARCH,
@@ -125,6 +132,7 @@ var AWSServiceNames = map[string]AwsService{
 	"AWS/ElasticInterface":        AWSELASTIC_INTERFACE,
 	"AWS/EBS":                     AWSEBS,
 	"AWS/EFS":                     AWSEFS,
+	"AWS/EKS":                     AWSEKS,
 	"AWS/ELB":                     AWSELB,
 	"AWS/ApplicationELB":          AWSAPPLICATION_ELB,
 	"AWS/NetworkELB":              AWSNETWORK_ELB,
@@ -177,10 +185,12 @@ var AWSServiceNames = map[string]AwsService{
 	"AWS/TrustedAdvisor":          AWSTRUSTED_ADVISOR,
 	"AWS/NATGateway":              AWSNAT_GATEWAY,
 	"AWS/VPN":                     AWSVPN,
+	"AWS/WAFV2":                   AWSWAFV2,
 	"WAF":                         WAF,
 	"AWS/WorkMail":                AWSWORK_MAIL,
 	"AWS/WorkSpaces":              AWSWORK_SPACES,
 	"AWS/Neptune":                 AWSNEPTUNE,
 	"MediaLive":                   AWSMEDIA_LIVE,
 	"System/Linux":                AWS_SYSTEM_LINUX,
+	"CWAgent":                     CWAGENT,
 }
