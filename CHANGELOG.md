@@ -2,6 +2,8 @@
 
 BUGFIXES:
 * data_source_aws_services, data_source_azure_services, data_source_gcp_services: add new services [#328](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/328)
+* resource/signalfx_dashboard_group: Teams in dashboard groups should be an unordered set rather than a list [#331](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/331)
+* resource/signalfx_alert_muting_rule: Support new type of filter value [#333](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/333)
 
 ## 6.7.9
 
