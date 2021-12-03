@@ -3,6 +3,7 @@ package signalfx
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -92,7 +93,7 @@ func getPayloadAlertMutingRule(d *schema.ResourceData) (*alertmuting.CreateUpdat
 		tfFilter := tfFilter.(map[string]interface{})
 		filter := &alertmuting.AlertMutingRuleFilter{
 			Property:      tfFilter["property"].(string),
-			PropertyValue: tfFilter["property_value"].(string),
+			PropertyValue: alertmuting.StringOrArray{Values: []string{tfFilter["property_value"].(string)}},
 			NOT:           tfFilter["negated"].(bool),
 		}
 		filterList = append(filterList, filter)
@@ -106,7 +107,7 @@ func getPayloadAlertMutingRule(d *schema.ResourceData) (*alertmuting.CreateUpdat
 		for _, d := range val.([]interface{}) {
 			filterList = append(filterList, &alertmuting.AlertMutingRuleFilter{
 				Property:      "sf_detectorId",
-				PropertyValue: d.(string),
+				PropertyValue: alertmuting.StringOrArray{Values: []string{d.(string)}},
 				NOT:           false,
 			})
 		}
@@ -179,16 +180,23 @@ func alertMutingRuleAPIToTF(d *schema.ResourceData, amr *alertmuting.AlertMuting
 		var detectors []string
 		for _, f := range amr.Filters {
 
+			val := ""
+			if len(f.PropertyValue.Values) == 1 {
+				val = f.PropertyValue.Values[0]
+			} else if len(f.PropertyValue.Values) > 1 {
+				return errors.New("terraform provider does not support arrays in alert muting rule filter values")
+			}
+
 			switch f.Property {
 			// The API does not differentiate, but we do to make things
 			// easier for the user, so separate detectors out into their
 			// own propery.
 			case "sf_detectorId":
-				detectors = append(detectors, f.PropertyValue)
+				detectors = append(detectors, val)
 			default:
 				filters = append(filters, map[string]interface{}{
 					"property":       f.Property,
-					"property_value": f.PropertyValue,
+					"property_value": val,
 					"negated":        f.NOT,
 				})
 			}
