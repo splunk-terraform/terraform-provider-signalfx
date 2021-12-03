@@ -193,7 +193,7 @@ func getPayloadDashboardGroup(d *schema.ResourceData) *dashboard_group.CreateUpd
 
 	if val, ok := d.GetOk("teams"); ok {
 		teams := []string{}
-		for _, t := range val.([]interface{}) {
+		for _, t := range val.(*schema.Set).List() {
 			teams = append(teams, t.(string))
 		}
 		cudgr.Teams = teams
