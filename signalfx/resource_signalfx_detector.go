@@ -238,7 +238,7 @@ func detectorResource() *schema.Resource {
 			},
 		},
 
-		CustomizeDiff: customdiff.If(validateCondition, validateProgramText),
+		CustomizeDiff: customdiff.If(validateProgramTextCondition, validateProgramText),
 
 		Create: detectorCreate,
 		Read:   detectorRead,
@@ -763,7 +763,7 @@ func validateSeverity(v interface{}, k string) (we []string, errors []error) {
 /*
   Validates the condition to be fulfilled for checking ProgramText.
 */
-func validateCondition(d *schema.ResourceDiff, meta interface{}) bool {
+func validateProgramTextCondition(d *schema.ResourceDiff, meta interface{}) bool {
 
 	if _, ok := d.GetOkExists("program_text"); !ok {
 		return false
