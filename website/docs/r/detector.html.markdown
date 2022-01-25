@@ -186,6 +186,7 @@ See [Delayed Datapoints](https://signalfx-product-docs.readthedocs-hosted.com/en
 In a addition to all arguments above, the following attributes are exported:
 
 * `id` - The ID of the detector.
+* `label_resolutions` - The resolutions of the detector alerts in milliseconds that indicate how often data is analyzed to determine if an alert should be triggered.
 * `url` - The URL of the detector.
 
 ## Import
