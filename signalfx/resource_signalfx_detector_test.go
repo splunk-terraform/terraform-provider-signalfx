@@ -173,6 +173,25 @@ resource "signalfx_detector" "high_cpu_utilization" {
 }
 `
 
+const invalidRulesConfig = `
+resource "signalfx_detector" "high_cpu_utilization" {
+    name = "CPU utilization is high"
+    description = "The process is taking too much CPU power"
+
+    program_text = <<-EOF
+	A = data('cpu.utilization').mean(by=['sf_metric', 'sfx_realm']).publish(label='A');
+	detect(when(A > threshold(10), lasting='2m'), auto_resolve_after='3d').publish('CPU utilization is high')
+	EOF
+
+    rule {
+        description = "Maximum > 10 for 2minutes"
+        severity = "Warning"
+        detect_label = "CPU utilization is low"
+        notifications = ["Email,foo-alerts@example.com"]
+    }
+}
+`
+
 func TestAccCreateUpdateDetector(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -182,6 +201,12 @@ func TestAccCreateUpdateDetector(t *testing.T) {
 			// Check invalid programTextConfig
 			{
 				Config:      invalidProgramTextConfig,
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("Unexpected status code"),
+			},
+			// Check invalid rulesConfig
+			{
+				Config:      invalidRulesConfig,
 				PlanOnly:    true,
 				ExpectError: regexp.MustCompile("Unexpected status code"),
 			},
