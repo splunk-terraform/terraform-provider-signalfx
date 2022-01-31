@@ -1,3 +1,8 @@
+## 6.8.0
+
+IMPROVEMENTS:
+* resource/signalfx_detector: Add a CustomDiff to validate the `programText` along with the `rule` attribute at Plan stage [#337](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/337)
+
 ## 6.7.10
 
 BUGFIXES:
