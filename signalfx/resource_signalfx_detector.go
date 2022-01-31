@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-sdk/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/hashcode"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
@@ -236,6 +237,8 @@ func detectorResource() *schema.Resource {
 				Version: 0,
 			},
 		},
+
+		CustomizeDiff: customdiff.If(validateProgramTextCondition, validateProgramText),
 
 		Create: detectorCreate,
 		Read:   detectorRead,
@@ -728,7 +731,9 @@ func resourceRuleHash(v interface{}) int {
 		notifications := v.([]interface{})
 		s_notifications := make([]string, len(notifications))
 		for i, raw := range notifications {
-			s_notifications[i] = raw.(string)
+			if raw != nil {
+				s_notifications[i] = raw.(string)
+			}
 		}
 		sort.Strings(s_notifications)
 
@@ -753,4 +758,82 @@ func validateSeverity(v interface{}, k string) (we []string, errors []error) {
 	}
 	errors = append(errors, fmt.Errorf("%s not allowed; must be one of: %s", value, strings.Join(allowedWords, ", ")))
 	return
+}
+
+/*
+  Validates the condition to be fulfilled for checking ProgramText.
+*/
+func validateProgramTextCondition(d *schema.ResourceDiff, meta interface{}) bool {
+
+	if _, ok := d.GetOkExists("program_text"); !ok {
+		return false
+	}
+	if _, ok := d.GetOkExists("rule"); !ok {
+		return false
+	}
+
+	return true
+}
+
+/*
+  Validates the ProgramText and the list of rules.
+*/
+func validateProgramText(d *schema.ResourceDiff, meta interface{}) error {
+
+	tfRules := d.Get("rule").(*schema.Set).List()
+	rulesList := make([]*detector.Rule, len(tfRules))
+	for i, tfRule := range tfRules {
+		tfRule := tfRule.(map[string]interface{})
+		rule := &detector.Rule{
+			Description: tfRule["description"].(string),
+			DetectLabel: tfRule["detect_label"].(string),
+			Disabled:    tfRule["disabled"].(bool),
+		}
+
+		tfSev := tfRule["severity"].(string)
+		sev := detector.INFO
+		switch tfSev {
+		case "Critical":
+			sev = detector.CRITICAL
+		case "Warning":
+			sev = detector.WARNING
+		case "Major":
+			sev = detector.MAJOR
+		case "Minor":
+			sev = detector.MINOR
+		case "Info":
+			sev = detector.INFO
+		}
+		rule.Severity = sev
+
+		if val, ok := tfRule["parameterized_body"]; ok {
+			rule.ParameterizedBody = val.(string)
+		}
+
+		if val, ok := tfRule["parameterized_subject"]; ok {
+			rule.ParameterizedSubject = val.(string)
+		}
+
+		if val, ok := tfRule["runbook_url"]; ok {
+			rule.RunbookUrl = val.(string)
+		}
+
+		if val, ok := tfRule["tip"]; ok {
+			rule.Tip = val.(string)
+		}
+		rulesList[i] = rule
+	}
+
+	config := meta.(*signalfxConfig)
+
+	err := config.Client.ValidateDetector(context.Background(), &detector.ValidateDetectorRequestModel{
+		Name:        d.Get("name").(string),
+		ProgramText: d.Get("program_text").(string),
+		Rules:       rulesList,
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
