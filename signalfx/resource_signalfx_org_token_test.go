@@ -47,6 +47,30 @@ resource "signalfx_org_token" "myorgtokenTOK1" {
 }
 `
 
+const newOrgTokenLimitConfig = `
+resource "signalfx_org_token" "mylimitorgtokenTOK1" {
+  name = "LimitToken"
+  description = "Limits"
+  auth_scopes = ["INGEST"]
+
+  dpm_limits {
+    dpm_limit = 1000
+  }
+}
+`
+
+const updatedOrgTokenLimitConfig = `
+resource "signalfx_org_token" "mylimitorgtokenTOK1" {
+  name = "LimitToken"
+  description = "Limits NEW"
+  auth_scopes = ["INGEST"]
+
+  dpm_limits {
+    dpm_limit = 2000
+  }
+}
+`
+
 func TestAccCreateUpdateOrgToken(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -75,6 +99,42 @@ func TestAccCreateUpdateOrgToken(t *testing.T) {
 					testAccCheckOrgTokenResourceExists,
 					resource.TestCheckResourceAttr("signalfx_org_token.myorgtokenTOK1", "name", "FarToken"),
 					resource.TestCheckResourceAttr("signalfx_org_token.myorgtokenTOK1", "description", "Farts NEW"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccCreateUpdateLimitOrgToken(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccOrgTokenDestroy,
+		Steps: []resource.TestStep{
+			// Create It
+			{
+				Config: newOrgTokenLimitConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckOrgTokenResourceExists,
+					resource.TestCheckResourceAttr("signalfx_org_token.mylimitorgtokenTOK1", "name", "LimitToken"),
+					resource.TestCheckResourceAttr("signalfx_org_token.mylimitorgtokenTOK1", "description", "Limits"),
+					resource.TestCheckResourceAttr("signalfx_org_token.mylimitorgtokenTOK1", "dpm_limits.#", "1"),
+				),
+			},
+			{
+				ResourceName:      "signalfx_org_token.mylimitorgtokenTOK1",
+				ImportState:       true,
+				ImportStateIdFunc: testAccStateIdFunc("signalfx_org_token.mylimitorgtokenTOK1"),
+				ImportStateVerify: true,
+			},
+			// Update Everything
+			{
+				Config: updatedOrgTokenLimitConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckOrgTokenResourceExists,
+					resource.TestCheckResourceAttr("signalfx_org_token.mylimitorgtokenTOK1", "name", "LimitToken"),
+					resource.TestCheckResourceAttr("signalfx_org_token.mylimitorgtokenTOK1", "description", "Limits NEW"),
+					resource.TestCheckResourceAttr("signalfx_org_token.mylimitorgtokenTOK1", "dpm_limits.#", "1"),
 				),
 			},
 		},
