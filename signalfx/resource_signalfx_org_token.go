@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"sort"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -23,6 +24,13 @@ func orgTokenResource() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Description of the token (Optional)",
+			},
+			"auth_scopes": &schema.Schema{
+				Type:        schema.TypeList,
+				Optional:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Computed:    true,
+				Description: "Authentication scope, ex: INGEST, API, RUM ... (Optional)",
 			},
 			"disabled": &schema.Schema{
 				Type:        schema.TypeBool,
@@ -143,6 +151,14 @@ func getPayloadOrgToken(d *schema.ResourceData) (*orgtoken.CreateUpdateTokenRequ
 		Disabled:    d.Get("disabled").(bool),
 	}
 
+	if val, ok := d.GetOk("auth_scopes"); ok {
+		var auths []string
+		for _, v := range val.([]interface{}) {
+			auths = append(auths, v.(string))
+		}
+		token.AuthScopes = auths
+	}
+
 	if hostLimits, ok := d.GetOk("host_or_usage_limits"); ok {
 		hostLimits := hostLimits.(*schema.Set).List()[0].(map[string]interface{})
 		categoryQuotas := &orgtoken.UsageLimits{}
@@ -247,6 +263,11 @@ func orgTokenAPIToTF(d *schema.ResourceData, t *orgtoken.Token) error {
 		return err
 	}
 
+	sort.Strings(t.AuthScopes)
+	if err := d.Set("auth_scopes", t.AuthScopes); err != nil {
+		return err
+	}
+
 	if t.Limits != nil {
 		limits := t.Limits
 		if limits.DpmQuota != nil {
@@ -256,7 +277,7 @@ func orgTokenAPIToTF(d *schema.ResourceData, t *orgtoken.Token) error {
 			if limits.DpmNotificationThreshold != nil {
 				dpmStuff["dpm_notification_threshold"] = limits.DpmNotificationThreshold
 			}
-			if err := d.Set("dpm_limit", dpmStuff); err != nil {
+			if err := d.Set("dpm_limits", []map[string]interface{}{dpmStuff}); err != nil {
 				return err
 			}
 		} else {
