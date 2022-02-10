@@ -288,14 +288,15 @@ func awsIntegrationAPIToTF(d *schema.ResourceData, aws *integration.AwsCloudWatc
 	if len(aws.CustomNamespaceSyncRules) > 0 {
 		var rules []map[string]interface{}
 		for _, v := range aws.CustomNamespaceSyncRules {
-			if v.Filter != nil {
-				rules = append(rules, map[string]interface{}{
-					"default_action": string(v.DefaultAction),
-					"filter_action":  v.Filter.Action,
-					"filter_source":  v.Filter.Source,
-					"namespace":      v.Namespace,
-				})
+			rule := map[string]interface{}{
+				"default_action": string(v.DefaultAction),
+				"namespace":      v.Namespace,
 			}
+			if v.Filter != nil {
+				rule["filter_action"] = v.Filter.Action
+				rule["filter_source"] = v.Filter.Source
+			}
+			rules = append(rules, rule)
 		}
 		if len(rules) > 0 {
 			if err := d.Set("custom_namespace_sync_rule", rules); err != nil {
