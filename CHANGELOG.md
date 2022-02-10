@@ -1,3 +1,8 @@
+## 6.8.1
+
+BUGFIXES:
+* resource/signalfx_org_token: Fix `dpm_limits` and add `auth_scopes` schema option [#342](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/342)
+
 ## 6.8.0
 
 IMPROVEMENTS:
