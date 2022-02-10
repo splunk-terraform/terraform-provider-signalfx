@@ -110,7 +110,5 @@ func integrationAWSTokenCreate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func integrationAWSTokenDelete(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*signalfxConfig)
-
-	return config.Client.DeleteAWSCloudWatchIntegration(context.TODO(), d.Id())
+	return DoIntegrationAWSDelete(d, meta)
 }
