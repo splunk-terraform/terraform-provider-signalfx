@@ -6,35 +6,34 @@ description: |-
   The SignalFx provider is used to interact with the resources supported by SignalFx. The provider needs to be configured with the proper credentials before it can be used.
 ---
 
-# SignalFx Provider
+# SignalFx provider
 
-The [SignalFx](https://www.signalfx.com/) provider is used to interact with the
-resources supported by SignalFx. The provider needs to be configured
-with the proper credentials before it can be used.
+The [SignalFx](https://www.signalfx.com/) provider lets you interact with 
+the resources supported by SignalFx. You must configure the provider with 
+credentials before using it.
 
-Use the navigation to the left to read about the available resources.
+Use the navigation to learn more about the available resources.
 
-# Learning
+# Learning about Terraform and SignalFx
 
-If you're new to Terraform and SignalFx there are few resource we can offer to
-help!
+Terraform is a powerful tool and ecosystem beyond. See [Introduction to Terraform](https://www.terraform.io/intro/index.html)
+to understand the basics of working with Terraform. 
 
-Terraform is a tool and ecosystem beyond just SignalFx. It's really powerful and you can check out an [Introduction to Terraform](https://www.terraform.io/intro/index.html)
-which covers the basic usage.
-
-Once you got the basics of working with Terraform down, using this provider is much easier. You'll probably want to check out the docs on the [SignalFlow programming language](https://developers.signalfx.com/signalflow_analytics/signalflow_overview.html#_signalflow_programming_language) as all charts and detectors will require you to provide the `program_text` in SignalFlow. Also keep in mind that you can open any chart or in SignalFx and click "Show SignalFlow" if you prefer to use the UI.
+See [SignalFlow programming language](https://dev.splunk.com/observability/docs/signalflow/) to learn how to create 
+SignalFx charts and detectors using `program_text`.
 
 # Authentication
 
-When authenticating you have [two options](https://developers.signalfx.com/basics/authentication.html): an Org token or a User token.
+When authenticating to the SignalFx API you can use either an Org token or a 
+Session token. See [Authenticate API Requests](https://dev.splunk.com/observability/docs/apibasics/authentication_basics/) for more
+information.
 
-Org tokens are long-lived and give the capability to manipulate dashboards, charts, and the like. The long-lived nature means you can set them up and forget them for a long time.
+~> **NOTE** Separate the less sensitive resources, such as dashboards, from the 
+more sensitive ones, such as integrations, to avoid having to change tokens.
 
-User tokens are short-lived and provide administrative permissions to edit integrations. These expire relatively quickly (30 days at the time of this writing) but allow the manipulation of some more sensitive resources. Resources that require this are flagged in their documentation.
+## Example
 
-~> **NOTE** Per the above, it is beneficial to separate the less sensitive resources (dashboards, etc) from the more sensitive (integrations) such that you don't have to reup the token all the time.
-
-## Example Usage
+The following example shows how to configure the SignalFx provider for Terraform:
 
 ```hcl
 # Configure the SignalFx provider
@@ -57,11 +56,11 @@ resource "signalfx_dashboard" "default" {
 }
 ```
 
-## Argument Reference
+## Arguments
 
-The following arguments are supported:
+The provider supports the following arguments:
 
-* `auth_token` - (Required) The auth token for [authentication](https://developers.signalfx.com/basics/authentication.html). This can also be set via the `SFX_AUTH_TOKEN` environment variable.
-* `api_url` - (Optional) The API URL to use for communicating with SignalFx. This is helpful for organizations who need to set their Realm or use a proxy. Note: You likely want to change `custom_app_url` too! This can also be set via the `SFX_API_URL` environment variable.
-* `custom_app_url` - (Optional)  The application URL that users should use to interact with assets in the browser. This is used by organizations using specific realms or those with a custom [SSO domain](https://docs.signalfx.com/en/latest/admin-guide/sso.html). This can also be set via the `SFX_CUSTOM_APP_URL` environment variable.
-* `timeout_seconds` - (Optional) The total timeout duration, in seconds, to wait when making HTTP API calls to SignalFx. Defaults to 120.
+* `auth_token` - (Required) The auth token for [authentication](https://developers.signalfx.com/basics/authentication.html). You can also set it using the `SFX_AUTH_TOKEN` environment variable.
+* `api_url` - (Optional) The API URL to use for communicating with SignalFx. This is helpful for organizations that need to set their Realm or use a proxy. You can also set it using the `SFX_API_URL` environment variable.
+* `custom_app_url` - (Optional) The application URL that users might use to interact with assets in the browser. Used by organizations on specific realms or with a custom [SSO domain](https://docs.signalfx.com/en/latest/admin-guide/sso.html). You can also set it using the `SFX_CUSTOM_APP_URL` environment variable.
+* `timeout_seconds` - (Optional) The total timeout duration to wait when making HTTP API calls to SignalFx, in seconds. Defaults to `120`.
