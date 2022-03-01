@@ -19,7 +19,7 @@ Building The Provider
 Clone repository to: `$GOPATH/src/github.com/splunk-terraform/terraform-provider-signalfx`
 
 ```sh
-$ git clone git@github.com:terraform-providers/terraform-provider-signalfx $GOPATH/src/github.com/splunk-terraform/terraform-provider-signalfx
+$ git clone git@github.com:splunk-terraform/terraform-provider-signalfx.git $GOPATH/src/github.com/splunk-terraform/terraform-provider-signalfx
 ```
 
 Enter the provider directory and build the provider
