@@ -26,6 +26,7 @@ resource "signalfx_dashboard" "mydashboardX0" {
     name = "My Dashboard Test 1"
     description = "Cool dashboard"
     dashboard_group = "${signalfx_dashboard_group.mydashboardgroupX0.id}"
+    tags = ["cool tag", "not so cool tag"]
 
     time_range = "-30m"
 
@@ -69,6 +70,25 @@ func TestChartWidthAllowed(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboardX0", "grid.#", "1"),
 					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboardX0", "grid.0.width", "12"),
+				),
+			},
+		},
+	})
+}
+
+func TestDashboardTagsApplied(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccDashboardGroupDestroy,
+		Steps: []resource.TestStep{
+			// Create resource with tags
+			{
+				Config: fmt.Sprintf(widthTestDashConfig, 1),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboardX0", "tags.#", "2"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboardX0", "tags.0", "cool tag"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboardX0", "tags.1", "not so cool tag"),
 				),
 			},
 		},
