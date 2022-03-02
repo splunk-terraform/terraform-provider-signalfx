@@ -85,7 +85,8 @@ The policies that this user must be granted are:
 ```
 
 See [Connect to AWS using the guided setup in Splunk Observability Cloud](https://docs.splunk.com/Observability/gdi/get-data-in/connect/aws/aws-wizardconfig.html) and [Enable CloudWatch Metric Streams](https://docs.splunk.com/Observability/gdi/get-data-in/connect/aws/aws-apiconfig.html#enable-cloudwatch-metric-streams) in Splunk documentation for more details about creating that IAM policy.
-Note that we use an IAM user instead of an IAM role as the latter requires an External ID that is only know at AWS integration creation time.
+
+Note that we use an IAM user instead of an IAM role as the latter requires an External ID that is only known at AWS integration creation time.
 
 Releasing the Provider
 ----------------------

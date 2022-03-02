@@ -155,40 +155,6 @@ const updatedIntegrationAWSConfig = `
 `
 
 const updatedIntegrationAWSConfigMetricStreams = `
-  resource "signalfx_aws_external_integration" "aws_ext_myteamXX" {
-	name = "AWSFoo"
-  }
-
-  resource "signalfx_aws_integration" "aws_myteamXX" {
-	enabled = false
-
-	integration_id     = signalfx_aws_external_integration.aws_ext_myteamXX.id
-	external_id        = signalfx_aws_external_integration.aws_ext_myteamXX.external_id
-	role_arn           = "arn:aws:iam::XXX:role/SignalFx-Read-Role"
-	regions            = ["us-east-1"]
-	poll_rate          = 300
-	import_cloud_watch = true
-	enable_aws_usage   = true
-
-	custom_namespace_sync_rule {
-	  default_action = "Exclude"
-	  filter_action  = "Include"
-	  filter_source  = "filter('code', '200')"
-	  namespace      = "fart"
-	}
-
-	custom_namespace_sync_rule {
-	  namespace = "custom"
-	}
-
-	namespace_sync_rule {
-	  default_action = "Exclude"
-	  filter_action  = "Include"
-	  filter_source  = "filter('code', '200')"
-	  namespace      = "AWS/EC2"
-	}
-  }
-
   resource "signalfx_aws_token_integration" "aws_tok_myteamXX" {
 	name = "AWSFooToken"
   }
@@ -200,28 +166,10 @@ const updatedIntegrationAWSConfigMetricStreams = `
 	token                   = "%s"
 	key                     = "%s"
 	regions                 = ["us-east-1"]
+	services                = ["AWS/Lambda"]
 	poll_rate               = 300
 	import_cloud_watch      = true
-	enable_aws_usage        = true
 	use_metric_streams_sync = %s
-
-	custom_namespace_sync_rule {
-	  default_action = "Exclude"
-	  filter_action  = "Include"
-	  filter_source  = "filter('code', '200')"
-	  namespace      = "fart"
-	}
-
-	custom_namespace_sync_rule {
-	  namespace = "custom"
-	}
-
-	namespace_sync_rule {
-	  default_action = "Exclude"
-	  filter_action  = "Include"
-	  filter_source  = "filter('code', '200')"
-	  namespace      = "AWS/EC2"
-	}
   }
 `
 
@@ -254,7 +202,6 @@ func TestAccCreateUpdateIntegrationAWS(t *testing.T) {
 				Config:   fmt.Sprintf(updatedIntegrationAWSConfigMetricStreams, awsAccessKeyID, awsSecretAccessKey, "true"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckIntegrationAWSResourceExists,
-					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "name", "AWSFoo"),
 					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteam_tokXX", "name", "AWSFooToken"),
 					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteam_tokXX", "use_metric_streams_sync", "true"),
 				),
@@ -265,7 +212,6 @@ func TestAccCreateUpdateIntegrationAWS(t *testing.T) {
 				Config:   fmt.Sprintf(updatedIntegrationAWSConfigMetricStreams, awsAccessKeyID, awsSecretAccessKey, "false"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckIntegrationAWSResourceExists,
-					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "name", "AWSFoo"),
 					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteam_tokXX", "name", "AWSFooToken"),
 					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteam_tokXX", "use_metric_streams_sync", "false"),
 				),
@@ -289,7 +235,6 @@ func TestAccCreateDeleteIntegrationAWSMetricStream(t *testing.T) {
 				Config:   fmt.Sprintf(updatedIntegrationAWSConfigMetricStreams, awsAccessKeyID, awsSecretAccessKey, "true"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckIntegrationAWSResourceExists,
-					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "name", "AWSFoo"),
 					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteam_tokXX", "name", "AWSFooToken"),
 					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteam_tokXX", "use_metric_streams_sync", "true"),
 				),
@@ -357,7 +302,8 @@ func testAccIntegrationAWSSkipAWSMetricStreamsMissingCredentials(t *testing.T, a
 		if awsAccessKeyID != "" && awsSecretAccessKey != "" {
 			return false, nil
 		}
-		t.Log("Skipping step: Environment variables SFX_TEST_AWS_ACCESS_KEY_ID and SFX_TEST_AWS_SECRET_ACCESS_KEY must be set for testing AWS Cloudwatch Metric Streams synchronization.")
+		t.Log("Skipping step: Env vars SFX_TEST_AWS_ACCESS_KEY_ID and SFX_TEST_AWS_SECRET_ACCESS_KEY must be set to " +
+			"test AWS CloudWatch Metric Streams synchronization.")
 		return true, nil
 	}
 }

@@ -134,7 +134,7 @@ func DoIntegrationAWSDelete(d *schema.ResourceData, meta interface{}) error {
 	// Retrieve current integration state
 	int, err := config.Client.GetAWSCloudWatchIntegration(context.TODO(), d.Id())
 	if err != nil {
-		return fmt.Errorf("Error fetching existing integration for integration %s, %s", d.Id(), err.Error())
+		return fmt.Errorf("Error fetching existing integration %s, %s", d.Id(), err.Error())
 	}
 
 	// Only disable the Cloudwatch Metric Stream synchronization if needed

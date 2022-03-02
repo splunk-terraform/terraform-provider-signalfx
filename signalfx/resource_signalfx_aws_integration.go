@@ -367,7 +367,7 @@ func awsIntegrationAPIToTF(d *schema.ResourceData, aws *integration.AwsCloudWatc
 	return nil
 }
 
-func getPayloadAWSIntegration(d *schema.ResourceData, useMetricStreamHasChange bool) (*integration.AwsCloudWatchIntegration, error) {
+func getPayloadAWSIntegration(d *schema.ResourceData) (*integration.AwsCloudWatchIntegration, error) {
 
 	aws := &integration.AwsCloudWatchIntegration{
 		Name:                   d.Get("name").(string),
@@ -381,8 +381,8 @@ func getPayloadAWSIntegration(d *schema.ResourceData, useMetricStreamHasChange b
 
 	if d.Get("use_metric_streams_sync").(bool) {
 		aws.MetricStreamsSyncState = "ENABLED"
-	} else if useMetricStreamHasChange {
-		// Only set to CANCELLING state if use_metric_streams_sync is false and it has changed, meaning it was ENABLED before
+	} else if d.HasChange("use_metric_streams_sync") {
+		// Only set to CANCELLING state if the use_metric_streams_sync is false and it has changed, meaning it was ENABLED before
 		aws.MetricStreamsSyncState = "CANCELLING"
 	}
 
@@ -518,7 +518,7 @@ func integrationAWSCreate(d *schema.ResourceData, meta interface{}) error {
 
 	preInt, err := config.Client.GetAWSCloudWatchIntegration(context.TODO(), d.Get("integration_id").(string))
 	if err != nil {
-		return fmt.Errorf("Error fetching existing integration for integration %s, %s", d.Get("integration_id").(string), err.Error())
+		return fmt.Errorf("Error fetching existing integration %s, %s", d.Get("integration_id").(string), err.Error())
 	}
 	if preInt.AuthMethod == integration.EXTERNAL_ID {
 		if err := d.Set("external_id", preInt.ExternalId); err != nil {
@@ -536,8 +536,7 @@ func integrationAWSCreate(d *schema.ResourceData, meta interface{}) error {
 func integrationAWSUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 
-	useMetricStreamsSyncHasChange := d.HasChange("use_metric_streams_sync")
-	payload, err := getPayloadAWSIntegration(d, useMetricStreamsSyncHasChange)
+	payload, err := getPayloadAWSIntegration(d)
 	if err != nil {
 		return fmt.Errorf("Failed creating json payload: %s", err.Error())
 	}
@@ -553,7 +552,7 @@ func integrationAWSUpdate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	if useMetricStreamsSyncHasChange {
+	if d.HasChange("use_metric_streams_sync") {
 		// Wait for expected Cloudwatch Metric Streams sync state to be reached
 		if int, err = waitForAWSIntegrationMetricStreamsSyncState(d, config, int.Id); err != nil {
 			return err
