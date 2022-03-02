@@ -14,7 +14,6 @@ resource "signalfx_webhook_integration" "webhook_myteamXX" {
     name = "Webhook - My Team"
     enabled = true
     url = "https://www.example.com"
-    shared_secret = "poot"
 
     headers {
       header_key = "foo"
@@ -28,7 +27,6 @@ resource "signalfx_webhook_integration" "webhook_myteamXX" {
     name = "Webhook - My Team NEW"
     enabled = true
     url = "https://www.example.com"
-    shared_secret = "poot"
 
     headers {
       header_key = "foo"
