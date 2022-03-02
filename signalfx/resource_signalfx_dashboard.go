@@ -36,6 +36,12 @@ func dashboardResource() *schema.Resource {
 				Optional:    true,
 				Description: "Description of the dashboard (Optional)",
 			},
+			"tags": &schema.Schema{
+				Type:        schema.TypeList,
+				Optional:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "Tags of the dashboard",
+			},
 			"charts_resolution": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
@@ -437,6 +443,15 @@ func getPayloadDashboard(d *schema.ResourceData) (*dashboard.CreateUpdateDashboa
 			users = append(users, v.(string))
 		}
 		cudr.AuthorizedWriters.Users = users
+	}
+
+	if val, ok := d.GetOk("tags"); ok {
+		var tags []string
+		tfValues := val.([]interface{})
+		for _, v := range tfValues {
+			tags = append(tags, v.(string))
+		}
+		cudr.Tags = tags
 	}
 
 	allFilters := &dashboard.ChartsFilters{}
