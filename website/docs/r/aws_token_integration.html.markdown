@@ -18,7 +18,7 @@ SignalFx AWS CloudWatch integrations using security tokens. For help with this i
 
 ```tf
 resource "signalfx_aws_token_integration" "aws_myteam_token" {
-  name = "AWSFoo"
+  name = "My AWS integration"
 }
 
 // Make yourself an AWS IAM role here

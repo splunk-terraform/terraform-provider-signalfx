@@ -18,7 +18,7 @@ SignalFx AWS CloudWatch integrations using Role ARNs. For help with this integra
 
 ```tf
 resource "signalfx_aws_external_integration" "aws_myteam_extern" {
-  name = "AWSFooNEW"
+  name = "My AWS integration"
 }
 
 data "aws_iam_policy_document" "signalfx_assume_policy" {

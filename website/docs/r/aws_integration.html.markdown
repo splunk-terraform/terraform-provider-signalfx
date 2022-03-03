@@ -19,7 +19,7 @@ SignalFx AWS CloudWatch integrations. For help with this integration see [Monito
 ```tf
 // This resource returns an account id in `external_id`…
 resource "signalfx_aws_external_integration" "aws_myteam_external" {
-  name = "AWSFoo"
+  name = "My AWS integration"
 }
 
 // Make yourself an AWS IAM role here, use `signalfx_aws_external_integration.aws_myteam_external.external_id`
@@ -84,4 +84,5 @@ resource "signalfx_aws_integration" "aws_myteam" {
 * `poll_rate` - (Optional) AWS poll rate (in seconds). Value between `60` and `300`.
 * `use_get_metric_data_method` - (Optional) Enable the use of Amazon's `GetMetricData` for collecting metrics. Note that this requires the inclusion of the `"cloudwatch:GetMetricData"` permission.
 * `use_metric_streams_sync` - (Optional) Enable the use of Amazon Cloudwatch Metric Streams for ingesting metrics. Note that this requires the inclusion of `"cloudwatch:ListMetricStreams"`,`"cloudwatch:GetMetricStream"`, `"cloudwatch:PutMetricStream"`, `"cloudwatch:DeleteMetricStream"`, `"cloudwatch:StartMetricStreams"`, `"cloudwatch:StopMetricStreams"` and `"iam:PassRole"` permissions.
+* `enable_logs_sync` - (Optional) Enable the AWS logs synchronization. Note that this requires the inclusion of `"logs:DescribeLogGroups"`,  `"logs:DeleteSubscriptionFilter"`, `"logs:DescribeSubscriptionFilters"`, `"logs:PutSubscriptionFilter"`, and `"s3:GetBucketLogging"`,  `"s3:GetBucketNotification"`, `"s3:PutBucketNotification"` permissions. Additional permissions may be required to capture logs from specific AWS services.
 * `enable_check_large_volume` - (Optional) Controls how SignalFx checks for large amounts of data for this AWS integration. If `true`, SignalFx monitors the amount of data coming in from the integration.
