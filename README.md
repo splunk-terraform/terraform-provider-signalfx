@@ -65,23 +65,31 @@ $ export SFX_AUTH_TOKEN=XXXXXX
 $ make testacc
 ```
 
-To also run the AWS integration tests for Cloudwatch Metric Streams synchronization, you must create an actual AWS IAM user with an access key and secret that SignalFx can use to manage AWS Cloudwatch Metric Streams resources, and define the `SFX_TEST_AWS_ACCESS_KEY_ID` and `SFX_TEST_AWS_SECRET_ACCESS_KEY` environment variables:
+To also run the AWS integration tests for CloudWatch Metric Streams and AWS logs synchronization, you must create an actual AWS IAM user with an access key and secret that SignalFx can use to manage AWS resources, and define the `SFX_TEST_AWS_ACCESS_KEY_ID` and `SFX_TEST_AWS_SECRET_ACCESS_KEY` environment variables:
 
 ```sh
 export SFX_TEST_AWS_ACCESS_KEY_ID=AKIAXXXXXX
 export SFX_TEST_AWS_SECRET_ACCESS_KEY=XXXXXX
 ```
 
-The policies that this user must be granted are:
+The following permissions must be granted. Additional permissions may be required to capture logs from specific AWS services.
 
 ```
-"cloudwatch:ListMetricStreams",
-"cloudwatch:GetMetricStream",
-"cloudwatch:PutMetricStream",
 "cloudwatch:DeleteMetricStream",
+"cloudwatch:GetMetricStream",
+"cloudwatch:ListMetricStreams",
+"cloudwatch:PutMetricStream",
 "cloudwatch:StartMetricStreams",
 "cloudwatch:StopMetricStreams",
-"iam:PassRole"
+"iam:PassRole",
+
+"logs:DeleteSubscriptionFilter",
+"logs:DescribeLogGroups",
+"logs:DescribeSubscriptionFilters",
+"logs:PutSubscriptionFilter",
+"s3:GetBucketLogging",
+"s3:GetBucketNotification",
+"s3:PutBucketNotification"
 ```
 
 See [Connect to AWS using the guided setup in Splunk Observability Cloud](https://docs.splunk.com/Observability/gdi/get-data-in/connect/aws/aws-wizardconfig.html) and [Enable CloudWatch Metric Streams](https://docs.splunk.com/Observability/gdi/get-data-in/connect/aws/aws-apiconfig.html#enable-cloudwatch-metric-streams) in Splunk documentation for more details about creating that IAM policy.

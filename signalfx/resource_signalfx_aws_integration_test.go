@@ -14,7 +14,7 @@ import (
 
 const newIntegrationAWSConfig = `
   resource "signalfx_aws_external_integration" "aws_ext_myteamXX" {
-	name = "AWSFoo"
+	name = "AWS TF Test (ext/new)"
   }
 
   resource "signalfx_aws_integration" "aws_myteamXX" {
@@ -48,7 +48,7 @@ const newIntegrationAWSConfig = `
   }
 
   resource "signalfx_aws_token_integration" "aws_tok_myteamXX" {
-	name = "AWSFooToken"
+	name = "AWS TF Test (token/new)"
   }
 
   resource "signalfx_aws_integration" "aws_myteam_tokXX" {
@@ -85,7 +85,7 @@ const newIntegrationAWSConfig = `
 
 const updatedIntegrationAWSConfig = `
   resource "signalfx_aws_external_integration" "aws_ext_myteamXX" {
-	name = "AWSFoo"
+	name = "AWS TF Test (ext/updated)"
   }
 
   resource "signalfx_aws_integration" "aws_myteamXX" {
@@ -119,7 +119,7 @@ const updatedIntegrationAWSConfig = `
   }
 
   resource "signalfx_aws_token_integration" "aws_tok_myteamXX" {
-	name = "AWSFooToken"
+	name = "AWS TF Test (token/updated)"
   }
 
   resource "signalfx_aws_integration" "aws_myteam_tokXX" {
@@ -156,7 +156,7 @@ const updatedIntegrationAWSConfig = `
 
 const updatedIntegrationAWSConfigMetricStreams = `
   resource "signalfx_aws_token_integration" "aws_tok_myteamXX" {
-	name = "AWSFooToken"
+	name = "AWS TF Test (token/updated/ms:%s)"
   }
 
   resource "signalfx_aws_integration" "aws_myteam_tokXX" {
@@ -173,6 +173,25 @@ const updatedIntegrationAWSConfigMetricStreams = `
   }
 `
 
+const updatedIntegrationAWSConfigLogsSync = `
+  resource "signalfx_aws_token_integration" "aws_tok_myteamXX" {
+	name = "AWS TF Test (token/updated/logs:%s)"
+  }
+
+  resource "signalfx_aws_integration" "aws_myteam_tokXX" {
+	enabled = true # This is required to be able to cancel AWS Metric Streams synchronization.
+
+	integration_id          = signalfx_aws_token_integration.aws_tok_myteamXX.id
+	token                   = "%s"
+	key                     = "%s"
+	regions                 = ["eu-north-1"]
+	services                = ["AWS/Lambda"]
+	poll_rate               = 300
+	import_cloud_watch      = true
+	enable_logs_sync        = %s
+  }
+`
+
 func TestAccCreateUpdateIntegrationAWS(t *testing.T) {
 	awsAccessKeyID := os.Getenv("SFX_TEST_AWS_ACCESS_KEY_ID")
 	awsSecretAccessKey := os.Getenv("SFX_TEST_AWS_SECRET_ACCESS_KEY")
@@ -182,38 +201,58 @@ func TestAccCreateUpdateIntegrationAWS(t *testing.T) {
 		Providers:    testAccProviders,
 		CheckDestroy: testAccIntegrationAWSDestroy,
 		Steps: []resource.TestStep{
-			// Create It
+			// Create
 			{
 				Config: newIntegrationAWSConfig,
 				Check:  testAccCheckIntegrationAWSResourceExists,
 			},
-			// Update It
+			// Update
 			{
 				Config: updatedIntegrationAWSConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckIntegrationAWSResourceExists,
-					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "name", "AWSFoo"),
-					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteam_tokXX", "name", "AWSFooToken"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "name", "AWS TF Test (ext/updated)"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteam_tokXX", "name", "AWS TF Test (token/updated)"),
 				),
 			},
-			// Update It again to enable Cloudwatch Metric Streams synchronization
+			// Update again to enable Cloudwatch Metric Streams synchronization
 			{
-				SkipFunc: testAccIntegrationAWSSkipAWSMetricStreamsMissingCredentials(t, awsAccessKeyID, awsSecretAccessKey),
-				Config:   fmt.Sprintf(updatedIntegrationAWSConfigMetricStreams, awsAccessKeyID, awsSecretAccessKey, "true"),
+				SkipFunc: skipTestWhenAWSCredentialsAreMissing(t, awsAccessKeyID, awsSecretAccessKey),
+				Config:   fmt.Sprintf(updatedIntegrationAWSConfigMetricStreams, "enabled", awsAccessKeyID, awsSecretAccessKey, "true"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckIntegrationAWSResourceExists,
-					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteam_tokXX", "name", "AWSFooToken"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteam_tokXX", "name", "AWS TF Test (token/updated/ms:enabled)"),
 					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteam_tokXX", "use_metric_streams_sync", "true"),
 				),
 			},
-			// Update It again to disable Cloudwatch Metric Streams synchronization
+			// Update again to disable Cloudwatch Metric Streams synchronization
 			{
-				SkipFunc: testAccIntegrationAWSSkipAWSMetricStreamsMissingCredentials(t, awsAccessKeyID, awsSecretAccessKey),
-				Config:   fmt.Sprintf(updatedIntegrationAWSConfigMetricStreams, awsAccessKeyID, awsSecretAccessKey, "false"),
+				SkipFunc: skipTestWhenAWSCredentialsAreMissing(t, awsAccessKeyID, awsSecretAccessKey),
+				Config:   fmt.Sprintf(updatedIntegrationAWSConfigMetricStreams, "disabled", awsAccessKeyID, awsSecretAccessKey, "false"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckIntegrationAWSResourceExists,
-					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteam_tokXX", "name", "AWSFooToken"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteam_tokXX", "name", "AWS TF Test (token/updated/ms:disabled)"),
 					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteam_tokXX", "use_metric_streams_sync", "false"),
+				),
+			},
+			// Update again to enable AWS logs synchronization
+			{
+				SkipFunc: skipTestWhenAWSCredentialsAreMissing(t, awsAccessKeyID, awsSecretAccessKey),
+				Config:   fmt.Sprintf(updatedIntegrationAWSConfigLogsSync, "enabled", awsAccessKeyID, awsSecretAccessKey, "true"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckIntegrationAWSResourceExists,
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteam_tokXX", "name", "AWS TF Test (token/updated/logs:enabled)"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteam_tokXX", "enable_logs_sync", "true"),
+				),
+			},
+			// Update again to disable AWS logs synchronization
+			{
+				SkipFunc: skipTestWhenAWSCredentialsAreMissing(t, awsAccessKeyID, awsSecretAccessKey),
+				Config:   fmt.Sprintf(updatedIntegrationAWSConfigLogsSync, "disabled", awsAccessKeyID, awsSecretAccessKey, "false"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckIntegrationAWSResourceExists,
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteam_tokXX", "name", "AWS TF Test (token/updated/logs:disabled)"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteam_tokXX", "enable_logs_sync", "false"),
 				),
 			},
 		},
@@ -231,11 +270,11 @@ func TestAccCreateDeleteIntegrationAWSMetricStream(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Create integration with Cloudwatch Metric Streams synchronization enabled without any additional step to disable it before deletion. That should automatically be done in the delete phase.
 			{
-				SkipFunc: testAccIntegrationAWSSkipAWSMetricStreamsMissingCredentials(t, awsAccessKeyID, awsSecretAccessKey),
-				Config:   fmt.Sprintf(updatedIntegrationAWSConfigMetricStreams, awsAccessKeyID, awsSecretAccessKey, "true"),
+				SkipFunc: skipTestWhenAWSCredentialsAreMissing(t, awsAccessKeyID, awsSecretAccessKey),
+				Config:   fmt.Sprintf(updatedIntegrationAWSConfigMetricStreams, "enabled", awsAccessKeyID, awsSecretAccessKey, "true"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckIntegrationAWSResourceExists,
-					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteam_tokXX", "name", "AWSFooToken"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteam_tokXX", "name", "AWS TF Test (token/updated/ms:enabled)"),
 					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteam_tokXX", "use_metric_streams_sync", "true"),
 				),
 			},
@@ -297,7 +336,7 @@ func TestValidateFilterAction(t *testing.T) {
 	assert.Equal(t, 1, len(errors), "Errors for invalid value")
 }
 
-func testAccIntegrationAWSSkipAWSMetricStreamsMissingCredentials(t *testing.T, awsAccessKeyID, awsSecretAccessKey string) func() (bool, error) {
+func skipTestWhenAWSCredentialsAreMissing(t *testing.T, awsAccessKeyID, awsSecretAccessKey string) func() (bool, error) {
 	return func() (bool, error) {
 		if awsAccessKeyID != "" && awsSecretAccessKey != "" {
 			return false, nil
