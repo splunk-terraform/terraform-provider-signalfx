@@ -1,3 +1,8 @@
+## 6.9.0
+
+IMPROVEMENTS:
+* resource/signalfx_aws_integration: Add support for AWS metric streams and AWS logs synchronization [#351](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/351) [#353](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/353)
+
 ## 6.8.1
 
 BUGFIXES:
