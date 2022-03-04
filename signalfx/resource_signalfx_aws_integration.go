@@ -599,7 +599,7 @@ func DoIntegrationAWSDelete(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Error fetching existing integration %s, %s", d.Id(), err.Error())
 	}
 
-	// Only disable the Cloudwatch Metric Stream synchronization if needed
+	// Disable the AWS logs sync and/or CloudWatch metric streams sync if needed
 	needToDisableMetricStreams := int.Enabled && int.MetricStreamsSyncState != "" && int.MetricStreamsSyncState != "DISABLED"
 	needToDisableLogsSync := int.Enabled && int.LogsSyncState != "" && int.LogsSyncState != "DISABLED"
 	if needToDisableMetricStreams || needToDisableLogsSync {

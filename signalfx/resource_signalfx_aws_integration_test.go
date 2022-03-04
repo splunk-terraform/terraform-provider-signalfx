@@ -188,7 +188,7 @@ const updatedIntegrationAWSConfigLogsSync = `
 	services                = ["AWS/Lambda"]
 	poll_rate               = 300
 	import_cloud_watch      = true
-	enable_logs_sync		= %s
+	enable_logs_sync        = %s
   }
 `
 
