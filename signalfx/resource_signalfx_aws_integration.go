@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/signalfx/signalfx-go/integration"
@@ -177,6 +179,12 @@ func integrationAWSResource() *schema.Resource {
 				Default:     false,
 				Description: "Enables the use of Amazon's GetMetricData API. Defaults to `false`.",
 			},
+			"use_metric_streams_sync": &schema.Schema{
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Computed:    true,
+				Description: "Enables the use of Cloudwatch Metric Streams for metrics synchronization.",
+			},
 			"named_token": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -261,6 +269,9 @@ func awsIntegrationAPIToTF(d *schema.ResourceData, aws *integration.AwsCloudWatc
 		return err
 	}
 	if err := d.Set("use_get_metric_data_method", aws.UseGetMetricDataMethod); err != nil {
+		return err
+	}
+	if err := d.Set("use_metric_streams_sync", aws.MetricStreamsSyncState == "ENABLED"); err != nil {
 		return err
 	}
 	if err := d.Set("enable_check_large_volume", aws.EnableCheckLargeVolume); err != nil {
@@ -366,6 +377,13 @@ func getPayloadAWSIntegration(d *schema.ResourceData) (*integration.AwsCloudWatc
 		ImportCloudWatch:       d.Get("import_cloud_watch").(bool),
 		UseGetMetricDataMethod: d.Get("use_get_metric_data_method").(bool),
 		EnableCheckLargeVolume: d.Get("enable_check_large_volume").(bool),
+	}
+
+	if d.Get("use_metric_streams_sync").(bool) {
+		aws.MetricStreamsSyncState = "ENABLED"
+	} else if d.HasChange("use_metric_streams_sync") {
+		// Only set to CANCELLING state if the use_metric_streams_sync is false and it has changed, meaning it was ENABLED before
+		aws.MetricStreamsSyncState = "CANCELLING"
 	}
 
 	if d.Get("external_id").(string) != "" {
@@ -500,7 +518,7 @@ func integrationAWSCreate(d *schema.ResourceData, meta interface{}) error {
 
 	preInt, err := config.Client.GetAWSCloudWatchIntegration(context.TODO(), d.Get("integration_id").(string))
 	if err != nil {
-		return fmt.Errorf("Error fetching existing integration for integration %s, %s", d.Get("integration_id").(string), err.Error())
+		return fmt.Errorf("Error fetching existing integration %s, %s", d.Get("integration_id").(string), err.Error())
 	}
 	if preInt.AuthMethod == integration.EXTERNAL_ID {
 		if err := d.Set("external_id", preInt.ExternalId); err != nil {
@@ -510,24 +528,9 @@ func integrationAWSCreate(d *schema.ResourceData, meta interface{}) error {
 	if err := d.Set("name", preInt.Name); err != nil {
 		return err
 	}
-	payload, err := getPayloadAWSIntegration(d)
-	if err != nil {
-		return fmt.Errorf("Failed creating json payload: %s", err.Error())
-	}
+	d.SetId(preInt.Id)
 
-	debugOutput, _ := json.Marshal(payload)
-	log.Printf("[DEBUG] SignalFx: Create (Update) AWS Integration Payload: %s", string(debugOutput))
-
-	int, err := config.Client.UpdateAWSCloudWatchIntegration(context.TODO(), d.Get("integration_id").(string), payload)
-	if err != nil {
-		if strings.Contains(err.Error(), "40") {
-			err = fmt.Errorf("%s\nPlease verify you are using an admin token when working with integrations", err.Error())
-		}
-		return err
-	}
-	d.SetId(int.Id)
-
-	return awsIntegrationAPIToTF(d, int)
+	return integrationAWSUpdate(d, meta)
 }
 
 func integrationAWSUpdate(d *schema.ResourceData, meta interface{}) error {
@@ -548,9 +551,65 @@ func integrationAWSUpdate(d *schema.ResourceData, meta interface{}) error {
 		}
 		return err
 	}
-	d.SetId(int.Id)
+
+	if d.HasChange("use_metric_streams_sync") {
+		// Wait for expected Cloudwatch Metric Streams sync state to be reached
+		if int, err = waitForAWSIntegrationMetricStreamsSyncState(d, config, int.Id); err != nil {
+			return err
+		}
+	}
 
 	return awsIntegrationAPIToTF(d, int)
+}
+
+func waitForAWSIntegrationMetricStreamsSyncState(d *schema.ResourceData, config *signalfxConfig, id string) (*integration.AwsCloudWatchIntegration, error) {
+	var pending, target []string
+	useMetricStreamsSync := d.Get("use_metric_streams_sync").(bool)
+	var expectedState string
+	if useMetricStreamsSync {
+		expectedState = "enabled"
+		pending = []string{
+			"DISABLED",
+			"CANCELLING",
+			"CANCELLATION_FAILED",
+		}
+		target = []string{
+			"ENABLED",
+		}
+	} else {
+		expectedState = "disabled"
+		pending = []string{
+			"ENABLED",
+			"CANCELLING",
+		}
+		target = []string{
+			"",
+			"DISABLED",
+		}
+	}
+
+	stateConf := &resource.StateChangeConf{
+		Pending: pending,
+		Target:  target,
+		Refresh: func() (interface{}, string, error) {
+			int, err := config.Client.GetAWSCloudWatchIntegration(context.TODO(), id)
+			if err != nil {
+				return 0, "", err
+			}
+			return int, int.MetricStreamsSyncState, nil
+		},
+		Timeout:    d.Timeout(schema.TimeoutUpdate) - time.Minute,
+		Delay:      10 * time.Second,
+		MinTimeout: 5 * time.Second,
+	}
+
+	int, err := stateConf.WaitForState()
+	if err != nil {
+		return nil, fmt.Errorf(
+			"Error waiting for integration (%s) Cloudwatch Metric Streams sync state to become %s: %s",
+			id, expectedState, err)
+	}
+	return int.(*integration.AwsCloudWatchIntegration), nil
 }
 
 func integrationAWSDelete(d *schema.ResourceData, meta interface{}) error {

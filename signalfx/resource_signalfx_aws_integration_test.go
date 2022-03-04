@@ -3,6 +3,7 @@ package signalfx
 import (
 	"context"
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
@@ -12,148 +13,170 @@ import (
 )
 
 const newIntegrationAWSConfig = `
-resource "signalfx_aws_external_integration" "aws_ext_myteamXX" {
+  resource "signalfx_aws_external_integration" "aws_ext_myteamXX" {
 	name = "AWSFoo"
-}
+  }
 
-resource "signalfx_aws_integration" "aws_myteamXX" {
-    enabled = false
+  resource "signalfx_aws_integration" "aws_myteamXX" {
+	enabled = false
 
-		integration_id = "${signalfx_aws_external_integration.aws_ext_myteamXX.id}"
-		external_id = "${signalfx_aws_external_integration.aws_ext_myteamXX.external_id}"
-		role_arn = "arn:aws:iam::XXX:role/SignalFx-Read-Role"
-		regions = ["us-east-1"]
-		poll_rate = 300
-		import_cloud_watch = true
-		enable_aws_usage = true
+	integration_id     = signalfx_aws_external_integration.aws_ext_myteamXX.id
+	external_id        = signalfx_aws_external_integration.aws_ext_myteamXX.external_id
+	role_arn           = "arn:aws:iam::XXX:role/SignalFx-Read-Role"
+	regions            = ["us-east-1"]
+	poll_rate          = 300
+	import_cloud_watch = true
+	enable_aws_usage   = true
 
-		custom_namespace_sync_rule {
-			default_action = "Exclude"
-			filter_action = "Include"
-			filter_source = "filter('code', '200')"
-			namespace = "fart"
-		}
+	custom_namespace_sync_rule {
+	  default_action = "Exclude"
+	  filter_action  = "Include"
+	  filter_source  = "filter('code', '200')"
+	  namespace      = "fart"
+	}
 
-		custom_namespace_sync_rule {
-			namespace = "custom"
-		}
+	custom_namespace_sync_rule {
+	  namespace = "custom"
+	}
 
-		namespace_sync_rule {
-			default_action = "Exclude"
-			filter_action = "Include"
-			filter_source = "filter('code', '200')"
-			namespace = "AWS/EC2"
-		}
-}
+	namespace_sync_rule {
+	  default_action = "Exclude"
+	  filter_action  = "Include"
+	  filter_source  = "filter('code', '200')"
+	  namespace      = "AWS/EC2"
+	}
+  }
 
-resource "signalfx_aws_token_integration" "aws_tok_myteamXX" {
+  resource "signalfx_aws_token_integration" "aws_tok_myteamXX" {
 	name = "AWSFooToken"
-}
+  }
 
-resource "signalfx_aws_integration" "aws_myteam_tokXX" {
-    enabled = false
+  resource "signalfx_aws_integration" "aws_myteam_tokXX" {
+	enabled = false
 
-		integration_id = "${signalfx_aws_token_integration.aws_tok_myteamXX.id}"
-		token = "token123"
-		key = "key123"
-		regions = ["us-east-1"]
-		poll_rate = 300
-		import_cloud_watch = true
-		enable_aws_usage = true
-		use_get_metric_data_method = true
+	integration_id             = signalfx_aws_token_integration.aws_tok_myteamXX.id
+	token                      = "token123"
+	key                        = "key123"
+	regions                    = ["us-east-1"]
+	poll_rate                  = 300
+	import_cloud_watch         = true
+	enable_aws_usage           = true
+	use_get_metric_data_method = true
 
-		custom_namespace_sync_rule {
-			default_action = "Exclude"
-			filter_action = "Include"
-			filter_source = "filter('code', '200')"
-			namespace = "fart"
-		}
+	custom_namespace_sync_rule {
+	  default_action = "Exclude"
+	  filter_action  = "Include"
+	  filter_source  = "filter('code', '200')"
+	  namespace      = "fart"
+	}
 
-		custom_namespace_sync_rule {
-			namespace = "custom"
-		}
+	custom_namespace_sync_rule {
+	  namespace = "custom"
+	}
 
-		namespace_sync_rule {
-			default_action = "Exclude"
-			filter_action = "Include"
-			filter_source = "filter('code', '200')"
-			namespace = "AWS/EC2"
-		}
-}
+	namespace_sync_rule {
+	  default_action = "Exclude"
+	  filter_action  = "Include"
+	  filter_source  = "filter('code', '200')"
+	  namespace      = "AWS/EC2"
+	}
+  }
 `
 
 const updatedIntegrationAWSConfig = `
-resource "signalfx_aws_external_integration" "aws_ext_myteamXX" {
+  resource "signalfx_aws_external_integration" "aws_ext_myteamXX" {
 	name = "AWSFoo"
-}
+  }
 
-resource "signalfx_aws_integration" "aws_myteamXX" {
-    enabled = false
+  resource "signalfx_aws_integration" "aws_myteamXX" {
+	enabled = false
 
-		integration_id = "${signalfx_aws_external_integration.aws_ext_myteamXX.id}"
-		external_id = "${signalfx_aws_external_integration.aws_ext_myteamXX.external_id}"
-		role_arn = "arn:aws:iam::XXX:role/SignalFx-Read-Role"
-		regions = ["us-east-1"]
-		poll_rate = 300
-		import_cloud_watch = true
-		enable_aws_usage = true
+	integration_id     = signalfx_aws_external_integration.aws_ext_myteamXX.id
+	external_id        = signalfx_aws_external_integration.aws_ext_myteamXX.external_id
+	role_arn           = "arn:aws:iam::XXX:role/SignalFx-Read-Role"
+	regions            = ["us-east-1"]
+	poll_rate          = 300
+	import_cloud_watch = true
+	enable_aws_usage   = true
 
-		custom_namespace_sync_rule {
-			default_action = "Exclude"
-			filter_action = "Include"
-			filter_source = "filter('code', '200')"
-			namespace = "fart"
-		}
+	custom_namespace_sync_rule {
+	  default_action = "Exclude"
+	  filter_action  = "Include"
+	  filter_source  = "filter('code', '200')"
+	  namespace      = "fart"
+	}
 
-		custom_namespace_sync_rule {
-			namespace = "custom"
-		}
+	custom_namespace_sync_rule {
+	  namespace = "custom"
+	}
 
-		namespace_sync_rule {
-			default_action = "Exclude"
-			filter_action = "Include"
-			filter_source = "filter('code', '200')"
-			namespace = "AWS/EC2"
-		}
-}
+	namespace_sync_rule {
+	  default_action = "Exclude"
+	  filter_action  = "Include"
+	  filter_source  = "filter('code', '200')"
+	  namespace      = "AWS/EC2"
+	}
+  }
 
-resource "signalfx_aws_token_integration" "aws_tok_myteamXX" {
+  resource "signalfx_aws_token_integration" "aws_tok_myteamXX" {
 	name = "AWSFooToken"
-}
+  }
 
-resource "signalfx_aws_integration" "aws_myteam_tokXX" {
-    enabled = false
+  resource "signalfx_aws_integration" "aws_myteam_tokXX" {
+	enabled = false
 
-		integration_id = "${signalfx_aws_token_integration.aws_tok_myteamXX.id}"
-		token = "token123"
-		key = "key123"
-		regions = ["us-east-1"]
-		poll_rate = 300
-		import_cloud_watch = true
-		enable_aws_usage = true
-		use_get_metric_data_method = true
+	integration_id             = signalfx_aws_token_integration.aws_tok_myteamXX.id
+	token                      = "token123"
+	key                        = "key123"
+	regions                    = ["us-east-1"]
+	poll_rate                  = 300
+	import_cloud_watch         = true
+	enable_aws_usage           = true
+	use_get_metric_data_method = true
 
-		custom_namespace_sync_rule {
-			default_action = "Exclude"
-			filter_action = "Include"
-			filter_source = "filter('code', '200')"
-			namespace = "fart"
-		}
+	custom_namespace_sync_rule {
+	  default_action = "Exclude"
+	  filter_action  = "Include"
+	  filter_source  = "filter('code', '200')"
+	  namespace      = "fart"
+	}
 
-		custom_namespace_sync_rule {
-			namespace = "custom"
-		}
+	custom_namespace_sync_rule {
+	  namespace = "custom"
+	}
 
-		namespace_sync_rule {
-			default_action = "Exclude"
-			filter_action = "Include"
-			filter_source = "filter('code', '200')"
-			namespace = "AWS/EC2"
-		}
-}
+	namespace_sync_rule {
+	  default_action = "Exclude"
+	  filter_action  = "Include"
+	  filter_source  = "filter('code', '200')"
+	  namespace      = "AWS/EC2"
+	}
+  }
+`
+
+const updatedIntegrationAWSConfigMetricStreams = `
+  resource "signalfx_aws_token_integration" "aws_tok_myteamXX" {
+	name = "AWSFooToken"
+  }
+
+  resource "signalfx_aws_integration" "aws_myteam_tokXX" {
+	enabled = true # This is required to be able to cancel AWS Metric Streams synchronization.
+
+	integration_id          = signalfx_aws_token_integration.aws_tok_myteamXX.id
+	token                   = "%s"
+	key                     = "%s"
+	regions                 = ["us-east-1"]
+	services                = ["AWS/Lambda"]
+	poll_rate               = 300
+	import_cloud_watch      = true
+	use_metric_streams_sync = %s
+  }
 `
 
 func TestAccCreateUpdateIntegrationAWS(t *testing.T) {
+	awsAccessKeyID := os.Getenv("SFX_TEST_AWS_ACCESS_KEY_ID")
+	awsSecretAccessKey := os.Getenv("SFX_TEST_AWS_SECRET_ACCESS_KEY")
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
@@ -170,6 +193,50 @@ func TestAccCreateUpdateIntegrationAWS(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckIntegrationAWSResourceExists,
 					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "name", "AWSFoo"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteam_tokXX", "name", "AWSFooToken"),
+				),
+			},
+			// Update It again to enable Cloudwatch Metric Streams synchronization
+			{
+				SkipFunc: testAccIntegrationAWSSkipAWSMetricStreamsMissingCredentials(t, awsAccessKeyID, awsSecretAccessKey),
+				Config:   fmt.Sprintf(updatedIntegrationAWSConfigMetricStreams, awsAccessKeyID, awsSecretAccessKey, "true"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckIntegrationAWSResourceExists,
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteam_tokXX", "name", "AWSFooToken"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteam_tokXX", "use_metric_streams_sync", "true"),
+				),
+			},
+			// Update It again to disable Cloudwatch Metric Streams synchronization
+			{
+				SkipFunc: testAccIntegrationAWSSkipAWSMetricStreamsMissingCredentials(t, awsAccessKeyID, awsSecretAccessKey),
+				Config:   fmt.Sprintf(updatedIntegrationAWSConfigMetricStreams, awsAccessKeyID, awsSecretAccessKey, "false"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckIntegrationAWSResourceExists,
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteam_tokXX", "name", "AWSFooToken"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteam_tokXX", "use_metric_streams_sync", "false"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccCreateDeleteIntegrationAWSMetricStream(t *testing.T) {
+	awsAccessKeyID := os.Getenv("SFX_TEST_AWS_ACCESS_KEY_ID")
+	awsSecretAccessKey := os.Getenv("SFX_TEST_AWS_SECRET_ACCESS_KEY")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccIntegrationAWSDestroy,
+		Steps: []resource.TestStep{
+			// Create integration with Cloudwatch Metric Streams synchronization enabled without any additional step to disable it before deletion. That should automatically be done in the delete phase.
+			{
+				SkipFunc: testAccIntegrationAWSSkipAWSMetricStreamsMissingCredentials(t, awsAccessKeyID, awsSecretAccessKey),
+				Config:   fmt.Sprintf(updatedIntegrationAWSConfigMetricStreams, awsAccessKeyID, awsSecretAccessKey, "true"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckIntegrationAWSResourceExists,
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteam_tokXX", "name", "AWSFooToken"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteam_tokXX", "use_metric_streams_sync", "true"),
 				),
 			},
 		},
@@ -228,4 +295,15 @@ func TestValidateFilterAction(t *testing.T) {
 
 	_, errors = validateFilterAction("Fart", "")
 	assert.Equal(t, 1, len(errors), "Errors for invalid value")
+}
+
+func testAccIntegrationAWSSkipAWSMetricStreamsMissingCredentials(t *testing.T, awsAccessKeyID, awsSecretAccessKey string) func() (bool, error) {
+	return func() (bool, error) {
+		if awsAccessKeyID != "" && awsSecretAccessKey != "" {
+			return false, nil
+		}
+		t.Log("Skipping step: Env vars SFX_TEST_AWS_ACCESS_KEY_ID and SFX_TEST_AWS_SECRET_ACCESS_KEY must be set to " +
+			"test AWS CloudWatch Metric Streams synchronization.")
+		return true, nil
+	}
 }
