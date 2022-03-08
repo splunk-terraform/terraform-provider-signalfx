@@ -1,12 +1,6 @@
 package signalfx
 
 import (
-	"context"
-	"encoding/json"
-	"fmt"
-	"log"
-	"strings"
-
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/signalfx/signalfx-go/integration"
 )
@@ -34,81 +28,11 @@ func integrationAWSTokenResource() *schema.Resource {
 			},
 		},
 
-		Create: integrationAWSTokenCreate,
-		Read:   integrationAWSTokenRead,
-		Delete: integrationAWSTokenDelete,
-		Exists: integrationAWSTokenExists,
+		Create: func(d *schema.ResourceData, meta interface{}) error {
+			return IntegrationAWSCreate(d, meta, integration.SECURITY_TOKEN)
+		},
+		Read:   IntegrationAWSRead,
+		Delete: IntegrationAWSDelete,
+		Exists: IntegrationAWSExists,
 	}
-}
-
-func integrationAWSTokenExists(d *schema.ResourceData, meta interface{}) (bool, error) {
-	config := meta.(*signalfxConfig)
-	_, err := config.Client.GetAWSCloudWatchIntegration(context.TODO(), d.Id())
-	if err != nil {
-		if strings.Contains(err.Error(), "404") {
-			return false, nil
-		}
-		return false, err
-	}
-	return true, nil
-}
-
-func integrationAWSTokenRead(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*signalfxConfig)
-	_, err := config.Client.GetAWSCloudWatchIntegration(context.TODO(), d.Id())
-	if err != nil {
-		if strings.Contains(err.Error(), "404") {
-			d.SetId("")
-		}
-		return err
-	}
-
-	return nil
-}
-
-func getPayloadAWSTokenIntegration(d *schema.ResourceData) (*integration.AwsCloudWatchIntegration, error) {
-
-	// We can't leave this empty, even though we don't need it yet
-	aws := &integration.AwsCloudWatchIntegration{
-		Type:       "AWSCloudWatch",
-		AuthMethod: integration.SECURITY_TOKEN,
-		Name:       d.Get("name").(string),
-		PollRate:   300000,
-	}
-
-	return aws, nil
-}
-
-func integrationAWSTokenCreate(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*signalfxConfig)
-	payload, err := getPayloadAWSTokenIntegration(d)
-	if err != nil {
-		return fmt.Errorf("Failed creating json payload: %s", err.Error())
-	}
-
-	debugOutput, _ := json.Marshal(payload)
-	log.Printf("[DEBUG] SignalFx: Create AWS Token Integration Payload: %s", string(debugOutput))
-
-	int, err := config.Client.CreateAWSCloudWatchIntegration(context.TODO(), payload)
-	if err != nil {
-		if strings.Contains(err.Error(), "40") {
-			err = fmt.Errorf("%s\nPlease verify you are using an admin token when working with integrations", err.Error())
-		}
-		return err
-	}
-	d.SetId(int.Id)
-	if err := d.Set("name", int.Name); err != nil {
-		return err
-	}
-	if err := d.Set("signalfx_aws_account", int.SfxAwsAccountArn); err != nil {
-		return err
-	}
-
-	// This method does not read back anything from the API except the
-	// id and Token ID above.
-	return nil
-}
-
-func integrationAWSTokenDelete(d *schema.ResourceData, meta interface{}) error {
-	return DoIntegrationAWSDelete(d, meta)
 }
