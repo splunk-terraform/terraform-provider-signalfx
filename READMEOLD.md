@@ -75,12 +75,12 @@ To run the tests, run `go test ./...`
 
 This provider because the official SignalFx provider at the time of [SignalForm](https://github.com/Yelp/terraform-provider-signalform) v2.8.0. Conversions from SignalForm to this module at that point in time have no compatibility issues.
 
-To perform a conversion you'll need to do two things:
+To perform a conversion you need to do two things:
 * adjust the provider configuration
 * change Terraform configuration files to references the new provider name
 * update state files to reference the new provider name
 
-Each are easy to do! You'll need to do them at the same time, however, avoiding any asset changes between each step.
+Each are easy to do! You need to do them at the same time, however, avoiding any asset changes between each step.
 
 ### Adjust Provider Configuration
 
@@ -92,7 +92,7 @@ provider "signalform" {
 }
 ```
 
-You'll need to change the name from `signalform` to `signalfx` wherever you've set this up in your file layout.
+You need to change the name from `signalform` to `signalfx` wherever you've set this up in your file layout.
 
 ### Changing Terraform Configuration
 
