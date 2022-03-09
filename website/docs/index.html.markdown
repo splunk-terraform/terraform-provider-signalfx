@@ -28,7 +28,7 @@ When authenticating to the SignalFx API you can use either an Org token or a
 Session token. See [Authenticate API Requests](https://dev.splunk.com/observability/docs/apibasics/authentication_basics/) for more
 information.
 
-User tokens are short-lived and provide administrative permissions to edit integrations. These expire relatively quickly, but allow the manipulation of some more sensitive resources. Resources that require this are flagged in their documentation.
+Session tokens are short-lived and provide administrative permissions to edit integrations. These expire relatively quickly, but allow the manipulation of some more sensitive resources. Resources that require this are flagged in their documentation.
 
 ~> **NOTE** Separate the less sensitive resources, such as dashboards, from the 
 more sensitive ones, such as integrations, to avoid having to change tokens.
