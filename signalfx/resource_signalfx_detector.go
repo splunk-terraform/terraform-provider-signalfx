@@ -222,12 +222,19 @@ func detectorResource() *schema.Resource {
 					},
 				},
 			},
+			"label_resolutions": &schema.Schema{
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Description: "Resolutions of the detector alerts in milliseconds that indicate how often data is analyzed to determine if an alert should be triggered",
+				Elem: &schema.Schema{
+					Type: schema.TypeInt,
+				},
+			},
 			"url": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "URL of the detector",
-			},
-		},
+			}},
 
 		SchemaVersion: 1,
 		StateUpgraders: []schema.StateUpgrader{
@@ -471,7 +478,7 @@ func detectorCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 	d.SetId(det.Id)
 
-	return detectorAPIToTF(d, det)
+	return detectorRead(d, meta)
 }
 
 func detectorExists(d *schema.ResourceData, meta interface{}) (bool, error) {
@@ -534,6 +541,9 @@ func detectorAPIToTF(d *schema.ResourceData, det *detector.Detector) error {
 		if err := d.Set("min_delay", *det.MinDelay/1000); err != nil {
 			return err
 		}
+	}
+	if err := d.Set("label_resolutions", det.LabelResolutions); err != nil {
+		return err
 	}
 	if err := d.Set("tags", det.Tags); err != nil {
 		return err
