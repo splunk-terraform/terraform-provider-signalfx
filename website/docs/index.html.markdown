@@ -20,7 +20,7 @@ Terraform is a powerful tool and ecosystem beyond. See [Introduction to Terrafor
 to understand the basics of working with Terraform. 
 
 See [SignalFlow programming language](https://dev.splunk.com/observability/docs/signalflow/) to learn how to create 
-SignalFx charts and detectors using `program_text`. You can click "View SignalFlow" when editing any chart in Splunk Observability Cloud to see the underlying code.
+SignalFx charts and detectors using `program_text`. You can click "Show SignalFlow" after opening any chart in Splunk Observability Cloud to see the underlying code.
 
 # Authentication
 
