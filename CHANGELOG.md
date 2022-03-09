@@ -1,7 +1,16 @@
+## 6.10.0
+
+IMPROVEMENTS:
+* enable support for darwin_arm64 architecture  [#347](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/347)
+* resource/signalfx_detector: add `label_resolutions` support  [#338](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/338)
+* resource/signalfx_dashboard: add `tags` support [#349](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/349)
+* resource/signalfx_aws_integration: refactor internal implementation [#354](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/354)
+* documentation editorial updates  [#346](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/346)
+
 ## 6.9.0
 
 IMPROVEMENTS:
-* resource/signalfx_aws_integration: Add support for AWS metric streams and AWS logs synchronization [#351](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/351) [#353](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/353)
+* resource/signalfx_aws_integration: add support for AWS metric streams and AWS logs synchronization [#351](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/351) [#353](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/353)
 
 ## 6.8.1
 
