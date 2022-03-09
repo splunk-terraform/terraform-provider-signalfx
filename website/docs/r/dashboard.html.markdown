@@ -50,6 +50,7 @@ The following arguments are supported in the resource block:
 * `name` - (Required) Name of the dashboard.
 * `dashboard_group` - (Required) The ID of the dashboard group that contains the dashboard.
 * `description` - (Optional) Description of the dashboard.
+* `tags` - (Optional) Tags of the dashboard.
 * `authorized_writer_teams` - (Optional) Team IDs that have write access to this dashboard group. Remember to use an admin's token if using this feature and to include that admin's team (or user id in `authorized_writer_teams`).
 * `authorized_writer_users` - (Optional) User IDs that have write access to this dashboard group. Remember to use an admin's token if using this feature and to include that admin's user id (or team id in `authorized_writer_teams`).
 * `charts_resolution` - (Optional) Specifies the chart data display resolution for charts in this dashboard. Value can be one of `"default"`,  `"low"`, `"high"`, or  `"highest"`.
