@@ -80,7 +80,7 @@ To perform a conversion you need to do two things:
 * change Terraform configuration files to references the new provider name
 * update state files to reference the new provider name
 
-Each are easy to do! you need to do them at the same time, however, avoiding any asset changes between each step.
+Each are easy to do! You need to do them at the same time, however, avoiding any asset changes between each step.
 
 ### Adjust Provider Configuration
 
@@ -92,7 +92,7 @@ provider "signalform" {
 }
 ```
 
-you need to change the name from `signalform` to `signalfx` wherever you've set this up in your file layout.
+You need to change the name from `signalform` to `signalfx` wherever you've set this up in your file layout.
 
 ### Changing Terraform Configuration
 
