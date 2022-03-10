@@ -18,7 +18,7 @@ SignalFx GCP Integration
 resource "signalfx_gcp_integration" "gcp_myteam" {
   name      = "GCP - My Team"
   enabled   = true
-  poll_rate = 300000
+  poll_rate = 300
   services  = ["compute"]
   project_service_keys {
     project_id  = "gcp_project_id_1"
@@ -35,7 +35,7 @@ resource "signalfx_gcp_integration" "gcp_myteam" {
 
 * `name` - (Required) Name of the integration.
 * `enabled` - (Required) Whether the integration is enabled.
-* `poll_rate` - (Required) GCP integration poll rate in seconds. Can be set to either 60 or 300 (1 minute or 5 minutes).
+* `poll_rate` - (Required) GCP integration poll rate (in seconds). Value between `60` and `600`.
 * `services` - (Optional) GCP service metrics to import. Can be an empty list, or not included, to import 'All services'. See the documentation for [Creating Integrations](https://developers.signalfx.com/integrations_reference.html#operation/Create%20Integration) for valid values.
 * `project_service_keys` - (Required) GCP projects to add.
 * `whilelist` - (Optional) [Compute Metadata Whitelist](https://docs.signalfx.com/en/latest/integrations/google-cloud-platform.html#compute-engine-instance).

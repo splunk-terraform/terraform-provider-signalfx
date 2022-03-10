@@ -28,8 +28,8 @@ func integrationGCPResource() *schema.Resource {
 			"poll_rate": &schema.Schema{
 				Type:         schema.TypeInt,
 				Optional:     true,
-				Description:  "GCP poll rate",
-				ValidateFunc: validation.IntInSlice([]int{60, 300}),
+				Description:  "GCP poll rate (in seconds). Between `60` and `600`.",
+				ValidateFunc: validation.IntBetween(60, 600),
 			},
 			"services": &schema.Schema{
 				Type:        schema.TypeSet,
@@ -123,14 +123,7 @@ func getGCPPayloadIntegration(d *schema.ResourceData) *integration.GCPIntegratio
 	}
 
 	if val, ok := d.GetOk("poll_rate"); ok {
-		val := val.(int)
-		if val != 0 {
-			pollRate := integration.OneMinutely
-			if val == 300 {
-				pollRate = integration.FiveMinutely
-			}
-			gcp.PollRate = &pollRate
-		}
+		gcp.PollRate = int64(val.(int)) * 1000
 	}
 
 	if val, ok := d.GetOk("services"); ok {
@@ -173,7 +166,7 @@ func gcpIntegrationAPIToTF(d *schema.ResourceData, gcp *integration.GCPIntegrati
 	if err := d.Set("enabled", gcp.Enabled); err != nil {
 		return err
 	}
-	if err := d.Set("poll_rate", *gcp.PollRate/1000); err != nil {
+	if err := d.Set("poll_rate", gcp.PollRate/1000); err != nil {
 		return err
 	}
 	if err := d.Set("named_token", gcp.NamedToken); err != nil {

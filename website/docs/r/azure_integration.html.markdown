@@ -54,7 +54,7 @@ resource "signalfx_azure_integration" "azure_myteam" {
   * `service` - (Required) The name of the service.
   * `namespaces` - (Required) The additional namespaces.
 * `environment` (Optional) What type of Azure integration this is. The allowed values are `\"azure_us_government\"` and `\"azure\"`. Defaults to `\"azure\"`.
-* `poll_rate` - (Optional) AWS poll rate (in seconds). One of `60` or `300`.
+* `poll_rate` - (Optional) Azure poll rate (in seconds). Value between `60` and `600`.
 * `secret_key` - (Required) Azure secret key that associates the SignalFx app in Azure with the Azure tenant ID. To learn how to get this ID, see the topic [Connect to Microsoft Azure](https://docs.signalfx.com/en/latest/integrations/azure-info.html#connect-to-azure) in the product documentation.
 * `services` - (Required) List of Microsoft Azure service names for the Azure services you want SignalFx to monitor. See the documentation for [Creating Integrations](https://developers.signalfx.com/integrations_reference.html#operation/Create%20Integration) for valida values.
 * `subscriptions` - (Required) List of Azure subscriptions that SignalFx should monitor.
