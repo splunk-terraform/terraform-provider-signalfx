@@ -123,7 +123,7 @@ func getGCPPayloadIntegration(d *schema.ResourceData) *integration.GCPIntegratio
 	}
 
 	if val, ok := d.GetOk("poll_rate"); ok {
-		gcp.PollRate = int64(val.(int)) * 1000
+		gcp.PollRateMs = int64(val.(int)) * 1000
 	}
 
 	if val, ok := d.GetOk("services"); ok {
@@ -166,7 +166,7 @@ func gcpIntegrationAPIToTF(d *schema.ResourceData, gcp *integration.GCPIntegrati
 	if err := d.Set("enabled", gcp.Enabled); err != nil {
 		return err
 	}
-	if err := d.Set("poll_rate", gcp.PollRate/1000); err != nil {
+	if err := d.Set("poll_rate", gcp.PollRateMs/1000); err != nil {
 		return err
 	}
 	if err := d.Set("named_token", gcp.NamedToken); err != nil {

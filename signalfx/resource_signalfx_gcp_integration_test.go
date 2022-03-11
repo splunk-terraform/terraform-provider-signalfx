@@ -15,7 +15,7 @@ const newIntegrationGCPConfig = `
 resource "signalfx_gcp_integration" "gcp_myteamXX" {
     name = "GCP - My Team"
     enabled = false
-    poll_rate = 300
+    poll_rate = 600
     services = ["compute"]
     whitelist = ["labels"]
 
@@ -35,7 +35,7 @@ const updatedIntegrationGCPConfig = `
 resource "signalfx_gcp_integration" "gcp_myteamXX" {
     name = "GCP - My Team NEW"
     enabled = false
-    poll_rate = 300
+    poll_rate = 60
     services = ["compute"]
     whitelist = ["labels"]
 
@@ -69,6 +69,7 @@ func TestAccCreateUpdateIntegrationGCP(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "project_service_keys.605621665.project_key", "secret_farts_2"),
 					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "whitelist.#", "1"),
 					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "whitelist.151844697", "labels"),
+					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "poll_rate", "600"),
 				),
 			},
 			{
@@ -86,6 +87,7 @@ func TestAccCreateUpdateIntegrationGCP(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckIntegrationGCPResourceExists,
 					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "name", "GCP - My Team NEW"),
+					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "poll_rate", "60"),
 				),
 			},
 		},

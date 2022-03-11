@@ -159,7 +159,7 @@ func azureIntegrationAPIToTF(d *schema.ResourceData, azure *integration.AzureInt
 	if err := d.Set("environment", strings.ToLower(string(azure.AzureEnvironment))); err != nil {
 		return err
 	}
-	if err := d.Set("poll_rate", azure.PollRate/1000); err != nil {
+	if err := d.Set("poll_rate", azure.PollRateMs/1000); err != nil {
 		return err
 	}
 	if err := d.Set("tenant_id", azure.TenantId); err != nil {
@@ -227,7 +227,7 @@ func getPayloadAzureIntegration(d *schema.ResourceData) (*integration.AzureInteg
 	}
 
 	if val, ok := d.GetOk("poll_rate"); ok {
-		azure.PollRate = int64(val.(int)) * 1000
+		azure.PollRateMs = int64(val.(int)) * 1000
 	}
 
 	if val, ok := d.GetOk("services"); ok {
