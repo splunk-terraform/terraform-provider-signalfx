@@ -41,7 +41,7 @@ resource "signalfx_aws_integration" "aws_myteam" {
     default_action = "Exclude"
     filter_action  = "Include"
     filter_source  = "filter('code', '200')"
-    namespace      = "fart"
+    namespace      = "my-custom-namespace"
   }
 
   namespace_sync_rule {
