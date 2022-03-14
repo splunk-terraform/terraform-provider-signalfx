@@ -70,8 +70,9 @@ func integrationAzureResource() *schema.Resource {
 			"poll_rate": &schema.Schema{
 				Type:         schema.TypeInt,
 				Optional:     true,
-				Description:  "Azure poll rate (in seconds). One of `60` or `300`.",
-				ValidateFunc: validation.IntInSlice([]int{60, 300}),
+				Default:      300,
+				Description:  "Azure poll rate (in seconds). Between `60` and `600`.",
+				ValidateFunc: validation.IntBetween(60, 600),
 			},
 			"services": &schema.Schema{
 				Type:     schema.TypeSet,
@@ -159,7 +160,7 @@ func azureIntegrationAPIToTF(d *schema.ResourceData, azure *integration.AzureInt
 	if err := d.Set("environment", strings.ToLower(string(azure.AzureEnvironment))); err != nil {
 		return err
 	}
-	if err := d.Set("poll_rate", *azure.PollRate/1000); err != nil {
+	if err := d.Set("poll_rate", azure.PollRateMs/1000); err != nil {
 		return err
 	}
 	if err := d.Set("tenant_id", azure.TenantId); err != nil {
@@ -227,14 +228,7 @@ func getPayloadAzureIntegration(d *schema.ResourceData) (*integration.AzureInteg
 	}
 
 	if val, ok := d.GetOk("poll_rate"); ok {
-		val := val.(int)
-		if val != 0 {
-			pollRate := integration.OneMinutely
-			if val == 300 {
-				pollRate = integration.FiveMinutely
-			}
-			azure.PollRate = &pollRate
-		}
+		azure.PollRateMs = int64(val.(int)) * 1000
 	}
 
 	if val, ok := d.GetOk("services"); ok {

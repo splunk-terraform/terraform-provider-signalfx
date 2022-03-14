@@ -18,7 +18,7 @@ resource "signalfx_azure_integration" "azure_myteamXX" {
 
     environment = "azure"
 
-		poll_rate = 300
+		poll_rate = 120
 
     secret_key = "XXX"
 
@@ -39,7 +39,7 @@ resource "signalfx_azure_integration" "azure_myteamXX" {
 
     environment = "azure"
 
-		poll_rate = 300
+		poll_rate = 600
 
     secret_key = "XXX"
 
@@ -62,7 +62,10 @@ func TestAccCreateUpdateIntegrationAzure(t *testing.T) {
 			// Create It
 			{
 				Config: newIntegrationAzureConfig,
-				Check:  testAccCheckIntegrationAzureResourceExists,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckIntegrationAzureResourceExists,
+					resource.TestCheckResourceAttr("signalfx_azure_integration.azure_myteamXX", "poll_rate", "120"),
+				),
 			},
 			{
 				ResourceName:      "signalfx_azure_integration.azure_myteamXX",
@@ -78,6 +81,7 @@ func TestAccCreateUpdateIntegrationAzure(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckIntegrationAzureResourceExists,
 					resource.TestCheckResourceAttr("signalfx_azure_integration.azure_myteamXX", "name", "AzureFoo NEW"),
+					resource.TestCheckResourceAttr("signalfx_azure_integration.azure_myteamXX", "poll_rate", "600"),
 				),
 			},
 		},
