@@ -38,14 +38,14 @@ data "aws_iam_policy_document" "signalfx_assume_policy" {
   }
 }
 
-resource "aws_iam_role" "aws_sfx_role" {
+resource "aws_iam_role" "aws_splunk_role" {
   name               = "signalfx-reads-from-cloudwatch2"
   description        = "signalfx integration to read out data and send it to signalfxs aws account"
   assume_role_policy = data.aws_iam_policy_document.signalfx_assume_policy.json
 }
 
-resource "aws_iam_policy" "aws_read_permissions" {
-  name        = "SignalFxReadPermissionsPolicy"
+resource "aws_iam_policy" "aws_splunk_policy" {
+  name        = "SplunkObservabilityPolicy"
   description = "AWS permissions required by the Splunk Observability Cloud"
   policy      = <<EOF
 {
@@ -129,9 +129,9 @@ resource "aws_iam_policy" "aws_read_permissions" {
 EOF
 }
 
-resource "aws_iam_role_policy_attachment" "sfx-read-attach" {
-  role       = aws_iam_role.aws_sfx_role.name
-  policy_arn = aws_iam_policy.aws_read_permissions.arn
+resource "aws_iam_role_policy_attachment" "splunk_role_policy_attach" {
+  role       = aws_iam_role.aws_splunk_role.name
+  policy_arn = aws_iam_policy.aws_splunk_policy.arn
 }
 
 
@@ -140,7 +140,7 @@ resource "signalfx_aws_integration" "aws_myteam" {
 
   integration_id = signalfx_aws_external_integration.aws_myteam_extern.id
   external_id    = signalfx_aws_external_integration.aws_myteam_extern.external_id
-  role_arn       = aws_iam_role.aws_sfx_role.arn
+  role_arn       = aws_iam_role.aws_splunk_role.arn
   # token = "abc123"
   # key = "abc123"
   regions            = ["us-east-1"]
