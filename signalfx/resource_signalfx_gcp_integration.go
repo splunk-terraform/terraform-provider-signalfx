@@ -28,6 +28,7 @@ func integrationGCPResource() *schema.Resource {
 			"poll_rate": &schema.Schema{
 				Type:         schema.TypeInt,
 				Optional:     true,
+				Default:      300,
 				Description:  "GCP poll rate (in seconds). Between `60` and `600`.",
 				ValidateFunc: validation.IntBetween(60, 600),
 			},
