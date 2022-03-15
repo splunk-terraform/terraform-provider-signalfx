@@ -84,6 +84,35 @@ func integrationAzureResource() *schema.Resource {
 				},
 				Description: "List of Microsoft Azure service names for the Azure services you want SignalFx to monitor. SignalFx only supports certain services, and if you specify an unsupported one, you receive an API error.",
 			},
+			"additional_services": &schema.Schema{
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+				Description: "Additional Azure resource types that you want to sync with Observability Cloud.",
+			},
+			"resource_filter_rules": &schema.Schema{
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "List of rules for filtering Azure resources by their tags. The source of each filter rule must be in the form filter('key', 'value'). You can join multiple filter statements using the and and or operators. Referenced keys are limited to tags and must start with the azure_tag_ prefix..",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"filter": &schema.Schema{
+							Type:     schema.TypeMap,
+							Required: true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"source": &schema.Schema{
+										Type:     schema.TypeString,
+										Required: true,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 			"subscriptions": &schema.Schema{
 				Type:     schema.TypeSet,
 				Required: true,
@@ -181,6 +210,15 @@ func azureIntegrationAPIToTF(d *schema.ResourceData, azure *integration.AzureInt
 			return err
 		}
 	}
+	if len(azure.AdditionalServices) > 0 {
+		additionalServices := make([]string, len(azure.AdditionalServices))
+		for i, v := range azure.AdditionalServices {
+			additionalServices[i] = v
+		}
+		if err := d.Set("additional_services", additionalServices); err != nil {
+			return err
+		}
+	}
 	if len(azure.Subscriptions) > 0 {
 		subs := make([]interface{}, len(azure.Subscriptions))
 		for i, v := range azure.Subscriptions {
@@ -203,6 +241,20 @@ func azureIntegrationAPIToTF(d *schema.ResourceData, azure *integration.AzureInt
 			})
 		}
 		if err := d.Set("custom_namespaces_per_service", customs); err != nil {
+			return err
+		}
+	}
+	if len(azure.ResourceFilterRules) > 0 {
+		var rules []map[string]interface{}
+		for _, v := range azure.ResourceFilterRules {
+			filter := map[string]string{
+				"source": v.Filter.Source,
+			}
+			rules = append(rules, map[string]interface{}{
+				"filter": filter,
+			})
+		}
+		if err := d.Set("resource_filter_rules", rules); err != nil {
 			return err
 		}
 	}
@@ -241,6 +293,16 @@ func getPayloadAzureIntegration(d *schema.ResourceData) (*integration.AzureInteg
 		azure.Services = services
 	}
 
+	if val, ok := d.GetOk("additional_services"); ok {
+		tfAdditionalServices := val.([]interface{})
+		additionalServices := make([]string, len(tfAdditionalServices))
+		for i, s := range tfAdditionalServices {
+			s := s.(string)
+			additionalServices[i] = s
+		}
+		azure.AdditionalServices = additionalServices
+	}
+
 	if val, ok := d.GetOk("subscriptions"); ok {
 		tfSubs := val.(*schema.Set).List()
 		subs := make([]string, len(tfSubs))
@@ -263,6 +325,19 @@ func getPayloadAzureIntegration(d *schema.ResourceData) (*integration.AzureInteg
 			}
 		}
 		azure.CustomNamespacesPerService = customServiceNS
+	}
+
+	if val, ok := d.GetOk("resource_filter_rules"); ok {
+		resourceFilterRulesTF := val.([]interface{})
+		resourceFilterRules := make([]integration.AzureFilterRule, len(resourceFilterRulesTF))
+		for i, rfrTF := range resourceFilterRulesTF {
+			filterTF := rfrTF.(map[string]interface{})
+			sourceTF := filterTF["filter"].(map[string]interface{})
+			resourceFilterRules[i] = integration.AzureFilterRule{
+				Filter: integration.AzureFilterExpression{
+					Source: sourceTF["source"].(string)}}
+		}
+		azure.ResourceFilterRules = resourceFilterRules
 	}
 
 	return azure, nil

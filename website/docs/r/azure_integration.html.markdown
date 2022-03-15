@@ -34,9 +34,24 @@ resource "signalfx_azure_integration" "azure_myteam" {
   subscriptions = ["sub-guid-here"]
 
   # Optional
+  additional_services = ["some/service", "another/service"]
+
+  # Optional
   custom_namespaces_per_service {
     service = "Microsoft.Compute/virtualMachines"
     namespaces = [ "monitoringAgent", "customNamespace" ]
+  }
+
+  # Optional
+  resource_filter_rules {
+    filter = {
+      source = "filter('azure_tag_service', 'payment') and (filter('azure_tag_env', 'prod-us') or filter('azure_tag_env', 'prod-eu'))"
+    }
+  }
+  resource_filter_rules {
+    filter = {
+      source = "filter('azure_tag_service', 'notification') and (filter('azure_tag_env', 'prod-us') or filter('azure_tag_env', 'prod-eu'))"
+    }
   }
 }
 ```

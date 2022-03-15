@@ -12,13 +12,13 @@ import (
 )
 
 const newIntegrationAzureConfig = `
-resource "signalfx_azure_integration" "azure_myteamXX" {
+resource "signalfx_azure_integration" "azure_int" {
     name = "AzureFoo"
     enabled = false
 
     environment = "azure"
 
-		poll_rate = 120
+    poll_rate = 120
 
     secret_key = "XXX"
 
@@ -33,13 +33,13 @@ resource "signalfx_azure_integration" "azure_myteamXX" {
 `
 
 const updatedIntegrationAzureConfig = `
-resource "signalfx_azure_integration" "azure_myteamXX" {
+resource "signalfx_azure_integration" "azure_int" {
     name = "AzureFoo NEW"
     enabled = false
 
     environment = "azure"
 
-		poll_rate = 600
+    poll_rate = 600
 
     secret_key = "XXX"
 
@@ -49,7 +49,20 @@ resource "signalfx_azure_integration" "azure_myteamXX" {
 
     services = [ "microsoft.sql/servers/elasticpools" ]
 
+	additional_services = [ "foo", "bar" ]
+
     subscriptions = [ "microsoft.sql/servers/elasticpools" ]
+
+	resource_filter_rules {
+		filter = {
+			source = "filter('azure_tag_service', 'payment') and (filter('azure_tag_env', 'prod-us') or filter('azure_tag_env', 'prod-eu'))"
+		}
+	}
+	resource_filter_rules {
+		filter = {
+			source = "filter('azure_tag_service', 'notification') and (filter('azure_tag_env', 'prod-us') or filter('azure_tag_env', 'prod-eu'))"
+		}
+	}
 }
 `
 
@@ -64,13 +77,13 @@ func TestAccCreateUpdateIntegrationAzure(t *testing.T) {
 				Config: newIntegrationAzureConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckIntegrationAzureResourceExists,
-					resource.TestCheckResourceAttr("signalfx_azure_integration.azure_myteamXX", "poll_rate", "120"),
+					resource.TestCheckResourceAttr("signalfx_azure_integration.azure_int", "poll_rate", "120"),
 				),
 			},
 			{
-				ResourceName:      "signalfx_azure_integration.azure_myteamXX",
+				ResourceName:      "signalfx_azure_integration.azure_int",
 				ImportState:       true,
-				ImportStateIdFunc: testAccStateIdFunc("signalfx_azure_integration.azure_myteamXX"),
+				ImportStateIdFunc: testAccStateIdFunc("signalfx_azure_integration.azure_int"),
 				ImportStateVerify: true,
 				// The API doesn't return this value, so blow it up
 				ImportStateVerifyIgnore: []string{"app_id", "secret_key"},
@@ -80,8 +93,16 @@ func TestAccCreateUpdateIntegrationAzure(t *testing.T) {
 				Config: updatedIntegrationAzureConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckIntegrationAzureResourceExists,
-					resource.TestCheckResourceAttr("signalfx_azure_integration.azure_myteamXX", "name", "AzureFoo NEW"),
-					resource.TestCheckResourceAttr("signalfx_azure_integration.azure_myteamXX", "poll_rate", "600"),
+					resource.TestCheckResourceAttr("signalfx_azure_integration.azure_int", "name", "AzureFoo NEW"),
+					resource.TestCheckResourceAttr("signalfx_azure_integration.azure_int", "poll_rate", "600"),
+					resource.TestCheckResourceAttr("signalfx_azure_integration.azure_int", "additional_services.#", "2"),
+					resource.TestCheckResourceAttr("signalfx_azure_integration.azure_int", "additional_services.0", "foo"),
+					resource.TestCheckResourceAttr("signalfx_azure_integration.azure_int", "additional_services.1", "bar"),
+					resource.TestCheckResourceAttr("signalfx_azure_integration.azure_int", "resource_filter_rules.#", "2"),
+					resource.TestCheckResourceAttr("signalfx_azure_integration.azure_int", "resource_filter_rules.0.filter.source",
+						"filter('azure_tag_service', 'payment') and (filter('azure_tag_env', 'prod-us') or filter('azure_tag_env', 'prod-eu'))"),
+					resource.TestCheckResourceAttr("signalfx_azure_integration.azure_int", "resource_filter_rules.1.filter.source",
+						"filter('azure_tag_service', 'notification') and (filter('azure_tag_env', 'prod-us') or filter('azure_tag_env', 'prod-eu'))"),
 				),
 			},
 		},
@@ -127,6 +148,6 @@ func TestValidateAzureService(t *testing.T) {
 	_, errors := validateAzureService("microsoft.batch/batchaccounts", "")
 	assert.Equal(t, 0, len(errors), "No errors for valid value")
 
-	_, errors = validateAzureService("Fart", "")
+	_, errors = validateAzureService("unknown/service", "")
 	assert.Equal(t, 1, len(errors), "Errors for invalid value")
 }
