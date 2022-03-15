@@ -110,13 +110,40 @@ func dashboardGroupResource() *schema.Resource {
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
+				Deprecated:  "Please use permissions_acl field now",
 				Description: "Team IDs that have write access to this dashboard",
 			},
 			"authorized_writer_users": &schema.Schema{
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
+				Deprecated:  "Please use permissions_acl field now",
 				Description: "User IDs that have write access to this dashboard",
+			},
+			"permissions_acl": {
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Description: "The custom access control list for this dashboard",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"principal_id": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "ID of the principal with access",
+						},
+						"principal_type": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "Type of principal, possible values: ORG, TEAM, USER",
+						},
+						"actions": {
+							Type:        schema.TypeSet,
+							Optional:    true,
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Description: "Actions level, possible values: READ, WRITE",
+						},
+					},
+				},
 			},
 			"import_qualifier": &schema.Schema{
 				Type:     schema.TypeSet,
@@ -215,6 +242,8 @@ func getPayloadDashboardGroup(d *schema.ResourceData) *dashboard_group.CreateUpd
 		}
 		cudgr.AuthorizedWriters.Users = users
 	}
+	permissions := getPermissions(d)
+	cudgr.Permissions = permissions
 
 	// Because at present the `DashboardConfigs` mirrors the `Dashboards`
 	// field, we need to pay close attention here. We should only treat
@@ -348,6 +377,30 @@ func getPayloadDashboardGroup(d *schema.ResourceData) *dashboard_group.CreateUpd
 	return cudgr
 }
 
+func getPermissions(d *schema.ResourceData) *dashboard_group.ObjectPermissions {
+	permissions := &dashboard_group.ObjectPermissions{}
+	if val := getPermissionsAcl(d); len(val) > 0 {
+		permissions.Acl = val
+	}
+	return permissions
+}
+
+func getPermissionsAcl(d *schema.ResourceData) []*dashboard_group.AclEntry {
+	acl := d.Get("permissions_acl").(*schema.Set).List()
+	aclList := make([]*dashboard_group.AclEntry, len(acl))
+	for i, entry := range acl {
+		entry := entry.(map[string]interface{})
+
+		item := &dashboard_group.AclEntry{
+			PrincipalId:   entry["principal_id"].(string),
+			PrincipalType: entry["principal_type"].(string),
+			Actions:       expandStringSetToSlice(entry["actions"].(*schema.Set)),
+		}
+		aclList[i] = item
+	}
+	return aclList
+}
+
 func dashboardgroupCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 	payload := getPayloadDashboardGroup(d)
@@ -395,6 +448,23 @@ func dashboardGroupAPIToTF(d *schema.ResourceData, dg *dashboard_group.Dashboard
 				users[i] = v
 			}
 			if err := d.Set("authorized_writer_users", schema.NewSet(schema.HashString, users)); err != nil {
+				return err
+			}
+		}
+	}
+
+	if dg.Permissions != nil {
+		p := dg.Permissions
+		if p.Acl != nil && len(p.Acl) > 0 {
+			acl := make([]map[string]interface{}, len(p.Acl))
+			for i, a := range p.Acl {
+				entry := make(map[string]interface{})
+				entry["principal_id"] = a.PrincipalId
+				entry["principal_type"] = a.PrincipalType
+				entry["actions"] = flattenStringSliceToSet(a.Actions)
+				acl[i] = entry
+			}
+			if err := d.Set("permissions_acl", acl); err != nil {
 				return err
 			}
 		}
