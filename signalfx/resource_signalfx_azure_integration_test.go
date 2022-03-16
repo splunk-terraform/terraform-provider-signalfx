@@ -49,20 +49,20 @@ resource "signalfx_azure_integration" "azure_int" {
 
     services = [ "microsoft.sql/servers/elasticpools" ]
 
-	additional_services = [ "foo", "bar" ]
+    additional_services = [ "foo", "bar" ]
 
     subscriptions = [ "microsoft.sql/servers/elasticpools" ]
 
-	resource_filter_rules {
-		filter = {
-			source = "filter('azure_tag_service', 'payment') and (filter('azure_tag_env', 'prod-us') or filter('azure_tag_env', 'prod-eu'))"
-		}
-	}
-	resource_filter_rules {
-		filter = {
-			source = "filter('azure_tag_service', 'notification') and (filter('azure_tag_env', 'prod-us') or filter('azure_tag_env', 'prod-eu'))"
-		}
-	}
+    resource_filter_rules {
+        filter = {
+            source = "filter('azure_tag_service', 'payment') and (filter('azure_tag_env', 'prod-us') or filter('azure_tag_env', 'prod-eu'))"
+        }
+    }
+    resource_filter_rules {
+        filter = {
+            source = "filter('azure_tag_service', 'notification') and (filter('azure_tag_env', 'prod-us') or filter('azure_tag_env', 'prod-eu'))"
+        }
+    }
 }
 `
 
