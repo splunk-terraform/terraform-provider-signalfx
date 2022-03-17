@@ -243,7 +243,9 @@ func getPayloadDashboardGroup(d *schema.ResourceData) *dashboard_group.CreateUpd
 		cudgr.AuthorizedWriters.Users = users
 	}
 	permissions := getPermissions(d)
-	cudgr.Permissions = permissions
+	if permissions.Acl != nil {
+		cudgr.Permissions = permissions
+	}
 
 	// Because at present the `DashboardConfigs` mirrors the `Dashboards`
 	// field, we need to pay close attention here. We should only treat

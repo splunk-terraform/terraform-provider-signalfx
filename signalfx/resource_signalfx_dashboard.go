@@ -489,7 +489,9 @@ func getPayloadDashboard(d *schema.ResourceData) (*dashboard.CreateUpdateDashboa
 	}
 
 	permissions := getDashPermissions(d)
-	cudr.Permissions = permissions
+	if permissions.Acl != nil || permissions.Parent != "" {
+		cudr.Permissions = permissions
+	}
 
 	allFilters := &dashboard.ChartsFilters{}
 	if filters := getDashboardFilters(d); len(filters) > 0 {
