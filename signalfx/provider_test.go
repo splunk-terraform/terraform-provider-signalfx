@@ -370,7 +370,7 @@ func TestReadConfigFileFileNotFound(t *testing.T) {
 	defer resetGlobals()
 	config := signalfxConfig{}
 	err := readConfigFile("foo.conf", &config)
-	assert.Contains(t, err.Error(), "Failed to open config file")
+	assert.Contains(t, err.Error(), "failed to open config file")
 }
 
 func TestReadConfigFileParseError(t *testing.T) {
@@ -382,7 +382,7 @@ func TestReadConfigFileParseError(t *testing.T) {
 	defer os.Remove(tmpfile.Name())
 
 	err = readConfigFile(tmpfile.Name(), &config)
-	assert.Contains(t, err.Error(), "Failed to parse config file")
+	assert.Contains(t, err.Error(), "failed to parse config file")
 }
 
 func TestReadConfigFileSuccess(t *testing.T) {
