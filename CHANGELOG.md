@@ -1,3 +1,8 @@
+## UNRELEASED
+
+* resource/signalfx_alert_muting_rule: allow destroying the resource when muting is in the past [#360](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/360)
+* resource/signalfx_alert_muting_rule: fix `detectors` property [#360](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/360)
+
 ## 6.10.0
 
 IMPROVEMENTS:
