@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"log"
 	"strings"
 	"time"
@@ -12,6 +13,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/signalfx/signalfx-go/alertmuting"
 )
+
+const alertMutingDetectorIdProperty = "sf_detectorId"
 
 func alertMutingRuleResource() *schema.Resource {
 	return &schema.Resource{
@@ -28,16 +31,17 @@ func alertMutingRuleResource() *schema.Resource {
 				Description: "detectors to which this muting rule applies",
 			},
 			"filter": {
-				Type: schema.TypeSet,
-				// This has to be optional for the cases when there's "detectors" field and no other filters
-				Optional:    true,
-				Description: "list of alert muting filters for this rule",
+				Type:         schema.TypeSet,
+				Optional:     true,
+				AtLeastOneOf: []string{"detectors"},
+				Description:  "list of alert muting filters for this rule",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"property": {
-							Type:        schema.TypeString,
-							Required:    true,
-							Description: "the property to filter by",
+							Type:         schema.TypeString,
+							Required:     true,
+							ValidateFunc: validation.StringNotInSlice([]string{alertMutingDetectorIdProperty}, false),
+							Description:  "the property to filter by",
 						},
 						"property_value": {
 							Type:        schema.TypeString,
@@ -86,18 +90,19 @@ func alertMutingRuleResource() *schema.Resource {
 }
 
 func getPayloadAlertMutingRule(d *schema.ResourceData) (*alertmuting.CreateUpdateAlertMutingRuleRequest, error) {
-
-	tfFilters := d.Get("filter").(*schema.Set).List()
-
 	var filterList []*alertmuting.AlertMutingRuleFilter
-	for _, tfFilter := range tfFilters {
-		tfFilter := tfFilter.(map[string]interface{})
-		filter := &alertmuting.AlertMutingRuleFilter{
-			Property:      tfFilter["property"].(string),
-			PropertyValue: alertmuting.StringOrArray{Values: []string{tfFilter["property_value"].(string)}},
-			NOT:           tfFilter["negated"].(bool),
+
+	if filters, ok := d.GetOk("filter"); ok {
+		tfFilters := filters.(*schema.Set).List()
+		for _, tfFilter := range tfFilters {
+			tfFilter := tfFilter.(map[string]interface{})
+			filter := &alertmuting.AlertMutingRuleFilter{
+				Property:      tfFilter["property"].(string),
+				PropertyValue: alertmuting.StringOrArray{Values: []string{tfFilter["property_value"].(string)}},
+				NOT:           tfFilter["negated"].(bool),
+			}
+			filterList = append(filterList, filter)
 		}
-		filterList = append(filterList, filter)
 	}
 
 	// Detectors is a convenience property that allows
@@ -107,7 +112,7 @@ func getPayloadAlertMutingRule(d *schema.ResourceData) (*alertmuting.CreateUpdat
 	if val, ok := d.GetOk("detectors"); ok {
 		for _, d := range val.([]interface{}) {
 			filterList = append(filterList, &alertmuting.AlertMutingRuleFilter{
-				Property:      "sf_detectorId",
+				Property:      alertMutingDetectorIdProperty,
 				PropertyValue: alertmuting.StringOrArray{Values: []string{d.(string)}},
 				NOT:           false,
 			})
@@ -192,7 +197,7 @@ func alertMutingRuleAPIToTF(d *schema.ResourceData, amr *alertmuting.AlertMuting
 			// The API does not differentiate, but we do to make things
 			// easier for the user, so separate detectors out into their
 			// own property.
-			case "sf_detectorId":
+			case alertMutingDetectorIdProperty:
 				detectors = append(detectors, val)
 			default:
 				filters = append(filters, map[string]interface{}{
@@ -202,11 +207,15 @@ func alertMutingRuleAPIToTF(d *schema.ResourceData, amr *alertmuting.AlertMuting
 				})
 			}
 		}
-		if err := d.Set("filter", filters); err != nil {
-			return err
+		if filters != nil {
+			if err := d.Set("filter", filters); err != nil {
+				return err
+			}
 		}
-		if err := d.Set("detectors", detectors); err != nil {
-			return err
+		if detectors != nil {
+			if err := d.Set("detectors", detectors); err != nil {
+				return err
+			}
 		}
 		// The API changes `startTime` to be >= the current
 		// timestamp at the time of the API call. This means
