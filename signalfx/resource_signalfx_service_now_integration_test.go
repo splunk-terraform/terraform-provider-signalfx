@@ -13,7 +13,7 @@ resource "signalfx_service_now_integration" "snow_myresXX" {
     username = "thisis_me"
     password = "youd0ntsee1t"
     instance_name = "myinst.service-now.com"
-	issue_type = "Incident"
+    issue_type = "Incident"
 }
 `
 
@@ -24,9 +24,9 @@ resource "signalfx_service_now_integration" "snow_myresXX" {
     username = "thisis_me"
     password = "youd0ntsee1t"
     instance_name = "myinst.service-now.com"
-	issue_type = "Problem"
-	alert_triggered_payload_template = "doesn't really matter"
-	alert_resolved_payload_template = "nope"
+    issue_type = "Problem"
+    alert_triggered_payload_template = "{\"short_description\": \"{{{messageTitle}}} (customized)\"}"
+    alert_resolved_payload_template = "{\"close_notes\": \"{{{messageTitle}}} (customized close msg)\"}"
 }`
 
 func TestAccCreateUpdateIntegrationServiceNow(t *testing.T) {
@@ -67,8 +67,8 @@ func TestAccCreateUpdateIntegrationServiceNow(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_service_now_integration.snow_myresXX", "password", "youd0ntsee1t"),
 					resource.TestCheckResourceAttr("signalfx_service_now_integration.snow_myresXX", "instance_name", "myinst.service-now.com"),
 					resource.TestCheckResourceAttr("signalfx_service_now_integration.snow_myresXX", "issue_type", "Problem"),
-					resource.TestCheckResourceAttr("signalfx_service_now_integration.snow_myresXX", "alert_triggered_payload_template", "doesn't really matter"),
-					resource.TestCheckResourceAttr("signalfx_service_now_integration.snow_myresXX", "alert_resolved_payload_template", "nope"),
+					resource.TestCheckResourceAttr("signalfx_service_now_integration.snow_myresXX", "alert_triggered_payload_template", "{\"short_description\": \"{{{messageTitle}}} (customized)\"}"),
+					resource.TestCheckResourceAttr("signalfx_service_now_integration.snow_myresXX", "alert_resolved_payload_template", "{\"close_notes\": \"{{{messageTitle}}} (customized close msg)\"}"),
 				),
 			},
 		},
