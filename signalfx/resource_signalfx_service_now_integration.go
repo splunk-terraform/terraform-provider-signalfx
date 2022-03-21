@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	serviceNowIntegrationName = "Service Now"
+	serviceNowIntegrationName = "ServiceNow"
 	serviceNowTypeIncident    = "Incident"
 	serviceNowTypeProblem     = "Problem"
 )
@@ -33,18 +33,18 @@ func integrationServiceNowResource() *schema.Resource {
 			"enabled": {
 				Type:        schema.TypeBool,
 				Required:    true,
-				Description: "Whether the integration is enabled or not",
+				Description: "Whether the integration is enabled",
 			},
 			"username": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "User name used to authenticate the Service Now integration.",
+				Description: "User name used to authenticate the ServiceNow integration.",
 			},
 			"password": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Sensitive:   true,
-				Description: "Password used to authenticate the Service Now integration.",
+				Description: "Password used to authenticate the ServiceNow integration.",
 			},
 			"instance_name": {
 				Type:        schema.TypeString,
@@ -55,17 +55,17 @@ func integrationServiceNowResource() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validation.StringInSlice([]string{serviceNowTypeIncident, serviceNowTypeProblem}, false),
-				Description:  fmt.Sprintf("The type of issue in standard ITIL terminology. The allowed values are '%s' and '%s'.", serviceNowTypeIncident, serviceNowTypeProblem),
+				Description:  fmt.Sprintf("The type of issue in standard ITIL terminology. The allowed values are `%s` and `%s`.", serviceNowTypeIncident, serviceNowTypeProblem),
 			},
 			"alert_triggered_payload_template": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "An optional template that Observability Cloud uses to create the ServiceNow POST JSON payloads when an alert sends a notification to ServiceNow. Use this optional field to send the values of Observability Cloud alert properties to specific fields in ServiceNow. See API reference for details.",
+				Description: "A template that Observability Cloud uses to create the ServiceNow POST JSON payloads when an alert sends a notification to ServiceNow. Use this optional field to send the values of Observability Cloud alert properties to specific fields in ServiceNow. See API reference for details.",
 			},
 			"alert_resolved_payload_template": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "An optional template that Observability Cloud uses to create the ServiceNow PUT JSON payloads when an alert is cleared in ServiceNow. Use this optional field to send the values of Observability Cloud alert properties to specific fields in ServiceNow. See API reference for details.",
+				Description: "A template that Observability Cloud uses to create the ServiceNow PUT JSON payloads when an alert is cleared in ServiceNow. Use this optional field to send the values of Observability Cloud alert properties to specific fields in ServiceNow. See API reference for details.",
 			},
 		},
 
