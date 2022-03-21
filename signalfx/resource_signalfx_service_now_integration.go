@@ -99,7 +99,7 @@ func getServiceNowIntegration(d *schema.ResourceData) *integration.ServiceNowInt
 	return snow
 }
 
-func copyServiceNowIntegrationToResource(d *schema.ResourceData, snow *integration.ServiceNowIntegration) error {
+func setServiceNowIntegration(d *schema.ResourceData, snow *integration.ServiceNowIntegration) error {
 	// API doesn't return username and password, so we ignore them.
 	if err := d.Set("name", snow.Name); err != nil {
 		return err
@@ -142,7 +142,7 @@ func integrationServiceNowRead(d *schema.ResourceData, meta interface{}) error {
 	}
 	logIntegrationResponse(in, serviceNowIntegrationName)
 
-	return copyServiceNowIntegrationToResource(d, in)
+	return setServiceNowIntegration(d, in)
 }
 
 func integrationServiceNowCreate(d *schema.ResourceData, meta interface{}) error {
@@ -156,7 +156,7 @@ func integrationServiceNowCreate(d *schema.ResourceData, meta interface{}) error
 	}
 	logIntegrationResponse(in, serviceNowIntegrationName)
 
-	return copyServiceNowIntegrationToResource(d, in)
+	return setServiceNowIntegration(d, in)
 }
 
 func integrationServiceNowUpdate(d *schema.ResourceData, meta interface{}) error {
@@ -170,7 +170,7 @@ func integrationServiceNowUpdate(d *schema.ResourceData, meta interface{}) error
 	}
 	logIntegrationResponse(in, serviceNowIntegrationName)
 
-	return copyServiceNowIntegrationToResource(d, in)
+	return setServiceNowIntegration(d, in)
 }
 
 func integrationServiceNowDelete(d *schema.ResourceData, meta interface{}) error {
