@@ -1,7 +1,12 @@
+## 6.12.0
+
+IMPROVEMENTS:
+* resource/signalfx_aws_integration: Add `sync_custom_namespaces_only` option [#366](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/366)
+
 ## 6.11.1
 IMPROVEMENTS: 
 * resource/signalfx_aws_integration: documentation update (described named_token parameter) [#367](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/367)
-
+ 
 ## 6.11.0
 
 IMPROVEMENTS:
