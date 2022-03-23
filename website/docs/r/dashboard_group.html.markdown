@@ -27,6 +27,28 @@ resource "signalfx_dashboard_group" "mydashboardgroup0" {
 }
 ```
 
+## Example Usage with Permissions
+
+```tf
+resource "signalfx_dashboard_group" "mydashboardgroup_withpermissions" {
+  name        = "My team dashboard group"
+  description = "Cool dashboard group"
+
+  // You can add up to 25 of entries for permission configurations. 
+  // Make sure your account supports this feature!
+  permissions {
+    principal_id    = "abc123"
+    principal_type  = "ORG"
+    actions         = ["READ"]
+  }
+  permissions {
+    principal_id    = "abc456"
+    principal_type  = "USER"
+    actions         = ["READ", "WRITE"]
+  }
+}
+```
+
 ## Example Usage With Mirrored Dashboards
 
 ```tf
@@ -63,8 +85,12 @@ The following arguments are supported in the resource block:
 * `name` - (Required) Name of the dashboard group.
 * `description` - (Required) Description of the dashboard group.
 * `teams` - (Optional) Team IDs to associate the dashboard group to.
-* `authorized_writer_teams` - (Optional) Team IDs that have write access to this dashboard group. Remember to use an admin's token if using this feature and to include that admin's team (or user id in `authorized_writer_teams`).
-* `authorized_writer_users` - (Optional) User IDs that have write access to this dashboard group. Remember to use an admin's token if using this feature and to include that admin's user id (or team id in `authorized_writer_teams`).
+* `authorized_writer_teams` - (Optional) Team IDs that have write access to this dashboard group. Remember to use an admin's token if using this feature and to include that admin's team (or user id in `authorized_writer_teams`). **Note:** Deprecated use `permissions_acl` instead.
+* `authorized_writer_users` - (Optional) User IDs that have write access to this dashboard group. Remember to use an admin's token if using this feature and to include that admin's user id (or team id in `authorized_writer_teams`). **Note:** Deprecated use `permissions_acl` instead.
+* `permissions_acl` - (Optional) [Permissions](https://docs.splunk.com/Observability/infrastructure/terms-concepts/permissions.html) List of read and write permission configuration to specify which user, team, and organization can view and/or edit your dashboard group. **Note:** This feature is not present in all accounts. Please contact support if you are unsure.
+  * `principal_id` - (Required) ID of the user, team, or organization for which you're granting permissions.
+  * `principal_type` - (Required) Clarify whether this permission configuration is for a user, a team, or an organization. Value can be one of "USER", "TEAM", or "ORG".
+  * `actions` - (Required) Action the user, team, or organization can take with the dashboard group. List of values (value can be "READ" or "WRITE").
 * `dashboard` - (Optional) [Mirrored dashboards](https://docs.signalfx.com/en/latest/dashboards/dashboard-mirrors.html) in this dashboard group. **Note:** This feature is not present in all accounts. Please contact support if you are unsure.
   * `dashboard_id` - (Required) The dashboard id to mirror
   * `name_override` - (Optional) The name that will override the original dashboards's name.

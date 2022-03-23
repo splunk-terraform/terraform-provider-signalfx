@@ -381,13 +381,59 @@ func dashboardResource() *schema.Resource {
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
+				Deprecated:  "Please use permissions_* fields now",
 				Description: "Team IDs that have write access to this dashboard",
 			},
 			"authorized_writer_users": &schema.Schema{
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
+				Deprecated:  "Please use permissions fields now",
 				Description: "User IDs that have write access to this dashboard",
+			},
+			"permissions": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Computed: true,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"parent": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "The ID of the dashboard group that this dashboard inherits permissions from",
+						},
+						"acl": {
+							Type:        schema.TypeSet,
+							Optional:    true,
+							Description: "The custom access control list for this dashboard",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"principal_id": {
+										Type:        schema.TypeString,
+										Required:    true,
+										Description: "ID of the principal with access",
+									},
+									"principal_type": {
+										Type:         schema.TypeString,
+										Required:     true,
+										ValidateFunc: validation.StringInSlice([]string{"ORG", "TEAM", "USER"}, false),
+										Description:  "Type of principal, possible values: ORG, TEAM, USER",
+									},
+									"actions": {
+										Type:     schema.TypeSet,
+										Optional: true,
+										Elem: &schema.Schema{
+											Type:         schema.TypeString,
+											ValidateFunc: validation.StringInSlice([]string{"READ", "WRITE"}, false),
+										},
+										Description: "Actions level, possible values: READ, WRITE",
+									},
+								},
+							},
+						},
+					},
+				},
 			},
 			"discovery_options_query": &schema.Schema{
 				Type:     schema.TypeString,
@@ -454,6 +500,11 @@ func getPayloadDashboard(d *schema.ResourceData) (*dashboard.CreateUpdateDashboa
 		cudr.Tags = tags
 	}
 
+	permissions := getDashPermissions(d)
+	if permissions.Acl != nil || permissions.Parent != "" {
+		cudr.Permissions = permissions
+	}
+
 	allFilters := &dashboard.ChartsFilters{}
 	if filters := getDashboardFilters(d); len(filters) > 0 {
 		allFilters.Sources = filters
@@ -510,6 +561,37 @@ func getPayloadDashboard(d *schema.ResourceData) (*dashboard.CreateUpdateDashboa
 	}
 
 	return cudr, nil
+}
+
+func getDashPermissions(d *schema.ResourceData) *dashboard.ObjectPermissions {
+	permissions := &dashboard.ObjectPermissions{}
+	if val, ok := d.GetOk("permissions"); ok {
+		p := val.([]interface{})[0].(map[string]interface{})
+		if val, ok := p["parent"]; ok {
+			permissions.Parent = val.(string)
+		}
+		if val, ok := p["acl"]; ok {
+			permissions.Acl = getDashPermissionsAcl(val.(*schema.Set))
+		}
+	}
+	return permissions
+}
+
+func getDashPermissionsAcl(set *schema.Set) []*dashboard.AclEntry {
+	if set.Len() > 0 {
+		aclList := make([]*dashboard.AclEntry, set.Len())
+		for i, entry := range set.List() {
+			entry := entry.(map[string]interface{})
+			item := &dashboard.AclEntry{
+				PrincipalId:   entry["principal_id"].(string),
+				PrincipalType: entry["principal_type"].(string),
+				Actions:       expandStringSetToSlice(entry["actions"].(*schema.Set)),
+			}
+			aclList[i] = item
+		}
+		return aclList
+	}
+	return nil
 }
 
 func getDashboardTime(d *schema.ResourceData) *dashboard.ChartsFiltersTime {
@@ -819,6 +901,29 @@ func dashboardAPIToTF(d *schema.ResourceData, dash *dashboard.Dashboard) error {
 			if err := d.Set("authorized_writer_users", schema.NewSet(schema.HashString, users)); err != nil {
 				return err
 			}
+		}
+	}
+
+	if dash.Permissions != nil {
+		p := dash.Permissions
+		perm := []map[string]interface{}{{}}
+
+		if p.Parent != "" {
+			perm[0]["parent"] = p.Parent
+		}
+		if p.Acl != nil && len(p.Acl) > 0 {
+			acl := make([]map[string]interface{}, len(p.Acl))
+			for i, a := range p.Acl {
+				entry := make(map[string]interface{})
+				entry["principal_id"] = a.PrincipalId
+				entry["principal_type"] = a.PrincipalType
+				entry["actions"] = flattenStringSliceToSet(a.Actions)
+				acl[i] = entry
+			}
+			perm[0]["acl"] = acl
+		}
+		if err := d.Set("permissions", perm); err != nil {
+			return err
 		}
 	}
 

@@ -1,6 +1,8 @@
 ## UNRELEASED
 
 IMPROVEMENTS:
+* resource/dashboard: Added `permissions` field, deprecation notice for `authorized_writer_teams` and `authorized_writer_users`  [#357](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/357)
+* resource/dashboard_group: Added `permissions` field, deprecation notice for `authorized_writer_teams` and `authorized_writer_users` [#357](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/357)
 * resource/signalfx_service_now_integration: add support for ServiceNow integration [#361](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/361)
 * resource/signalfx_azure_integration: Add `additional_services` and `resource_filter_rules` [#359](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/359)
 * resource/signalfx_aws_integration documentation update (AWS IAM policy update) [#356](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/356)
