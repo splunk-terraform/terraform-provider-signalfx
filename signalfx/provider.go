@@ -16,7 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/logging"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
-	homedir "github.com/mitchellh/go-homedir"
+	"github.com/mitchellh/go-homedir"
 	sfx "github.com/signalfx/signalfx-go"
 
 	"github.com/splunk-terraform/terraform-provider-signalfx/version"
@@ -38,25 +38,25 @@ type signalfxConfig struct {
 func Provider() terraform.ResourceProvider {
 	sfxProvider = &schema.Provider{
 		Schema: map[string]*schema.Schema{
-			"auth_token": &schema.Schema{
+			"auth_token": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("SFX_AUTH_TOKEN", ""),
 				Description: "SignalFx auth token",
 			},
-			"api_url": &schema.Schema{
+			"api_url": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("SFX_API_URL", "https://api.signalfx.com"),
 				Description: "API URL for your SignalFx org, may include a realm",
 			},
-			"custom_app_url": &schema.Schema{
+			"custom_app_url": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("SFX_CUSTOM_APP_URL", "https://app.signalfx.com"),
-				Description: "Application URL for your SignalFx org, often customzied for organizations using SSO",
+				Description: "Application URL for your SignalFx org, often customized for organizations using SSO",
 			},
-			"timeout_seconds": &schema.Schema{
+			"timeout_seconds": {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Default:     120,
@@ -88,6 +88,7 @@ func Provider() terraform.ResourceProvider {
 			"signalfx_org_token":                orgTokenResource(),
 			"signalfx_opsgenie_integration":     integrationOpsgenieResource(),
 			"signalfx_pagerduty_integration":    integrationPagerDutyResource(),
+			"signalfx_service_now_integration":  integrationServiceNowResource(),
 			"signalfx_slack_integration":        integrationSlackResource(),
 			"signalfx_single_value_chart":       singleValueChartResource(),
 			"signalfx_team":                     teamResource(),
@@ -105,7 +106,7 @@ func Provider() terraform.ResourceProvider {
 func signalfxConfigure(data *schema.ResourceData) (interface{}, error) {
 	config := signalfxConfig{}
 
-	// /etc/signalfx.conf has lowest priority
+	// /etc/signalfx.conf has the lowest priority
 	if _, err := os.Stat(SystemConfigPath); err == nil {
 		err = readConfigFile(SystemConfigPath, &config)
 		if err != nil {
@@ -118,7 +119,7 @@ func signalfxConfigure(data *schema.ResourceData) (interface{}, error) {
 	if HomeConfigPath == "" {
 		usr, err := user.Current()
 		if err != nil {
-			return nil, fmt.Errorf("Failed to get user environment %s", err.Error())
+			return nil, fmt.Errorf("failed to get user environment %s", err.Error())
 		}
 		HomeConfigPath = usr.HomeDir + HomeConfigSuffix
 	}
@@ -146,15 +147,15 @@ func signalfxConfigure(data *schema.ResourceData) (interface{}, error) {
 	if url, ok := data.GetOk("api_url"); ok {
 		config.APIURL = url.(string)
 	}
-	if custom_app_url, ok := data.GetOk("custom_app_url"); ok {
-		config.CustomAppURL = custom_app_url.(string)
+	if customAppURL, ok := data.GetOk("custom_app_url"); ok {
+		config.CustomAppURL = customAppURL.(string)
 	}
 
 	var netTransport = logging.NewTransport("SignalFx", &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
-		Dial: (&net.Dialer{
+		DialContext: (&net.Dialer{
 			Timeout: 5 * time.Second,
-		}).Dial,
+		}).DialContext,
 		TLSHandshakeTimeout: 5 * time.Second,
 		MaxIdleConns:        100,
 		MaxIdleConnsPerHost: 100,
@@ -185,11 +186,11 @@ func signalfxConfigure(data *schema.ResourceData) (interface{}, error) {
 func readConfigFile(configPath string, config *signalfxConfig) error {
 	configFile, err := ioutil.ReadFile(configPath)
 	if err != nil {
-		return fmt.Errorf("Failed to open config file. %s", err.Error())
+		return fmt.Errorf("failed to open config file. %s", err.Error())
 	}
 	err = json.Unmarshal(configFile, config)
 	if err != nil {
-		return fmt.Errorf("Failed to parse config file. %s", err.Error())
+		return fmt.Errorf("failed to parse config file. %s", err.Error())
 	}
 	return nil
 }
@@ -226,12 +227,12 @@ func readNetrcFile(config *signalfxConfig) error {
 	}
 
 	// Load up the netrc file
-	net, err := netrc.ParseFile(path)
+	netRC, err := netrc.ParseFile(path)
 	if err != nil {
-		return fmt.Errorf("Error parsing netrc file at %q: %s", path, err)
+		return fmt.Errorf("error parsing netrc file at %q: %s", path, err)
 	}
 
-	machine := net.FindMachine("api.signalfx.com")
+	machine := netRC.FindMachine("api.signalfx.com")
 	if machine == nil {
 		// Machine not found, no problem
 		return nil

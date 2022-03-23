@@ -5,45 +5,50 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"log"
 	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	alertmuting "github.com/signalfx/signalfx-go/alertmuting"
+	"github.com/signalfx/signalfx-go/alertmuting"
 )
+
+const alertMutingDetectorIdProperty = "sf_detectorId"
 
 func alertMutingRuleResource() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
-			"description": &schema.Schema{
+			"description": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "description of the rule",
 			},
-			"detectors": &schema.Schema{
+			"detectors": {
 				Type:        schema.TypeList,
 				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "detectors to which this muting rule applies",
 			},
-			"filter": &schema.Schema{
-				Type:        schema.TypeSet,
-				Required:    true,
-				Description: "list of alert muting filters for this rule",
+			"filter": {
+				Type:         schema.TypeSet,
+				Optional:     true,
+				AtLeastOneOf: []string{"detectors"},
+				Description:  "list of alert muting filters for this rule",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"property": &schema.Schema{
-							Type:        schema.TypeString,
-							Required:    true,
-							Description: "the property to filter by",
+						"property": {
+							Type:         schema.TypeString,
+							Required:     true,
+							ValidateFunc: validation.StringNotInSlice([]string{alertMutingDetectorIdProperty}, false),
+							Description:  "the property to filter by",
 						},
-						"property_value": &schema.Schema{
+						"property_value": {
 							Type:        schema.TypeString,
 							Required:    true,
 							Description: "the value of the property to filter by",
 						},
-						"negated": &schema.Schema{
+						"negated": {
 							Type:        schema.TypeBool,
 							Optional:    true,
 							Default:     false,
@@ -52,13 +57,13 @@ func alertMutingRuleResource() *schema.Resource {
 					},
 				},
 			},
-			"start_time": &schema.Schema{
+			"start_time": {
 				Type:        schema.TypeInt,
 				Required:    true,
 				Description: "starting time of an alert muting rule as a Unix timestamp, in seconds",
 				ForceNew:    true,
 			},
-			"stop_time": &schema.Schema{
+			"stop_time": {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Default:     0,
@@ -68,7 +73,7 @@ func alertMutingRuleResource() *schema.Resource {
 			// defined in the config file, we need another place to store
 			// that. Note that we won't be doing seconds conversion on
 			// this field since it is *not* user-facing.
-			"effective_start_time": &schema.Schema{
+			"effective_start_time": {
 				Type:     schema.TypeInt,
 				Computed: true,
 			},
@@ -85,18 +90,19 @@ func alertMutingRuleResource() *schema.Resource {
 }
 
 func getPayloadAlertMutingRule(d *schema.ResourceData) (*alertmuting.CreateUpdateAlertMutingRuleRequest, error) {
-
-	tfFilters := d.Get("filter").(*schema.Set).List()
-
 	var filterList []*alertmuting.AlertMutingRuleFilter
-	for _, tfFilter := range tfFilters {
-		tfFilter := tfFilter.(map[string]interface{})
-		filter := &alertmuting.AlertMutingRuleFilter{
-			Property:      tfFilter["property"].(string),
-			PropertyValue: alertmuting.StringOrArray{Values: []string{tfFilter["property_value"].(string)}},
-			NOT:           tfFilter["negated"].(bool),
+
+	if filters, ok := d.GetOk("filter"); ok {
+		tfFilters := filters.(*schema.Set).List()
+		for _, tfFilter := range tfFilters {
+			tfFilter := tfFilter.(map[string]interface{})
+			filter := &alertmuting.AlertMutingRuleFilter{
+				Property:      tfFilter["property"].(string),
+				PropertyValue: alertmuting.StringOrArray{Values: []string{tfFilter["property_value"].(string)}},
+				NOT:           tfFilter["negated"].(bool),
+			}
+			filterList = append(filterList, filter)
 		}
-		filterList = append(filterList, filter)
 	}
 
 	// Detectors is a convenience property that allows
@@ -106,7 +112,7 @@ func getPayloadAlertMutingRule(d *schema.ResourceData) (*alertmuting.CreateUpdat
 	if val, ok := d.GetOk("detectors"); ok {
 		for _, d := range val.([]interface{}) {
 			filterList = append(filterList, &alertmuting.AlertMutingRuleFilter{
-				Property:      "sf_detectorId",
+				Property:      alertMutingDetectorIdProperty,
 				PropertyValue: alertmuting.StringOrArray{Values: []string{d.(string)}},
 				NOT:           false,
 			})
@@ -127,7 +133,7 @@ func alertMutingRuleCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 	payload, err := getPayloadAlertMutingRule(d)
 	if err != nil {
-		return fmt.Errorf("Failed creating json payload: %s", err.Error())
+		return fmt.Errorf("failed creating json payload: %s", err.Error())
 	}
 
 	debugOutput, _ := json.Marshal(payload)
@@ -190,8 +196,8 @@ func alertMutingRuleAPIToTF(d *schema.ResourceData, amr *alertmuting.AlertMuting
 			switch f.Property {
 			// The API does not differentiate, but we do to make things
 			// easier for the user, so separate detectors out into their
-			// own propery.
-			case "sf_detectorId":
+			// own property.
+			case alertMutingDetectorIdProperty:
 				detectors = append(detectors, val)
 			default:
 				filters = append(filters, map[string]interface{}{
@@ -201,16 +207,20 @@ func alertMutingRuleAPIToTF(d *schema.ResourceData, amr *alertmuting.AlertMuting
 				})
 			}
 		}
-		if err := d.Set("filter", filters); err != nil {
-			return err
+		if filters != nil {
+			if err := d.Set("filter", filters); err != nil {
+				return err
+			}
 		}
-		if err := d.Set("detectors", detectors); err != nil {
-			return err
+		if detectors != nil {
+			if err := d.Set("detectors", detectors); err != nil {
+				return err
+			}
 		}
 		// The API changes `startTime` to be >= the current
 		// timestamp at the time of the API call. This means
 		// it will pretty much never agree with what the user specified.
-		// To accomodate this we will store the "effective" start time
+		// To accommodate this we will store the "effective" start time
 		// as a computed attribute, then…
 		if err := d.Set("effective_start_time", amr.StartTime); err != nil {
 			return err
@@ -229,7 +239,7 @@ func alertMutingRuleUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 	payload, err := getPayloadAlertMutingRule(d)
 	if err != nil {
-		return fmt.Errorf("Failed creating json payload: %s", err.Error())
+		return fmt.Errorf("failed creating json payload: %s", err.Error())
 	}
 
 	// If we have an effective start time…
@@ -265,5 +275,13 @@ func alertMutingRuleUpdate(d *schema.ResourceData, meta interface{}) error {
 func alertMutingRuleDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 
-	return config.Client.DeleteAlertMutingRule(context.TODO(), d.Id())
+	err := config.Client.DeleteAlertMutingRule(context.TODO(), d.Id())
+	// Silently ignore muting in the past for there is nothing the client could do with them and attempt to destroy
+	// results in invalid terraform state.
+	// 400 : Cannot delete alert muting in the past
+	if err != nil && strings.Contains(err.Error(), "400") {
+		log.Print("[DEBUG] SignalFx: Ignoring Delete Alert Muting Rule error 400 for alert muting in the past")
+		return nil
+	}
+	return err
 }

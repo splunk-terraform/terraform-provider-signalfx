@@ -3,6 +3,11 @@
 IMPROVEMENTS:
 * resource/dashboard: Added `permissions` field, deprecation notice for `authorized_writer_teams` and `authorized_writer_users`  [#357](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/357)
 * resource/dashboard_group: Added `permissions` field, deprecation notice for `authorized_writer_teams` and `authorized_writer_users` [#357](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/357)
+* resource/signalfx_service_now_integration: add support for ServiceNow integration [#361](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/361)
+
+BUGFIXES:
+* resource/signalfx_alert_muting_rule: allow destroying the resource when muting is in the past [#360](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/360)
+* resource/signalfx_alert_muting_rule: fix `detectors` property [#360](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/360)
 
 ## 6.10.0
 
