@@ -391,34 +391,46 @@ func dashboardResource() *schema.Resource {
 				Deprecated:  "Please use permissions fields now",
 				Description: "User IDs that have write access to this dashboard",
 			},
-			"permissions_parent": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				ConflictsWith: []string{"permissions_acl"},
-				Description:   "The ID of the dashboard group that this dashboard inherits permissions from",
-			},
-			"permissions_acl": {
-				Type:          schema.TypeSet,
-				Optional:      true,
-				ConflictsWith: []string{"permissions_parent"},
-				Description:   "The custom access control list for this dashboard",
+			"permissions": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Computed: true,
+				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"principal_id": {
+						"parent": {
 							Type:        schema.TypeString,
-							Required:    true,
-							Description: "ID of the principal with access",
+							Optional:    true,
+							Description: "The ID of the dashboard group that this dashboard inherits permissions from",
 						},
-						"principal_type": {
-							Type:        schema.TypeString,
-							Required:    true,
-							Description: "Type of principal, possible values: ORG, TEAM, USER",
-						},
-						"actions": {
+						"acl": {
 							Type:        schema.TypeSet,
 							Optional:    true,
-							Elem:        &schema.Schema{Type: schema.TypeString},
-							Description: "Actions level, possible values: READ, WRITE",
+							Description: "The custom access control list for this dashboard",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"principal_id": {
+										Type:        schema.TypeString,
+										Required:    true,
+										Description: "ID of the principal with access",
+									},
+									"principal_type": {
+										Type:         schema.TypeString,
+										Required:     true,
+										ValidateFunc: validation.StringInSlice([]string{"ORG", "TEAM", "USER"}, false),
+										Description:  "Type of principal, possible values: ORG, TEAM, USER",
+									},
+									"actions": {
+										Type:     schema.TypeSet,
+										Optional: true,
+										Elem: &schema.Schema{
+											Type:         schema.TypeString,
+											ValidateFunc: validation.StringInSlice([]string{"READ", "WRITE"}, false),
+										},
+										Description: "Actions level, possible values: READ, WRITE",
+									},
+								},
+							},
 						},
 					},
 				},
@@ -553,29 +565,33 @@ func getPayloadDashboard(d *schema.ResourceData) (*dashboard.CreateUpdateDashboa
 
 func getDashPermissions(d *schema.ResourceData) *dashboard.ObjectPermissions {
 	permissions := &dashboard.ObjectPermissions{}
-	if val, ok := d.GetOk("permissions_parent"); ok {
-		permissions.Parent = val.(string)
-	}
-	if val := getDashPermissionsAcl(d); len(val) > 0 {
-		permissions.Acl = val
+	if val, ok := d.GetOk("permissions"); ok {
+		p := val.([]interface{})[0].(map[string]interface{})
+		if val, ok := p["parent"]; ok {
+			permissions.Parent = val.(string)
+		}
+		if val, ok := p["acl"]; ok {
+			permissions.Acl = getDashPermissionsAcl(val.(*schema.Set))
+		}
 	}
 	return permissions
 }
 
-func getDashPermissionsAcl(d *schema.ResourceData) []*dashboard.AclEntry {
-	acl := d.Get("permissions_acl").(*schema.Set).List()
-	aclList := make([]*dashboard.AclEntry, len(acl))
-	for i, entry := range acl {
-		entry := entry.(map[string]interface{})
-
-		item := &dashboard.AclEntry{
-			PrincipalId:   entry["principal_id"].(string),
-			PrincipalType: entry["principal_type"].(string),
-			Actions:       expandStringSetToSlice(entry["actions"].(*schema.Set)),
+func getDashPermissionsAcl(set *schema.Set) []*dashboard.AclEntry {
+	if set.Len() > 0 {
+		aclList := make([]*dashboard.AclEntry, set.Len())
+		for i, entry := range set.List() {
+			entry := entry.(map[string]interface{})
+			item := &dashboard.AclEntry{
+				PrincipalId:   entry["principal_id"].(string),
+				PrincipalType: entry["principal_type"].(string),
+				Actions:       expandStringSetToSlice(entry["actions"].(*schema.Set)),
+			}
+			aclList[i] = item
 		}
-		aclList[i] = item
+		return aclList
 	}
-	return aclList
+	return nil
 }
 
 func getDashboardTime(d *schema.ResourceData) *dashboard.ChartsFiltersTime {
@@ -890,8 +906,10 @@ func dashboardAPIToTF(d *schema.ResourceData, dash *dashboard.Dashboard) error {
 
 	if dash.Permissions != nil {
 		p := dash.Permissions
-		if err := d.Set("permissions_parent", p.Parent); err != nil {
-			return err
+		perm := []map[string]interface{}{{}}
+
+		if p.Parent != "" {
+			perm[0]["parent"] = p.Parent
 		}
 		if p.Acl != nil && len(p.Acl) > 0 {
 			acl := make([]map[string]interface{}, len(p.Acl))
@@ -902,9 +920,10 @@ func dashboardAPIToTF(d *schema.ResourceData, dash *dashboard.Dashboard) error {
 				entry["actions"] = flattenStringSliceToSet(a.Actions)
 				acl[i] = entry
 			}
-			if err := d.Set("permissions_acl", acl); err != nil {
-				return err
-			}
+			perm[0]["acl"] = acl
+		}
+		if err := d.Set("permissions", perm); err != nil {
+			return err
 		}
 	}
 

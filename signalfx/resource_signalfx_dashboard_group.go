@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	dashboard_group "github.com/signalfx/signalfx-go/dashboard_group"
 )
 
@@ -110,19 +111,20 @@ func dashboardGroupResource() *schema.Resource {
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
-				Deprecated:  "Please use permissions_acl field now",
+				Deprecated:  "Please use permissions field now",
 				Description: "Team IDs that have write access to this dashboard",
 			},
 			"authorized_writer_users": &schema.Schema{
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
-				Deprecated:  "Please use permissions_acl field now",
+				Deprecated:  "Please use permissions field now",
 				Description: "User IDs that have write access to this dashboard",
 			},
-			"permissions_acl": {
+			"permissions": {
 				Type:        schema.TypeSet,
 				Optional:    true,
+				Computed:    true,
 				Description: "The custom access control list for this dashboard",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -132,14 +134,18 @@ func dashboardGroupResource() *schema.Resource {
 							Description: "ID of the principal with access",
 						},
 						"principal_type": {
-							Type:        schema.TypeString,
-							Required:    true,
-							Description: "Type of principal, possible values: ORG, TEAM, USER",
+							Type:         schema.TypeString,
+							Required:     true,
+							ValidateFunc: validation.StringInSlice([]string{"ORG", "TEAM", "USER"}, false),
+							Description:  "Type of principal, possible values: ORG, TEAM, USER",
 						},
 						"actions": {
-							Type:        schema.TypeSet,
-							Optional:    true,
-							Elem:        &schema.Schema{Type: schema.TypeString},
+							Type:     schema.TypeSet,
+							Optional: true,
+							Elem: &schema.Schema{
+								Type:         schema.TypeString,
+								ValidateFunc: validation.StringInSlice([]string{"READ", "WRITE"}, false),
+							},
 							Description: "Actions level, possible values: READ, WRITE",
 						},
 					},
@@ -388,7 +394,7 @@ func getPermissions(d *schema.ResourceData) *dashboard_group.ObjectPermissions {
 }
 
 func getPermissionsAcl(d *schema.ResourceData) []*dashboard_group.AclEntry {
-	acl := d.Get("permissions_acl").(*schema.Set).List()
+	acl := d.Get("permissions").(*schema.Set).List()
 	aclList := make([]*dashboard_group.AclEntry, len(acl))
 	for i, entry := range acl {
 		entry := entry.(map[string]interface{})
@@ -466,7 +472,7 @@ func dashboardGroupAPIToTF(d *schema.ResourceData, dg *dashboard_group.Dashboard
 				entry["actions"] = flattenStringSliceToSet(a.Actions)
 				acl[i] = entry
 			}
-			if err := d.Set("permissions_acl", acl); err != nil {
+			if err := d.Set("permissions", acl); err != nil {
 				return err
 			}
 		}
