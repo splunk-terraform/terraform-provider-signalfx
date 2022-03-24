@@ -32,7 +32,7 @@ const newIntegrationAWSConfig = `
 	  default_action = "Exclude"
 	  filter_action  = "Include"
 	  filter_source  = "filter('code', '200')"
-	  namespace      = "fart"
+	  namespace      = "AWS/SomeCustomNamespace"
 	}
 
 	custom_namespace_sync_rule {
@@ -73,7 +73,7 @@ const newIntegrationAWSConfig = `
 	  default_action = "Exclude"
 	  filter_action  = "Include"
 	  filter_source  = "filter('code', '200')"
-	  namespace      = "fart"
+	  namespace      = "AWS/SomeCustomNamespace"
 	}
 
 	custom_namespace_sync_rule {
@@ -109,7 +109,7 @@ const updatedIntegrationAWSConfig = `
 	  default_action = "Exclude"
 	  filter_action  = "Include"
 	  filter_source  = "filter('code', '200')"
-	  namespace      = "fart"
+	  namespace      = "AWS/SomeCustomNamespace"
 	}
 
 	custom_namespace_sync_rule {
@@ -150,7 +150,7 @@ const updatedIntegrationAWSConfig = `
 	  default_action = "Exclude"
 	  filter_action  = "Include"
 	  filter_source  = "filter('code', '200')"
-	  namespace      = "fart"
+	  namespace      = "AWS/SomeCustomNamespace"
 	}
 
 	custom_namespace_sync_rule {
@@ -346,7 +346,7 @@ func TestValidateAwsService(t *testing.T) {
 	_, errors := validateAwsService("AWS/Logs", "")
 	assert.Equal(t, 0, len(errors), "No errors for valid value")
 
-	_, errors = validateAwsService("Fart", "")
+	_, errors = validateAwsService("InvalidService", "")
 	assert.Equal(t, 1, len(errors), "Errors for invalid value")
 }
 
@@ -357,7 +357,7 @@ func TestValidateFilterAction(t *testing.T) {
 	_, errors = validateFilterAction("Include", "")
 	assert.Equal(t, 0, len(errors), "No errors for valid value")
 
-	_, errors = validateFilterAction("Fart", "")
+	_, errors = validateFilterAction("InvalidFilterAction", "")
 	assert.Equal(t, 1, len(errors), "Errors for invalid value")
 }
 

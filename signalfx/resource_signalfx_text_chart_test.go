@@ -11,17 +11,17 @@ import (
 
 const newTextChartConfig = `
 resource "signalfx_text_chart" "mychartTX" {
-  name = "Fart Text"
-  description = "Farts"
-  markdown = "**farts**"
+  name = "Chart Name"
+  description = "Chart Description"
+  markdown = "**chart markdown**"
 }
 `
 
 const updatedTextChartConfig = `
 resource "signalfx_text_chart" "mychartTX" {
-  name = "Fart Text NEW"
-  description = "Farts NEW"
-  markdown = "**farts**"
+  name = "Chart Name NEW"
+  description = "Chart Description NEW"
+  markdown = "**chart markdown**"
 }
 `
 
@@ -36,9 +36,9 @@ func TestAccCreateUpdateTextChart(t *testing.T) {
 				Config: newTextChartConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckTextChartResourceExists,
-					resource.TestCheckResourceAttr("signalfx_text_chart.mychartTX", "name", "Fart Text"),
-					resource.TestCheckResourceAttr("signalfx_text_chart.mychartTX", "description", "Farts"),
-					resource.TestCheckResourceAttr("signalfx_text_chart.mychartTX", "markdown", "**farts**"),
+					resource.TestCheckResourceAttr("signalfx_text_chart.mychartTX", "name", "Chart Name"),
+					resource.TestCheckResourceAttr("signalfx_text_chart.mychartTX", "description", "Chart Description"),
+					resource.TestCheckResourceAttr("signalfx_text_chart.mychartTX", "markdown", "**chart markdown**"),
 				),
 			},
 			{
@@ -52,8 +52,8 @@ func TestAccCreateUpdateTextChart(t *testing.T) {
 				Config: updatedTextChartConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckTextChartResourceExists,
-					resource.TestCheckResourceAttr("signalfx_text_chart.mychartTX", "name", "Fart Text NEW"),
-					resource.TestCheckResourceAttr("signalfx_text_chart.mychartTX", "description", "Farts NEW"),
+					resource.TestCheckResourceAttr("signalfx_text_chart.mychartTX", "name", "Chart Name NEW"),
+					resource.TestCheckResourceAttr("signalfx_text_chart.mychartTX", "description", "Chart Description NEW"),
 				),
 			},
 		},

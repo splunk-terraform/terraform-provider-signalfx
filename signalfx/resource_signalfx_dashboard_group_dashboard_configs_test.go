@@ -136,14 +136,14 @@ resource "signalfx_dashboard_group" "mydashboardgroupX1" {
 
       filter_override {
         property = "collector"
-        values = [ "farts" ]
+        values = [ "foo" ]
         negated = true
       }
 
       variable_override {
         property = "region"
-        values = ["farts"]
-        values_suggested = ["farts", "butts"]
+        values = ["foo"]
+        values_suggested = ["foo", "bar"]
       }
     }
 }
@@ -181,15 +181,15 @@ func TestAccCreateUpdateDashboardGroupWithConfig(t *testing.T) {
 					// resource.TestCheckResourceAttr("signalfx_dashboard_group.mydashboardgroupX1", "dashboard.0.filter_override.0.negated", "true"),
 					// resource.TestCheckResourceAttr("signalfx_dashboard_group.mydashboardgroupX1", "dashboard.0.filter_override.0.property", "collector"),
 					// resource.TestCheckResourceAttr("signalfx_dashboard_group.mydashboardgroupX1", "dashboard.0.filter_override.values.#", "1"),
-					// resource.TestCheckResourceAttr("signalfx_dashboard_group.mydashboardgroupX1", "dashboard.0.filter_override.values.0", "farts"),
+					// resource.TestCheckResourceAttr("signalfx_dashboard_group.mydashboardgroupX1", "dashboard.0.filter_override.values.0", "foo"),
 					// Variables
 					resource.TestCheckResourceAttr("signalfx_dashboard_group.mydashboardgroupX1", "dashboard.0.variable_override.#", "1"),
 					// resource.TestCheckResourceAttr("signalfx_dashboard_group.mydashboardgroupX1", "dashboard.0.variable_override.0.property", "region"),
 					// resource.TestCheckResourceAttr("signalfx_dashboard_group.mydashboardgroupX1", "dashboard.0.variable_override.0.values.#", "1"),
-					// resource.TestCheckResourceAttr("signalfx_dashboard_group.mydashboardgroupX1", "dashboard.0.variable_override.0.values.0", "farts"),
+					// resource.TestCheckResourceAttr("signalfx_dashboard_group.mydashboardgroupX1", "dashboard.0.variable_override.0.values.0", "foo"),
 					// resource.TestCheckResourceAttr("signalfx_dashboard_group.mydashboardgroupX1", "dashboard.0.variable_override.0.values_suggested.#", "2"),
-					// resource.TestCheckResourceAttr("signalfx_dashboard_group.mydashboardgroupX1", "dashboard.0.variable_override.0.values_suggested.0", "fart"),
-					// resource.TestCheckResourceAttr("signalfx_dashboard_group.mydashboardgroupX1", "dashboard.0.variable_override.0.values_suggested.1", "butts"),
+					// resource.TestCheckResourceAttr("signalfx_dashboard_group.mydashboardgroupX1", "dashboard.0.variable_override.0.values_suggested.0", "foo"),
+					// resource.TestCheckResourceAttr("signalfx_dashboard_group.mydashboardgroupX1", "dashboard.0.variable_override.0.values_suggested.1", "bar"),
 				),
 			},
 		},

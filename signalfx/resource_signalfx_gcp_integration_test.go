@@ -21,12 +21,12 @@ resource "signalfx_gcp_integration" "gcp_myteamXX" {
 
     project_service_keys {
 		    project_id = "gcp_project_id_1"
-		    project_key = "secret_farts"
+		    project_key = "secret_key_project_1"
     }
 
     project_service_keys {
         project_id = "gcp_project_id_2"
-        project_key = "secret_farts_2"
+        project_key = "secret_key_project_2"
     }
 }
 `
@@ -41,12 +41,12 @@ resource "signalfx_gcp_integration" "gcp_myteamXX" {
 
     project_service_keys {
 		    project_id = "gcp_project_id_1"
-		    project_key = "secret_farts"
+		    project_key = "secret_key_project_1"
     }
 
     project_service_keys {
         project_id = "gcp_project_id_2"
-        project_key = "secret_farts_2"
+        project_key = "secret_key_project_2"
     }
 }
 `
@@ -63,10 +63,10 @@ func TestAccCreateUpdateIntegrationGCP(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckIntegrationGCPResourceExists,
 					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "project_service_keys.#", "2"),
-					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "project_service_keys.1428645045.project_id", "gcp_project_id_1"),
-					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "project_service_keys.1428645045.project_key", "secret_farts"),
-					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "project_service_keys.605621665.project_id", "gcp_project_id_2"),
-					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "project_service_keys.605621665.project_key", "secret_farts_2"),
+					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "project_service_keys.11542654.project_id", "gcp_project_id_1"),
+					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "project_service_keys.11542654.project_key", "secret_key_project_1"),
+					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "project_service_keys.2689486244.project_id", "gcp_project_id_2"),
+					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "project_service_keys.2689486244.project_key", "secret_key_project_2"),
 					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "whitelist.#", "1"),
 					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "whitelist.151844697", "labels"),
 					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "poll_rate", "600"),
@@ -134,6 +134,6 @@ func TestValidateGcpService(t *testing.T) {
 	_, errors := validateGcpService("appengine", "")
 	assert.Equal(t, 0, len(errors), "No errors for valid value")
 
-	_, errors = validateGcpService("Fart", "")
+	_, errors = validateGcpService("InvalidService", "")
 	assert.Equal(t, 1, len(errors), "Errors for invalid value")
 }
