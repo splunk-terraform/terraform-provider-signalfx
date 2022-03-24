@@ -46,11 +46,11 @@ const newIntegrationAWSConfig = `
 	  namespace      = "AWS/EC2"
 	}
 
-	metric_stats_to_sync {
-      namespace      = "AWS/EC2"
-      metric    	 = "NetworkPacketsIn"
-      stats          = ["p95", "p99"]
-	}
+    metric_stats_to_sync {
+      namespace  = "AWS/EC2"
+      metric     = "NetworkPacketsIn"
+      stats      = ["p95", "p99"]
+    }
   }
 
   resource "signalfx_aws_token_integration" "aws_tok_myteamXX" {
@@ -122,6 +122,12 @@ const updatedIntegrationAWSConfig = `
 	  filter_source  = "filter('code', '200')"
 	  namespace      = "AWS/EC2"
 	}
+
+    metric_stats_to_sync {
+      namespace  = "AWS/EC2"
+      metric     = "NetworkPacketsIn"
+      stats      = ["upper"]
+    }
   }
 
   resource "signalfx_aws_token_integration" "aws_tok_myteamXX" {
@@ -227,6 +233,11 @@ func TestAccCreateUpdateIntegrationAWS(t *testing.T) {
 					testAccCheckIntegrationAWSResourceExists,
 					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "name", "AWS TF Test (ext/updated)"),
 					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteam_tokXX", "name", "AWS TF Test (token/updated)"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.#", "1"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.3877068524.namespace", "AWS/EC2"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.3877068524.metric", "NetworkPacketsIn"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.3877068524.stats.#", "1"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.3877068524.stats.2598274585", "upper"),
 				),
 			},
 			// Update again to enable Cloudwatch Metric Streams synchronization
