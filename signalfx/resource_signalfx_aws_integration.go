@@ -213,6 +213,34 @@ func integrationAWSResource() *schema.Resource {
 				Default:     false,
 				Description: "Controls how SignalFx checks for large amounts of data for this AWS integration. If true, SignalFx monitors the amount of data coming in from the integration.",
 			},
+			"metric_stats_to_sync": &schema.Schema{
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Description: "Each element in the array is an object that contains an AWS namespace name, AWS metric name and a list of statistics that SignalFx collects for this metric. If you specify this property, SignalFx retrieves only specified AWS statistics. If you don't specify this property, SignalFx retrieves the AWS standard set of statistics.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"namespace": &schema.Schema{
+							Type:         schema.TypeString,
+							Required:     true,
+							ValidateFunc: validateAwsService,
+							Description:  "An AWS namespace having AWS metric that you want to pick statistics for",
+						},
+						"metric": &schema.Schema{
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "AWS metric that you want to pick statistics for",
+						},
+						"stats": &schema.Schema{
+							Type:        schema.TypeSet,
+							Required:    true,
+							Description: "AWS statistics you want to collect",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+					},
+				},
+			},
 		},
 
 		Create: integrationAWSCreate,
@@ -384,6 +412,24 @@ func awsIntegrationAPIToTF(d *schema.ResourceData, aws *integration.AwsCloudWatc
 		}
 	}
 
+	if len(aws.MetricStatsToSync) > 0 {
+		var metricStatsToSync []map[string]interface{}
+		for namespace, v := range aws.MetricStatsToSync {
+			for metric, stats := range v {
+				metricStatsToSync = append(metricStatsToSync, map[string]interface{}{
+					"namespace": namespace,
+					"metric":    metric,
+					"stats":     stats,
+				})
+			}
+		}
+		if len(metricStatsToSync) > 0 {
+			if err := d.Set("metric_stats_to_sync", metricStatsToSync); err != nil {
+				return err
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -471,6 +517,25 @@ func getPayloadAWSIntegration(d *schema.ResourceData) (*integration.AwsCloudWatc
 
 	if val, ok := d.GetOk("named_token"); ok {
 		aws.NamedToken = val.(string)
+	}
+
+	if val, ok := d.GetOk("metric_stats_to_sync"); ok {
+		val := val.(*schema.Set).List()
+		if len(val) > 0 {
+			metricStatsToSync := map[string]map[string][]string{}
+			for _, v := range val {
+				v := v.(map[string]interface{})
+				namespace := v["namespace"].(string)
+				metric := v["metric"].(string)
+				stats := expandStringSetToSlice(v["stats"].(*schema.Set))
+
+				if metricStatsToSync[namespace] == nil {
+					metricStatsToSync[namespace] = map[string][]string{}
+				}
+				metricStatsToSync[namespace][metric] = stats
+			}
+			aws.MetricStatsToSync = metricStatsToSync
+		}
 	}
 
 	return aws, nil

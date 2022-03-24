@@ -45,6 +45,12 @@ const newIntegrationAWSConfig = `
 	  filter_source  = "filter('code', '200')"
 	  namespace      = "AWS/EC2"
 	}
+
+	metric_stats_to_sync {
+      namespace      = "AWS/EC2"
+      metric    	 = "NetworkPacketsIn"
+      stats          = ["p95", "p99"]
+	}
   }
 
   resource "signalfx_aws_token_integration" "aws_tok_myteamXX" {
@@ -204,7 +210,15 @@ func TestAccCreateUpdateIntegrationAWS(t *testing.T) {
 			// Create
 			{
 				Config: newIntegrationAWSConfig,
-				Check:  testAccCheckIntegrationAWSResourceExists,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckIntegrationAWSResourceExists,
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.#", "1"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.2980759070.namespace", "AWS/EC2"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.2980759070.metric", "NetworkPacketsIn"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.2980759070.stats.#", "2"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.2980759070.stats.1929087501", "p95"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.2980759070.stats.3729704193", "p99"),
+				),
 			},
 			// Update
 			{
