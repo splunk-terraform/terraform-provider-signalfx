@@ -1,6 +1,7 @@
 ## UNRELEASED
 
 IMPROVEMENTS:
+* resource/signalfx_aws_integration: add `metricStatsToSync` support [#362](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/362)
 * resource/dashboard: Added `permissions` field, deprecation notice for `authorized_writer_teams` and `authorized_writer_users`  [#357](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/357)
 * resource/dashboard_group: Added `permissions` field, deprecation notice for `authorized_writer_teams` and `authorized_writer_users` [#357](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/357)
 * resource/signalfx_service_now_integration: add support for ServiceNow integration [#361](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/361)
