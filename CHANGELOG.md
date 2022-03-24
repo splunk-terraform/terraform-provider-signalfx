@@ -1,4 +1,4 @@
-## UNRELEASED
+## 6.11.0
 
 IMPROVEMENTS:
 * resource/signalfx_aws_integration: add `metricStatsToSync` support [#362](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/362)
@@ -6,10 +6,11 @@ IMPROVEMENTS:
 * resource/dashboard_group: Added `permissions` field, deprecation notice for `authorized_writer_teams` and `authorized_writer_users` [#357](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/357)
 * resource/signalfx_service_now_integration: add support for ServiceNow integration [#361](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/361)
 * resource/signalfx_azure_integration: Add `additional_services` and `resource_filter_rules` [#359](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/359)
-* resource/signalfx_aws_integration documentation update (AWS IAM policy update) [#356](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/356)
+* resource/signalfx_aws_integration: documentation update (AWS IAM policy update) [#356](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/356)
 * resource/signalfx_aws_integration, resource/signalfx_azure_integration, resource/signalfx_gcp_integration: Align `poll_rate` with Splunk Observability API [#355](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/355)
 
 BUGFIXES:
+* resource/signalfx_gcp_integration: fix broken links in documentation [#358](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/358)
 * resource/signalfx_alert_muting_rule: allow destroying the resource when muting is in the past [#360](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/360)
 * resource/signalfx_alert_muting_rule: fix `detectors` property [#360](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/360)
 
