@@ -51,6 +51,12 @@ resource "signalfx_aws_integration" "aws_myteam" {
     filter_source  = "filter('code', '200')"
     namespace      = "AWS/EC2"
   }
+
+  metric_stats_to_sync {
+    namespace  = "AWS/EC2"
+    metric     = "NetworkPacketsIn"
+    stats      = ["upper"]
+  }
 }
 ```
 
@@ -86,3 +92,7 @@ resource "signalfx_aws_integration" "aws_myteam" {
 * `use_metric_streams_sync` - (Optional) Enable the use of Amazon Cloudwatch Metric Streams for ingesting metrics. Note that this requires the inclusion of `"cloudwatch:ListMetricStreams"`,`"cloudwatch:GetMetricStream"`, `"cloudwatch:PutMetricStream"`, `"cloudwatch:DeleteMetricStream"`, `"cloudwatch:StartMetricStreams"`, `"cloudwatch:StopMetricStreams"` and `"iam:PassRole"` permissions.
 * `enable_logs_sync` - (Optional) Enable the AWS logs synchronization. Note that this requires the inclusion of `"logs:DescribeLogGroups"`,  `"logs:DeleteSubscriptionFilter"`, `"logs:DescribeSubscriptionFilters"`, `"logs:PutSubscriptionFilter"`, and `"s3:GetBucketLogging"`,  `"s3:GetBucketNotification"`, `"s3:PutBucketNotification"` permissions. Additional permissions may be required to capture logs from specific AWS services.
 * `enable_check_large_volume` - (Optional) Controls how SignalFx checks for large amounts of data for this AWS integration. If `true`, SignalFx monitors the amount of data coming in from the integration.
+* `metric_stats_to_sync` - (Optional) Each element in the array is an object that contains an AWS namespace name, AWS metric name and a list of statistics that SignalFx collects for this metric. If you specify this property, SignalFx retrieves only specified AWS statistics. If you don't specify this property, SignalFx retrieves the AWS standard set of statistics.
+  * `namespace` - (Required) An AWS namespace having AWS metric that you want to pick statistics for
+  * `metric` - (Required) AWS metric that you want to pick statistics for
+  * `stats` - (Required) AWS statistics you want to collect
