@@ -34,7 +34,7 @@ resource "signalfx_alert_muting_rule" "rool_mooter_one" {
 
 * `description` - (Required) The description for this muting rule
 * `start_time` - (Required) Starting time of an alert muting rule as a Unit time stamp in seconds.
-* `stop_time` - (Optional) Starting time of an alert muting rule as a Unix time stamp in seconds.
+* `stop_time` - (Optional) Stop time of an alert muting rule as a Unix time stamp in seconds.
 * `detectors` - (Optional) A convenience attribute that associated this muting rule with specific detector ids.
 * `filter` - (Optional) Filters for this rule. See [Creating muting rules from scratch](https://docs.signalfx.com/en/latest/detect-alert/mute-notifications.html#rule-from-scratch) for more information.
   * `property` - (Required) The property to filter.
