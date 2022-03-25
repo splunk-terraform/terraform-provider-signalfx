@@ -119,7 +119,7 @@ func TestValidateFullPaletteColors(t *testing.T) {
 }
 
 func TestValidateFullPaletteColorsFail(t *testing.T) {
-	_, errors := validateFullPaletteColors("fart", "color_theme")
+	_, errors := validateFullPaletteColors("color_palette", "color_theme")
 	assert.Equal(t, 1, len(errors))
 }
 

@@ -11,7 +11,7 @@ const newIntegrationOpsgenieConfig = `
 resource "signalfx_opsgenie_integration" "opsgenie_myteamXX" {
     name = "Opsgenie - My Team"
     enabled = false
-    api_key = "fart"
+    api_key = "api_key"
     api_url = "https://api.opsgenie.com"
 }
 `
@@ -20,7 +20,7 @@ const updatedIntegrationOpsgenieConfig = `
 resource "signalfx_opsgenie_integration" "opsgenie_myteamXX" {
     name = "Opsgenie - My Team NEW"
     enabled = false
-    api_key = "fart"
+    api_key = "api_key"
     api_url = "https://api.opsgenie.com"
 }
 `

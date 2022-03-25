@@ -52,7 +52,7 @@ events(eventType='some.testing').publish(label='testing events')
     }
 		event_options {
 			label = "testing events"
-			display_name = "farts"
+			display_name = "events display name"
 			color = "azure"
 		}
 
@@ -153,7 +153,7 @@ events(eventType='some.testing').publish(label='testing events')
     }
 		event_options {
 			label = "testing events"
-			display_name = "farts"
+			display_name = "events display name"
 			color = "azure"
 		}
 
