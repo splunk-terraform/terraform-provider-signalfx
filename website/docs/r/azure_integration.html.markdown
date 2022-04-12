@@ -62,13 +62,14 @@ resource "signalfx_azure_integration" "azure_myteam" {
 
 ## Argument Reference
 
-* `name` - (Required) Name of the integration.
-* `enabled` - (Required) Whether the integration is enabled.
 * `app_id` - (Required) Azure application ID for the SignalFx app. To learn how to get this ID, see the topic [Connect to Microsoft Azure](https://docs.signalfx.com/en/latest/getting-started/send-data.html#connect-to-microsoft-azure) in the product documentation.
+* `enabled` - (Required) Whether the integration is enabled.
 * `custom_namespaces_per_service` - (Optional) Allows for more fine-grained control of syncing of custom namespaces, should the boolean convenience parameter `sync_guest_os_namespaces` be not enough. The customer may specify a map of services to custom namespaces. If they do so, for each service which is a key in this map, we will attempt to sync metrics from namespaces in the value list in addition to the default namespaces.
-  * `service` - (Required) The name of the service.
   * `namespaces` - (Required) The additional namespaces.
+  * `service` - (Required) The name of the service.
 * `environment` (Optional) What type of Azure integration this is. The allowed values are `\"azure_us_government\"` and `\"azure\"`. Defaults to `\"azure\"`.
+* `name` - (Required) Name of the integration.
+* `named_token` - (Optional) Name of the org token to be used for data ingestion. If not specified then default access token is used.
 * `poll_rate` - (Optional) Azure poll rate (in seconds). Value between `60` and `600`. Default: `300`.
 * `secret_key` - (Required) Azure secret key that associates the SignalFx app in Azure with the Azure tenant ID. To learn how to get this ID, see the topic [Connect to Microsoft Azure](https://docs.signalfx.com/en/latest/integrations/azure-info.html#connect-to-azure) in the product documentation.
 * `services` - (Required) List of Microsoft Azure service names for the Azure services you want SignalFx to monitor. See the documentation for [Creating Integrations](https://developers.signalfx.com/integrations_reference.html#operation/Create%20Integration) for valida values.
