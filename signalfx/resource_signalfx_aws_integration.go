@@ -241,6 +241,12 @@ func integrationAWSResource() *schema.Resource {
 					},
 				},
 			},
+			"sync_custom_namespaces_only": &schema.Schema{
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Indicates that SignalFx should sync metrics and metadata from custom AWS namespaces only (see the `custom_namespace_sync_rule` field for details). Defaults to `false`.",
+			},
 		},
 
 		Create: integrationAWSCreate,
@@ -323,6 +329,9 @@ func awsIntegrationAPIToTF(d *schema.ResourceData, aws *integration.AwsCloudWatc
 		return err
 	}
 	if err := d.Set("enable_check_large_volume", aws.EnableCheckLargeVolume); err != nil {
+		return err
+	}
+	if err := d.Set("sync_custom_namespaces_only", aws.SyncCustomNamespacesOnly); err != nil {
 		return err
 	}
 	if err := d.Set("named_token", aws.NamedToken); err != nil {
@@ -436,13 +445,14 @@ func awsIntegrationAPIToTF(d *schema.ResourceData, aws *integration.AwsCloudWatc
 func getPayloadAWSIntegration(d *schema.ResourceData) (*integration.AwsCloudWatchIntegration, error) {
 
 	aws := &integration.AwsCloudWatchIntegration{
-		Name:                   d.Get("name").(string),
-		Type:                   "AWSCloudWatch",
-		Enabled:                d.Get("enabled").(bool),
-		EnableAwsUsage:         d.Get("enable_aws_usage").(bool),
-		ImportCloudWatch:       d.Get("import_cloud_watch").(bool),
-		UseGetMetricDataMethod: d.Get("use_get_metric_data_method").(bool),
-		EnableCheckLargeVolume: d.Get("enable_check_large_volume").(bool),
+		Name:                     d.Get("name").(string),
+		Type:                     "AWSCloudWatch",
+		Enabled:                  d.Get("enabled").(bool),
+		EnableAwsUsage:           d.Get("enable_aws_usage").(bool),
+		ImportCloudWatch:         d.Get("import_cloud_watch").(bool),
+		UseGetMetricDataMethod:   d.Get("use_get_metric_data_method").(bool),
+		EnableCheckLargeVolume:   d.Get("enable_check_large_volume").(bool),
+		SyncCustomNamespacesOnly: d.Get("sync_custom_namespaces_only").(bool),
 	}
 
 	if d.Get("use_metric_streams_sync").(bool) {

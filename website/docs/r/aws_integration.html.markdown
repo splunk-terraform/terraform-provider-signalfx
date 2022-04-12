@@ -97,3 +97,4 @@ resource "signalfx_aws_integration" "aws_myteam" {
   * `namespace` - (Required) An AWS namespace having AWS metric that you want to pick statistics for
   * `metric` - (Required) AWS metric that you want to pick statistics for
   * `stats` - (Required) AWS statistics you want to collect
+* `sync_custom_namespaces_only` - (Optional) Indicates that SignalFx should sync metrics and metadata from custom AWS namespaces only (see the `custom_namespace_sync_rule` above). Defaults to `false`.
