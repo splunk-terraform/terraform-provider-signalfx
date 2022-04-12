@@ -80,7 +80,7 @@ resource "signalfx_aws_integration" "aws_myteam" {
 * `import_cloud_watch` - (Optional) Flag that controls how SignalFx imports Cloud Watch metrics. If true, SignalFx imports Cloud Watch metrics from AWS.
 * `integration_id` - (Required) The id of one of a `signalfx_aws_external_integration` or `signalfx_aws_token_integration`.
 * `key` - (Optional) If you specify `auth_method = \"SecurityToken\"` in your request to create an AWS integration object, use this property to specify the key (this is typically equivalent to the `AWS_SECRET_ACCESS_KEY` environment variable).
-* `metric_stats_to_sync` - (Optional) Each element in the array is an object that contains an AWS namespace name, AWS metric name and a list of statistics that SignalFx collects for this metric. If you specify this property, SignalFx retrieves only specified AWS statistics. If you don't specify this property, SignalFx retrieves the AWS standard set of statistics.
+* `metric_stats_to_sync` - (Optional) Each element in the array is an object that contains an AWS namespace name, AWS metric name and a list of statistics that SignalFx collects for this metric. If you specify this property, SignalFx retrieves only specified AWS statistics when AWS metric streams are not used. When AWS metric streams are used this property specifies additional extended statistics to collect. If you don't specify this property, SignalFx retrieves the AWS standard set of statistics.
   * `metric` - (Required) AWS metric that you want to pick statistics for
   * `namespace` - (Required) An AWS namespace having AWS metric that you want to pick statistics for
   * `stats` - (Required) AWS statistics you want to collect
