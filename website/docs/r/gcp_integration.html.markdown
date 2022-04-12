@@ -33,15 +33,16 @@ resource "signalfx_gcp_integration" "gcp_myteam" {
 
 ## Argument Reference
 
-* `name` - (Required) Name of the integration.
 * `enabled` - (Required) Whether the integration is enabled.
+* `name` - (Required) Name of the integration.
+* `named_token` - (Optional) Name of the org token to be used for data ingestion. If not specified then default access token is used.
 * `poll_rate` - (Optional) GCP integration poll rate (in seconds). Value between `60` and `600`. Default: `300`.
-* `services` - (Optional) GCP service metrics to import. Can be an empty list, or not included, to import 'All services'. See the documentation for [Creating Integrations](https://dev.splunk.com/observability/reference/api/integrations/latest#endpoint-create-integration) for valid values.
 * `project_service_keys` - (Required) GCP projects to add.
+* `services` - (Optional) GCP service metrics to import. Can be an empty list, or not included, to import 'All services'. See the documentation for [Creating Integrations](https://dev.splunk.com/observability/reference/api/integrations/latest#endpoint-create-integration) for valid values.
 * `whitelist` - (Optional) [Compute Metadata Whitelist](https://docs.splunk.com/Observability/infrastructure/navigators/gcp.html#compute-engine-instance).
 
 ## Attributes Reference
 
-In a addition to all arguments above, the following attributes are exported:
+In an addition to all arguments above, the following attributes are exported:
 
 * `id` - The ID of the integration.
