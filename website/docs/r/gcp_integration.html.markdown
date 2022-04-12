@@ -43,6 +43,6 @@ resource "signalfx_gcp_integration" "gcp_myteam" {
 
 ## Attributes Reference
 
-In an addition to all arguments above, the following attributes are exported:
+In addition to all arguments above, the following attributes are exported:
 
 * `id` - The ID of the integration.
