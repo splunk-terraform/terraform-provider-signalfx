@@ -1,3 +1,7 @@
+## 6.12.1
+IMPROVEMENTS:
+* resource/signalfx_aws_integration: documentation update (metric_stats_to_sync parameter) [#369](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/369)
+
 ## 6.12.0
 
 IMPROVEMENTS:
