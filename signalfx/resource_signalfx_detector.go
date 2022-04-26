@@ -103,7 +103,7 @@ func detectorResource() *schema.Resource {
 				Description: "Tags associated with the detector",
 			},
 			"teams": &schema.Schema{
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "Team IDs to associate the detector to",
