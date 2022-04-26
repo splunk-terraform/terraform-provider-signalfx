@@ -1,7 +1,7 @@
 ## UNRELEASED
 
 BUGFIXES:
-* upgrade signalfx-go to fix issue with `show_data_markers` field on detector resource
+* upgrade signalfx-go to fix issue with `show_data_markers` field on detector resource [#371](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/371)
 
 ## 6.12.1
 IMPROVEMENTS:
