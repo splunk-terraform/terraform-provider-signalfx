@@ -1,7 +1,7 @@
 ## UNRELEASED
 
 BUGFIX:
-* resource/detector: Fix issue with `teams` ordering
+* resource/detector: Fix issue with `teams` ordering [#372](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/372)
 
 ## 6.12.1
 IMPROVEMENTS:
