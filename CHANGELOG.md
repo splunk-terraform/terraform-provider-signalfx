@@ -1,4 +1,4 @@
-## UNRELEASED
+## 6.13.0
 
 BUGFIXES:
 * resource/dashboard: Fix documentation for  `permissions` field [#373](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/373)
