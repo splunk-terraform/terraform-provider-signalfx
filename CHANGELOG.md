@@ -1,3 +1,8 @@
+## UNRELEASED
+
+BUGFIXES:
+* upgrade signalfx-go to fix issue with `show_data_markers` field on detector resource [#371](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/371)
+
 ## 6.12.1
 IMPROVEMENTS:
 * resource/signalfx_aws_integration: documentation update (metric_stats_to_sync parameter) [#369](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/369)
