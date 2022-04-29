@@ -73,8 +73,6 @@ resource "signalfx_dashboard" "mydashboard_custompermissions" {
       principal_type  = "ORG"
       actions         = ["READ"]
     }
-  }
-  permissions {
     acl {
       principal_id    = "abc456"
       principal_type  = "USER"
@@ -93,13 +91,14 @@ The following arguments are supported in the resource block:
 * `dashboard_group` - (Required) The ID of the dashboard group that contains the dashboard.
 * `description` - (Optional) Description of the dashboard.
 * `tags` - (Optional) Tags of the dashboard.
-* `authorized_writer_teams` - (Optional) Team IDs that have write access to this dashboard group. Remember to use an admin's token if using this feature and to include that admin's team (or user id in `authorized_writer_teams`). **Note:** Deprecated use `permissions_acl` or `permissions_parent` instead.
-* `authorized_writer_users` - (Optional) User IDs that have write access to this dashboard group. Remember to use an admin's token if using this feature and to include that admin's user id (or team id in `authorized_writer_teams`). **Note:** Deprecated use `permissions_acl` or `permissions_parent` instead.
-* `permissions_acl` - (Optional) [Permissions](https://docs.splunk.com/Observability/infrastructure/terms-concepts/permissions.html) List of read and write permission configurations to specify which user, team, and organization can view and/or edit your dashboard. **Note:** This feature is not present in all accounts. Please contact support if you are unsure.
-  * `principal_id` - (Required) ID of the user, team, or organization for which you're granting permissions.
-  * `principal_type` - (Required) Clarify whether this permission configuration is for a user, a team, or an organization. Value can be one of "USER", "TEAM", or "ORG".
-  * `actions` - (Required) Action the user, team, or organization can take with the dashboard. List of values (value can be "READ" or "WRITE").
-* `permissions_parent` - (Optional) [Permissions](https://docs.splunk.com/Observability/infrastructure/terms-concepts/permissions.html) ID of the dashboard group you want your dashboard to inherit permissions from. Use the `permissions_acl` instead if you want to specify various read and write permission configurations. **Note:** This feature is not present in all accounts. Please contact support if you are unsure.
+* `authorized_writer_teams` - (Optional) Team IDs that have write access to this dashboard group. Remember to use an admin's token if using this feature and to include that admin's team (or user id in `authorized_writer_teams`). **Note:** Deprecated use `permissions` instead.
+* `authorized_writer_users` - (Optional) User IDs that have write access to this dashboard group. Remember to use an admin's token if using this feature and to include that admin's user id (or team id in `authorized_writer_teams`). **Note:** Deprecated use `permissions` instead.
+* `permissions` - (Optional) [Permissions](https://docs.splunk.com/Observability/infrastructure/terms-concepts/permissions.html) Controls who can view and/or edit your dashboard. **Note:** This feature is not present in all accounts. Please contact support if you are unsure.
+  * `parent` - (Optional) ID of the dashboard group you want your dashboard to inherit permissions from. Use the `permissions.acl` instead if you want to specify various read and write permission configurations. 
+  * `acl` - (Optional) List of read and write permission configurations to specify which user, team, and organization can view and/or edit your dashboard. Use the `permissions.parent` instead if you want to inherit permissions.
+    * `principal_id` - (Required) ID of the user, team, or organization for which you're granting permissions.
+    * `principal_type` - (Required) Clarify whether this permission configuration is for a user, a team, or an organization. Value can be one of "USER", "TEAM", or "ORG".
+    * `actions` - (Required) Action the user, team, or organization can take with the dashboard. List of values (value can be "READ" or "WRITE").
 * `charts_resolution` - (Optional) Specifies the chart data display resolution for charts in this dashboard. Value can be one of `"default"`,  `"low"`, `"high"`, or  `"highest"`.
 * `time_range` - (Optional) The time range prior to now to visualize. SignalFx time syntax (e.g. `"-5m"`, `"-1h"`).
 * `start_time` - (Optional) Seconds since epoch. Used for visualization.
