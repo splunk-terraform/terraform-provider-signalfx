@@ -384,7 +384,7 @@ func getPayloadDetector(d *schema.ResourceData) (*detector.CreateUpdateDetectorR
 
 	if val, ok := d.GetOk("teams"); ok {
 		teams := []string{}
-		for _, t := range val.([]interface{}) {
+		for _, t := range val.(*schema.Set).List() {
 			teams = append(teams, t.(string))
 		}
 		cudr.Teams = teams

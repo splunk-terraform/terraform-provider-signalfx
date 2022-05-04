@@ -1,3 +1,8 @@
+## UNRELEASED
+
+BUGFIXES:
+* resource/detector: Fix issue with `teams` after changing type
+
 ## 6.13.0
 
 BUGFIXES:
