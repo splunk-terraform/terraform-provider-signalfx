@@ -1,7 +1,7 @@
-## UNRELEASED
+## 6.13.1
 
 BUGFIXES:
-* resource/detector: Fix issue with `teams` after changing type
+* resource/detector: Fixes regression after changing `teams` field type from `List` to `Set` [#376](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/376)
 
 ## 6.13.0
 
