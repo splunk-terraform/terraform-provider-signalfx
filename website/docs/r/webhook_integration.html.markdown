@@ -1,12 +1,12 @@
 ---
 layout: "signalfx"
-page_title: "SignalFx: signalfx_webhook_resource"
+page_title: "SignalFx: signalfx_webhook_integration"
 sidebar_current: "docs-signalfx-resource-webhook-integration"
 description: |-
   Allows Terraform to create and manage SignalFx Webhook Integrations
 ---
 
-# Resource: signalfx_webhook_resource
+# Resource: signalfx_webhook_integration
 
 SignalFx Webhook integration.
 
@@ -15,7 +15,7 @@ SignalFx Webhook integration.
 ## Example Usage
 
 ```tf
-resource "signalfx_webhook_resource" "webhook_myteam" {
+resource "signalfx_webhook_integration" "webhook_myteam" {
   name          = "Webhook - My Team"
   enabled       = true
   url           = "https://www.example.com"
