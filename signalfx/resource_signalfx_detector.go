@@ -109,9 +109,9 @@ func detectorResource() *schema.Resource {
 				Description: "Team IDs to associate the detector to",
 			},
 			"rule": &schema.Schema{
-				Type:        schema.TypeSet,
+				Type:        schema.TypeList,
 				Required:    true,
-				Description: "Set of rules used for alerting",
+				Description: "List of rules used for alerting",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"severity": &schema.Schema{
@@ -167,7 +167,7 @@ func detectorResource() *schema.Resource {
 						},
 					},
 				},
-				Set: resourceRuleHash,
+				//Set: resourceRuleHash,
 			},
 			"authorized_writer_teams": &schema.Schema{
 				Type:        schema.TypeSet,
@@ -288,7 +288,7 @@ func timeRangeStateUpgradeV0(rawState map[string]interface{}, meta interface{}) 
 */
 func getPayloadDetector(d *schema.ResourceData) (*detector.CreateUpdateDetectorRequest, error) {
 
-	tfRules := d.Get("rule").(*schema.Set).List()
+	tfRules := d.Get("rule").([]interface{}).List()
 	rulesList := make([]*detector.Rule, len(tfRules))
 	for i, tfRule := range tfRules {
 		tfRule := tfRule.(map[string]interface{})
@@ -790,7 +790,7 @@ func validateProgramTextCondition(d *schema.ResourceDiff, meta interface{}) bool
 */
 func validateProgramText(d *schema.ResourceDiff, meta interface{}) error {
 
-	tfRules := d.Get("rule").(*schema.Set).List()
+	tfRules := d.Get("rule").([]interface{}).List()
 	rulesList := make([]*detector.Rule, len(tfRules))
 	for i, tfRule := range tfRules {
 		tfRule := tfRule.(map[string]interface{})
