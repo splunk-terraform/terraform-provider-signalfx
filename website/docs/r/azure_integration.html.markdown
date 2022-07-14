@@ -3,7 +3,7 @@ layout: "signalfx"
 page_title: "SignalFx: signalfx_azure_integration"
 sidebar_current: "docs-signalfx-resource-azure-integration"
 description: |-
-  Allows Terraform to create and manage SignalFx Azure Integrations
+Allows Terraform to create and manage SignalFx Azure Integrations
 ---
 
 # Resource: signalfx_azure_integration
@@ -75,6 +75,7 @@ resource "signalfx_azure_integration" "azure_myteam" {
 * `services` - (Required) List of Microsoft Azure service names for the Azure services you want SignalFx to monitor. See the documentation for [Creating Integrations](https://developers.signalfx.com/integrations_reference.html#operation/Create%20Integration) for valida values.
 * `subscriptions` - (Required) List of Azure subscriptions that SignalFx should monitor.
 * `sync_guest_os_namespaces` - (Optional) If enabled, SignalFx will try to sync additional namespaces for VMs (including VMs in scale sets): telegraf/mem, telegraf/cpu, azure.vm.windows.guest (these are namespaces recommended by Azure when enabling their Diagnostic Extension). If there are no metrics there, no new datapoints will be ingested. Defaults to false.
+* `import_azure_monitor` - (Optional) If enabled, SignalFx will sync also Azure Monitor data. If disabled, SignalFx will import only metadata. Defaults to true.
 * `tenant_id` (Required) Azure ID of the Azure tenant. To learn how to get this ID, see the topic [Connect to Microsoft Azure](https://docs.signalfx.com/en/latest/integrations/azure-info.html#connect-to-azure) in the product documentation.
 
 ## Attributes Reference

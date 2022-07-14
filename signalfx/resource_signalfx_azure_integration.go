@@ -127,6 +127,12 @@ func integrationAzureResource() *schema.Resource {
 				Default:     false,
 				Description: "If enabled, SignalFx will try to sync additional namespaces for VMs (including VMs in scale sets): telegraf/mem, telegraf/cpu, azure.vm.windows.guest (these are namespaces recommended by Azure when enabling their Diagnostic Extension). If there are no metrics there, no new datapoints will be ingested.",
 			},
+			"import_azure_monitor": &schema.Schema{
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     true,
+				Description: "If enabled, SignalFx will sync also Azure Monitor data. If disabled, SignalFx will import only metadata. Defaults to true.",
+			},
 			"tenant_id": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
@@ -201,6 +207,9 @@ func azureIntegrationAPIToTF(d *schema.ResourceData, azure *integration.AzureInt
 	if err := d.Set("sync_guest_os_namespaces", azure.SyncGuestOsNamespaces); err != nil {
 		return err
 	}
+	if err := d.Set("import_azure_monitor", azure.ImportAzureMonitor); err != nil {
+		return err
+	}
 	if len(azure.Services) > 0 {
 		services := make([]interface{}, len(azure.Services))
 		for i, v := range azure.Services {
@@ -273,6 +282,7 @@ func getPayloadAzureIntegration(d *schema.ResourceData) (*integration.AzureInteg
 		SecretKey:             d.Get("secret_key").(string),
 		TenantId:              d.Get("tenant_id").(string),
 		SyncGuestOsNamespaces: d.Get("sync_guest_os_namespaces").(bool),
+		ImportAzureMonitor:    d.Get("import_azure_monitor").(bool),
 	}
 
 	if val, ok := d.GetOk("named_token"); ok {
