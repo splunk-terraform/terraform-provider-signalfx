@@ -60,6 +60,12 @@ func integrationGCPResource() *schema.Resource {
 					},
 				},
 			},
+			"use_metric_source_project_for_quota": &schema.Schema{
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "When this value is set to true Observability Cloud will force usage of a quota from the project where metrics are stored. For this to work the service account provided for the project needs to be provided with serviceusage.services.use permission or Service Usage Consumer role in this project. When set to false default quota settings are used.",
+			},
 			"whitelist": &schema.Schema{
 				Type:        schema.TypeSet,
 				Optional:    true,
@@ -114,9 +120,10 @@ func integrationGCPRead(d *schema.ResourceData, meta interface{}) error {
 
 func getGCPPayloadIntegration(d *schema.ResourceData) *integration.GCPIntegration {
 	gcp := &integration.GCPIntegration{
-		Name:    d.Get("name").(string),
-		Enabled: d.Get("enabled").(bool),
-		Type:    "GCP",
+		Name:                           d.Get("name").(string),
+		Enabled:                        d.Get("enabled").(bool),
+		UseMetricSourceProjectForQuota: d.Get("use_metric_source_project_for_quota").(bool),
+		Type:                           "GCP",
 	}
 
 	if val, ok := d.GetOk("named_token"); ok {
@@ -165,6 +172,9 @@ func gcpIntegrationAPIToTF(d *schema.ResourceData, gcp *integration.GCPIntegrati
 		return err
 	}
 	if err := d.Set("enabled", gcp.Enabled); err != nil {
+		return err
+	}
+	if err := d.Set("use_metric_source_project_for_quota", gcp.UseMetricSourceProjectForQuota); err != nil {
 		return err
 	}
 	if err := d.Set("poll_rate", gcp.PollRateMs/1000); err != nil {
