@@ -2,6 +2,7 @@
 
 IMPROVEMENTS:
 * resource/signalfx_gcp_integration: add `use_metric_source_project_for_quota` field to the GCP integration [#382](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/382)
+* resource/signalfx_slack_integration: fixed documentation for the signalfx_webhook_integration resource [#377](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/377)
 
 ## 6.13.1
 
