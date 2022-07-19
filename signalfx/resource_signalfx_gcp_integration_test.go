@@ -48,6 +48,8 @@ resource "signalfx_gcp_integration" "gcp_myteamXX" {
         project_id = "gcp_project_id_2"
         project_key = "secret_key_project_2"
     }
+
+    use_metric_source_project_for_quota = true
 }
 `
 
@@ -70,6 +72,7 @@ func TestAccCreateUpdateIntegrationGCP(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "whitelist.#", "1"),
 					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "whitelist.151844697", "labels"),
 					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "poll_rate", "600"),
+					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "use_metric_source_project_for_quota", "false"),
 				),
 			},
 			{
@@ -88,6 +91,7 @@ func TestAccCreateUpdateIntegrationGCP(t *testing.T) {
 					testAccCheckIntegrationGCPResourceExists,
 					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "name", "GCP - My Team NEW"),
 					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "poll_rate", "60"),
+					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "use_metric_source_project_for_quota", "true"),
 				),
 			},
 		},
