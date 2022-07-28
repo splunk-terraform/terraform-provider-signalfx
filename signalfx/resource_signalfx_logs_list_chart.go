@@ -82,7 +82,7 @@ func logsListChartResource() *schema.Resource {
 			},
 			"default_connection": &schema.Schema{
 				Type:        schema.TypeString,
-				Computed:    true,
+				Optional:    true,
 				Description: "default connection that the dashboard uses",
 			},
 			"url": &schema.Schema{
@@ -108,6 +108,9 @@ func logsListChartResource() *schema.Resource {
 */
 func getPayloadLogsListChart(d *schema.ResourceData) *chart.CreateUpdateChartRequest {
 	var timeOptions *chart.TimeDisplayOptions
+	var col []interface{}
+	var sort []interface{}
+
 	if val, ok := d.GetOk("time_range"); ok {
 		r := int64(val.(int) * 1000)
 		timeOptions = &chart.TimeDisplayOptions{
@@ -126,13 +129,34 @@ func getPayloadLogsListChart(d *schema.ResourceData) *chart.CreateUpdateChartReq
 			timeOptions.End = &end
 		}
 	}
+
+	if val, ok := d.GetOk("columns"); ok {
+		for _, d := range val.([]interface{}) {
+			col = append(col, &chart.Columns{
+				Name: d["name"],
+			})
+		}
+	}
+
+	if val, ok := d.GetOk("sort_options"); ok {
+		for _, d := range val.([]interface{}) {
+			sort = append(sort, &chart.SortOptions{
+				Descending: d["descending"],
+				Field:      d["field"],
+			})
+		}
+	}
+
 	return &chart.CreateUpdateChartRequest{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
 		ProgramText: d.Get("program_text").(string),
 		Options: &chart.Options{
-			Time: timeOptions,
-			Type: "LogsChart",
+			Time:              timeOptions,
+			Type:              "LogsChart",
+			Columns:           col,
+			SortOptions:       sort,
+			DefaultConnection: d.Get("default_connection").(string),
 		},
 	}
 }
