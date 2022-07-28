@@ -108,8 +108,8 @@ func logsListChartResource() *schema.Resource {
 */
 func getPayloadLogsListChart(d *schema.ResourceData) *chart.CreateUpdateChartRequest {
 	var timeOptions *chart.TimeDisplayOptions
-	var col []interface{}
-	var sort []interface{}
+	var col []*chart.Columns
+	var sort []*chart.SortOptions
 
 	if val, ok := d.GetOk("time_range"); ok {
 		r := int64(val.(int) * 1000)
@@ -130,20 +130,37 @@ func getPayloadLogsListChart(d *schema.ResourceData) *chart.CreateUpdateChartReq
 		}
 	}
 
-	if val, ok := d.GetOk("columns"); ok {
-		for _, d := range val.([]interface{}) {
-			col = append(col, &chart.Columns{
-				Name: d["name"],
-			})
+	if columns, ok := d.Get("columns").([]interface{}); ok {
+
+		for _, column := range columns {
+			if column == nil {
+				continue
+			}
+
+			columnMap := column.(map[string]interface{})
+			if columnMap["name"].(string) != "" {
+				col = append(col, &chart.Columns{
+					Name: columnMap["name"].(string),
+				})
+
+			}
 		}
 	}
 
-	if val, ok := d.GetOk("sort_options"); ok {
-		for _, d := range val.([]interface{}) {
-			sort = append(sort, &chart.SortOptions{
-				Descending: d["descending"],
-				Field:      d["field"],
-			})
+	if sortOptions, ok := d.Get("sort_options").([]interface{}); ok {
+
+		for _, sortOption := range sortOptions {
+			if sortOption == nil {
+				continue
+			}
+
+			sortOptionMap := sortOption.(map[string]interface{})
+			if sortOptionMap["field"].(string) != "" {
+				sort = append(sort, &chart.SortOptions{
+					Field:      sortOptionMap["field"].(string),
+					Descending: sortOptionMap["descending"].(bool),
+				})
+			}
 		}
 	}
 
