@@ -97,6 +97,7 @@ func TestAccCreateUpdateLogsListChart(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_logs_list_chart.mychart0", "description", "Chart Description NEW"),
 					resource.TestCheckResourceAttr("signalfx_logs_list_chart.mychart0", "start_time", "1657647022"),
 					resource.TestCheckResourceAttr("signalfx_logs_list_chart.mychart0", "end_time", "1657648042"),
+					resource.TestCheckResourceAttr("signalfx_logs_list_chart.mychart0", "sort_options.0.descending", "true"),
 				),
 			},
 		},

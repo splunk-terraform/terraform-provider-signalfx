@@ -142,7 +142,6 @@ func getPayloadLogsListChart(d *schema.ResourceData) *chart.CreateUpdateChartReq
 				col = append(col, &chart.Columns{
 					Name: columnMap["name"].(string),
 				})
-
 			}
 		}
 	}
@@ -238,6 +237,43 @@ func logslistchartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 				}
 			}
 		}
+	}
+
+	if options.SortOptions != nil {
+
+		if len(options.SortOptions) > 0 {
+			sos := make([]map[string]interface{}, len(options.SortOptions))
+			for i, so := range options.SortOptions {
+				sos[i] = map[string]interface{}{
+					"descending": so.Descending,
+					"field":      so.Field,
+				}
+			}
+			if err := d.Set("sort_options", sos); err != nil {
+				return err
+			}
+		}
+	}
+
+	if options.Columns != nil {
+		if len(options.Columns) > 0 {
+			cols := make([]map[string]interface{}, len(options.Columns))
+			for i, col := range options.Columns {
+				cols[i] = map[string]interface{}{
+					"name": col.Name,
+				}
+			}
+			if err := d.Set("columns", cols); err != nil {
+				return err
+			}
+		}
+	}
+
+	if options.DefaultConnection != "" {
+		if err := d.Set("default_connection", options.DefaultConnection); err != nil {
+			return err
+		}
+
 	}
 	return nil
 }
