@@ -13,19 +13,17 @@ const newLogsListChartConfig = `
 resource "signalfx_logs_list_chart" "mychart0" {
   name = "Chart Name"
   description = "Chart Description"
-  program_text = <<-EOF
-  logs(index=['history','main','o11yhipster','splunklogger','summary']).publish()
-  EOF
+  program_text = "logs(index=['history','main','o11yhipster','splunklogger','summary']).publish()"
 
   time_range = 900
   default_connection = "Cosmicbat"
-    columns  {
+    columns {
       name= "severity"
     }
-    columns  {
+    columns {
         name= "time"
     }
-    columns  {
+    columns {
       name= "_raw"
     }
   sort_options {
@@ -39,20 +37,18 @@ const updatedLogsListChartConfig = `
 resource "signalfx_logs_list_chart" "mychart0" {
   name = "Chart Name NEW"
   description = "Chart Description NEW"
-  program_text = <<-EOF
-  logs().publish()
-  EOF
+  program_text = "logs().publish()"
 
   start_time = 1657647022
   end_time = 1657648042
 
-    columns  {
+    columns {
       name= "severity"
     }
-    columns  {
+    columns {
         name= "time"
     }
-    columns  {
+    columns {
       name= "_raw"
     }
   sort_options {
@@ -75,10 +71,15 @@ func TestAccCreateUpdateLogsListChart(t *testing.T) {
 					testAccCheckLogsListChartResourceExists,
 					resource.TestCheckResourceAttr("signalfx_logs_list_chart.mychart0", "name", "Chart Name"),
 					resource.TestCheckResourceAttr("signalfx_logs_list_chart.mychart0", "description", "Chart Description"),
-					resource.TestCheckResourceAttr("signalfx_logs_list_chart.mychart0", "columns", "**chart markdown**"),
-					resource.TestCheckResourceAttr("signalfx_logs_list_chart.mychart0", "sort_options", "**chart markdown**"),
 					resource.TestCheckResourceAttr("signalfx_logs_list_chart.mychart0", "default_connection", "Cosmicbat"),
-					resource.TestCheckResourceAttr("signalfx_logs_list_chart.mychart0", "time_range", "**chart markdown**"),
+					resource.TestCheckResourceAttr("signalfx_logs_list_chart.mychart0", "columns.#", "3"),
+					resource.TestCheckResourceAttr("signalfx_logs_list_chart.mychart0", "columns.0.name", "severity"),
+					resource.TestCheckResourceAttr("signalfx_logs_list_chart.mychart0", "columns.1.name", "time"),
+					resource.TestCheckResourceAttr("signalfx_logs_list_chart.mychart0", "columns.2.name", "_raw"),
+					resource.TestCheckResourceAttr("signalfx_logs_list_chart.mychart0", "sort_options.#", "1"),
+					resource.TestCheckResourceAttr("signalfx_logs_list_chart.mychart0", "sort_options.0.descending", "false"),
+					resource.TestCheckResourceAttr("signalfx_logs_list_chart.mychart0", "sort_options.0.field", "severity"),
+					resource.TestCheckResourceAttr("signalfx_logs_list_chart.mychart0", "time_range", "900"),
 				),
 			},
 			{
@@ -94,6 +95,8 @@ func TestAccCreateUpdateLogsListChart(t *testing.T) {
 					testAccCheckLogsListChartResourceExists,
 					resource.TestCheckResourceAttr("signalfx_logs_list_chart.mychart0", "name", "Chart Name NEW"),
 					resource.TestCheckResourceAttr("signalfx_logs_list_chart.mychart0", "description", "Chart Description NEW"),
+					resource.TestCheckResourceAttr("signalfx_logs_list_chart.mychart0", "start_time", "1657647022"),
+					resource.TestCheckResourceAttr("signalfx_logs_list_chart.mychart0", "end_time", "1657648042"),
 				),
 			},
 		},
