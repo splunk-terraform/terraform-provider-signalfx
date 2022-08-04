@@ -1,3 +1,8 @@
+## 6.15.0
+IMPROVEMENTS:
+* resource/signalfx_logs_list_chart: Added a new resource for logs list chart [#383](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/383)
+
+
 ## 6.14.0
 
 IMPROVEMENTS:
