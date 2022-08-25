@@ -10,7 +10,7 @@ import (
 	chart "github.com/signalfx/signalfx-go/chart"
 )
 
-func logsListChartResource() *schema.Resource {
+func logViewResource() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
 			"name": &schema.Schema{
@@ -92,10 +92,10 @@ func logsListChartResource() *schema.Resource {
 			},
 		},
 
-		Create: logslistchartCreate,
-		Read:   logslistchartRead,
-		Update: logslistchartUpdate,
-		Delete: logslistchartDelete,
+		Create: logViewCreate,
+		Read:   loggViewRead,
+		Update: logViewUpdate,
+		Delete: logViewDelete,
 		Exists: chartExists,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
@@ -104,9 +104,9 @@ func logsListChartResource() *schema.Resource {
 }
 
 /*
-  Use Resource object to construct json payload in order to create a logs list  chart
+  Use Resource object to construct json payload in order to create a log view
 */
-func getPayloadLogsListChart(d *schema.ResourceData) *chart.CreateUpdateChartRequest {
+func getPayloadLogView(d *schema.ResourceData) *chart.CreateUpdateChartRequest {
 	var timeOptions *chart.TimeDisplayOptions
 	var col []*chart.Columns
 	var sort []*chart.SortOptions
@@ -177,12 +177,12 @@ func getPayloadLogsListChart(d *schema.ResourceData) *chart.CreateUpdateChartReq
 	}
 }
 
-func logslistchartCreate(d *schema.ResourceData, meta interface{}) error {
+func logViewCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	payload := getPayloadLogsListChart(d)
+	payload := getPayloadLogView(d)
 
 	debugOutput, _ := json.Marshal(payload)
-	log.Printf("[DEBUG] SignalFx: Create Logs List Chart Payload: %s", string(debugOutput))
+	log.Printf("[DEBUG] SignalFx: Create Log View Payload: %s", string(debugOutput))
 
 	c, err := config.Client.CreateChart(context.TODO(), payload)
 	if err != nil {
@@ -199,12 +199,12 @@ func logslistchartCreate(d *schema.ResourceData, meta interface{}) error {
 	d.SetId(c.Id)
 	log.Printf("[DEBUG] appURL in create: %s", string(appURL))
 
-	return logslistchartAPIToTF(d, c)
+	return logViewAPIToTF(d, c)
 }
 
-func logslistchartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
+func logViewAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 	debugOutput, _ := json.Marshal(c)
-	log.Printf("[DEBUG] SignalFx: Got Logs List Chart to enState: %s", string(debugOutput))
+	log.Printf("[DEBUG] SignalFx: Got Log View to enState: %s", string(debugOutput))
 
 	if err := d.Set("name", c.Name); err != nil {
 		return err
@@ -278,7 +278,7 @@ func logslistchartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 	return nil
 }
 
-func logslistchartRead(d *schema.ResourceData, meta interface{}) error {
+func logViewRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 	c, err := config.Client.GetChart(context.TODO(), d.Id())
 	if err != nil {
@@ -294,26 +294,26 @@ func logslistchartRead(d *schema.ResourceData, meta interface{}) error {
 	}
 	log.Printf("[DEBUG] appURL in read: %s", string(appURL))
 
-	return logslistchartAPIToTF(d, c)
+	return logViewAPIToTF(d, c)
 }
 
-func logslistchartUpdate(d *schema.ResourceData, meta interface{}) error {
+func logViewUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	payload := getPayloadLogsListChart(d)
+	payload := getPayloadLogView(d)
 	debugOutput, _ := json.Marshal(payload)
-	log.Printf("[DEBUG] SignalFx: Update Logs List Chart Payload: %s", string(debugOutput))
+	log.Printf("[DEBUG] SignalFx: Update Log ViewPayload: %s", string(debugOutput))
 
 	c, err := config.Client.UpdateChart(context.TODO(), d.Id(), payload)
 	if err != nil {
 		return err
 	}
-	log.Printf("[DEBUG] SignalFx: Update Logs List Chart Response: %v", c)
+	log.Printf("[DEBUG] SignalFx: Update Log View Response: %v", c)
 
 	d.SetId(c.Id)
-	return logslistchartAPIToTF(d, c)
+	return logViewAPIToTF(d, c)
 }
 
-func logslistchartDelete(d *schema.ResourceData, meta interface{}) error {
+func logViewDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 
 	return config.Client.DeleteChart(context.TODO(), d.Id())

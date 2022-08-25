@@ -9,8 +9,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
 
-const newLogsListChartConfig = `
-resource "signalfx_logs_list_chart" "mychart0" {
+const newLogViewConfig = `
+resource "signalfx_log_view" "mychart0" {
   name = "Chart Name"
   description = "Chart Description"
   program_text = "logs(index=['history','main','o11yhipster','splunklogger','summary']).publish()"
@@ -33,8 +33,8 @@ resource "signalfx_logs_list_chart" "mychart0" {
 }
 `
 
-const updatedLogsListChartConfig = `
-resource "signalfx_logs_list_chart" "mychart0" {
+const updatedLogViewConfig = `
+resource "signalfx_log_view" "mychart0" {
   name = "Chart Name NEW"
   description = "Chart Description NEW"
   program_text = "logs().publish()"
@@ -58,17 +58,17 @@ resource "signalfx_logs_list_chart" "mychart0" {
 }
 `
 
-func TestAccCreateUpdateLogsListChart(t *testing.T) {
+func TestAccCreateUpdateLogView(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccLogsListChartDestroy,
+		CheckDestroy: testAccLogViewDestroy,
 		Steps: []resource.TestStep{
 			// Create It
 			{
-				Config: newLogsListChartConfig,
+				Config: newLogViewConfig,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckLogsListChartResourceExists,
+					testAccCheckLogViewResourceExists,
 					resource.TestCheckResourceAttr("signalfx_logs_list_chart.mychart0", "name", "Chart Name"),
 					resource.TestCheckResourceAttr("signalfx_logs_list_chart.mychart0", "description", "Chart Description"),
 					resource.TestCheckResourceAttr("signalfx_logs_list_chart.mychart0", "default_connection", "Cosmicbat"),
@@ -90,9 +90,9 @@ func TestAccCreateUpdateLogsListChart(t *testing.T) {
 			},
 			// Update Everything
 			{
-				Config: updatedLogsListChartConfig,
+				Config: updatedLogViewConfig,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckLogsListChartResourceExists,
+					testAccCheckLogViewResourceExists,
 					resource.TestCheckResourceAttr("signalfx_logs_list_chart.mychart0", "name", "Chart Name NEW"),
 					resource.TestCheckResourceAttr("signalfx_logs_list_chart.mychart0", "description", "Chart Description NEW"),
 					resource.TestCheckResourceAttr("signalfx_logs_list_chart.mychart0", "start_time", "1657647022"),
@@ -104,12 +104,12 @@ func TestAccCreateUpdateLogsListChart(t *testing.T) {
 	})
 }
 
-func testAccCheckLogsListChartResourceExists(s *terraform.State) error {
+func testAccCheckLogViewResourceExists(s *terraform.State) error {
 	client := newTestClient()
 
 	for _, rs := range s.RootModule().Resources {
 		switch rs.Type {
-		case "signalfx_logs_list_chart":
+		case "signalfx_log_view":
 			chart, err := client.GetChart(context.TODO(), rs.Primary.ID)
 			if chart.Id != rs.Primary.ID || err != nil {
 				return fmt.Errorf("Error finding chart %s: %s", rs.Primary.ID, err)
@@ -121,11 +121,11 @@ func testAccCheckLogsListChartResourceExists(s *terraform.State) error {
 	return nil
 }
 
-func testAccLogsListChartDestroy(s *terraform.State) error {
+func testAccLogViewDestroy(s *terraform.State) error {
 	client := newTestClient()
 	for _, rs := range s.RootModule().Resources {
 		switch rs.Type {
-		case "signalfx_logs_list_chart":
+		case "signalfx_log_view":
 			chart, _ := client.GetChart(context.TODO(), rs.Primary.ID)
 			if chart != nil {
 				return fmt.Errorf("Found deleted chart %s", rs.Primary.ID)

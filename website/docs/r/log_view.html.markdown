@@ -1,20 +1,20 @@
 ---
 layout: "signalfx"
-page_title: "SignalFx: signalfx_logs_view_chart"
-sidebar_current: "docs-signalfx-resource-logs-view-chart"
+page_title: "SignalFx: signalfx_log_view_chart"
+sidebar_current: "docs-signalfx-resource-log-view"
 description: |-
   Allows Terraform to create and manage log views
 ---
 
-# Resource: signalfx_logs_view_chart
+# Resource: signalfx_log_view
 
 You can add logs data to your Observability Cloud dashboards without turning your logs into metrics first. A log view displays log lines in a table form in a dashboard and shows you in detail what is happening and why.
 
 ## Example Usage
 
 ```tf
-resource "signalfx_logs_list_chart" "mychart0" {
-  name        = "Sample Logs List Chart"
+resource "signalfx_log_view" "mychart0" {
+  name        = "Sample Log View"
   description = "Lorem ipsum dolor sit amet, laudem tibique iracundia at mea. Nam posse dolores ex, nec cu adhuc putent honestatis"
 
   program_text = <<-EOF
