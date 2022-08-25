@@ -3,12 +3,12 @@ layout: "signalfx"
 page_title: "SignalFx: signalfx_logs_view_chart"
 sidebar_current: "docs-signalfx-resource-logs-view-chart"
 description: |-
-  Allows Terraform to create and manage Logs View charts
+  Allows Terraform to create and manage log views
 ---
 
 # Resource: signalfx_logs_view_chart
 
-You can add logs data to your Observability Cloud dashboards without turning your logs into metrics first. A logs view chart displays log lines in a table form in a dashboard adn shows you in detail what is happening and why.
+You can add logs data to your Observability Cloud dashboards without turning your logs into metrics first. A log view displays log lines in a table form in a dashboard and shows you in detail what is happening and why.
 
 ## Example Usage
 
@@ -61,7 +61,7 @@ The following arguments are supported in the resource block:
 * `end_time` - (Optional) Seconds since epoch. Used for visualization. Conflicts with `time_range`.
 * `columns` - (Optional) The column headers to show on the logs list table.
 * `sort_options` - (Optional) The sorting options configuration to specify if the table needs to be sorted in a particular field.
-* `default_connection` - (Optional) The connection that the chart uses to fetch data. This could be Splunk Enterprise, SPlunk Enterprise Cloud or Observability Cloud.
+* `default_connection` - (Optional) The connection that the chart uses to fetch data. This could be Splunk Enterprise, Splunk Enterprise Cloud or Observability Cloud.
 
 ## Attributes Reference
 
