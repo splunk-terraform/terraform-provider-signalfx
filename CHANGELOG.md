@@ -1,3 +1,8 @@
+## 6.16.0
+IMPROVEMENTS:
+* resource/signalfx_logs_list_chart renamed to resource/signalfx_log_view: 
+* Added docs for resource/signalfx_log_view [#387](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/387)
+
 ## 6.15.0
 IMPROVEMENTS:
 * resource/signalfx_logs_list_chart: Added a new resource for logs list chart [#383](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/383)
