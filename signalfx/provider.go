@@ -96,7 +96,7 @@ func Provider() terraform.ResourceProvider {
 			"signalfx_text_chart":               textChartResource(),
 			"signalfx_victor_ops_integration":   integrationVictorOpsResource(),
 			"signalfx_webhook_integration":      integrationWebhookResource(),
-			"signalfx_log_view":          		 logViewResource(),
+			"signalfx_log_view":                 logViewResource(),
 		},
 		ConfigureFunc: signalfxConfigure,
 	}
