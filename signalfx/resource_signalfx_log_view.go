@@ -93,7 +93,7 @@ func logViewResource() *schema.Resource {
 		},
 
 		Create: logViewCreate,
-		Read:   loggViewRead,
+		Read:   logViewRead,
 		Update: logViewUpdate,
 		Delete: logViewDelete,
 		Exists: chartExists,
@@ -104,7 +104,7 @@ func logViewResource() *schema.Resource {
 }
 
 /*
-  Use Resource object to construct json payload in order to create a log view
+Use Resource object to construct json payload in order to create a log view
 */
 func getPayloadLogView(d *schema.ResourceData) *chart.CreateUpdateChartRequest {
 	var timeOptions *chart.TimeDisplayOptions
