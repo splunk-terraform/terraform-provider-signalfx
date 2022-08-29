@@ -3,12 +3,12 @@ layout: "signalfx"
 page_title: "SignalFx: signalfx_table_chart"
 sidebar_current: "docs-signalfx-resource-table-chart"
 description: |-
-  Allows Terraform to create and manage SignalFx table notes
+  Allows Terraform to create and manage SignalFx Data Table Charts
 ---
 
 # Resource: signalfx_table_chart
 
-This special type of chart displays a Data Table. This Table can be grouped by a Dimension..
+This special type of chart displays a Data Table. This Table can be grouped by a Dimension.
 
 ## Example Usage
 
