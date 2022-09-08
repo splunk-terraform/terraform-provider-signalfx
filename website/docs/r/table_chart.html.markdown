@@ -28,9 +28,9 @@ resource "signalfx_table_chart" "table_0" {
 
 The following arguments are supported in the resource block:
 
-* `name` - (Required) Name of the text note.
+* `name` - (Required) Name of the table chart.
 * `program_text` - (Required) The SignalFlow for your Data Table Chart
-* `description` - (Optional) Description of the text note.
+* `description` - (Optional) Description of the table chart.
 * `group_by` - (Optional) Dimension to group by
 
 ## Attributes Reference
