@@ -1,3 +1,7 @@
+## 6.17.0
+IMPROVEMENTS:
+* resource/signalfx_table_chart added along with docs
+
 ## 6.16.0
 IMPROVEMENTS:
 * resource/signalfx_logs_list_chart renamed to resource/signalfx_log_view: 
