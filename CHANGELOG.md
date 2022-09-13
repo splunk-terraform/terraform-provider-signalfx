@@ -1,6 +1,9 @@
 ## 6.17.0
 IMPROVEMENTS:
-* resource/signalfx_table_chart added along with docs
+* resource/signalfx_table_chart added along with docs [#389](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/389)
+
+BUGFIXES:
+* resource/resource_signalfx_org_token: Persist token even when token limits is not defined [#392](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/392)
 
 ## 6.16.0
 IMPROVEMENTS:
