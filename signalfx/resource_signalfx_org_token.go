@@ -318,22 +318,22 @@ func orgTokenAPIToTF(d *schema.ResourceData, t *orgtoken.Token) error {
 				}
 			}
 		}
+	}
 
-		notifications := make([]string, len(t.Notifications))
-		for i, not := range t.Notifications {
-			tfNot, err := getNotifyStringFromAPI(not)
-			if err != nil {
-				return err
-			}
-			notifications[i] = tfNot
-		}
-		if err := d.Set("notifications", notifications); err != nil {
+	notifications := make([]string, len(t.Notifications))
+	for i, not := range t.Notifications {
+		tfNot, err := getNotifyStringFromAPI(not)
+		if err != nil {
 			return err
 		}
+		notifications[i] = tfNot
+	}
+	if err := d.Set("notifications", notifications); err != nil {
+		return err
+	}
 
-		if err := d.Set("secret", t.Secret); err != nil {
-			return err
-		}
+	if err := d.Set("secret", t.Secret); err != nil {
+		return err
 	}
 
 	return nil
