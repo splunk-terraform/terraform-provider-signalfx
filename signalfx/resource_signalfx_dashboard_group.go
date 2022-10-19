@@ -37,6 +37,11 @@ func dashboardGroupResource() *schema.Resource {
 				Description: "Dashboard IDs that are members of this dashboard group. Also handles 'mirrored' dashboards.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
+						"config_id": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Unique identifier of an association between a dashboard group and a dashboard",
+						},
 						"dashboard_id": &schema.Schema{
 							Type:        schema.TypeString,
 							Required:    true,
@@ -422,10 +427,10 @@ func dashboardgroupCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 	d.SetId(dg.Id)
 
-	return dashboardGroupAPIToTF(d, dg)
+	return dashboardGroupAPIToTF(d, dg, meta)
 }
 
-func dashboardGroupAPIToTF(d *schema.ResourceData, dg *dashboard_group.DashboardGroup) error {
+func dashboardGroupAPIToTF(d *schema.ResourceData, dg *dashboard_group.DashboardGroup, meta interface{}) error {
 	debugOutput, _ := json.Marshal(dg)
 	log.Printf("[DEBUG] SignalFx: Got Dashboard Group to enState: %s", string(debugOutput))
 
@@ -479,17 +484,18 @@ func dashboardGroupAPIToTF(d *schema.ResourceData, dg *dashboard_group.Dashboard
 	}
 
 	if len(dg.DashboardConfigs) > 0 {
-		hasMirrors := false
 		dConfigs := make([]map[string]interface{}, len(dg.DashboardConfigs))
 
-		for i, dc := range dg.DashboardConfigs {
-			if isMirroredDashboard(dc) {
-				hasMirrors = true
-			} else {
-				continue
-			}
+		// Collect a list of mirrored dashboard configs
+		config := meta.(*signalfxConfig)
+		mirroredDashboardConfigs, err := getMirroredDashboardConfigs(config, d)
+		if err != nil {
+			return err
+		}
 
+		for i, dc := range mirroredDashboardConfigs {
 			dConf := make(map[string]interface{})
+			dConf["config_id"] = dc.ConfigId
 			dConf["dashboard_id"] = dc.DashboardId
 			dConf["description_override"] = dc.DescriptionOverride
 			dConf["name_override"] = dc.NameOverride
@@ -522,7 +528,7 @@ func dashboardGroupAPIToTF(d *schema.ResourceData, dg *dashboard_group.Dashboard
 
 			dConfigs[i] = dConf
 		}
-		if hasMirrors {
+		if len(mirroredDashboardConfigs) > 0 {
 			if err := d.Set("dashboard", dConfigs); err != nil {
 				return err
 			}
@@ -560,7 +566,7 @@ func dashboardgroupRead(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	return dashboardGroupAPIToTF(d, dg)
+	return dashboardGroupAPIToTF(d, dg, meta)
 }
 
 func dashboardgroupUpdate(d *schema.ResourceData, meta interface{}) error {
@@ -592,14 +598,16 @@ func dashboardgroupUpdate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] SignalFx: Update Dashboard Group Response: %v", dg)
 
 	d.SetId(dg.Id)
-	return dashboardGroupAPIToTF(d, dg)
+	return dashboardGroupAPIToTF(d, dg, meta)
 }
 
 func getNonMirroredDashes(config *signalfxConfig, d *schema.ResourceData) ([]*dashboard_group.DashboardConfig, error) {
-	var mirrorIDsToBeOmitted map[string]bool
-	if d.HasChange("dashboard") {
-		oldDashboardList, newDashboardList := d.GetChange("dashboard")
-		mirrorIDsToBeOmitted = getMirrorsToBeOmitted(oldDashboardList, newDashboardList)
+	mirrorIDsToBeOmitted := map[string]bool{}
+	mirroredDashboardConfigs, err := getMirroredDashboardConfigs(config, d)
+	if err == nil {
+		for _, dc := range mirroredDashboardConfigs {
+			mirrorIDsToBeOmitted[dc.DashboardId] = true
+		}
 	}
 
 	dg, err := config.Client.GetDashboardGroup(context.TODO(), d.Id())
@@ -609,29 +617,32 @@ func getNonMirroredDashes(config *signalfxConfig, d *schema.ResourceData) ([]*da
 
 	out := make([]*dashboard_group.DashboardConfig, 0, len(dg.DashboardConfigs))
 	for _, dc := range dg.DashboardConfigs {
-		if !isMirroredDashboard(dc) && !mirrorIDsToBeOmitted[dc.DashboardId] {
-			out = append(out, &dashboard_group.DashboardConfig{DashboardId: dc.DashboardId})
+		if !mirrorIDsToBeOmitted[dc.DashboardId] {
+			out = append(out, &dashboard_group.DashboardConfig{DashboardId: dc.DashboardId, ConfigId: dc.ConfigId})
 		}
 	}
 
 	return out, nil
 }
 
-// getMirrorsToBeOmitted gets the difference of dashboard IDs from the current state
-// and desired state. The result will be dashboards that need to be omitted from the
-// final result before making the update API call. In other words, keep track of any
-// IDs that in the current state but not the target state. Such IDs will have to be
-// removed from final list of dashboard IDs.
-func getMirrorsToBeOmitted(oldDashboardList interface{}, newDashboardList interface{}) map[string]bool {
-	oldDashIDs := getDashboardIDs(oldDashboardList)
-	newDashIDs := getDashboardIDs(newDashboardList)
-	mirrorIDsToBeOmitted := map[string]bool{}
-	for old := range oldDashIDs {
-		if !newDashIDs[old] {
-			mirrorIDsToBeOmitted[old] = true
-		}
+func getMirroredDashboardConfigs(config *signalfxConfig, d *schema.ResourceData) ([]*dashboard_group.DashboardConfig, error) {
+	dg, err := config.Client.GetDashboardGroup(context.TODO(), d.Id())
+	if err != nil {
+		return nil, err
 	}
-	return mirrorIDsToBeOmitted
+
+	out := make([]*dashboard_group.DashboardConfig, 0, len(dg.DashboardConfigs))
+	for _, dc := range dg.DashboardConfigs {
+		dash, err := config.Client.GetDashboard(context.TODO(), dc.DashboardId)
+		if err != nil || dash.GroupId == d.Id() {
+			// It is not a mirrored dashboard
+			// if the dashboard's group ID matches with the current dashboard group id
+			continue
+		}
+		out = append(out, dc)
+	}
+
+	return out, nil
 }
 
 func getDashboardIDs(dashboardList interface{}) map[string]bool {
@@ -642,13 +653,6 @@ func getDashboardIDs(dashboardList interface{}) map[string]bool {
 		dashIDs[dash["dashboard_id"].(string)] = true
 	}
 	return dashIDs
-}
-
-func isMirroredDashboard(dc *dashboard_group.DashboardConfig) bool {
-	if dc.DescriptionOverride == "" && dc.NameOverride == "" && dc.FiltersOverride == nil {
-		return false
-	}
-	return true
 }
 
 func dashboardgroupDelete(d *schema.ResourceData, meta interface{}) error {

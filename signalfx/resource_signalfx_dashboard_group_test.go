@@ -1,66 +1,172 @@
 package signalfx
 
 import (
-	"reflect"
 	"testing"
+
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 )
 
-func TestGetMirrorsToBeOmitted(t *testing.T) {
-	type args struct {
-		oldDashboardList interface{}
-		newDashboardList interface{}
+const newDashboardGroupConfig = `
+resource "signalfx_dashboard_group" "new_dashboard_group" {
+    name = "New Dashboard Group"
+}
+`
+
+const newDashboardGroupWithDashboardConfig = `
+resource "signalfx_dashboard_group" "new_dashboard_group" {
+    name = "New Dashboard Group"
+}
+
+resource "signalfx_text_chart" "new_chart" {
+    name = "chart"
+    markdown = "chart"
+}
+
+resource "signalfx_dashboard" "new_dashboard" {
+    name = "New Dashboard"
+    dashboard_group = signalfx_dashboard_group.new_dashboard_group.id
+    chart {
+        chart_id = signalfx_text_chart.new_chart.id
+        width = 6
+        row = 0
+        column = 0
+    }
+}
+`
+
+const newDashboardGroupsWithDashboardAndDashboardMirrorConfig = `
+resource "signalfx_dashboard_group" "new_dashboard_group" {
+    name = "New Dashboard Group"
+}
+
+resource "signalfx_text_chart" "new_chart" {
+    name = "chart"
+    markdown = "chart"
+}
+
+resource "signalfx_dashboard" "new_dashboard" {
+    name = "New Dashboard"
+    dashboard_group = signalfx_dashboard_group.new_dashboard_group.id
+    chart {
+        chart_id = signalfx_text_chart.new_chart.id
+        width = 6
+        row = 0
+        column = 0
+    }
+}
+
+resource "signalfx_dashboard_group" "new_dashboard_group_2" {
+    name = "New Dashboard Group 2"
+
+	dashboard {
+        dashboard_id = signalfx_dashboard.new_dashboard.id
 	}
-	tests := []struct {
-		name string
-		args args
-		want map[string]bool
-	}{
-		{
-			"Same values result in empty omit list",
-			args{
-				oldDashboardList: []interface{}{
-					map[string]interface{}{
-						"dashboard_id": "A",
-					},
-				},
-				newDashboardList: []interface{}{
-					map[string]interface{}{
-						"dashboard_id": "A",
-					},
-				},
+}
+`
+
+const newDashboardGroupsWithDashboardAndDashboardMirrorWithNameConfig = `
+resource "signalfx_dashboard_group" "new_dashboard_group" {
+    name = "New Dashboard Group"
+}
+
+resource "signalfx_text_chart" "new_chart" {
+    name = "chart"
+    markdown = "chart"
+}
+
+resource "signalfx_dashboard" "new_dashboard" {
+    name = "New Dashboard"
+    dashboard_group = signalfx_dashboard_group.new_dashboard_group.id
+    chart {
+        chart_id = signalfx_text_chart.new_chart.id
+        width = 6
+        row = 0
+        column = 0
+    }
+}
+
+resource "signalfx_dashboard_group" "new_dashboard_group_2" {
+    name = "New Dashboard Group 2"
+
+	dashboard {
+        dashboard_id = signalfx_dashboard.new_dashboard.id
+		name_override = "New Dashboard Name"
+	}
+}
+`
+
+func TestAccCreateDashboardGroup(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		Providers:    testAccProviders,
+		CheckDestroy: testAccDashboardGroupDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: newDashboardGroupConfig,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("signalfx_dashboard_group.new_dashboard_group", "name", "New Dashboard Group"),
+				),
 			},
-			map[string]bool{},
 		},
-		{
-			"Omit values absent in new list",
-			args{
-				oldDashboardList: []interface{}{
-					map[string]interface{}{
-						"dashboard_id": "A",
-					},
-					map[string]interface{}{
-						"dashboard_id": "B",
-					},
-				},
-				newDashboardList: []interface{}{
-					map[string]interface{}{
-						"dashboard_id": "B",
-					},
-					map[string]interface{}{
-						"dashboard_id": "C",
-					},
-				},
-			},
-			map[string]bool{
-				"A": true,
+	})
+}
+
+func TestAccCreateDashboardGroupWithDashboard(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		Providers:    testAccProviders,
+		CheckDestroy: testAccDashboardGroupDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: newDashboardGroupWithDashboardConfig,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("signalfx_dashboard_group.new_dashboard_group", "dashboard.#", "0"),
+				),
 			},
 		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := getMirrorsToBeOmitted(tt.args.oldDashboardList, tt.args.newDashboardList); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("getMirrorsToBeOmitted() = %v, want %v", got, tt.want)
-			}
-		})
-	}
+	})
+}
+
+func TestAccCreateDashboardGroupsWithDashboardAndDashboardMirror(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		Providers:    testAccProviders,
+		CheckDestroy: testAccDashboardGroupDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: newDashboardGroupsWithDashboardAndDashboardMirrorConfig,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("signalfx_dashboard_group.new_dashboard_group", "dashboard.#", "0"),
+					resource.TestCheckResourceAttr("signalfx_dashboard_group.new_dashboard_group_2", "dashboard.#", "1"),
+				),
+			},
+			// Must contain the same number of dashboard configs in the second dashboard group
+			{
+				Config: newDashboardGroupsWithDashboardAndDashboardMirrorConfig,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("signalfx_dashboard_group.new_dashboard_group", "dashboard.#", "0"),
+					resource.TestCheckResourceAttr("signalfx_dashboard_group.new_dashboard_group_2", "dashboard.#", "1"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccCreateDashboardGroupsWithDashboardAndDashboardWithNameMirror(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		Providers:    testAccProviders,
+		CheckDestroy: testAccDashboardGroupDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: newDashboardGroupsWithDashboardAndDashboardMirrorConfig,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("signalfx_dashboard_group.new_dashboard_group_2", "dashboard.#", "1"),
+				),
+			},
+			{
+				Config: newDashboardGroupsWithDashboardAndDashboardMirrorWithNameConfig,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("signalfx_dashboard_group.new_dashboard_group_2", "dashboard.#", "1"),
+					resource.TestCheckResourceAttr("signalfx_dashboard_group.new_dashboard_group_2", "dashboard.0.name_override", "New Dashboard Name"),
+				),
+			},
+		},
+	})
 }
