@@ -1,3 +1,10 @@
+## 6.18.0
+IMPROVEMENTS:
+* resource/signalfx_gcp_integration: Add `import_gcp_metrics` option [#397](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/397)
+
+BUGFIXES:
+* resource/signalfx_gcp_integration: Fix `import_azure_monitor` option - setting it as false now disables metrics properly [#397](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/397)
+
 ## 6.17.0
 IMPROVEMENTS:
 * resource/signalfx_table_chart added along with docs [#389](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/389)
