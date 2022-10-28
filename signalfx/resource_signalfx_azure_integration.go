@@ -207,7 +207,7 @@ func azureIntegrationAPIToTF(d *schema.ResourceData, azure *integration.AzureInt
 	if err := d.Set("sync_guest_os_namespaces", azure.SyncGuestOsNamespaces); err != nil {
 		return err
 	}
-	if err := d.Set("import_azure_monitor", azure.ImportAzureMonitor); err != nil {
+	if err := d.Set("import_azure_monitor", *azure.ImportAzureMonitor); err != nil {
 		return err
 	}
 	if len(azure.Services) > 0 {
@@ -272,7 +272,7 @@ func azureIntegrationAPIToTF(d *schema.ResourceData, azure *integration.AzureInt
 }
 
 func getPayloadAzureIntegration(d *schema.ResourceData) (*integration.AzureIntegration, error) {
-
+	importAzureMonitor := d.Get("import_azure_monitor").(bool)
 	azure := &integration.AzureIntegration{
 		Name:                  d.Get("name").(string),
 		Type:                  "Azure",
@@ -282,7 +282,7 @@ func getPayloadAzureIntegration(d *schema.ResourceData) (*integration.AzureInteg
 		SecretKey:             d.Get("secret_key").(string),
 		TenantId:              d.Get("tenant_id").(string),
 		SyncGuestOsNamespaces: d.Get("sync_guest_os_namespaces").(bool),
-		ImportAzureMonitor:    d.Get("import_azure_monitor").(bool),
+		ImportAzureMonitor:    &importAzureMonitor,
 	}
 
 	if val, ok := d.GetOk("named_token"); ok {

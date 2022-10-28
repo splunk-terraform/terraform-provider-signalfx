@@ -80,6 +80,12 @@ func integrationGCPResource() *schema.Resource {
 				Description: "A named token to use for ingest",
 				ForceNew:    true,
 			},
+			"import_gcp_metrics": &schema.Schema{
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     true,
+				Description: "If enabled, SignalFx will sync also Google Cloud Metrics data. If disabled, SignalFx will import only metadata. Defaults to true.",
+			},
 		},
 
 		Create: integrationGCPCreate,
@@ -119,11 +125,13 @@ func integrationGCPRead(d *schema.ResourceData, meta interface{}) error {
 }
 
 func getGCPPayloadIntegration(d *schema.ResourceData) *integration.GCPIntegration {
+	importGCPMetrics := d.Get("import_gcp_metrics").(bool)
 	gcp := &integration.GCPIntegration{
 		Name:                           d.Get("name").(string),
 		Enabled:                        d.Get("enabled").(bool),
 		UseMetricSourceProjectForQuota: d.Get("use_metric_source_project_for_quota").(bool),
 		Type:                           "GCP",
+		ImportGCPMetrics:               &importGCPMetrics,
 	}
 
 	if val, ok := d.GetOk("named_token"); ok {
@@ -181,6 +189,9 @@ func gcpIntegrationAPIToTF(d *schema.ResourceData, gcp *integration.GCPIntegrati
 		return err
 	}
 	if err := d.Set("named_token", gcp.NamedToken); err != nil {
+		return err
+	}
+	if err := d.Set("import_gcp_metrics", *gcp.ImportGCPMetrics); err != nil {
 		return err
 	}
 
