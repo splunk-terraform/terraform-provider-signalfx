@@ -109,3 +109,4 @@ The following arguments are supported in the resource block:
 In a addition to all arguments above, the following attributes are exported:
 
 * `id` - The ID of the integration.
+* `dashboard.config_id` - The ID of the association between the dashboard group and the dashboard

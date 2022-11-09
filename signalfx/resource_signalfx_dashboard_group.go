@@ -220,7 +220,7 @@ func dashboardgroupExists(d *schema.ResourceData, meta interface{}) (bool, error
 }
 
 /*
-  Use Resource object to construct json payload in order to create a dasboard group
+Use Resource object to construct json payload in order to create a dasboard group
 */
 func getPayloadDashboardGroup(d *schema.ResourceData) *dashboard_group.CreateUpdateDashboardGroupRequest {
 	cudgr := &dashboard_group.CreateUpdateDashboardGroupRequest{
@@ -604,7 +604,9 @@ func dashboardgroupUpdate(d *schema.ResourceData, meta interface{}) error {
 func getNonMirroredDashes(config *signalfxConfig, d *schema.ResourceData) ([]*dashboard_group.DashboardConfig, error) {
 	mirrorIDsToBeOmitted := map[string]bool{}
 	mirroredDashboardConfigs, err := getMirroredDashboardConfigs(config, d)
-	if err == nil {
+	if err != nil {
+		return nil, fmt.Errorf("failed to get mirrored dashboard list for %s: %v", d.Id(), err)
+	} else {
 		for _, dc := range mirroredDashboardConfigs {
 			mirrorIDsToBeOmitted[dc.DashboardId] = true
 		}
