@@ -220,10 +220,9 @@ func integrationAWSResource() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"namespace": &schema.Schema{
-							Type:         schema.TypeString,
-							Required:     true,
-							ValidateFunc: validateAwsService,
-							Description:  "An AWS namespace having AWS metric that you want to pick statistics for",
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "An AWS namespace having AWS metric that you want to pick statistics for",
 						},
 						"metric": &schema.Schema{
 							Type:        schema.TypeString,

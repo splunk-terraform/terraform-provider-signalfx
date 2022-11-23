@@ -51,6 +51,12 @@ const newIntegrationAWSConfig = `
       metric     = "NetworkPacketsIn"
       stats      = ["p95", "p99"]
     }
+
+	metric_stats_to_sync {
+	  namespace  = "AWS/SomeCustomNamespace"
+	  metric     = "TaskInstanceDuration"
+	  stats      = ["sum"]
+	}
   }
 
   resource "signalfx_aws_token_integration" "aws_tok_myteamXX" {
@@ -128,6 +134,12 @@ const updatedIntegrationAWSConfig = `
       metric     = "NetworkPacketsIn"
       stats      = ["upper"]
     }
+
+	metric_stats_to_sync {
+	  namespace  = "AWS/SomeCustomNamespace"
+	  metric     = "TaskInstanceFailures"
+	  stats      = ["sum"]
+	}
   }
 
   resource "signalfx_aws_token_integration" "aws_tok_myteamXX" {
@@ -218,12 +230,16 @@ func TestAccCreateUpdateIntegrationAWS(t *testing.T) {
 				Config: newIntegrationAWSConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckIntegrationAWSResourceExists,
-					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.#", "1"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.#", "2"),
 					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.2980759070.namespace", "AWS/EC2"),
 					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.2980759070.metric", "NetworkPacketsIn"),
 					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.2980759070.stats.#", "2"),
 					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.2980759070.stats.1929087501", "p95"),
 					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.2980759070.stats.3729704193", "p99"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.529658192.namespace", "AWS/SomeCustomNamespace"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.529658192.metric", "TaskInstanceDuration"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.529658192.stats.#", "1"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.529658192.stats.1806468635", "sum"),
 				),
 			},
 			// Update
@@ -233,11 +249,15 @@ func TestAccCreateUpdateIntegrationAWS(t *testing.T) {
 					testAccCheckIntegrationAWSResourceExists,
 					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "name", "AWS TF Test (ext/updated)"),
 					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteam_tokXX", "name", "AWS TF Test (token/updated)"),
-					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.#", "1"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.#", "2"),
 					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.3877068524.namespace", "AWS/EC2"),
 					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.3877068524.metric", "NetworkPacketsIn"),
 					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.3877068524.stats.#", "1"),
 					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.3877068524.stats.2598274585", "upper"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.997089140.namespace", "AWS/SomeCustomNamespace"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.997089140.metric", "TaskInstanceFailures"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.997089140.stats.#", "1"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.997089140.stats.1806468635", "sum"),
 				),
 			},
 			// Update again to enable Cloudwatch Metric Streams synchronization
