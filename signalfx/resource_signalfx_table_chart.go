@@ -87,6 +87,41 @@ func tableChartResource() *schema.Resource {
 				Computed:    true,
 				Description: "URL of the chart",
 			},
+			"viz_options": &schema.Schema{
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Description: "Plot-level customization options, associated with a publish statement",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"label": &schema.Schema{
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "The label used in the publish statement that displays the plot (metric time series data) you want to customize",
+						},
+						"display_name": &schema.Schema{
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "Specifies an alternate value for the Plot Name column of the Data Table associated with the chart.",
+						},
+						"value_unit": &schema.Schema{
+							Type:         schema.TypeString,
+							Optional:     true,
+							ValidateFunc: validateUnitTimeChart,
+							Description:  "A unit to attach to this plot. Units support automatic scaling (eg thousands of bytes will be displayed as kilobytes)",
+						},
+						"value_prefix": &schema.Schema{
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "An arbitrary prefix to display with the value of this plot",
+						},
+						"value_suffix": &schema.Schema{
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "An arbitrary suffix to display with the value of this plot",
+						},
+					},
+				},
+			},
 		},
 
 		Create: tablechartCreate,
@@ -114,6 +149,11 @@ func getPayloadTableChart(d *schema.ResourceData) (*chart.CreateUpdateChartReque
 	if err != nil {
 		return nil, err
 	}
+
+	if vizOptions := getPerSignalVizOptions(d); len(vizOptions) > 0 {
+		options.PublishLabelOptions = vizOptions
+	}
+
 	payload.Options = options
 
 	return payload, nil
@@ -266,6 +306,20 @@ func tablechartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 			return err
 		}
 		if err := d.Set("disable_sampling", options.ProgramOptions.DisableSampling); err != nil {
+			return err
+		}
+	}
+
+	if len(options.PublishLabelOptions) > 0 {
+		plos := make([]map[string]interface{}, len(options.PublishLabelOptions))
+		for i, plo := range options.PublishLabelOptions {
+			no, err := publishNonTimeLabelOptionsToMap(plo)
+			if err != nil {
+				return err
+			}
+			plos[i] = no
+		}
+		if err := d.Set("viz_options", plos); err != nil {
 			return err
 		}
 	}

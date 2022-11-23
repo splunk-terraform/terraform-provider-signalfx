@@ -20,6 +20,13 @@ resource "signalfx_table_chart" "mychartTB" {
 	hide_timestamp = true
 	group_by = ["ClusterName"]
 
+	viz_options {
+		label = "CPU Idle"
+		display_name = "CPU Idle Display"
+		value_unit = "Bit"
+		value_prefix = "foo"
+		value_suffix = "bar"
+	}
 }
 `
 
@@ -33,6 +40,14 @@ resource "signalfx_table_chart" "mychartTB" {
 	timezone = "Europe/Paris"
 	hide_timestamp = true
 	group_by = ["ClusterName"]
+
+	viz_options {
+		label = "CPU Idle"
+		display_name = "CPU Idle Display"
+		value_unit = "Bit"
+		value_prefix = "foo"
+		value_suffix = "bar"
+	}
 }
 `
 

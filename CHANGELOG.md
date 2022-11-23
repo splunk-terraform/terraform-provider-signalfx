@@ -1,3 +1,8 @@
+## Unreleased
+
+ IMPROVEMENTS:
+ * resource/signalfx_table_chart: Added `viz_options` option [#402](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/402)
+
 ## 6.18.0
 IMPROVEMENTS:
 * resource/signalfx_gcp_integration: Add `import_gcp_metrics` option [#397](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/397)
