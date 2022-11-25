@@ -101,7 +101,7 @@ func tableChartResource() *schema.Resource {
 }
 
 /*
-  Use Resource object to construct json payload in order to create an Table chart
+Use Resource object to construct json payload in order to create an Table chart
 */
 func getPayloadTableChart(d *schema.ResourceData) (*chart.CreateUpdateChartRequest, error) {
 	payload := &chart.CreateUpdateChartRequest{
@@ -323,7 +323,7 @@ func tablechartDelete(d *schema.ResourceData, meta interface{}) error {
 }
 
 /*
-  Validates the color_range field against a list of allowed words.
+Validates the color_range field against a list of allowed words.
 */
 func validateTableChartColor(v interface{}, k string) (we []string, errors []error) {
 	value := v.(string)

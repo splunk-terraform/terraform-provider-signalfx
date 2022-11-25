@@ -96,7 +96,7 @@ func chartExists(d *schema.ResourceData, meta interface{}) (bool, error) {
 }
 
 /*
-  Utility function that wraps http calls to SignalFx
+Utility function that wraps http calls to SignalFx
 */
 func sendRequest(method string, url string, token string, payload []byte) (int, []byte, error) {
 	client := &http.Client{}
@@ -142,7 +142,7 @@ func flattenStringSliceToSet(slice []string) *schema.Set {
 }
 
 /*
-  Validates that sort_by field start with either + or -.
+Validates that sort_by field start with either + or -.
 */
 func validateSortBy(v interface{}, k string) (we []string, errors []error) {
 	value := v.(string)
@@ -180,7 +180,7 @@ func getNameFromChartColorsByIndex(index int) (string, error) {
 }
 
 /*
-	Get Color Scale Options
+Get Color Scale Options
 */
 func getColorScaleOptions(d *schema.ResourceData) []*chart.SecondaryVisualization {
 	colorScale := d.Get("color_scale").(*schema.Set).List()
@@ -225,10 +225,10 @@ func getColorScaleOptionsFromSlice(colorScale []interface{}) []*chart.SecondaryV
 }
 
 /*
-  Send a GET to get the current state of the resource. It just checks if the lastUpdated timestamp is
-  later than the timestamp saved in the resource. If so, the resource has been modified in some way
-  in the UI, and should be recreated. This is signaled by setting synced to false, meaning if synced is set to
-  true in the tf configuration, it will update the resource to achieve the desired state.
+Send a GET to get the current state of the resource. It just checks if the lastUpdated timestamp is
+later than the timestamp saved in the resource. If so, the resource has been modified in some way
+in the UI, and should be recreated. This is signaled by setting synced to false, meaning if synced is set to
+true in the tf configuration, it will update the resource to achieve the desired state.
 */
 func resourceRead(url string, sfxToken string, d *schema.ResourceData) error {
 	status_code, resp_body, err := sendRequest("GET", url, sfxToken, nil)
@@ -257,7 +257,7 @@ func resourceRead(url string, sfxToken string, d *schema.ResourceData) error {
 }
 
 /*
-  Fetches payload specified in terraform configuration and creates a resource
+Fetches payload specified in terraform configuration and creates a resource
 */
 func resourceCreate(url string, sfxToken string, payload []byte, d *schema.ResourceData) error {
 	status_code, resp_body, err := sendRequest("POST", url, sfxToken, payload)
@@ -277,7 +277,7 @@ func resourceCreate(url string, sfxToken string, payload []byte, d *schema.Resou
 }
 
 /*
-  Fetches payload specified in terraform configuration and creates chart
+Fetches payload specified in terraform configuration and creates chart
 */
 func resourceUpdate(url string, sfxToken string, payload []byte, d *schema.ResourceData) error {
 	status_code, resp_body, err := sendRequest("PUT", url, sfxToken, payload)
@@ -297,7 +297,7 @@ func resourceUpdate(url string, sfxToken string, payload []byte, d *schema.Resou
 }
 
 /*
-  Deletes a resource.  If the resource does not exist, it will receive a 404, and carry on as usual.
+Deletes a resource.  If the resource does not exist, it will receive a 404, and carry on as usual.
 */
 func resourceDelete(url string, sfxToken string, d *schema.ResourceData) error {
 	status_code, resp_body, err := sendRequest("DELETE", url, sfxToken, nil)
@@ -313,7 +313,7 @@ func resourceDelete(url string, sfxToken string, d *schema.ResourceData) error {
 }
 
 /*
-	Util method to get Legend Chart Options.
+Util method to get Legend Chart Options.
 */
 func getLegendOptions(d *schema.ResourceData) *chart.DataTableOptions {
 	var options *chart.DataTableOptions
@@ -344,7 +344,7 @@ func getLegendOptions(d *schema.ResourceData) *chart.DataTableOptions {
 }
 
 /*
-	Util method to get Legend Chart Options for fields
+Util method to get Legend Chart Options for fields
 */
 func getLegendFieldOptions(d *schema.ResourceData) *chart.DataTableOptions {
 	if fields, ok := d.GetOk("legend_options_fields"); ok {
@@ -367,7 +367,7 @@ func getLegendFieldOptions(d *schema.ResourceData) *chart.DataTableOptions {
 }
 
 /*
-	Util method to validate SignalFx specific string format.
+Util method to validate SignalFx specific string format.
 */
 func validateSignalfxRelativeTime(v interface{}, k string) (we []string, errors []error) {
 	ts := v.(string)
@@ -406,7 +406,7 @@ func fromRangeToMilliSeconds(timeRange string) (int, error) {
 }
 
 /*
-  Validates the color field against a list of allowed words.
+Validates the color field against a list of allowed words.
 */
 func validatePerSignalColor(v interface{}, k string) (we []string, errors []error) {
 	value := v.(string)

@@ -46,7 +46,7 @@ func textChartResource() *schema.Resource {
 }
 
 /*
-  Use Resource object to construct json payload in order to create a text chart
+Use Resource object to construct json payload in order to create a text chart
 */
 func getPayloadTextChart(d *schema.ResourceData) *chart.CreateUpdateChartRequest {
 	return &chart.CreateUpdateChartRequest{
