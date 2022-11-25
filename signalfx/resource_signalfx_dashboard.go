@@ -463,7 +463,7 @@ func dashboardResource() *schema.Resource {
 }
 
 /*
-  Use Resource object to construct json payload in order to create a dashboard
+Use Resource object to construct json payload in order to create a dashboard
 */
 func getPayloadDashboard(d *schema.ResourceData) (*dashboard.CreateUpdateDashboardRequest, error) {
 
@@ -1142,7 +1142,7 @@ func dashboardDelete(d *schema.ResourceData, meta interface{}) error {
 }
 
 /*
-  Validate Chart Resolution option against a list of allowed words.
+Validate Chart Resolution option against a list of allowed words.
 */
 func validateChartsResolution(v interface{}, k string) (we []string, errors []error) {
 	value := v.(string)

@@ -511,7 +511,7 @@ func timeChartResource() *schema.Resource {
 }
 
 /*
-  Use Resource object to construct json payload in order to create a time chart
+Use Resource object to construct json payload in order to create a time chart
 */
 func getPayloadTimeChart(d *schema.ResourceData) *chart.CreateUpdateChartRequest {
 	var tags []string

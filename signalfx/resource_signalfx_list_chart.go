@@ -242,7 +242,7 @@ func listChartResource() *schema.Resource {
 }
 
 /*
-  Use Resource object to construct json payload in order to create a list chart
+Use Resource object to construct json payload in order to create a list chart
 */
 func getPayloadListChart(d *schema.ResourceData) (*chart.CreateUpdateChartRequest, error) {
 	payload := &chart.CreateUpdateChartRequest{

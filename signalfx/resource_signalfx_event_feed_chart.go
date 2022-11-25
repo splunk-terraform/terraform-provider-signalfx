@@ -66,7 +66,7 @@ func eventFeedChartResource() *schema.Resource {
 }
 
 /*
-  Use Resource object to construct json payload in order to create an event feed chart
+Use Resource object to construct json payload in order to create an event feed chart
 */
 func getPayloadEventFeedChart(d *schema.ResourceData) *chart.CreateUpdateChartRequest {
 	var timeOptions *chart.TimeDisplayOptions

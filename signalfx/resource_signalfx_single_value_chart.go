@@ -188,7 +188,7 @@ func singleValueChartResource() *schema.Resource {
 }
 
 /*
-  Use Resource object to construct json payload in order to create a single value chart
+Use Resource object to construct json payload in order to create a single value chart
 */
 func getPayloadSingleValueChart(d *schema.ResourceData) *chart.CreateUpdateChartRequest {
 	payload := &chart.CreateUpdateChartRequest{
