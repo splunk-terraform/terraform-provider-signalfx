@@ -1,3 +1,10 @@
+## 6.19.0
+IMPROVEMENTS:
+* data_source_azure_services: add new services [#403](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/403)
+
+BUGFIXES:
+* remove validation with list of supported AWS namespaces in `metric_stats_to_sync` [#400](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/400)
+
 ## 6.18.0
 IMPROVEMENTS:
 * resource/signalfx_gcp_integration: Add `import_gcp_metrics` option [#397](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/397)
