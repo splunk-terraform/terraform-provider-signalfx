@@ -107,7 +107,7 @@ func teamResource() *schema.Resource {
 }
 
 /*
-  Use Resource object to construct json payload in order to create a team
+Use Resource object to construct json payload in order to create a team
 */
 func getPayloadTeam(d *schema.ResourceData) (*team.CreateUpdateTeamRequest, error) {
 	t := &team.CreateUpdateTeamRequest{

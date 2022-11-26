@@ -284,7 +284,7 @@ func timeRangeStateUpgradeV0(rawState map[string]interface{}, meta interface{}) 
 }
 
 /*
-  Use Resource object to construct json payload in order to create a detector
+Use Resource object to construct json payload in order to create a detector
 */
 func getPayloadDetector(d *schema.ResourceData) (*detector.CreateUpdateDetectorRequest, error) {
 
@@ -717,7 +717,7 @@ func getPerSignalDetectorVizOptions(d *schema.ResourceData) []*detector.PublishL
 }
 
 /*
-   Hashing function for rule substructure of the detector resource, used in determining state changes.
+Hashing function for rule substructure of the detector resource, used in determining state changes.
 */
 func resourceRuleHash(v interface{}) int {
 	var buf bytes.Buffer
@@ -756,7 +756,7 @@ func resourceRuleHash(v interface{}) int {
 }
 
 /*
-  Validates the severity field against a list of allowed words.
+Validates the severity field against a list of allowed words.
 */
 func validateSeverity(v interface{}, k string) (we []string, errors []error) {
 	value := v.(string)
@@ -771,7 +771,7 @@ func validateSeverity(v interface{}, k string) (we []string, errors []error) {
 }
 
 /*
-  Validates the condition to be fulfilled for checking ProgramText.
+Validates the condition to be fulfilled for checking ProgramText.
 */
 func validateProgramTextCondition(d *schema.ResourceDiff, meta interface{}) bool {
 
@@ -786,7 +786,7 @@ func validateProgramTextCondition(d *schema.ResourceDiff, meta interface{}) bool
 }
 
 /*
-  Validates the ProgramText and the list of rules.
+Validates the ProgramText and the list of rules.
 */
 func validateProgramText(d *schema.ResourceDiff, meta interface{}) error {
 
