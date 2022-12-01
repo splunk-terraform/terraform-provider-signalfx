@@ -42,11 +42,11 @@ resource "signalfx_table_chart" "mychartTB" {
 	group_by = ["ClusterName"]
 
 	viz_options {
-		label = "CPU Idle"
-		display_name = "CPU Idle Display"
+		label = "Updated CPU Idle"
+		display_name = "Updated CPU Idle Display"
 		value_unit = "Bit"
-		value_prefix = "foo"
-		value_suffix = "bar"
+		value_prefix = "Updated foo"
+		value_suffix = "Updated bar"
 	}
 }
 `
@@ -70,6 +70,11 @@ func TestAccCreateUpdateTableChart(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "hide_timestamp", "true"),
 					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "group_by.#", "1"),
 					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "group_by.0", "ClusterName"),
+					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "viz_options.label", "CPU Idle"),
+					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "viz_options.display_name", "CPU Idle Display"),
+					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "viz_options.value_unit", "Bit"),
+					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "viz_options.value_prefix", "foo"),
+					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "viz_options.value_suffix", "bar"),
 				),
 			},
 			{
@@ -85,6 +90,10 @@ func TestAccCreateUpdateTableChart(t *testing.T) {
 					testAccCheckTableChartResourceExists,
 					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "name", "Table NEW"),
 					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "description", "Tabley Time"),
+					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "viz_options.label", "Updated CPU Idle"),
+					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "viz_options.display_name", "Updated CPU Idle Display"),
+					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "viz_options.value_prefix", "Updated foo"),
+					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "viz_options.value_suffix", "Updated bar"),
 				),
 			},
 		},
