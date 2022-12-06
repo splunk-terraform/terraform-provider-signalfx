@@ -1,3 +1,8 @@
+## Unreleased
+
+ IMPROVEMENTS:
+ * resource/signalfx_table_chart: Added `viz_options` option [#402](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/402)
+
 ## 6.19.0
 IMPROVEMENTS:
 * data_source_azure_services: add new services [#403](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/403)
