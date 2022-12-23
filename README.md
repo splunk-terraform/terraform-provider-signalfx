@@ -29,7 +29,28 @@ $ make build
 
 Using the provider
 ----------------------
-If you're building the provider, follow the instructions to [install it as a plugin.](https://www.terraform.io/docs/plugins/basics.html#installing-a-plugin) After placing it into your plugins directory,  run `terraform init` to initialize it.
+
+If you want to test a local build of  the provider, follow the instructions to [Development Overrides for Provider Developers
+](https://developer.hashicorp.com/terraform/cli/config/config-file#development-overrides-for-provider-developers).
+
+Example dev.tfrc
+```terraform
+provider_installation {
+  dev_overrides {
+    "splunk-terraform/signalfx" = "/Users/user/.go/bin/"
+  }
+
+  direct {}
+}
+```
+
+Replace `/Users/user/.go/bin/` with a path pointing to the go bin directory (place
+where `make build` stores compiled binaries) - `echo $GOPATH/bin` 
+
+Now you can set `TF_CLI_CONFIG_FILE` variable to enable a development override only for shell sessions. For example:
+```shell
+export TF_CLI_CONFIG_FILE=/User/user/tmp/dev.tfrc
+```
 
 Further [usage documentation is available on the Terraform website](https://www.terraform.io/docs/providers/signalfx/index.html).
 

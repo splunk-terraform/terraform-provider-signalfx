@@ -32,9 +32,11 @@ func IntegrationAWSRead(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	if int.ExternalId != "" {
-		if err := d.Set("external_id", int.ExternalId); err != nil {
-			return err
+	if int.AuthMethod == integration.EXTERNAL_ID {
+		if int.ExternalId != "" {
+			if err := d.Set("external_id", int.ExternalId); err != nil {
+				return err
+			}
 		}
 	}
 	if err := d.Set("signalfx_aws_account", int.SfxAwsAccountArn); err != nil {
