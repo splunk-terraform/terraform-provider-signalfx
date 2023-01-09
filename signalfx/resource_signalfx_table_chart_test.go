@@ -26,6 +26,7 @@ resource "signalfx_table_chart" "mychartTB" {
 		value_unit = "Bit"
 		value_prefix = "foo"
 		value_suffix = "bar"
+		color = "green"
 	}
 }
 `
@@ -47,6 +48,7 @@ resource "signalfx_table_chart" "mychartTB" {
 		value_unit = "Bit"
 		value_prefix = "Updated foo"
 		value_suffix = "Updated bar"
+		color = "blue"
 	}
 }
 `
@@ -75,6 +77,7 @@ func TestAccCreateUpdateTableChart(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "viz_options.value_unit", "Bit"),
 					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "viz_options.value_prefix", "foo"),
 					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "viz_options.value_suffix", "bar"),
+					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "viz_options.color", "green"),
 				),
 			},
 			{
@@ -94,6 +97,8 @@ func TestAccCreateUpdateTableChart(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "viz_options.display_name", "Updated CPU Idle Display"),
 					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "viz_options.value_prefix", "Updated foo"),
 					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "viz_options.value_suffix", "Updated bar"),
+					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "viz_options.value_suffix", "Updated bar"),
+					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "viz_options.color", "blue"),
 				),
 			},
 		},
