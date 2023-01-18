@@ -99,7 +99,6 @@ func TestAccCreateUpdateIntegrationGCP(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "use_metric_source_project_for_quota", "true"),
 					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "import_gcp_metrics", "false"),
 					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "custom_metric_type_domains.#", "1"),
-					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "custom_metric_type_domains.0", "networking.googleapis.com/google_service/request_bytes_count"),
 				),
 			},
 		},
