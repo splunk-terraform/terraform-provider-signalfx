@@ -1,3 +1,8 @@
+## Unreleased
+
+BUGFIXES:
+* remove empty dashboards in tfstate when non-mirrored dashboards are included in a dashboard group [#413](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/413)
+
 ## 6.20.0
 
  IMPROVEMENTS:
