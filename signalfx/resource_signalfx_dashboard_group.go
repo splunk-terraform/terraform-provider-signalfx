@@ -484,8 +484,6 @@ func dashboardGroupAPIToTF(d *schema.ResourceData, dg *dashboard_group.Dashboard
 	}
 
 	if len(dg.DashboardConfigs) > 0 {
-		dConfigs := make([]map[string]interface{}, len(dg.DashboardConfigs))
-
 		// Collect a list of mirrored dashboard configs
 		config := meta.(*signalfxConfig)
 		mirroredDashboardConfigs, err := getMirroredDashboardConfigs(config, d)
@@ -493,6 +491,7 @@ func dashboardGroupAPIToTF(d *schema.ResourceData, dg *dashboard_group.Dashboard
 			return err
 		}
 
+		dConfigs := make([]map[string]interface{}, len(mirroredDashboardConfigs))
 		for i, dc := range mirroredDashboardConfigs {
 			dConf := make(map[string]interface{})
 			dConf["config_id"] = dc.ConfigId
