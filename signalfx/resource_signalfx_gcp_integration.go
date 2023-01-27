@@ -46,7 +46,7 @@ func integrationGCPResource() *schema.Resource {
 				Optional:    true,
 				Description: "List of additional GCP service domain names that you want to monitor",
 				Elem: &schema.Schema{
-					Type:         schema.TypeString,
+					Type: schema.TypeString,
 				},
 			},
 			"project_service_keys": &schema.Schema{
@@ -176,7 +176,7 @@ func getGCPPayloadIntegration(d *schema.ResourceData) *integration.GCPIntegratio
 	if val, ok := d.GetOk("include_list"); ok {
 		gcp.IncludeList = expandStringSetToSlice(val.(*schema.Set))
 	}
-    
+
 	if val, ok := d.GetOk("custom_metric_type_domains"); ok {
 		gcp.CustomMetricTypeDomains = expandStringSetToSlice(val.(*schema.Set))
 	}
