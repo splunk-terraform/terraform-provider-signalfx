@@ -1,6 +1,6 @@
 ## 6.21.0
 IMPROVEMENTS:
-* resource/signalfx_gcp_integration: Add `custom_metric_type_domains` option and rename deprecated field `whitelist` to `include_list` [#411](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/411)
+* resource/signalfx_gcp_integration: Add `custom_metric_type_domains` option and rename deprecated field `whitelist` to `include_list` [#412](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/412)
 
 ## 6.20.0
  IMPROVEMENTS:
