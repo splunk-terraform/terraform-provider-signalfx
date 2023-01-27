@@ -17,7 +17,7 @@ resource "signalfx_gcp_integration" "gcp_myteamXX" {
     enabled = false
     poll_rate = 600
     services = ["compute"]
-    whitelist = ["labels"]
+    include_list = ["labels"]
 
     project_service_keys {
 		    project_id = "gcp_project_id_1"
@@ -37,7 +37,7 @@ resource "signalfx_gcp_integration" "gcp_myteamXX" {
     enabled = false
     poll_rate = 60
     services = ["compute"]
-    whitelist = ["labels"]
+    include_list = ["labels"]
 
     project_service_keys {
 		    project_id = "gcp_project_id_1"
@@ -50,6 +50,8 @@ resource "signalfx_gcp_integration" "gcp_myteamXX" {
     }
 
     use_metric_source_project_for_quota = true
+
+    custom_metric_type_domains = ["networking.googleapis.com/google_service/request_bytes_count"]
 
 	import_gcp_metrics = false
 }
@@ -71,8 +73,8 @@ func TestAccCreateUpdateIntegrationGCP(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "project_service_keys.11542654.project_key", "secret_key_project_1"),
 					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "project_service_keys.2689486244.project_id", "gcp_project_id_2"),
 					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "project_service_keys.2689486244.project_key", "secret_key_project_2"),
-					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "whitelist.#", "1"),
-					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "whitelist.151844697", "labels"),
+					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "include_list.#", "1"),
+					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "include_list.151844697", "labels"),
 					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "poll_rate", "600"),
 					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "use_metric_source_project_for_quota", "false"),
 					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "import_gcp_metrics", "true"),
@@ -96,6 +98,7 @@ func TestAccCreateUpdateIntegrationGCP(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "poll_rate", "60"),
 					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "use_metric_source_project_for_quota", "true"),
 					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "import_gcp_metrics", "false"),
+					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "custom_metric_type_domains.#", "1"),
 				),
 			},
 		},
