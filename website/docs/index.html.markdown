@@ -66,3 +66,6 @@ The provider supports the following arguments:
 * `api_url` - (Optional) The API URL to use for communicating with SignalFx. This is helpful for organizations that need to set their Realm or use a proxy. You can also set it using the `SFX_API_URL` environment variable.
 * `custom_app_url` - (Optional) The application URL that users might use to interact with assets in the browser. Used by organizations on specific realms or with a custom [SSO domain](https://docs.signalfx.com/en/latest/admin-guide/sso.html). You can also set it using the `SFX_CUSTOM_APP_URL` environment variable.
 * `timeout_seconds` - (Optional) The total timeout duration to wait when making HTTP API calls to SignalFx, in seconds. Defaults to `120`.
+* `retry_max_attempts` - (Optional) The number of retry attempts when making HTTP API calls to SignalFx. Defaults to `4`.
+* `retry_wait_min_seconds` - (Optional) The minimum wait time between retry attempts when making HTTP API calls to SignalFx, in seconds. Defaults to `1`.
+* `retry_wait_max_seconds` - (Optional) The maximum wait time between retry attempts when making HTTP API calls to SignalFx, in seconds. Defaults to `30`.
