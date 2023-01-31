@@ -1,4 +1,4 @@
-## Unreleased
+## 6.22.0
 BUGFIXES
 * resource/signalfx_table_chart: Added `color` option to `viz_options` to fix `Error: Invalid address to set: []string{"viz_options", "0", "color"}` [#410](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/410)
 
