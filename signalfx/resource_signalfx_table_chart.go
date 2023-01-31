@@ -98,6 +98,12 @@ func tableChartResource() *schema.Resource {
 							Required:    true,
 							Description: "The label used in the publish statement that displays the plot (metric time series data) you want to customize",
 						},
+						"color": &schema.Schema{
+							Type:         schema.TypeString,
+							Optional:     true,
+							Description:  "Color to use",
+							ValidateFunc: validatePerSignalColor,
+						},
 						"display_name": &schema.Schema{
 							Type:        schema.TypeString,
 							Optional:    true,
