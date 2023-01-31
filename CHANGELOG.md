@@ -2,9 +2,16 @@
 BUGFIXES
 * resource/signalfx_table_chart: Added `color` option to `viz_options` to fix `Error: Invalid address to set: []string{"viz_options", "0", "color"}` [#410](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/410)
 
-## 6.20.0
+## 6.21.0
 IMPROVEMENTS:
-* resource/signalfx_table_chart: Added `viz_options` option [#402](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/402)
+* resource/signalfx_gcp_integration: Add `custom_metric_type_domains` option and rename deprecated field `whitelist` to `include_list` [#412](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/412)
+
+BUGFIXES:
+* remove empty dashboards in tfstate when non-mirrored dashboards are included in a dashboard group [#413](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/413)
+
+## 6.20.0
+ IMPROVEMENTS:
+ * resource/signalfx_table_chart: Added `viz_options` option [#402](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/402)
 
 ## 6.19.0
 IMPROVEMENTS:

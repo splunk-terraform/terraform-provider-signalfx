@@ -41,6 +41,14 @@ func integrationGCPResource() *schema.Resource {
 					ValidateFunc: validateGcpService,
 				},
 			},
+			"custom_metric_type_domains": &schema.Schema{
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Description: "List of additional GCP service domain names that you want to monitor",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 			"project_service_keys": &schema.Schema{
 				Type:        schema.TypeSet,
 				Optional:    true,
@@ -66,10 +74,10 @@ func integrationGCPResource() *schema.Resource {
 				Default:     false,
 				Description: "When this value is set to true Observability Cloud will force usage of a quota from the project where metrics are stored. For this to work the service account provided for the project needs to be provided with serviceusage.services.use permission or Service Usage Consumer role in this project. When set to false default quota settings are used.",
 			},
-			"whitelist": &schema.Schema{
+			"include_list": &schema.Schema{
 				Type:        schema.TypeSet,
 				Optional:    true,
-				Description: "Compute Metadata Whitelist",
+				Description: "List of custom metadata keys that you want Observability Cloud to collect for Compute Engine instances. This field replaces the deprecated field `whiteList`.",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -165,8 +173,12 @@ func getGCPPayloadIntegration(d *schema.ResourceData) *integration.GCPIntegratio
 		gcp.ProjectServiceKeys = serviceKeys
 	}
 
-	if val, ok := d.GetOk("whitelist"); ok {
-		gcp.Whitelist = expandStringSetToSlice(val.(*schema.Set))
+	if val, ok := d.GetOk("include_list"); ok {
+		gcp.IncludeList = expandStringSetToSlice(val.(*schema.Set))
+	}
+
+	if val, ok := d.GetOk("custom_metric_type_domains"); ok {
+		gcp.CustomMetricTypeDomains = expandStringSetToSlice(val.(*schema.Set))
 	}
 
 	return gcp
@@ -208,7 +220,11 @@ func gcpIntegrationAPIToTF(d *schema.ResourceData, gcp *integration.GCPIntegrati
 	// Note that the API doesn't return the project keys so we ignore them,
 	// because there's not much reason to poke at just the project id.
 
-	if err := d.Set("whitelist", flattenStringSliceToSet(gcp.Whitelist)); err != nil {
+	if err := d.Set("include_list", flattenStringSliceToSet(gcp.IncludeList)); err != nil {
+		return err
+	}
+
+	if err := d.Set("custom_metric_type_domains", flattenStringSliceToSet(gcp.CustomMetricTypeDomains)); err != nil {
 		return err
 	}
 
