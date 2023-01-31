@@ -1,7 +1,11 @@
 ## Unreleased
-## 6.22.0
+## 6.23.0
 IMPROVEMENTS:
 * provider: Use go-retryablehttp for automatic retries with exponential backoff. Add `retry_max_attempts` (default=4), `retry_wait_min_seconds` (default=1), and `retry_wait_max_seconds` (default=30) configuration options. [#416](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/416)
+
+## 6.22.0
+BUGFIXES
+* resource/signalfx_table_chart: Added `color` option to `viz_options` to fix `Error: Invalid address to set: []string{"viz_options", "0", "color"}` [#410](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/410)
 
 ## 6.21.0
 IMPROVEMENTS:
