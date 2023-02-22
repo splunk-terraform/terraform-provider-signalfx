@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/bgentry/go-netrc/netrc"
+	"github.com/hashicorp/go-retryablehttp"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/logging"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
@@ -61,6 +62,24 @@ func Provider() terraform.ResourceProvider {
 				Optional:    true,
 				Default:     120,
 				Description: "Timeout duration for a single HTTP call in seconds. Defaults to 120",
+			},
+			"retry_max_attempts": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Default:     4,
+				Description: "Max retries for a single HTTP call. Defaults to 4",
+			},
+			"retry_wait_min_seconds": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Default:     1,
+				Description: "Minimum retry wait for a single HTTP call in seconds. Defaults to 1",
+			},
+			"retry_wait_max_seconds": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Default:     30,
+				Description: "Maximum retry wait for a single HTTP call in seconds. Defaults to 30",
 			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
@@ -153,7 +172,7 @@ func signalfxConfigure(data *schema.ResourceData) (interface{}, error) {
 		config.CustomAppURL = customAppURL.(string)
 	}
 
-	var netTransport = logging.NewTransport("SignalFx", &http.Transport{
+	netTransport := logging.NewTransport("SignalFx", &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
 		DialContext: (&net.Dialer{
 			Timeout: 5 * time.Second,
@@ -167,13 +186,25 @@ func signalfxConfigure(data *schema.ResourceData) (interface{}, error) {
 	providerUserAgent := fmt.Sprintf("Terraform/%s terraform-provider-signalfx/%s", sfxProvider.TerraformVersion, pv)
 
 	totalTimeoutSeconds := data.Get("timeout_seconds").(int)
+	retryMaxAttempts := data.Get("retry_max_attempts").(int)
+	retryWaitMinSeconds := data.Get("retry_wait_min_seconds").(int)
+	retryWaitMaxSeconds := data.Get("retry_wait_max_seconds").(int)
 	log.Printf("[DEBUG] SignalFx: HTTP Timeout is %d seconds", totalTimeoutSeconds)
+	log.Printf("[DEBUG] SignalFx: HTTP max retry attempts: %d", retryMaxAttempts)
+	log.Printf("[DEBUG] SignalFx: HTTP retry wait min is %d seconds", retryWaitMinSeconds)
+	log.Printf("[DEBUG] SignalFx: HTTP retry wait max is %d seconds", retryWaitMaxSeconds)
+
+	retryClient := retryablehttp.NewClient()
+	retryClient.RetryMax = retryMaxAttempts
+	retryClient.RetryWaitMin = time.Second * time.Duration(int64(retryWaitMinSeconds))
+	retryClient.RetryWaitMax = time.Second * time.Duration(int64(retryWaitMaxSeconds))
+	standardClient := retryClient.StandardClient()
+	standardClient.Timeout = time.Second * time.Duration(int64(totalTimeoutSeconds))
+	standardClient.Transport = netTransport
+
 	client, err := sfx.NewClient(config.AuthToken,
 		sfx.APIUrl(config.APIURL),
-		sfx.HTTPClient(&http.Client{
-			Timeout:   time.Second * time.Duration(int64(totalTimeoutSeconds)),
-			Transport: netTransport,
-		}),
+		sfx.HTTPClient(standardClient),
 		sfx.UserAgent(fmt.Sprintf(providerUserAgent)),
 	)
 	if err != nil {
