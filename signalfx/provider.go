@@ -3,10 +3,10 @@ package signalfx
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/hashicorp/go-cleanhttp"
 	"io/ioutil"
 	"log"
 	"net"
+	"net/http"
 	"os"
 	"os/user"
 	"runtime"
@@ -172,14 +172,15 @@ func signalfxConfigure(data *schema.ResourceData) (interface{}, error) {
 		config.CustomAppURL = customAppURL.(string)
 	}
 
-	pooledTransport := cleanhttp.DefaultPooledTransport()
-	pooledTransport.DialContext = (&net.Dialer{
-		Timeout: 5 * time.Second,
-	}).DialContext
-	pooledTransport.TLSHandshakeTimeout = 5 * time.Second
-	pooledTransport.MaxIdleConnsPerHost = 100
-
-	var netTransport = logging.NewTransport("SignalFx", pooledTransport)
+	netTransport := logging.NewTransport("SignalFx", &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		DialContext: (&net.Dialer{
+			Timeout: 5 * time.Second,
+		}).DialContext,
+		TLSHandshakeTimeout: 5 * time.Second,
+		MaxIdleConns:        100,
+		MaxIdleConnsPerHost: 100,
+	})
 
 	pv := version.ProviderVersion
 	providerUserAgent := fmt.Sprintf("Terraform/%s terraform-provider-signalfx/%s", sfxProvider.TerraformVersion, pv)
