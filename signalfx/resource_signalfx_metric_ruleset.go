@@ -31,6 +31,11 @@ func metricRulesetResource() *schema.Resource {
 				Description: "Aggregation rules in the ruleset",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
+						"name": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "Name of this aggregation rule",
+						},
 						"enabled": {
 							Type:        schema.TypeBool,
 							Required:    true,
@@ -316,6 +321,7 @@ func metricRulesetAPIToTF(d *schema.ResourceData, metricRuleset *metric_ruleset.
 		rules := make([]map[string]interface{}, len(metricRuleset.AggregationRules))
 		for i, rule := range metricRuleset.AggregationRules {
 			aggRule := map[string]interface{}{
+				"name":    rule.Name,
 				"enabled": rule.Enabled,
 			}
 
@@ -389,7 +395,9 @@ func getAggregationRules(tfRules []interface{}) []metric_ruleset.AggregationRule
 	var aggregationRulesList []metric_ruleset.AggregationRule
 	for _, tfRule := range tfRules {
 		newTfRule := tfRule.(map[string]interface{})
+		ruleName := newTfRule["name"].(string)
 		rule := metric_ruleset.AggregationRule{
+			Name:       &ruleName,
 			Enabled:    newTfRule["enabled"].(bool),
 			Matcher:    getMatcher(newTfRule),
 			Aggregator: getAggregator(newTfRule),
