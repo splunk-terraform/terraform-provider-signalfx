@@ -1,7 +1,9 @@
 ## Unreleased
+
 ## 6.23.0
 IMPROVEMENTS:
 * provider: Use go-retryablehttp for automatic retries with exponential backoff. Add `retry_max_attempts` (default=4), `retry_wait_min_seconds` (default=1), and `retry_wait_max_seconds` (default=30) configuration options. [#416](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/416)
+* resource/signalfx_metric_ruleset: added along with docs
 
 ## 6.22.0
 BUGFIXES

@@ -7,7 +7,7 @@ require (
 	github.com/hashicorp/go-retryablehttp v0.7.1
 	github.com/hashicorp/terraform-plugin-sdk v1.15.0
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/signalfx/signalfx-go v1.26.0
+	github.com/signalfx/signalfx-go v1.28.0
 	github.com/stretchr/testify v1.6.1
 )
 

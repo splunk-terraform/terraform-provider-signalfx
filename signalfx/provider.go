@@ -117,6 +117,7 @@ func Provider() terraform.ResourceProvider {
 			"signalfx_webhook_integration":      integrationWebhookResource(),
 			"signalfx_log_view":                 logViewResource(),
 			"signalfx_table_chart":              tableChartResource(),
+			"signalfx_metric_ruleset":           metricRulesetResource(),
 		},
 		ConfigureFunc: signalfxConfigure,
 	}
