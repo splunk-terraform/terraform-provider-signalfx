@@ -17,6 +17,7 @@ resource "signalfx_metric_ruleset" "cpu_utilization_metric_ruleset" {
     metric_name = "cpu.utilization"
 
     aggregation_rules {
+        name = "cpu.utilization by service rule"
         enabled = true
         matcher {
             type = "dimension"
@@ -47,6 +48,7 @@ The following arguments are supported in the resource block:
 * `metric_name` - (Required) Name of the input metric
 * `aggregation_rules` - (Optional) List of aggregation rules for the metric
   * `enabled` - (Required) When false, this rule will not generate aggregated MTSs
+  * `name` - (Optional) name of the aggregation rule
   * `matcher` - (Required) Matcher object
     * `type` - (Required) Type of matcher. Must always be "dimension"
     * `filters` - (Optional) List of filters to filter the set of input MTSs
