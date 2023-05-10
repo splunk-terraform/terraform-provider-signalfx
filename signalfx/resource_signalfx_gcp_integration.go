@@ -75,22 +75,9 @@ func integrationGCPResource() *schema.Resource {
 				Description: "When this value is set to true Observability Cloud will force usage of a quota from the project where metrics are stored. For this to work the service account provided for the project needs to be provided with serviceusage.services.use permission or Service Usage Consumer role in this project. When set to false default quota settings are used.",
 			},
 			"include_list": &schema.Schema{
-				Type:          schema.TypeSet,
-				Optional:      true,
-				Computed:      true,
-				Description:   "List of custom metadata keys that you want Observability Cloud to collect for Compute Engine instances.",
-				ConflictsWith: []string{"whitelist"},
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
-			},
-			"whitelist": &schema.Schema{
-				Type:          schema.TypeSet,
-				Optional:      true,
-				Computed:      true,
-				Description:   "Compute Metadata Whitelist",
-				Deprecated:    "Please use include_list instead",
-				ConflictsWith: []string{"include_list"},
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Description: "List of custom metadata keys that you want Observability Cloud to collect for Compute Engine instances.",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -190,10 +177,6 @@ func getGCPPayloadIntegration(d *schema.ResourceData) *integration.GCPIntegratio
 		gcp.IncludeList = expandStringSetToSlice(val.(*schema.Set))
 	}
 
-	if val, ok := d.GetOk("whitelist"); ok {
-		gcp.Whitelist = expandStringSetToSlice(val.(*schema.Set))
-	}
-
 	if val, ok := d.GetOk("custom_metric_type_domains"); ok {
 		gcp.CustomMetricTypeDomains = expandStringSetToSlice(val.(*schema.Set))
 	}
@@ -238,10 +221,6 @@ func gcpIntegrationAPIToTF(d *schema.ResourceData, gcp *integration.GCPIntegrati
 	// because there's not much reason to poke at just the project id.
 
 	if err := d.Set("include_list", flattenStringSliceToSet(gcp.IncludeList)); err != nil {
-		return err
-	}
-
-	if err := d.Set("whitelist", flattenStringSliceToSet(gcp.Whitelist)); err != nil {
 		return err
 	}
 

@@ -73,7 +73,6 @@ const newIntegrationAWSConfig = `
 	poll_rate                  = 300
 	import_cloud_watch         = true
 	enable_aws_usage           = true
-	use_get_metric_data_method = true
 
 	custom_namespace_sync_rule {
 	  default_action = "Exclude"
@@ -156,7 +155,6 @@ const updatedIntegrationAWSConfig = `
 	poll_rate                  = 300
 	import_cloud_watch         = true
 	enable_aws_usage           = true
-	use_get_metric_data_method = true
 
 	custom_namespace_sync_rule {
 	  default_action = "Exclude"

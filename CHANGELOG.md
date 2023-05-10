@@ -1,5 +1,9 @@
 ## Unreleased 
 
+## 7.0.0
+IMPROVEMENTS:
+* Remove deprecated fields: `use_get_metric_data_method` in AWS integration resource and `whitelist` in GCP integration resource.
+
 ## 6.24.0
 BUGFIXES:
 * Fixes backwards incompatibility for GCP integration resource introduced in `6.21.0`
