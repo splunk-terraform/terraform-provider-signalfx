@@ -1,18 +1,28 @@
-## Unreleased
+## Unreleased 
+
+## 6.24.0
+BUGFIXES:
+* Fixes backwards incompatibility for GCP integration resource introduced in `6.21.0`
 
 IMPROVEMENTS:
 * Deprecate `use_get_metric_data_method` in AWS integration resource
 
 ## 6.23.0
+WARNING: This version is NOT backward compatible for GCP integration resource. This is fixed in 6.24.0
+
 IMPROVEMENTS:
 * provider: Use go-retryablehttp for automatic retries with exponential backoff. Add `retry_max_attempts` (default=4), `retry_wait_min_seconds` (default=1), and `retry_wait_max_seconds` (default=30) configuration options. [#416](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/416)
 * resource/signalfx_metric_ruleset: added along with docs
 
 ## 6.22.0
+WARNING: This version is NOT backward compatible for GCP integration resource. This is fixed in 6.24.0
+
 BUGFIXES
 * resource/signalfx_table_chart: Added `color` option to `viz_options` to fix `Error: Invalid address to set: []string{"viz_options", "0", "color"}` [#410](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/410)
 
 ## 6.21.0
+WARNING: This version is NOT backward compatible for GCP integration resource. This is fixed in 6.24.0
+
 IMPROVEMENTS:
 * resource/signalfx_gcp_integration: Add `custom_metric_type_domains` option and rename deprecated field `whitelist` to `include_list` [#412](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/412)
 
