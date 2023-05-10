@@ -51,7 +51,7 @@ resource "signalfx_gcp_integration" "gcp_myteamXX" {
 
     use_metric_source_project_for_quota = true
 
-    custom_metric_type_domains = ["networking.googleapis.com/google_service/request_bytes_count"]
+    custom_metric_type_domains = ["networking.googleapis.com"]
 
 	import_gcp_metrics = false
 }
