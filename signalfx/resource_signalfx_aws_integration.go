@@ -188,6 +188,7 @@ func integrationAWSResource() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
+				Deprecated:  "This field will be removed",
 				Description: "Enables the use of Amazon's GetMetricData API. Defaults to `false`.",
 			},
 			"use_metric_streams_sync": &schema.Schema{
