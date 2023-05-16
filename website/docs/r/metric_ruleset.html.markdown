@@ -10,6 +10,8 @@ Allows Terraform to create and manage Splunk Infrastructure Monitoring metric ru
 
 Provides an Observability Cloud resource for managing metric rulesets
 
+~> **NOTE** When managing metric rulesets to drop data use a session token for an administrator to authenticate the SignalFx provider. See [Operations that require a session token for an administrator](https://dev.splunk.com/observability/docs/administration/authtokens#Operations-that-require-a-session-token-for-an-administrator). Otherwise you'll receive a 4xx error.
+
 ## Example Usage
 
 ```tf
@@ -17,6 +19,7 @@ resource "signalfx_metric_ruleset" "cpu_utilization_metric_ruleset" {
     metric_name = "cpu.utilization"
 
     aggregation_rules {
+        name = "cpu.utilization by service rule"
         enabled = true
         matcher {
             type = "dimension"
@@ -47,6 +50,7 @@ The following arguments are supported in the resource block:
 * `metric_name` - (Required) Name of the input metric
 * `aggregation_rules` - (Optional) List of aggregation rules for the metric
   * `enabled` - (Required) When false, this rule will not generate aggregated MTSs
+  * `name` - (Optional) name of the aggregation rule
   * `matcher` - (Required) Matcher object
     * `type` - (Required) Type of matcher. Must always be "dimension"
     * `filters` - (Optional) List of filters to filter the set of input MTSs
@@ -59,4 +63,4 @@ The following arguments are supported in the resource block:
     * `drop_dimensions` - (Required) when true, the specified dimensions will be dropped from the aggregated MTSs
     * `output_name` - (Required) name of the new aggregated metric
 * `routing_rule` - (Required) Routing Rule object
-  * `destination` - (Required) - end destination of the input metric
+  * `destination` - (Required) - end destination of the input metric. Must be `RealTime` or `Drop`
