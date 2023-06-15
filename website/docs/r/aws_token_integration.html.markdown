@@ -6,7 +6,7 @@ description: |-
   Allows Terraform to create and manage SignalFx AWS Security Token Integrations
 ---
 
-# Resource: signalfx_aws_external_integration
+# Resource: signalfx_aws_token_integration
 
 SignalFx AWS CloudWatch integrations using security tokens. For help with this integration see [Connect to AWS CloudWatch](https://docs.signalfx.com/en/latest/integrations/amazon-web-services.html#connect-to-aws).
 
