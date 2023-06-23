@@ -3,6 +3,7 @@
 ## 7.0.0
 IMPROVEMENTS:
 * Remove deprecated fields: `use_get_metric_data_method` in AWS integration resource and `whitelist` in GCP integration resource. [#430](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/430)
+* Upgrade signalfx-go to add new Azure services. [#436](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/436)
 
 ## 6.24.0
 BUGFIXES:
