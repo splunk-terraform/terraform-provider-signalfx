@@ -2,14 +2,14 @@
 
 ## 7.0.0
 IMPROVEMENTS:
-* Remove deprecated fields: `use_get_metric_data_method` in AWS integration resource and `whitelist` in GCP integration resource.
+* Remove deprecated fields: `use_get_metric_data_method` in AWS integration resource and `whitelist` in GCP integration resource. [#430](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/430)
 
 ## 6.24.0
 BUGFIXES:
-* Fixes backwards incompatibility for GCP integration resource introduced in `6.21.0`
+* Fixes backwards incompatibility for GCP integration resource introduced in `6.21.0` [#429](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/429)
 
 IMPROVEMENTS:
-* Deprecate `use_get_metric_data_method` in AWS integration resource
+* Deprecate `use_get_metric_data_method` in AWS integration resource [#428](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/428)
 
 ## 6.23.0
 WARNING: This version is NOT backward compatible for GCP integration resource. This is fixed in 6.24.0
