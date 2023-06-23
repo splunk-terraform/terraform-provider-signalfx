@@ -1,13 +1,15 @@
 package signalfx
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/davecgh/go-spew/spew"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	sfx "github.com/signalfx/signalfx-go"
 	"github.com/stretchr/testify/assert"
 )
@@ -15,12 +17,12 @@ import (
 var OldSystemConfigPath = SystemConfigPath
 var OldHomeConfigPath = HomeConfigPath
 
-var testAccProviders map[string]terraform.ResourceProvider
+var testAccProviders map[string]*schema.Provider
 var testAccProvider *schema.Provider
 
 func init() {
-	testAccProvider = Provider().(*schema.Provider)
-	testAccProviders = map[string]terraform.ResourceProvider{
+	testAccProvider = Provider()
+	testAccProviders = map[string]*schema.Provider{
 		"signalfx": testAccProvider,
 	}
 }
@@ -52,7 +54,7 @@ func newTestClient() *sfx.Client {
 }
 
 func TestProvider(t *testing.T) {
-	if err := Provider().(*schema.Provider).InternalValidate(); err != nil {
+	if err := Provider().InternalValidate(); err != nil {
 		t.Fatal(err.Error())
 	}
 }
@@ -77,9 +79,9 @@ func TestProviderConfigureFromNothing(t *testing.T) {
 	raw := make(map[string]interface{})
 
 	rp := Provider()
-	err := rp.Configure(terraform.NewResourceConfigRaw(raw))
-	assert.NotNil(t, err)
-	assert.Contains(t, err.Error(), "auth_token: required field is not set")
+	diag := rp.Configure(context.Background(), terraform.NewResourceConfigRaw(raw))
+	assert.NotNil(t, diag)
+	assert.Contains(t, diag[0].Summary, "auth_token: required field is not set")
 }
 
 func TestProviderConfigureFromTerraform(t *testing.T) {
@@ -115,10 +117,10 @@ func TestProviderConfigureFromTerraform(t *testing.T) {
 	}
 
 	rp := Provider()
-	err = rp.Configure(terraform.NewResourceConfigRaw(raw))
-	meta := rp.(*schema.Provider).Meta()
+	diag := rp.Configure(context.Background(), terraform.NewResourceConfigRaw(raw))
+	meta := rp.Meta()
 	if meta == nil {
-		t.Fatalf("Expected metadata, got nil. err: %s", err.Error())
+		t.Fatalf("Expected metadata, got nil. err: %s", spew.Sdump(diag))
 	}
 	configuration := meta.(*signalfxConfig)
 	assert.Equal(t, "XXX", configuration.AuthToken)
@@ -137,10 +139,10 @@ func TestProviderConfigureFromTerraformOnly(t *testing.T) {
 	}
 
 	rp := Provider()
-	err := rp.Configure(terraform.NewResourceConfigRaw(raw))
-	meta := rp.(*schema.Provider).Meta()
+	diag := rp.Configure(context.Background(), terraform.NewResourceConfigRaw(raw))
+	meta := rp.Meta()
 	if meta == nil {
-		t.Fatalf("Expected metadata, got nil. err: %s", err.Error())
+		t.Fatalf("Expected metadata, got nil. err: %s", spew.Sdump(diag))
 	}
 	configuration := meta.(*signalfxConfig)
 	assert.Equal(t, "XXX", configuration.AuthToken)
@@ -177,10 +179,10 @@ func TestProviderConfigureFromEnvironment(t *testing.T) {
 	raw := make(map[string]interface{})
 
 	rp := Provider()
-	err = rp.Configure(terraform.NewResourceConfigRaw(raw))
-	meta := rp.(*schema.Provider).Meta()
+	diag := rp.Configure(context.Background(), terraform.NewResourceConfigRaw(raw))
+	meta := rp.Meta()
 	if meta == nil {
-		t.Fatalf("Expected metadata, got nil. err: %s", err.Error())
+		t.Fatalf("Expected metadata, got nil. err: %s", spew.Sdump(diag))
 	}
 	configuration := meta.(*signalfxConfig)
 	assert.Equal(t, "YYY", configuration.AuthToken)
@@ -208,10 +210,10 @@ func TestProviderConfigureFromEnvironmentOnly(t *testing.T) {
 	raw := make(map[string]interface{})
 
 	rp := Provider()
-	err := rp.Configure(terraform.NewResourceConfigRaw(raw))
-	meta := rp.(*schema.Provider).Meta()
+	diag := rp.Configure(context.Background(), terraform.NewResourceConfigRaw(raw))
+	meta := rp.Meta()
 	if meta == nil {
-		t.Fatalf("Expected metadata, got nil. err: %s", err.Error())
+		t.Fatalf("Expected metadata, got nil. err: %s", spew.Sdump(diag))
 	}
 	configuration := meta.(*signalfxConfig)
 	assert.Equal(t, "YYY", configuration.AuthToken)
@@ -241,10 +243,10 @@ func TestSignalFxConfigureFromHomeFile(t *testing.T) {
 	raw := make(map[string]interface{})
 
 	rp := Provider()
-	err = rp.Configure(terraform.NewResourceConfigRaw(raw))
-	meta := rp.(*schema.Provider).Meta()
+	diag := rp.Configure(context.Background(), terraform.NewResourceConfigRaw(raw))
+	meta := rp.Meta()
 	if meta == nil {
-		t.Fatalf("Expected metadata, got nil. err: %s", err.Error())
+		t.Fatalf("Expected metadata, got nil. err: %s", spew.Sdump(diag))
 	}
 	configuration := meta.(*signalfxConfig)
 	assert.Equal(t, "WWW", configuration.AuthToken)
@@ -281,10 +283,10 @@ func TestSignalFxConfigureFromNetrcFile(t *testing.T) {
 	raw := make(map[string]interface{})
 
 	rp := Provider()
-	err = rp.Configure(terraform.NewResourceConfigRaw(raw))
-	meta := rp.(*schema.Provider).Meta()
+	diag := rp.Configure(context.Background(), terraform.NewResourceConfigRaw(raw))
+	meta := rp.Meta()
 	if meta == nil {
-		t.Fatalf("Expected metadata, got nil. err: %s", err.Error())
+		t.Fatalf("Expected metadata, got nil. err: %s", spew.Sdump(diag))
 	}
 	configuration := meta.(*signalfxConfig)
 	assert.Equal(t, "WWW", configuration.AuthToken)
@@ -317,10 +319,10 @@ func TestSignalFxConfigureFromHomeFileOnly(t *testing.T) {
 	raw := make(map[string]interface{})
 
 	rp := Provider()
-	err = rp.Configure(terraform.NewResourceConfigRaw(raw))
-	meta := rp.(*schema.Provider).Meta()
+	diag := rp.Configure(context.Background(), terraform.NewResourceConfigRaw(raw))
+	meta := rp.Meta()
 	if meta == nil {
-		t.Fatalf("Expected metadata, got nil. err: %s", err.Error())
+		t.Fatalf("Expected metadata, got nil. err: %s", spew.Sdump(diag))
 	}
 	configuration := meta.(*signalfxConfig)
 	assert.Equal(t, "WWW", configuration.AuthToken)
@@ -353,10 +355,10 @@ func TestSignalFxConfigureFromSystemFileOnly(t *testing.T) {
 	raw := make(map[string]interface{})
 
 	rp := Provider()
-	err = rp.Configure(terraform.NewResourceConfigRaw(raw))
-	meta := rp.(*schema.Provider).Meta()
+	diag := rp.Configure(context.Background(), terraform.NewResourceConfigRaw(raw))
+	meta := rp.Meta()
 	if meta == nil {
-		t.Fatalf("Expected metadata, got nil. err: %s", err.Error())
+		t.Fatalf("Expected metadata, got nil. err: %s", spew.Sdump(diag))
 	}
 	configuration := meta.(*signalfxConfig)
 	assert.Equal(t, "ZZZ", configuration.AuthToken)

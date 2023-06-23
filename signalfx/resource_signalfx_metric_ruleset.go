@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/signalfx/signalfx-go/metric_ruleset"
 	"log"
 	"strconv"
@@ -116,7 +116,7 @@ func metricRulesetResource() *schema.Resource {
 				},
 			},
 			"routing_rule": {
-				Type:        schema.TypeMap,
+				Type:        schema.TypeSet,
 				Required:    true,
 				Description: "Location to send the input metric",
 				Elem: &schema.Resource{

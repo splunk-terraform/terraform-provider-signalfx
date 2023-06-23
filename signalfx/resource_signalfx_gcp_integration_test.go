@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -69,12 +69,12 @@ func TestAccCreateUpdateIntegrationGCP(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckIntegrationGCPResourceExists,
 					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "project_service_keys.#", "2"),
-					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "project_service_keys.11542654.project_id", "gcp_project_id_1"),
-					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "project_service_keys.11542654.project_key", "secret_key_project_1"),
-					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "project_service_keys.2689486244.project_id", "gcp_project_id_2"),
-					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "project_service_keys.2689486244.project_key", "secret_key_project_2"),
+					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "project_service_keys.0.project_id", "gcp_project_id_1"),
+					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "project_service_keys.0.project_key", "secret_key_project_1"),
+					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "project_service_keys.1.project_id", "gcp_project_id_2"),
+					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "project_service_keys.1.project_key", "secret_key_project_2"),
 					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "include_list.#", "1"),
-					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "include_list.151844697", "labels"),
+					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "include_list.0", "labels"),
 					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "poll_rate", "600"),
 					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "use_metric_source_project_for_quota", "false"),
 					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "import_gcp_metrics", "true"),

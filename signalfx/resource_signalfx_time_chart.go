@@ -8,9 +8,9 @@ import (
 	"math"
 	"strconv"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 
 	chart "github.com/signalfx/signalfx-go/chart"
 )
@@ -545,7 +545,7 @@ func getPayloadTimeChart(d *schema.ResourceData) *chart.CreateUpdateChartRequest
 		viz.LegendOptions = legendOptions
 	}
 
-	if vizOptions := getPerSignalVizOptions(d); len(vizOptions) > 0 {
+	if vizOptions := getPerSignalVizOptions(d, true); len(vizOptions) > 0 {
 		viz.PublishLabelOptions = vizOptions
 	}
 	if eventOptions := getPerEventOptions(d); len(eventOptions) > 0 {
@@ -567,7 +567,7 @@ func getPayloadTimeChart(d *schema.ResourceData) *chart.CreateUpdateChartRequest
 	return payload
 }
 
-func getPerSignalVizOptions(d *schema.ResourceData) []*chart.PublishLabelOptions {
+func getPerSignalVizOptions(d *schema.ResourceData, includePaletteIndex bool) []*chart.PublishLabelOptions {
 	viz := d.Get("viz_options").(*schema.Set).List()
 	vizList := make([]*chart.PublishLabelOptions, len(viz))
 	for i, v := range viz {
@@ -579,7 +579,7 @@ func getPerSignalVizOptions(d *schema.ResourceData) []*chart.PublishLabelOptions
 			item.DisplayName = val
 		}
 		if val, ok := v["color"].(string); ok {
-			if elem, ok := PaletteColors[val]; ok {
+			if elem, ok := PaletteColors[val]; includePaletteIndex && ok {
 				i := int32(elem)
 				item.PaletteIndex = &i
 			}

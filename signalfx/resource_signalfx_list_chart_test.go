@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 const newListChartConfig = `
@@ -132,10 +132,10 @@ func TestAccCreateUpdateListChart(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_list_chart.mychartLX", "legend_options_fields.0.property", "collector"),
 
 					resource.TestCheckResourceAttr("signalfx_list_chart.mychartLX", "color_scale.#", "2"),
-					resource.TestCheckResourceAttr("signalfx_list_chart.mychartLX", "color_scale.690432474.color", "cerise"),
-					resource.TestCheckResourceAttr("signalfx_list_chart.mychartLX", "color_scale.690432474.gt", "40"),
-					resource.TestCheckResourceAttr("signalfx_list_chart.mychartLX", "color_scale.761948173.color", "vivid_yellow"),
-					resource.TestCheckResourceAttr("signalfx_list_chart.mychartLX", "color_scale.761948173.lte", "40"),
+					resource.TestCheckResourceAttr("signalfx_list_chart.mychartLX", "color_scale.0.color", "cerise"),
+					resource.TestCheckResourceAttr("signalfx_list_chart.mychartLX", "color_scale.0.gt", "40"),
+					resource.TestCheckResourceAttr("signalfx_list_chart.mychartLX", "color_scale.1.color", "vivid_yellow"),
+					resource.TestCheckResourceAttr("signalfx_list_chart.mychartLX", "color_scale.1.lte", "40"),
 				),
 			},
 			{
