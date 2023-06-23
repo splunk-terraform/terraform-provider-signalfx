@@ -7,8 +7,8 @@ import (
 	"log"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/signalfx/signalfx-go/integration"
 )
 
@@ -92,18 +92,18 @@ func integrationAzureResource() *schema.Resource {
 				},
 				Description: "Additional Azure resource types that you want to sync with Observability Cloud.",
 			},
-			"resource_filter_rules": &schema.Schema{
-				Type:        schema.TypeList,
+			"resource_filter_rules": {
+				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "List of rules for filtering Azure resources by their tags. The source of each filter rule must be in the form filter('key', 'value'). You can join multiple filter statements using the and and or operators. Referenced keys are limited to tags and must start with the azure_tag_ prefix..",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"filter": &schema.Schema{
-							Type:     schema.TypeMap,
+						"filter": {
+							Type:     schema.TypeSet,
 							Required: true,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
-									"source": &schema.Schema{
+									"source": {
 										Type:     schema.TypeString,
 										Required: true,
 									},

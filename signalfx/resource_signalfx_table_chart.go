@@ -7,8 +7,8 @@ import (
 	"log"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	chart "github.com/signalfx/signalfx-go/chart"
 )
 
@@ -156,7 +156,7 @@ func getPayloadTableChart(d *schema.ResourceData) (*chart.CreateUpdateChartReque
 		return nil, err
 	}
 
-	if vizOptions := getPerSignalVizOptions(d); len(vizOptions) > 0 {
+	if vizOptions := getPerSignalVizOptions(d, false); len(vizOptions) > 0 {
 		options.PublishLabelOptions = vizOptions
 	}
 

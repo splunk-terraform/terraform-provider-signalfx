@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 const newSingleValueChartConfig = `
@@ -114,10 +114,10 @@ func TestAccCreateUpdateSingleValueChart(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_single_value_chart.mychartSVX", "show_spark_line", "false"),
 
 					resource.TestCheckResourceAttr("signalfx_single_value_chart.mychartSVX", "color_scale.#", "2"),
-					resource.TestCheckResourceAttr("signalfx_single_value_chart.mychartSVX", "color_scale.690432474.color", "cerise"),
-					resource.TestCheckResourceAttr("signalfx_single_value_chart.mychartSVX", "color_scale.690432474.gt", "40"),
-					resource.TestCheckResourceAttr("signalfx_single_value_chart.mychartSVX", "color_scale.761948173.color", "vivid_yellow"),
-					resource.TestCheckResourceAttr("signalfx_single_value_chart.mychartSVX", "color_scale.761948173.lte", "40"),
+					resource.TestCheckResourceAttr("signalfx_single_value_chart.mychartSVX", "color_scale.0.color", "cerise"),
+					resource.TestCheckResourceAttr("signalfx_single_value_chart.mychartSVX", "color_scale.0.gt", "40"),
+					resource.TestCheckResourceAttr("signalfx_single_value_chart.mychartSVX", "color_scale.1.color", "vivid_yellow"),
+					resource.TestCheckResourceAttr("signalfx_single_value_chart.mychartSVX", "color_scale.1.lte", "40"),
 				),
 			},
 			{

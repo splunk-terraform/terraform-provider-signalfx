@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -54,12 +54,12 @@ resource "signalfx_azure_integration" "azure_int" {
     subscriptions = [ "microsoft.sql/servers/elasticpools" ]
 
     resource_filter_rules {
-        filter = {
+        filter {
             source = "filter('azure_tag_service', 'payment') and (filter('azure_tag_env', 'prod-us') or filter('azure_tag_env', 'prod-eu'))"
         }
     }
     resource_filter_rules {
-        filter = {
+        filter {
             source = "filter('azure_tag_service', 'notification') and (filter('azure_tag_env', 'prod-us') or filter('azure_tag_env', 'prod-eu'))"
         }
     }

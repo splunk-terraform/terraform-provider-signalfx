@@ -5,14 +5,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"hash/crc32"
 	"log"
 	"sort"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/customdiff"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/hashcode"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/signalfx/signalfx-go/detector"
 )
 
@@ -23,92 +23,92 @@ const (
 func detectorResource() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Name of the detector",
 			},
-			"program_text": &schema.Schema{
+			"program_text": {
 				Type:         schema.TypeString,
 				Required:     true,
 				Description:  "Signalflow program text for the detector. More info at \"https://developers.signalfx.com/docs/signalflow-overview\"",
 				ValidateFunc: validation.StringLenBetween(18, 50000),
 			},
-			"description": &schema.Schema{
+			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Description of the detector",
 			},
-			"timezone": &schema.Schema{
+			"timezone": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Default:     "UTC",
 				Description: "The property value is a string that denotes the geographic region associated with the time zone, (e.g. Australia/Sydney)",
 			},
-			"max_delay": &schema.Schema{
+			"max_delay": {
 				Type:         schema.TypeInt,
 				Optional:     true,
 				Default:      0,
 				Description:  "Maximum time (in seconds) to wait for late datapoints. Max value is 900 (15m)",
 				ValidateFunc: validation.IntBetween(0, 900),
 			},
-			"min_delay": &schema.Schema{
+			"min_delay": {
 				Type:         schema.TypeInt,
 				Optional:     true,
 				Default:      0,
 				Description:  "Minimum time (in seconds) for the computation to wait even if the datapoints are arriving in a timely fashion. Max value is 900 (15m)",
 				ValidateFunc: validation.IntBetween(0, 900),
 			},
-			"show_data_markers": &schema.Schema{
+			"show_data_markers": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     true,
 				Description: "(true by default) When true, markers will be drawn for each datapoint within the visualization.",
 			},
-			"show_event_lines": &schema.Schema{
+			"show_event_lines": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Description: "(false by default) When true, vertical lines will be drawn for each triggered event within the visualization.",
 			},
-			"disable_sampling": &schema.Schema{
+			"disable_sampling": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Description: "(false by default) When false, samples a subset of the output MTS in the visualization.",
 			},
-			"time_range": &schema.Schema{
+			"time_range": {
 				Type:          schema.TypeInt,
 				Optional:      true,
 				Default:       3600,
 				Description:   "Seconds to display in the visualization. This is a rolling range from the current time. Example: 3600 = `-1h`. Defaults to 3600",
 				ConflictsWith: []string{"start_time", "end_time"},
 			},
-			"start_time": &schema.Schema{
+			"start_time": {
 				Type:          schema.TypeInt,
 				Optional:      true,
 				ConflictsWith: []string{"time_range"},
 				Description:   "Seconds since epoch. Used for visualization",
 				ValidateFunc:  validation.IntAtLeast(0),
 			},
-			"end_time": &schema.Schema{
+			"end_time": {
 				Type:          schema.TypeInt,
 				Optional:      true,
 				ConflictsWith: []string{"time_range"},
 				Description:   "Seconds since epoch. Used for visualization",
 				ValidateFunc:  validation.IntAtLeast(0),
 			},
-			"tags": &schema.Schema{
+			"tags": {
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "Tags associated with the detector",
 			},
-			"teams": &schema.Schema{
+			"teams": {
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "Team IDs to associate the detector to",
 			},
-			"rule": &schema.Schema{
+			"rule": {
 				Type:        schema.TypeSet,
 				Required:    true,
 				Description: "Set of rules used for alerting",
@@ -269,7 +269,7 @@ func timeRangeV0() *schema.Resource {
 	}
 }
 
-func timeRangeStateUpgradeV0(rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
+func timeRangeStateUpgradeV0(ctx context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
 
 	log.Printf("[DEBUG] SignalFx: Upgrading Detector State %v", rawState["time_range"])
 	if tr, ok := rawState["time_range"].(string); ok {
@@ -752,7 +752,7 @@ func resourceRuleHash(v interface{}) int {
 		}
 	}
 
-	return hashcode.String(buf.String())
+	return HashCodeString(buf.String())
 }
 
 /*
@@ -773,7 +773,7 @@ func validateSeverity(v interface{}, k string) (we []string, errors []error) {
 /*
 Validates the condition to be fulfilled for checking ProgramText.
 */
-func validateProgramTextCondition(d *schema.ResourceDiff, meta interface{}) bool {
+func validateProgramTextCondition(ctx context.Context, d *schema.ResourceDiff, meta interface{}) bool {
 
 	if _, ok := d.GetOkExists("program_text"); !ok {
 		return false
@@ -788,7 +788,7 @@ func validateProgramTextCondition(d *schema.ResourceDiff, meta interface{}) bool
 /*
 Validates the ProgramText and the list of rules.
 */
-func validateProgramText(d *schema.ResourceDiff, meta interface{}) error {
+func validateProgramText(ctx context.Context, d *schema.ResourceDiff, meta interface{}) error {
 
 	tfRules := d.Get("rule").(*schema.Set).List()
 	rulesList := make([]*detector.Rule, len(tfRules))
@@ -846,4 +846,32 @@ func validateProgramText(d *schema.ResourceDiff, meta interface{}) error {
 	}
 
 	return nil
+}
+
+// String hashes a string to a unique hashcode.
+//
+// crc32 returns a uint32, but for our use we need
+// and non negative integer. Here we cast to an integer
+// and invert it if the result is negative.
+func HashCodeString(s string) int {
+	v := int(crc32.ChecksumIEEE([]byte(s)))
+	if v >= 0 {
+		return v
+	}
+	if -v >= 0 {
+		return -v
+	}
+	// v == MinInt
+	return 0
+}
+
+// Strings hashes a list of strings to a unique hashcode.
+func HashCodeStrings(strings []string) string {
+	var buf bytes.Buffer
+
+	for _, s := range strings {
+		buf.WriteString(fmt.Sprintf("%s-", s))
+	}
+
+	return fmt.Sprintf("%d", HashCodeString(buf.String()))
 }
