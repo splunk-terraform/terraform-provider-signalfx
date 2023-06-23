@@ -184,13 +184,6 @@ func integrationAWSResource() *schema.Resource {
 				ConflictsWith: []string{"token", "key"},
 				Description:   "Used with `signalfx_aws_external_integration`. Use this property to specify the external id.",
 			},
-			"use_get_metric_data_method": &schema.Schema{
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     false,
-				Deprecated:  "This field will be removed",
-				Description: "Enables the use of Amazon's GetMetricData API. Defaults to `false`.",
-			},
 			"use_metric_streams_sync": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
@@ -317,9 +310,6 @@ func awsIntegrationAPIToTF(d *schema.ResourceData, aws *integration.AwsCloudWatc
 		return err
 	}
 	if err := d.Set("poll_rate", aws.PollRate/1000); err != nil {
-		return err
-	}
-	if err := d.Set("use_get_metric_data_method", aws.UseGetMetricDataMethod); err != nil {
 		return err
 	}
 	if err := d.Set("use_metric_streams_sync", aws.MetricStreamsSyncState == "ENABLED"); err != nil {
@@ -450,7 +440,6 @@ func getPayloadAWSIntegration(d *schema.ResourceData) (*integration.AwsCloudWatc
 		Enabled:                  d.Get("enabled").(bool),
 		EnableAwsUsage:           d.Get("enable_aws_usage").(bool),
 		ImportCloudWatch:         d.Get("import_cloud_watch").(bool),
-		UseGetMetricDataMethod:   d.Get("use_get_metric_data_method").(bool),
 		EnableCheckLargeVolume:   d.Get("enable_check_large_volume").(bool),
 		SyncCustomNamespacesOnly: d.Get("sync_custom_namespaces_only").(bool),
 	}
