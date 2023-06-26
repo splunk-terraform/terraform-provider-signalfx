@@ -360,9 +360,8 @@ func metricRulesetAPIToTF(d *schema.ResourceData, metricRuleset *metric_ruleset.
 		}
 	}
 
-	routingRule := map[string]interface{}{
-		"destination": metricRuleset.RoutingRule.Destination,
-	}
+	dest := map[string]interface{}{"destination": metricRuleset.RoutingRule.Destination}
+	routingRule := []interface{}{dest}
 	if err := d.Set("routing_rule", routingRule); err != nil {
 		return err
 	}
@@ -383,7 +382,7 @@ func getPayloadMetricRuleset(d *schema.ResourceData) (*metric_ruleset.MetricRule
 	}
 
 	if val, ok := d.GetOk("routing_rule"); ok {
-		routingRule := val.(map[string]interface{})
+		routingRule := val.(*schema.Set).List()[0].(map[string]interface{})
 		rr := getRoutingRule(routingRule)
 		cudr.RoutingRule = &rr
 	}
