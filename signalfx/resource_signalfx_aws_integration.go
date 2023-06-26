@@ -33,22 +33,10 @@ func integrationAWSResource() *schema.Resource {
 				Description: "The ID of this integration",
 				ForceNew:    true,
 			},
-			"name": &schema.Schema{
-				Type:        schema.TypeString,
-				Computed:    true,
-				Removed:     "Please specify the name in `signalfx_aws_external_integration` or `signalfx_aws_integration_token`",
-				Description: "Name of the integration",
-			},
 			"enabled": &schema.Schema{
 				Type:        schema.TypeBool,
 				Required:    true,
 				Description: "Whether the integration is enabled or not",
-			},
-			"auth_method": &schema.Schema{
-				Type:        schema.TypeString,
-				Computed:    true,
-				Removed:     "Use one of `signalfx_aws_external_integration` or `signalfx_aws_token_integration`",
-				Description: "The mechanism used to authenticate with AWS.",
 			},
 			"custom_cloudwatch_namespaces": &schema.Schema{
 				Type: schema.TypeSet,

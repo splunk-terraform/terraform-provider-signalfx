@@ -3,6 +3,7 @@
 ## 7.0.0
 IMPROVEMENTS:
 * Remove deprecated fields: `use_get_metric_data_method` in AWS integration resource and `whitelist` in GCP integration resource. [#430](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/430)
+* Remove already unused fields `name` and `auth_method` from AWS integration resource
 
 ## 6.24.0
 BUGFIXES:
