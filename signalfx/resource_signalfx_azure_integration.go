@@ -93,22 +93,14 @@ func integrationAzureResource() *schema.Resource {
 				Description: "Additional Azure resource types that you want to sync with Observability Cloud.",
 			},
 			"resource_filter_rules": {
-				Type:        schema.TypeSet,
+				Type:        schema.TypeList,
 				Optional:    true,
 				Description: "List of rules for filtering Azure resources by their tags. The source of each filter rule must be in the form filter('key', 'value'). You can join multiple filter statements using the and and or operators. Referenced keys are limited to tags and must start with the azure_tag_ prefix..",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"filter": {
-							Type:     schema.TypeSet,
+						"filter_source": {
+							Type:     schema.TypeString,
 							Required: true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"source": {
-										Type:     schema.TypeString,
-										Required: true,
-									},
-								},
-							},
 						},
 					},
 				},
@@ -256,11 +248,9 @@ func azureIntegrationAPIToTF(d *schema.ResourceData, azure *integration.AzureInt
 	if len(azure.ResourceFilterRules) > 0 {
 		var rules []map[string]interface{}
 		for _, v := range azure.ResourceFilterRules {
-			filter := map[string]string{
-				"source": v.Filter.Source,
-			}
+			filter_source := v.Filter.Source
 			rules = append(rules, map[string]interface{}{
-				"filter": filter,
+				"filter_source": filter_source,
 			})
 		}
 		if err := d.Set("resource_filter_rules", rules); err != nil {
@@ -341,11 +331,10 @@ func getPayloadAzureIntegration(d *schema.ResourceData) (*integration.AzureInteg
 		resourceFilterRulesTF := val.([]interface{})
 		resourceFilterRules := make([]integration.AzureFilterRule, len(resourceFilterRulesTF))
 		for i, rfrTF := range resourceFilterRulesTF {
-			filterTF := rfrTF.(map[string]interface{})
-			sourceTF := filterTF["filter"].(map[string]interface{})
+			ruleTF := rfrTF.(map[string]interface{})
 			resourceFilterRules[i] = integration.AzureFilterRule{
 				Filter: integration.AzureFilterExpression{
-					Source: sourceTF["source"].(string)}}
+					Source: ruleTF["filter_source"].(string)}}
 		}
 		azure.ResourceFilterRules = resourceFilterRules
 	}
