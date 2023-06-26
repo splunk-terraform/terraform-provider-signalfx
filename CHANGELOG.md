@@ -7,6 +7,12 @@ IMPROVEMENTS:
 * Remove already unused fields `name` and `auth_method` from AWS integration resource
 * Upgrade signalfx-go to add new Azure services. [#436](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/436)
 
+BREAKING CHANGES:
+* `signalfx_azure_integration` resource: The `resource_filter_rules.filter.source` field has been
+  replaced with `resource_filter_rules.filter_source`, which is the string filter source itself.
+  This change is due to the previous implementation of the `filter` and `source` fields using
+  the wrong types -- the upgrade to the v2 SDK has stricter validation that required it to be changed.
+
 ## 6.24.0
 BUGFIXES:
 * Fixes backwards incompatibility for GCP integration resource introduced in `6.21.0` [#429](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/429)
