@@ -1147,7 +1147,7 @@ var validateUnitTimeChart = validation.StringInSlice([]string{
 	"Byte",
 	"Kibibyte",
 	"Mebibyte",
-	"Gigibyte",
+	"Gibibyte",
 	"Tebibyte",
 	"Pebibyte",
 	"Exbibyte",
