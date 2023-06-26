@@ -14,6 +14,9 @@ BREAKING CHANGES:
   replaced with `resource_filter_rules.filter_source`, which is the string filter source itself.
   This change is due to the previous implementation of the `filter` and `source` fields using
   the wrong types -- the upgrade to the v2 SDK has stricter validation that required it to be changed.
+* `signalfx_metric_ruleset` resource: The `routing_rule` field has been changed to a set type that
+  requires the removal of the `=` after `routing_rule` -- the upgrade to the v2 SDK has stricter
+  validation that required it to be changed.
 
 ## 6.24.0
 BUGFIXES:
