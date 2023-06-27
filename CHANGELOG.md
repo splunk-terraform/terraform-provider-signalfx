@@ -1,6 +1,9 @@
 ## Unreleased 
 
 ## 7.0.0
+BUGFIXES:
+* Fixes issue with calculating correct height of a row when using grid or column layout in dashboard
+
 IMPROVEMENTS:
 * Remove deprecated fields: `use_get_metric_data_method` in AWS integration resource and `whitelist` in GCP integration resource. [#430](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/430)
 
