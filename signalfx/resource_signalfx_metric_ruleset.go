@@ -381,7 +381,7 @@ func getPayloadMetricRuleset(d *schema.ResourceData) (*metric_ruleset.MetricRule
 		cudr.AggregationRules = getAggregationRules(val)
 	}
 
-	if val, ok := d.GetOk("routing_rule"); ok {
+	if val, ok := d.GetOk("routing_rule"); ok && len(val.(*schema.Set).List()) > 0 {
 		routingRule := val.(*schema.Set).List()[0].(map[string]interface{})
 		rr := getRoutingRule(routingRule)
 		cudr.RoutingRule = &rr
