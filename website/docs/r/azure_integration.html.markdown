@@ -44,14 +44,10 @@ resource "signalfx_azure_integration" "azure_myteam" {
 
   # Optional
   resource_filter_rules {
-    filter = {
-      source = "filter('azure_tag_service', 'payment') and (filter('azure_tag_env', 'prod-us') or filter('azure_tag_env', 'prod-eu'))"
-    }
+    filter_source = "filter('azure_tag_service', 'payment') and (filter('azure_tag_env', 'prod-us') or filter('azure_tag_env', 'prod-eu'))"
   }
   resource_filter_rules {
-    filter = {
-      source = "filter('azure_tag_service', 'notification') and (filter('azure_tag_env', 'prod-us') or filter('azure_tag_env', 'prod-eu'))"
-    }
+    filter_source = "filter('azure_tag_service', 'notification') and (filter('azure_tag_env', 'prod-us') or filter('azure_tag_env', 'prod-eu'))"
   }
 }
 ```
@@ -71,6 +67,8 @@ resource "signalfx_azure_integration" "azure_myteam" {
 * `name` - (Required) Name of the integration.
 * `named_token` - (Optional) Name of the org token to be used for data ingestion. If not specified then default access token is used.
 * `poll_rate` - (Optional) Azure poll rate (in seconds). Value between `60` and `600`. Default: `300`.
+* `resource_filter_rules` - (Optional) Each element controls the data collected by SignalFx for the specified resource.
+  * `filter_source` - (Required) Expression that selects the data that SignalFx should sync for the resource associated with this sync rule. The expression uses the syntax defined for the SignalFlow `filter()` function; it can be any valid SignalFlow filter expression.
 * `secret_key` - (Required) Azure secret key that associates the SignalFx app in Azure with the Azure tenant ID. To learn how to get this ID, see the topic [Connect to Microsoft Azure](https://docs.signalfx.com/en/latest/integrations/azure-info.html#connect-to-azure) in the product documentation.
 * `services` - (Required) List of Microsoft Azure service names for the Azure services you want SignalFx to monitor. See the documentation for [Creating Integrations](https://developers.signalfx.com/integrations_reference.html#operation/Create%20Integration) for valida values.
 * `subscriptions` - (Required) List of Azure subscriptions that SignalFx should monitor.
