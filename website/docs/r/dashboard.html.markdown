@@ -12,6 +12,8 @@ A dashboard is a curated collection of specific charts and supports dimensional 
 
 ~> **NOTE** Since every dashboard is included in a [dashboard group](dashboard_group.html) (SignalFx collection of dashboards), you need to create that first and reference it as shown in the example.
 
+~> **NOTE** When you want to "Change or remove write permissions for a user other than yourself" regarding dashboards, use a session token of an administrator to authenticate the SignalFx provider. See [Operations that require a session token for an administrator](https://dev.splunk.com/observability/docs/administration/authtokens#Operations-that-require-a-session-token-for-an-administrator). 
+
 ## Example Usage
 
 ```tf
