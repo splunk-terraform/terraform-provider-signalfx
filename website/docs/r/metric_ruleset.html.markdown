@@ -37,7 +37,7 @@ resource "signalfx_metric_ruleset" "cpu_utilization_metric_ruleset" {
         }
     }
 
-    routing_rule = {
+    routing_rule {
         destination = "RealTime"
     }
 }

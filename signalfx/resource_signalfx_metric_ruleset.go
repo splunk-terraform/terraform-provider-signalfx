@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/signalfx/signalfx-go/metric_ruleset"
 	"log"
 	"strconv"
@@ -116,7 +116,7 @@ func metricRulesetResource() *schema.Resource {
 				},
 			},
 			"routing_rule": {
-				Type:        schema.TypeMap,
+				Type:        schema.TypeSet,
 				Required:    true,
 				Description: "Location to send the input metric",
 				Elem: &schema.Resource{
@@ -360,9 +360,8 @@ func metricRulesetAPIToTF(d *schema.ResourceData, metricRuleset *metric_ruleset.
 		}
 	}
 
-	routingRule := map[string]interface{}{
-		"destination": metricRuleset.RoutingRule.Destination,
-	}
+	dest := map[string]interface{}{"destination": metricRuleset.RoutingRule.Destination}
+	routingRule := []interface{}{dest}
 	if err := d.Set("routing_rule", routingRule); err != nil {
 		return err
 	}
@@ -382,8 +381,8 @@ func getPayloadMetricRuleset(d *schema.ResourceData) (*metric_ruleset.MetricRule
 		cudr.AggregationRules = getAggregationRules(val)
 	}
 
-	if val, ok := d.GetOk("routing_rule"); ok {
-		routingRule := val.(map[string]interface{})
+	if val, ok := d.GetOk("routing_rule"); ok && len(val.(*schema.Set).List()) > 0 {
+		routingRule := val.(*schema.Set).List()[0].(map[string]interface{})
 		rr := getRoutingRule(routingRule)
 		cudr.RoutingRule = &rr
 	}

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -54,14 +54,10 @@ resource "signalfx_azure_integration" "azure_int" {
     subscriptions = [ "microsoft.sql/servers/elasticpools" ]
 
     resource_filter_rules {
-        filter = {
-            source = "filter('azure_tag_service', 'payment') and (filter('azure_tag_env', 'prod-us') or filter('azure_tag_env', 'prod-eu'))"
-        }
+        filter_source = "filter('azure_tag_service', 'payment') and (filter('azure_tag_env', 'prod-us') or filter('azure_tag_env', 'prod-eu'))"
     }
     resource_filter_rules {
-        filter = {
-            source = "filter('azure_tag_service', 'notification') and (filter('azure_tag_env', 'prod-us') or filter('azure_tag_env', 'prod-eu'))"
-        }
+        filter_source = "filter('azure_tag_service', 'notification') and (filter('azure_tag_env', 'prod-us') or filter('azure_tag_env', 'prod-eu'))"
     }
 
 	import_azure_monitor = false
@@ -102,9 +98,9 @@ func TestAccCreateUpdateIntegrationAzure(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_azure_integration.azure_int", "additional_services.0", "foo"),
 					resource.TestCheckResourceAttr("signalfx_azure_integration.azure_int", "additional_services.1", "bar"),
 					resource.TestCheckResourceAttr("signalfx_azure_integration.azure_int", "resource_filter_rules.#", "2"),
-					resource.TestCheckResourceAttr("signalfx_azure_integration.azure_int", "resource_filter_rules.0.filter.source",
+					resource.TestCheckResourceAttr("signalfx_azure_integration.azure_int", "resource_filter_rules.0.filter_source",
 						"filter('azure_tag_service', 'payment') and (filter('azure_tag_env', 'prod-us') or filter('azure_tag_env', 'prod-eu'))"),
-					resource.TestCheckResourceAttr("signalfx_azure_integration.azure_int", "resource_filter_rules.1.filter.source",
+					resource.TestCheckResourceAttr("signalfx_azure_integration.azure_int", "resource_filter_rules.1.filter_source",
 						"filter('azure_tag_service', 'notification') and (filter('azure_tag_env', 'prod-us') or filter('azure_tag_env', 'prod-eu'))"),
 					resource.TestCheckResourceAttr("signalfx_azure_integration.azure_int", "import_azure_monitor", "false"),
 				),

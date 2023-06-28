@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 const newTableChartConfig = `
@@ -21,12 +21,11 @@ resource "signalfx_table_chart" "mychartTB" {
 	group_by = ["ClusterName"]
 
 	viz_options {
-		label = "CPU Idle"
-		display_name = "CPU Idle Display"
+		label = "CPU Total"
+		display_name = "CPU Total Display"
 		value_unit = "Bit"
 		value_prefix = "foo"
 		value_suffix = "bar"
-		color = "green"
 	}
 }
 `
@@ -35,7 +34,7 @@ const updatedTableChartConfig = `
 resource "signalfx_table_chart" "mychartTB" {
   name = "Table NEW"
   description = "Tabley Time"
-	program_text = "data('cpu.usage.total').publish(label='CPU Total')"
+	program_text = "data('cpu.usage.total').publish(label='Updated CPU Total')"
 
 	disable_sampling = true
 	timezone = "Europe/Paris"
@@ -43,12 +42,11 @@ resource "signalfx_table_chart" "mychartTB" {
 	group_by = ["ClusterName"]
 
 	viz_options {
-		label = "Updated CPU Idle"
-		display_name = "Updated CPU Idle Display"
+		label = "Updated CPU Total"
+		display_name = "Updated CPU Total Display"
 		value_unit = "Bit"
 		value_prefix = "Updated foo"
 		value_suffix = "Updated bar"
-		color = "blue"
 	}
 }
 `
@@ -72,12 +70,12 @@ func TestAccCreateUpdateTableChart(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "hide_timestamp", "true"),
 					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "group_by.#", "1"),
 					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "group_by.0", "ClusterName"),
-					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "viz_options.label", "CPU Idle"),
-					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "viz_options.display_name", "CPU Idle Display"),
-					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "viz_options.value_unit", "Bit"),
-					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "viz_options.value_prefix", "foo"),
-					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "viz_options.value_suffix", "bar"),
-					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "viz_options.color", "green"),
+					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "viz_options.#", "1"),
+					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "viz_options.0.label", "CPU Total"),
+					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "viz_options.0.display_name", "CPU Total Display"),
+					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "viz_options.0.value_unit", "Bit"),
+					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "viz_options.0.value_prefix", "foo"),
+					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "viz_options.0.value_suffix", "bar"),
 				),
 			},
 			{
@@ -93,12 +91,12 @@ func TestAccCreateUpdateTableChart(t *testing.T) {
 					testAccCheckTableChartResourceExists,
 					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "name", "Table NEW"),
 					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "description", "Tabley Time"),
-					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "viz_options.label", "Updated CPU Idle"),
-					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "viz_options.display_name", "Updated CPU Idle Display"),
-					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "viz_options.value_prefix", "Updated foo"),
-					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "viz_options.value_suffix", "Updated bar"),
-					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "viz_options.value_suffix", "Updated bar"),
-					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "viz_options.color", "blue"),
+					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "viz_options.#", "1"),
+					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "viz_options.0.label", "Updated CPU Total"),
+					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "viz_options.0.display_name", "Updated CPU Total Display"),
+					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "viz_options.0.value_prefix", "Updated foo"),
+					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "viz_options.0.value_suffix", "Updated bar"),
+					resource.TestCheckResourceAttr("signalfx_table_chart.mychartTB", "viz_options.0.value_suffix", "Updated bar"),
 				),
 			},
 		},
