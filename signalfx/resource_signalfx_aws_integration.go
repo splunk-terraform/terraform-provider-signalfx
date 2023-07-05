@@ -114,10 +114,9 @@ func integrationAWSResource() *schema.Resource {
 							Description: "Expression that selects the data that SignalFx should sync for the custom namespace associated with this sync rule. The expression uses the syntax defined for the SignalFlow `filter()` function; it can be any valid SignalFlow filter expression.",
 						},
 						"namespace": {
-							Type:         schema.TypeString,
-							Required:     true,
-							ValidateFunc: validateAwsService,
-							Description:  "An AWS namespace having custom AWS metrics that you want to sync with SignalFx. See the AWS documentation on publishing metrics for more information.",
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "An AWS namespace having custom AWS metrics that you want to sync with SignalFx. See the AWS documentation on publishing metrics for more information.",
 						},
 					},
 				},
@@ -157,8 +156,7 @@ func integrationAWSResource() *schema.Resource {
 				Type:     schema.TypeSet,
 				Optional: true,
 				Elem: &schema.Schema{
-					Type:         schema.TypeString,
-					ValidateFunc: validateAwsService,
+					Type: schema.TypeString,
 				},
 				Description: "List of AWS services that you want SignalFx to monitor. Each element is a string designating an AWS service.",
 			},
@@ -745,16 +743,5 @@ func validateFilterAction(v interface{}, k string) (we []string, errors []error)
 	if value != string(integration.EXCLUDE) && value != string(integration.INCLUDE) {
 		errors = append(errors, fmt.Errorf("%s not allowed; filter action must be one of %s or %s", value, integration.EXCLUDE, integration.INCLUDE))
 	}
-	return
-}
-
-func validateAwsService(v interface{}, k string) (we []string, errors []error) {
-	value := v.(string)
-	for key, _ := range integration.AWSServiceNames {
-		if key == value {
-			return
-		}
-	}
-	errors = append(errors, fmt.Errorf("%s not allowed; consult the documentation for a list of valid AWS Service names", value))
 	return
 }

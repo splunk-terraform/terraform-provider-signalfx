@@ -52,10 +52,6 @@ resource "signalfx_azure_integration" "azure_myteam" {
 }
 ```
 
-## Service Names
-
-~> **NOTE** You can use the data source "signalfx_azure_services" to specify all services.
-
 ## Argument Reference
 
 * `app_id` - (Required) Azure application ID for the SignalFx app. To learn how to get this ID, see the topic [Connect to Microsoft Azure](https://docs.signalfx.com/en/latest/getting-started/send-data.html#connect-to-microsoft-azure) in the product documentation.
@@ -70,7 +66,7 @@ resource "signalfx_azure_integration" "azure_myteam" {
 * `resource_filter_rules` - (Optional) List of rules for filtering Azure resources by their tags. 
   * `filter_source` - (Required) Expression that selects the data that SignalFx should sync for the resource associated with this sync rule. The expression uses the syntax defined for the SignalFlow `filter()` function. The source of each filter rule must be in the form filter('key', 'value'). You can join multiple filter statements using the and and or operators. Referenced keys are limited to tags and must start with the azure_tag_ prefix.
 * `secret_key` - (Required) Azure secret key that associates the SignalFx app in Azure with the Azure tenant ID. To learn how to get this ID, see the topic [Connect to Microsoft Azure](https://docs.signalfx.com/en/latest/integrations/azure-info.html#connect-to-azure) in the product documentation.
-* `services` - (Required) List of Microsoft Azure service names for the Azure services you want SignalFx to monitor. See the documentation for [Creating Integrations](https://developers.signalfx.com/integrations_reference.html#operation/Create%20Integration) for valida values.
+* `services` - (Required) List of Microsoft Azure service names for the Azure services you want SignalFx to monitor. Can be an empty list to import data for all supported services. See [Microsoft Azure services](https://docs.splunk.com/Observability/gdi/get-data-in/integrations.html#azure-integrations) for a list of valid values.
 * `subscriptions` - (Required) List of Azure subscriptions that SignalFx should monitor.
 * `sync_guest_os_namespaces` - (Optional) If enabled, SignalFx will try to sync additional namespaces for VMs (including VMs in scale sets): telegraf/mem, telegraf/cpu, azure.vm.windows.guest (these are namespaces recommended by Azure when enabling their Diagnostic Extension). If there are no metrics there, no new datapoints will be ingested. Defaults to false.
 * `import_azure_monitor` - (Optional) If enabled, SignalFx will sync also Azure Monitor data. If disabled, SignalFx will import only metadata. Defaults to true.

@@ -7,8 +7,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-
-	"github.com/stretchr/testify/assert"
 )
 
 const newIntegrationGCPConfig = `
@@ -139,12 +137,4 @@ func testAccIntegrationGCPDestroy(s *terraform.State) error {
 	}
 
 	return nil
-}
-
-func TestValidateGcpService(t *testing.T) {
-	_, errors := validateGcpService("appengine", "")
-	assert.Equal(t, 0, len(errors), "No errors for valid value")
-
-	_, errors = validateGcpService("InvalidService", "")
-	assert.Equal(t, 1, len(errors), "Errors for invalid value")
 }

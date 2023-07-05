@@ -37,8 +37,7 @@ func integrationGCPResource() *schema.Resource {
 				Optional:    true,
 				Description: "GCP enabled services",
 				Elem: &schema.Schema{
-					Type:         schema.TypeString,
-					ValidateFunc: validateGcpService,
+					Type: schema.TypeString,
 				},
 			},
 			"custom_metric_type_domains": &schema.Schema{
@@ -273,15 +272,4 @@ func integrationGCPDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 
 	return config.Client.DeleteGCPIntegration(context.TODO(), d.Id())
-}
-
-func validateGcpService(v interface{}, k string) (we []string, errors []error) {
-	value := v.(string)
-	for key, _ := range integration.GcpServiceNames {
-		if key == value {
-			return
-		}
-	}
-	errors = append(errors, fmt.Errorf("%s not allowed; consult the documentation for a list of valid GCP service names", value))
-	return
 }

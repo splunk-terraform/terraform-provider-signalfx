@@ -360,14 +360,6 @@ func testAccIntegrationAWSDestroy(s *terraform.State) error {
 	return nil
 }
 
-func TestValidateAwsService(t *testing.T) {
-	_, errors := validateAwsService("AWS/Logs", "")
-	assert.Equal(t, 0, len(errors), "No errors for valid value")
-
-	_, errors = validateAwsService("InvalidService", "")
-	assert.Equal(t, 1, len(errors), "Errors for invalid value")
-}
-
 func TestValidateFilterAction(t *testing.T) {
 	_, errors := validateFilterAction("Exclude", "")
 	assert.Equal(t, 0, len(errors), "No errors for valid value")

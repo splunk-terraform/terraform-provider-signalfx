@@ -82,9 +82,6 @@ func Provider() *schema.Provider {
 			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
-			"signalfx_aws_services":          dataSourceAwsServices(),
-			"signalfx_azure_services":        dataSourceAzureServices(),
-			"signalfx_gcp_services":          dataSourceGcpServices(),
 			"signalfx_dimension_values":      dataSourceDimensionValues(),
 			"signalfx_pagerduty_integration": dataSourcePagerDutyIntegration(),
 		},

@@ -7,8 +7,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-
-	"github.com/stretchr/testify/assert"
 )
 
 const newIntegrationAzureConfig = `
@@ -142,12 +140,4 @@ func testAccIntegrationAzureDestroy(s *terraform.State) error {
 	}
 
 	return nil
-}
-
-func TestValidateAzureService(t *testing.T) {
-	_, errors := validateAzureService("microsoft.batch/batchaccounts", "")
-	assert.Equal(t, 0, len(errors), "No errors for valid value")
-
-	_, errors = validateAzureService("unknown/service", "")
-	assert.Equal(t, 1, len(errors), "Errors for invalid value")
 }
