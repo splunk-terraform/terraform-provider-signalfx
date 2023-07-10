@@ -39,7 +39,7 @@ resource "signalfx_gcp_integration" "gcp_myteam" {
 * `named_token` - (Optional) Name of the org token to be used for data ingestion. If not specified then default access token is used.
 * `poll_rate` - (Optional) GCP integration poll rate (in seconds). Value between `60` and `600`. Default: `300`.
 * `project_service_keys` - (Required) GCP projects to add.
-* `services` - (Optional) GCP service metrics to import. Can be an empty list, or not included, to import 'All services'. See the documentation for [Creating Integrations](https://dev.splunk.com/observability/reference/api/integrations/latest#endpoint-create-integration) for valid values.
+* `services` - (Optional) GCP service metrics to import. Can be an empty list, or not included, to import 'All services'. See [Google Cloud Platform services](https://docs.splunk.com/Observability/gdi/get-data-in/integrations.html#google-cloud-platform-services) for a list of valid values.
 * `use_metric_source_project_for_quota` - (Optional) When this value is set to true Observability Cloud will force usage of a quota from the project where metrics are stored. For this to work the service account provided for the project needs to be provided with serviceusage.services.use permission or Service Usage Consumer role in this project. When set to false default quota settings are used.
 
 ## Attributes Reference

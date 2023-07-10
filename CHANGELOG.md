@@ -1,5 +1,13 @@
 ## Unreleased 
 
+## 8.0.0
+IMPROVEMENTS:
+* Removed AWS/Azure/GCP service (a.k.a. namespace) validation to make TF provider more flexible 
+  and rely on the Splunk Observability Cloud API validation logic.
+* Removed data resources signalfx_aws_services, signalfx_azure_services, signalfx_gcp_services 
+  as they were based on a no longer maintained lists in the signalfx-go library. Users may use 
+  empty list to specify "all services" instead or use strings to specify selected services.
+
 ## 7.0.0
 BUGFIXES:
 * Fixes issue with calculating correct height of a row when using grid or column layout in dashboard

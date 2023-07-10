@@ -79,8 +79,7 @@ func integrationAzureResource() *schema.Resource {
 				Required: true,
 				MinItems: 1,
 				Elem: &schema.Schema{
-					Type:         schema.TypeString,
-					ValidateFunc: validateAzureService,
+					Type: schema.TypeString,
 				},
 				Description: "List of Microsoft Azure service names for the Azure services you want SignalFx to monitor. SignalFx only supports certain services, and if you specify an unsupported one, you receive an API error.",
 			},
@@ -286,9 +285,9 @@ func getPayloadAzureIntegration(d *schema.ResourceData) (*integration.AzureInteg
 	if val, ok := d.GetOk("services"); ok {
 		tfServices := val.(*schema.Set).List()
 		services := make([]integration.AzureService, len(tfServices))
-		for i, s := range tfServices {
-			s := s.(string)
-			services[i] = integration.AzureServiceNames[s]
+		for i, v := range tfServices {
+			v := integration.AzureService(v.(string))
+			services[i] = v
 		}
 		azure.Services = services
 	}
@@ -390,15 +389,4 @@ func integrationAzureDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 
 	return config.Client.DeleteAzureIntegration(context.TODO(), d.Id())
-}
-
-func validateAzureService(v interface{}, k string) (we []string, errors []error) {
-	value := v.(string)
-	for key, _ := range integration.AzureServiceNames {
-		if key == value {
-			return
-		}
-	}
-	errors = append(errors, fmt.Errorf("%s not allowed; consult the documentation for a list of valid Azure service names", value))
-	return
 }
