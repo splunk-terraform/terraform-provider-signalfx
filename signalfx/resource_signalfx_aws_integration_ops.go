@@ -32,7 +32,7 @@ func IntegrationAWSRead(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	if int.ExternalId != "" {
+	if int.AuthMethod == integration.EXTERNAL_ID && int.ExternalId != "" {
 		if err := d.Set("external_id", int.ExternalId); err != nil {
 			return err
 		}
