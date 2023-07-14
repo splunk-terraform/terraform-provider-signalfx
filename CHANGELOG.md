@@ -2,11 +2,13 @@
 
 ## 8.0.0
 IMPROVEMENTS:
-* Removed AWS/Azure/GCP service (a.k.a. namespace) validation to make TF provider more flexible 
+* Remove AWS/Azure/GCP service (a.k.a. namespace) validation to make TF provider more flexible 
   and rely on the Splunk Observability Cloud API validation logic.
-* Removed data resources signalfx_aws_services, signalfx_azure_services, signalfx_gcp_services 
+* Remove data resources signalfx_aws_services, signalfx_azure_services, signalfx_gcp_services 
   as they were based on a no longer maintained lists in the signalfx-go library. Users may use 
   empty list to specify "all services" instead or use strings to specify selected services.
+* Fix external-id field handling when token based AWS integration is created in two separate
+  Terraform runs.
 
 ## 7.0.0
 BUGFIXES:
