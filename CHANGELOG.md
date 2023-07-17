@@ -9,6 +9,7 @@ IMPROVEMENTS:
   empty list to specify "all services" instead or use strings to specify selected services.
 * Fix external-id field handling when token based AWS integration is created in two separate
   Terraform runs.
+* Update documentation for `signalfx_aws_integration`
 
 ## 7.0.0
 BUGFIXES:

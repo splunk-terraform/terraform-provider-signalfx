@@ -24,7 +24,7 @@ func integrationAWSTokenResource() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Sensitive:   true,
-				Description: "The SignalFx AWS account ID to use with an AWS role.",
+				Description: "The Splunk Observability AWS account ID to use with an AWS role.",
 			},
 		},
 
