@@ -1,18 +1,18 @@
 ---
 layout: "signalfx"
-page_title: "SignalFx: signalfx_aws_external_integration"
+page_title: "Splunk Observability: signalfx_aws_external_integration"
 sidebar_current: "docs-signalfx-resource-aws-external-integration"
 description: |-
-  Allows Terraform to create and manage SignalFx AWS External ID Integrations
+  Allows Terraform to create and manage Splunk Observability AWS External ID Integrations
 ---
 
 # Resource: signalfx_aws_external_integration
 
-SignalFx AWS CloudWatch integrations using Role ARNs. For help with this integration see [Connect to AWS CloudWatch](https://docs.signalfx.com/en/latest/integrations/amazon-web-services.html#connect-to-aws).
+Splunk Observability AWS CloudWatch integrations using Role ARNs. For help with this integration see [Connect to AWS CloudWatch](https://docs.signalfx.com/en/latest/integrations/amazon-web-services.html#connect-to-aws).
 
-~> **NOTE** When managing integrations, use a session token of an administrator to authenticate the SignalFx provider. See [Operations that require a session token for an administrator](https://dev.splunk.com/observability/docs/administration/authtokens#Operations-that-require-a-session-token-for-an-administrator).
+~> **NOTE** When managing integrations, use a session token of an administrator to authenticate the Splunk Observability provider. See [Operations that require a session token for an administrator](https://dev.splunk.com/observability/docs/administration/authtokens#Operations-that-require-a-session-token-for-an-administrator).
 
-~> **WARNING** This resource implements a part of a workflow. You must use it with `signalfx_aws_integration`. Check with SignalFx support for your realm's AWS account id.
+~> **WARNING** This resource implements a part of a workflow. You must use it with `signalfx_aws_integration`. Check with Splunk Observability support for your realm's AWS account id.
 
 ## Example Usage
 
@@ -161,4 +161,4 @@ In addition to all arguments above, the following attributes are exported:
 
 * `id` - The ID of this integration, used with `signalfx_aws_integration`
 * `external_id` - The external ID to use with your IAM role and with `signalfx_aws_integration`.
-* `signalfx_aws_account` - The AWS Account ARN to use with your policies/roles, provided by SignalFx.
+* `signalfx_aws_account` - The AWS Account ARN to use with your policies/roles, provided by Splunk Observability.

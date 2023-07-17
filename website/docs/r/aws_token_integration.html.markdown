@@ -1,16 +1,16 @@
 ---
 layout: "signalfx"
-page_title: "SignalFx: signalfx_aws_token_integration"
+page_title: "Splunk Observability: signalfx_aws_token_integration"
 sidebar_current: "docs-signalfx-resource-aws-token-integration"
 description: |-
-  Allows Terraform to create and manage SignalFx AWS Security Token Integrations
+  Allows Terraform to create and manage Splunk Observability AWS Security Token Integrations
 ---
 
 # Resource: signalfx_aws_token_integration
 
-SignalFx AWS CloudWatch integrations using security tokens. For help with this integration see [Connect to AWS CloudWatch](https://docs.signalfx.com/en/latest/integrations/amazon-web-services.html#connect-to-aws).
+Splunk Observability AWS CloudWatch integrations using security tokens. For help with this integration see [Connect to AWS CloudWatch](https://docs.signalfx.com/en/latest/integrations/amazon-web-services.html#connect-to-aws).
 
-~> **NOTE** When managing integrations, use a session token of an administrator to authenticate the SignalFx provider. See [Operations that require a session token for an administrator](https://dev.splunk.com/observability/docs/administration/authtokens#Operations-that-require-a-session-token-for-an-administrator).
+~> **NOTE** When managing integrations, use a session token of an administrator to authenticate the Splunk Observability provider. See [Operations that require a session token for an administrator](https://dev.splunk.com/observability/docs/administration/authtokens#Operations-that-require-a-session-token-for-an-administrator).
 
 ~> **WARNING** This resource implements a part of a workflow. You must use it with `signalfx_aws_integration`.
 
@@ -62,4 +62,4 @@ resource "signalfx_aws_integration" "aws_myteam" {
 In addition to all arguments above, the following attributes are exported:
 
 * `id` - The ID of the integration to use with `signalfx_aws_integration`
-* `signalfx_aws_account` - The AWS Account ARN to use with your policies/roles, provided by SignalFx.
+* `signalfx_aws_account` - The AWS Account ARN to use with your policies/roles, provided by Splunk Observability.
