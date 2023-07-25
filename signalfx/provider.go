@@ -112,7 +112,6 @@ func Provider() *schema.Provider {
 			"signalfx_victor_ops_integration":   integrationVictorOpsResource(),
 			"signalfx_webhook_integration":      integrationWebhookResource(),
 			"signalfx_log_view":                 logViewResource(),
-			"signalfx_log_timeline":             logTimelineResource(),
 			"signalfx_table_chart":              tableChartResource(),
 			"signalfx_metric_ruleset":           metricRulesetResource(),
 		},
