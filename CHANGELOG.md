@@ -1,4 +1,6 @@
 ## Unreleased 
+IMPROVEMENTS:
+* Update documentation for `signalfx_gcp_integration`
 
 ## 8.0.0
 IMPROVEMENTS:
