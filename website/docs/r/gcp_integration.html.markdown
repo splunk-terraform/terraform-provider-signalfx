@@ -16,10 +16,12 @@ SignalFx GCP Integration
 
 ```tf
 resource "signalfx_gcp_integration" "gcp_myteam" {
-  name      = "GCP - My Team"
-  enabled   = true
-  poll_rate = 300
-  services  = ["compute"]
+  name                       = "GCP - My Team"
+  enabled                    = true
+  poll_rate                  = 300
+  services                   = ["compute"]
+  custom_metric_type_domains = ["istio.io"]
+  import_gcp_metrics         = true
   project_service_keys {
     project_id  = "gcp_project_id_1"
     project_key = "${file("/path/to/gcp_credentials_1.json")}"
@@ -33,7 +35,9 @@ resource "signalfx_gcp_integration" "gcp_myteam" {
 
 ## Argument Reference
 
+* `custom_metric_type_domains` - (Optional) List of additional GCP service domain names that Splunk Observability Cloud will monitor. See [Custom Metric Type Domains documentation](https://dev.splunk.com/observability/docs/integrations/gcp_integration_overview/#Custom-metric-type-domains)
 * `enabled` - (Required) Whether the integration is enabled.
+* `import_gcp_metrics` - (Optional) If enabled, Splunk Observability Cloud will sync also Google Cloud Monitoring data. If disabled, Splunk Observability Cloud will import only metadata. Defaults to true.
 * `include_list` - (Optional) [Compute Metadata Include List](https://dev.splunk.com/observability/docs/integrations/gcp_integration_overview/).
 * `name` - (Required) Name of the integration.
 * `named_token` - (Optional) Name of the org token to be used for data ingestion. If not specified then default access token is used.
