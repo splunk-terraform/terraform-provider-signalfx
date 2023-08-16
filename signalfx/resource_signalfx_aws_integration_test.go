@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -184,6 +185,24 @@ const updatedIntegrationAWSConfigLogsSync = `
   }
 `
 
+const emptyRegionsIntegrationAWSConfig = `
+  resource "signalfx_aws_external_integration" "aws_ext_myteamXX" {
+	name = "AWS TF Test (ext/new)"
+  }
+
+  resource "signalfx_aws_integration" "aws_myteamXX" {
+	enabled = false
+
+	integration_id     = signalfx_aws_external_integration.aws_ext_myteamXX.id
+	external_id        = signalfx_aws_external_integration.aws_ext_myteamXX.external_id
+	role_arn           = "arn:aws:iam::XXX:role/SignalFx-Read-Role"
+	regions            = []
+	poll_rate          = 300
+	import_cloud_watch = true
+	enable_aws_usage   = true
+  }
+`
+
 func TestAccCreateUpdateIntegrationAWS(t *testing.T) {
 	awsAccessKeyID := os.Getenv("SFX_TEST_AWS_ACCESS_KEY_ID")
 	awsSecretAccessKey := os.Getenv("SFX_TEST_AWS_SECRET_ACCESS_KEY")
@@ -290,6 +309,19 @@ func TestAccCreateDeleteIntegrationAWSMetricStream(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteam_tokXX", "name", "AWS TF Test (token/updated/ms:enabled)"),
 					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteam_tokXX", "use_metric_streams_sync", "true"),
 				),
+			},
+		},
+	})
+}
+
+func TestFailOnEmptyRegions(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config:      emptyRegionsIntegrationAWSConfig,
+				ExpectError: regexp.MustCompile("regions should be defined explicitly, see https://docs.splunk.com/Observability/gdi/get-data-in/connect/aws/aws-prereqs.html#supported-aws-regions"),
 			},
 		},
 	})

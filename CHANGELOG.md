@@ -1,5 +1,11 @@
 ## Unreleased 
 
+## 9.0.0
+BREAKING CHANGES:
+* `signalfx_aws_integration` resource: The `regions` field is now required and no longer accepts an empty value.
+  Regions must be now declared explicitly to avoid unexpected increased cost whenever a new region is enabled
+  on the AWS account [#450](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/450)
+
 ## 8.1.0
 IMPROVEMENTS:
 * Update documentation for `signalfx_gcp_integration` [#447](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/447)
