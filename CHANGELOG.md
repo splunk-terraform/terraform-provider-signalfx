@@ -1,17 +1,20 @@
 ## Unreleased 
+
+## 8.1.0
 IMPROVEMENTS:
-* Update documentation for `signalfx_gcp_integration`
+* Update documentation for `signalfx_gcp_integration` [#447](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/447)
+* Add Logs Timeline Chart resource [#448](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/448)
 
 ## 8.0.0
 IMPROVEMENTS:
 * Remove AWS/Azure/GCP service (a.k.a. namespace) validation to make TF provider more flexible 
-  and rely on the Splunk Observability Cloud API validation logic.
+  and rely on the Splunk Observability Cloud API validation logic. [#444](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/444)
 * Remove data resources signalfx_aws_services, signalfx_azure_services, signalfx_gcp_services 
   as they were based on a no longer maintained lists in the signalfx-go library. Users may use 
-  empty list to specify "all services" instead or use strings to specify selected services.
+  empty list to specify "all services" instead or use strings to specify selected services. 
 * Fix external-id field handling when token based AWS integration is created in two separate
-  Terraform runs.
-* Update documentation for `signalfx_aws_integration`
+  Terraform runs. [#445](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/445)
+* Update documentation for `signalfx_aws_integration` [#446](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/446)
 
 ## 7.0.0
 BUGFIXES:
