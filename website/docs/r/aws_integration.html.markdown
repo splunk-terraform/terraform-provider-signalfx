@@ -88,7 +88,7 @@ resource "signalfx_aws_integration" "aws_myteam" {
   * `filter_source` - (Optional) Expression that selects the data that Splunk Observability should sync for the custom namespace associated with this sync rule. The expression uses the syntax defined for the SignalFlow `filter()` function; it can be any valid SignalFlow filter expression.
   * `namespace` - (Required) An AWS custom namespace having custom AWS metrics that you want to sync with Splunk Observability. See `services` field description below for additional information.
 * `poll_rate` - (Optional) AWS poll rate (in seconds). Value between `60` and `600`. Default: `300`.
-* `regions` - (Optional) List of AWS regions that Splunk Observability should monitor.
+* `regions` - (Required) List of AWS regions that Splunk Observability should monitor. It cannot be empty.
 * `role_arn` - (Optional) Role ARN that you add to an existing AWS integration object. **Note**: Ensure you use the `arn` property of your role, not the id!
 * `services` - (Optional) List of AWS services that you want Splunk Observability to monitor. Each element is a string designating an AWS service. Can be an empty list to import data for all supported services. Conflicts with `namespace_sync_rule`. See [Amazon Web Services](https://docs.splunk.com/Observability/gdi/get-data-in/integrations.html#amazon-web-services) for a list of valid values.
 * `sync_custom_namespaces_only` - (Optional) Indicates that Splunk Observability should sync metrics and metadata from custom AWS namespaces only (see the `custom_namespace_sync_rule` above). Defaults to `false`.
