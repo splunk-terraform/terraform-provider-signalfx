@@ -1,20 +1,20 @@
 ---
 layout: "signalfx"
-page_title: "SignalFx: signalfx_resource"
+page_title: "Splunk Observability Cloud: signalfx_resource"
 sidebar_current: "docs-signalfx-resource-team"
 description: |-
-  Allows Terraform to create and manage SignalFx teams
+  Allows Terraform to create and manage teams in Splunk Observability Cloud
 ---
 
 # Resource: signalfx_team
 
-Handles management of SignalFx teams.
+Handles management of Splunk Observability Cloud teams.
 
 You can configure [team notification policies](https://docs.signalfx.com/en/latest/managing/teams/team-notifications.html) using this resource and the various `notifications_*` properties.
 
-~> **NOTE** When managing teams, use a session token of an administrator to authenticate the SignalFx provider. See [Operations that require a session token for an administrator](https://dev.splunk.com/observability/docs/administration/authtokens#Operations-that-require-a-session-token-for-an-administrator).
+~> **NOTE** When managing teams, use a session token of an administrator to authenticate the Splunk Observability Cloud provider. See [Operations that require a session token for an administrator](https://dev.splunk.com/observability/docs/administration/authtokens#Operations-that-require-a-session-token-for-an-administrator).
 
-## Example Usage
+## Example
 
 ```tf
 resource "signalfx_team" "myteam0" {
@@ -37,7 +37,7 @@ resource "signalfx_team" "myteam0" {
 }
 ```
 
-## Argument Reference
+## Arguments
 
 The following arguments are supported in the resource block:
 
@@ -51,7 +51,7 @@ The following arguments are supported in the resource block:
 * `notifications_minor` - (Optional) Where to send notifications for minor alerts
 * `notifications_warning` - (Optional) Where to send notifications for warning alerts
 
-## Attributes Reference
+## Attributes
 
 In a addition to all arguments above, the following attributes are exported:
 

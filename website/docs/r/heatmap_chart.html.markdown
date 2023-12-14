@@ -1,16 +1,16 @@
 ---
 layout: "signalfx"
-page_title: "SignalFx: signalfx_heatmap_chart"
+page_title: "Splunk Observability Cloud: signalfx_heatmap_chart"
 sidebar_current: "docs-signalfx-resource-heatmap-chart"
 description: |-
-  Allows Terraform to create and manage SignalFx heat map chart
+  Allows Terraform to create and manage heat map charts in Splunk Observability Cloud
 ---
 
 # Resource: signalfx_heatmap_chart
 
 This chart type displays the specified plot in a heatmap fashion. This format is similar to the [Infrastructure Navigator](https://signalfx-product-docs.readthedocs-hosted.com/en/latest/built-in-content/infra-nav.html#infra), with squares representing each source for the selected metric, and the color of each square representing the value range of the metric.
 
-## Example Usage
+## Example
 
 ```tf
 resource "signalfx_heatmap_chart" "myheatmapchart0" {
@@ -53,7 +53,7 @@ resource "signalfx_heatmap_chart" "myheatmapchart0" {
 ```
 
 
-## Argument Reference
+## Arguments
 
 The following arguments are supported in the resource block:
 
@@ -80,7 +80,7 @@ The following arguments are supported in the resource block:
     * `lte` - (Optional) Indicates the upper threshold inclusive value for this range.
     * `color` - (Required) The color range to use. Hex values are not supported here. Must be one of gray, blue, light_blue, navy, dark_orange, orange, dark_yellow, magenta, cerise, pink, violet, purple, gray_blue, dark_green, green, aquamarine, red, yellow, vivid_yellow, light_green, or lime_green.
 
-## Attributes Reference
+## Attributes
 
 In a addition to all arguments above, the following attributes are exported:
 

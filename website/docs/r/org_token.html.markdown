@@ -1,18 +1,18 @@
 ---
 layout: "signalfx"
-page_title: "SignalFx: signalfx_org_token"
+page_title: "Splunk Observability Cloud: signalfx_org_token"
 sidebar_current: "docs-signalfx-resource-org-token"
 description: |-
-  Allows Terraform to create and manage SignalFx text notes
+  Allows Terraform to create and manage text notes in Splunk Observability Cloud
 ---
 
 # Resource: signalfx_org_token
 
-Manage SignalFx org tokens.
+Manage Splunk Observability Cloud org tokens.
 
-~> **NOTE** When managing Org tokens, use a session token of an administrator to authenticate the SignalFx provider. See [Operations that require a session token for an administrator](https://dev.splunk.com/observability/docs/administration/authtokens#Operations-that-require-a-session-token-for-an-administrator).
+~> **NOTE** When managing Org tokens, use a session token of an administrator to authenticate the Splunk Observability Cloud provider. See [Operations that require a session token for an administrator](https://dev.splunk.com/observability/docs/administration/authtokens#Operations-that-require-a-session-token-for-an-administrator).
 
-## Example Usage
+## Example
 
 ```tf
 resource "signalfx_org_token" "myteamkey0" {
@@ -33,7 +33,7 @@ resource "signalfx_org_token" "myteamkey0" {
 }
 ```
 
-## Argument Reference
+## Arguments
 
 The following arguments are supported in the resource block:
 
@@ -52,10 +52,10 @@ The following arguments are supported in the resource block:
   * `high_res_metrics_limit` - (Optional) Max number of hi-res metrics that can be sent with this toke
   * `high_res_metrics_notification_threshold` - (Optional) Notification threshold for hi-res metrics
 * `dpm_limits` (Optional) Specify DPM-based limits for this token.
-  * `dpm_notification_threshold` - (Optional) DPM level at which SignalFx sends the notification for this token. If you don't specify a notification, SignalFx sends the generic notification.
-  * `dpm_limit` - (Required) The datapoints per minute (dpm) limit for this token. If you exceed this limit, SignalFx sends out an alert.
+  * `dpm_notification_threshold` - (Optional) DPM level at which Splunk Observability Cloud sends the notification for this token. If you don't specify a notification, Splunk Observability Cloud sends the generic notification.
+  * `dpm_limit` - (Required) The datapoints per minute (dpm) limit for this token. If you exceed this limit, Splunk Observability Cloud sends out an alert.
 
-## Attributes Reference
+## Attributes
 
 In a addition to all arguments above, the following attributes are exported:
 

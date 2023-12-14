@@ -3,7 +3,7 @@ layout: "signalfx"
 page_title: "Provider: SignalFx"
 sidebar_current: "docs-signalfx-index"
 description: |-
-  Use the Splunk Observability Cloud provider, formerly known as SignalFx provider, to interact with the resources supported by Splunk Observability Cloud. Configure the provider with the proper credentials before using it.
+  Use the Splunk Observability Cloud provider, formerly known as Splunk Observability Cloud provider, to interact with the resources supported by Splunk Observability Cloud. Configure the provider with the proper credentials before using it.
 ---
 
 # Splunk Observability Cloud provider
@@ -34,7 +34,7 @@ more sensitive ones, such as integrations, to avoid having to change tokens.
 The following example shows how to configure the Splunk Observability Cloud provider for Terraform:
 
 ```hcl
-# Configure the SignalFx provider
+# Configure the Splunk Observability Cloud provider
 provider "signalfx" {
   auth_token = "${var.signalfx_auth_token}"
   # If your organization uses a different realm

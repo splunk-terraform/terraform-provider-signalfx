@@ -1,9 +1,9 @@
 ---
 layout: "signalfx"
-page_title: "SignalFx: signalfx_list_chart"
+page_title: "Splunk Observability Cloud: signalfx_list_chart"
 sidebar_current: "docs-signalfx-resource-list-chart"
 description: |-
-  Allows Terraform to create and manage SignalFx list charts
+  Allows Terraform to create and manage list charts in Splunk Observability Cloud
 ---
 
 # Resource: signalfx_list_chart
@@ -12,7 +12,7 @@ This chart type displays current data values in a list format.
 
 The name of each value in the chart reflects the name of the plot and any associated dimensions. We recommend you click the Pencil icon and give the plot a meaningful name, as in plot B below. Otherwise, just the raw metric name will be displayed on the chart, as in plot A below.
 
-## Example Usage
+## Example
 
 ```tf
 resource "signalfx_list_chart" "mylistchart0" {
@@ -58,12 +58,12 @@ resource "signalfx_list_chart" "mylistchart0" {
 }
 ```
 
-## Argument Reference
+## Arguments
 
 The following arguments are supported in the resource block:
 
 * `name` - (Required) Name of the chart.
-* `program_text` - (Required) Signalflow program text for the chart. More info[in the SignalFx docs](https://developers.signalfx.com/signalflow_analytics/signalflow_overview.html#_signalflow_programming_language).
+* `program_text` - (Required) Signalflow program text for the chart. More info[in the Splunk Observability Cloud docs](https://developers.signalfx.com/signalflow_analytics/signalflow_overview.html#_signalflow_programming_language).
 * `description` - (Optional) Description of the chart.
 * `unit_prefix` - (Optional) Must be `"Metric"` or `"Binary`". `"Metric"` by default.
 * `color_by` - (Optional) Must be one of `"Scale"`, `"Dimension"` or `"Metric"`. `"Dimension"` by default.
@@ -83,7 +83,7 @@ The following arguments are supported in the resource block:
     * `property` The name of the property to display. Note the special values of `sf_metric` (corresponding with the API's `Plot Name`) which shows the label of the time series `publish()` and `sf_originatingMetric` (corresponding with the API's `metric (sf metric)`) that shows the [name of the metric](https://developers.signalfx.com/signalflow_analytics/functions/data_function.html#table-1-parameter-definitions) for the time series being displayed.
     * `enabled` True or False depending on if you want the property to be shown or hidden.
 * `max_precision` - (Optional) Maximum number of digits to display when rounding values up or down.
-* `secondary_visualization` - (Optional) The type of secondary visualization. Can be `None`, `Radial`, `Linear`, or `Sparkline`. If unset, the SignalFx default is used (`Sparkline`).
+* `secondary_visualization` - (Optional) The type of secondary visualization. Can be `None`, `Radial`, `Linear`, or `Sparkline`. If unset, the Splunk Observability Cloud default is used (`Sparkline`).
 * `color_scale` - (Optional. `color_by` must be `"Scale"`) Single color range including both the color to display for that range and the borders of the range. Example: `[{ gt = 60, color = "blue" }, { lte = 60, color = "yellow" }]`. Look at this [link](https://docs.signalfx.com/en/latest/charts/chart-options-tab.html).
     * `gt` - (Optional) Indicates the lower threshold non-inclusive value for this range.
     * `gte` - (Optional) Indicates the lower threshold inclusive value for this range.
@@ -95,7 +95,7 @@ The following arguments are supported in the resource block:
 * `start_time` - (Optional) Seconds since epoch. Used for visualization. Conflicts with `time_range`.
 * `end_time` - (Optional) Seconds since epoch. Used for visualization. Conflicts with `time_range`.
 
-## Attributes Reference
+## Attributes
 
 In a addition to all arguments above, the following attributes are exported:
 

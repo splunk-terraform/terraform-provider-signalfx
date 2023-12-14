@@ -42,19 +42,19 @@ func Provider() *schema.Provider {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("SFX_AUTH_TOKEN", ""),
-				Description: "SignalFx auth token",
+				Description: "Splunk Observability Cloud auth token",
 			},
 			"api_url": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("SFX_API_URL", "https://api.signalfx.com"),
-				Description: "API URL for your SignalFx org, may include a realm",
+				Description: "API URL for your Splunk Observability Cloud org, may include a realm",
 			},
 			"custom_app_url": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("SFX_CUSTOM_APP_URL", "https://app.signalfx.com"),
-				Description: "Application URL for your SignalFx org, often customized for organizations using SSO",
+				Description: "Application URL for your Splunk Observability Cloud org, often customized for organizations using SSO",
 			},
 			"timeout_seconds": {
 				Type:        schema.TypeInt,

@@ -1,6 +1,6 @@
 ---
 layout: "signalfx"
-page_title: "SignalFx: signalfx_dimension_values"
+page_title: "Splunk Observability Cloud: signalfx_dimension_values"
 sidebar_current: "docs-signalfx-signalfx-dimension-values"
 description: |-
   Provides a list of dimension values given a query

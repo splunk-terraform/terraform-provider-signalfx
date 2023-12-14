@@ -3,7 +3,7 @@ layout: "signalfx"
 page_title: "Observability Cloud: signalfx_service_now_integration"
 sidebar_current: "docs-signalfx-resource-service-now-integration"
 description: |-
-Allows Terraform to create and manage Observability Cloud ServiceNow Integrations
+Allows Terraform to create and manage ServiceNow Integrations for Splunk Observability Cloud
 ---
 
 # Resource: signalfx_service_now_integration
@@ -12,7 +12,7 @@ Observability Cloud ServiceNow integrations. For help with this integration see 
 
 ~> **NOTE** When managing integrations, use a session token of an administrator to authenticate the Observability Cloud provider. See [Operations that require a session token for an administrator](https://dev.splunk.com/observability/docs/administration/authtokens#Operations-that-require-a-session-token-for-an-administrator). Otherwise you'll receive a 4xx error.
 
-## Example Usage
+## Example
 
 ```tf
 resource "signalfx_service_now_integration" "service_now_myteam" {
@@ -31,7 +31,7 @@ resource "signalfx_service_now_integration" "service_now_myteam" {
 ```
 
 
-## Argument Reference
+## Arguments
 
 * `name` - (Required) Name of the integration.
 * `enabled` - (Required) Whether the integration is enabled.
@@ -42,7 +42,7 @@ resource "signalfx_service_now_integration" "service_now_myteam" {
 * `alert_triggered_payload_template` - (Optional) A template that Observability Cloud uses to create the ServiceNow POST JSON payloads when an alert sends a notification to ServiceNow. Use this optional field to send the values of Observability Cloud alert properties to specific fields in ServiceNow. See [API reference](https://dev.splunk.com/observability/reference/api/integrations/latest) for details.
 * `alert_resolved_payload_template` - (Optional) A template that Observability Cloud uses to create the ServiceNow PUT JSON payloads when an alert is cleared in ServiceNow. Use this optional field to send the values of Observability Cloud alert properties to specific fields in ServiceNow. See [API reference](https://dev.splunk.com/observability/reference/api/integrations/latest) for details.
 
-## Attributes Reference
+## Attributes
 
 In a addition to all arguments above, the following attributes are exported:
 

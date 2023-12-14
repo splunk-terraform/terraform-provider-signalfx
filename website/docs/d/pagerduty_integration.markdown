@@ -1,6 +1,6 @@
 ---
 layout: "signalfx"
-page_title: "SignalFx: signalfx_pagerduty_integration"
+page_title: "Splunk Observability Cloud: signalfx_pagerduty_integration"
 sidebar_current: "docs-signalfx-signalfx-pagerduty-integration"
 description: |-
   Provides information on an existing PagerDuty integration.

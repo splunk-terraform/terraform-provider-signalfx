@@ -1,20 +1,20 @@
 ---
 layout: "signalfx"
-page_title: "SignalFx: signalfx_detector"
+page_title: "Splunk Observability Cloud: signalfx_detector"
 sidebar_current: "docs-signalfx-resource-dashboard"
 description: |-
-  Allows Terraform to create and manage SignalFx Dashboards
+  Allows Terraform to create and manage dashboards in Splunk Observability Cloud
 ---
 
 # Resource: signalfx_detector
 
-Provides a SignalFx detector resource. This can be used to create and manage detectors.
+Provides a Splunk Observability Cloud detector resource. This can be used to create and manage detectors.
 
-~> **NOTE** If you're interested in using SignalFx detector features such as Historical Anomaly, Resource Running Out, or others then consider building them in the UI first then using the "Show SignalFlow" feature to extract the value for `program_text`. You may also consult the [documentation for detector functions in signalflow-library](https://github.com/signalfx/signalflow-library/tree/master/library/signalfx/detectors).
+~> **NOTE** If you're interested in using Splunk Observability Cloud detector features such as Historical Anomaly, Resource Running Out, or others then consider building them in the UI first then using the "Show SignalFlow" feature to extract the value for `program_text`. You may also consult the [documentation for detector functions in signalflow-library](https://github.com/signalfx/signalflow-library/tree/master/library/signalfx/detectors).
 
-~> **NOTE** When you want to "Change or remove write permissions for a user other than yourself" regarding detectors, use a session token of an administrator to authenticate the SignalFx provider. See [Operations that require a session token for an administrator](https://dev.splunk.com/observability/docs/administration/authtokens#Operations-that-require-a-session-token-for-an-administrator). 
+~> **NOTE** When you want to "Change or remove write permissions for a user other than yourself" regarding detectors, use a session token of an administrator to authenticate the Splunk Observability Cloud provider. See [Operations that require a session token for an administrator](https://dev.splunk.com/observability/docs/administration/authtokens#Operations-that-require-a-session-token-for-an-administrator). 
 
-## Example Usage
+## Example
 
 ```tf
 resource "signalfx_detector" "application_delay" {
@@ -59,13 +59,13 @@ variable "clusters" {
 
 ## Notification Format
 
-As SignalFx supports different notification mechanisms a comma-delimited string is used to provide inputs. If you'd like to specify multiple notifications, then each should be a member in the list, like so:
+As Splunk Observability Cloud supports different notification mechanisms a comma-delimited string is used to provide inputs. If you'd like to specify multiple notifications, then each should be a member in the list, like so:
 
 ```
 notifications = ["Email,foo-alerts@example.com", "Slack,credentialId,channel"]
 ```
 
-This will likely be changed in a future iteration of the provider. See [SignalFx Docs](https://developers.signalfx.com/detectors_reference.html#operation/Create%20Single%20Detector) for more information. For now, here are some example of how to configure each notification type:
+This will likely be changed in a future iteration of the provider. See [Splunk Observability Cloud Docs](https://developers.signalfx.com/detectors_reference.html#operation/Create%20Single%20Detector) for more information. For now, here are some example of how to configure each notification type:
 
 ### Email
 
@@ -139,10 +139,10 @@ or configure one inline:
 notifications = ["Webhook,,secret,url"]
 ```
 
-## Argument Reference
+## Arguments
 
 * `name` - (Required) Name of the detector.
-* `program_text` - (Required) Signalflow program text for the detector. More info [in the SignalFx docs](https://developers.signalfx.com/signalflow_analytics/signalflow_overview.html#_signalflow_programming_language).
+* `program_text` - (Required) Signalflow program text for the detector. More info [in the Splunk Observability Cloud docs](https://developers.signalfx.com/signalflow_analytics/signalflow_overview.html#_signalflow_programming_language).
 * `description` - (Optional) Description of the detector.
 * `authorized_writer_teams` - (Optional) Team IDs that have write access to this detector. Remember to use an admin's token if using this feature and to include that admin's team id (or user id in `authorized_writer_users`).
 * `authorized_writer_users` - (Optional) User IDs that have write access to this detector. Remember to use an admin's token if using this feature and to include that admin's user id (or team id in `authorized_writer_teams`).
@@ -177,13 +177,13 @@ notifications = ["Webhook,,secret,url"]
 
 It is highly recommended that you use both `max_delay` in your detector configuration and an `extrapolation` policy in your program text to reduce false positives/negatives.
 
-`max_delay` allows SignalFx to continue with computation if there is a lag in receiving data points.
+`max_delay` allows Splunk Observability Cloud to continue with computation if there is a lag in receiving data points.
 
 `extrapolation` allows you to specify how to handle missing data. An extrapolation policy can be added to individual signals by updating the data block in your `program_text`.
 
 See [Delayed Datapoints](https://signalfx-product-docs.readthedocs-hosted.com/en/latest/charts/chart-builder.html#delayed-datapoints) for more info.
 
-## Attributes Reference
+## Attributes
 
 In a addition to all arguments above, the following attributes are exported:
 

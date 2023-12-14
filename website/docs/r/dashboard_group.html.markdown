@@ -1,20 +1,20 @@
 ---
 layout: "signalfx"
-page_title: "SignalFx: signalfx_dashboard_group"
+page_title: "Splunk Observability Cloud: signalfx_dashboard_group"
 sidebar_current: "docs-signalfx-resource-dashboard-group"
 description: |-
-  Allows Terraform to create and manage SignalFx Dashboard Groups
+  Allows Terraform to create and manage sashboard groups in Splunk Observability Cloud
 ---
 
 # Resource: signalfx_dashboard_group
 
-In the SignalFx web UI, a [dashboard group](https://developers.signalfx.com/dashboard_groups_reference.html) is a collection of dashboards.
+In the Splunk Observability Cloud web UI, a [dashboard group](https://developers.signalfx.com/dashboard_groups_reference.html) is a collection of dashboards.
 
 ~> **NOTE** Dashboard groups cannot be accessed directly, but just via a dashboard contained in them. This is the reason why make show won't show any of yours dashboard groups.
 
-~> **NOTE** When you want to "Change or remove write permissions for a user other than yourself" regarding dashboard groups, use a session token of an administrator to authenticate the SignalFx provider. See [Operations that require a session token for an administrator](https://dev.splunk.com/observability/docs/administration/authtokens#Operations-that-require-a-session-token-for-an-administrator). 
+~> **NOTE** When you want to "Change or remove write permissions for a user other than yourself" regarding dashboard groups, use a session token of an administrator to authenticate the Splunk Observability Cloud provider. See [Operations that require a session token for an administrator](https://dev.splunk.com/observability/docs/administration/authtokens#Operations-that-require-a-session-token-for-an-administrator). 
 
-## Example Usage
+## Example
 
 ```tf
 resource "signalfx_dashboard_group" "mydashboardgroup0" {
@@ -29,7 +29,7 @@ resource "signalfx_dashboard_group" "mydashboardgroup0" {
 }
 ```
 
-## Example Usage with Permissions
+## Example with Permissions
 
 ```tf
 resource "signalfx_dashboard_group" "mydashboardgroup_withpermissions" {
@@ -51,7 +51,7 @@ resource "signalfx_dashboard_group" "mydashboardgroup_withpermissions" {
 }
 ```
 
-## Example Usage With Mirrored Dashboards
+## Example With Mirrored Dashboards
 
 ```tf
 resource "signalfx_dashboard_group" "mydashboardgroup_withmirrors" {
@@ -80,7 +80,7 @@ resource "signalfx_dashboard_group" "mydashboardgroup_withmirrors" {
 }
 ```
 
-## Argument Reference
+## Arguments
 
 The following arguments are supported in the resource block:
 
@@ -106,7 +106,7 @@ The following arguments are supported in the resource block:
     * `values` - (Optional) (Optional) List of of strings (which will be treated as an OR filter on the property).
     * `values_suggested` - (Optional) A list of strings of suggested values for this variable; these suggestions will receive priority when values are autosuggested for this variable.
 
-## Attributes Reference
+## Attributes
 
 In a addition to all arguments above, the following attributes are exported:
 
