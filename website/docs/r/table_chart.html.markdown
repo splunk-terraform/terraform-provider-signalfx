@@ -8,7 +8,7 @@ description: |-
 
 # Resource: signalfx_table_chart
 
-This special type of chart displays a Data Table. This Table can be grouped by a Dimension.
+This special type of chart displays a data table. This table can be grouped by a dimension.
 
 ## Example
 

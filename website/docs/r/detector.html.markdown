@@ -10,9 +10,9 @@ description: |-
 
 Provides a Splunk Observability Cloud detector resource. This can be used to create and manage detectors.
 
-~> **NOTE** If you're interested in using Splunk Observability Cloud detector features such as Historical Anomaly, Resource Running Out, or others then consider building them in the UI first then using the "Show SignalFlow" feature to extract the value for `program_text`. You may also consult the [documentation for detector functions in signalflow-library](https://github.com/signalfx/signalflow-library/tree/master/library/signalfx/detectors).
+If you're interested in using Splunk Observability Cloud detector features such as Historical Anomaly, Resource Running Out, or others, consider building them in the UI first and then use the "Show SignalFlow" feature to extract the value for `program_text`. You can also see the [documentation for detector functions in signalflow-library](https://github.com/signalfx/signalflow-library/tree/master/library/signalfx/detectors).
 
-~> **NOTE** When you want to "Change or remove write permissions for a user other than yourself" regarding detectors, use a session token of an administrator to authenticate the Splunk Observability Cloud provider. See [Operations that require a session token for an administrator](https://dev.splunk.com/observability/docs/administration/authtokens#Operations-that-require-a-session-token-for-an-administrator). 
+~> **NOTE** When you want to change or remove write permissions for a user other than yourself regarding detectors, use a session token of an administrator to authenticate the Splunk Observability Cloud provider. See [Operations that require a session token for an administrator](https://dev.splunk.com/observability/docs/administration/authtokens#Operations-that-require-a-session-token-for-an-administrator). 
 
 ## Example
 
@@ -57,15 +57,17 @@ variable "clusters" {
 }
 ```
 
-## Notification Format
+## Notification format
 
-As Splunk Observability Cloud supports different notification mechanisms a comma-delimited string is used to provide inputs. If you'd like to specify multiple notifications, then each should be a member in the list, like so:
+As Splunk Observability Cloud supports different notification mechanisms, use a comma-delimited string to provide inputs. If you want to specify multiple notifications, each must be a member in the list, like so:
 
 ```
 notifications = ["Email,foo-alerts@example.com", "Slack,credentialId,channel"]
 ```
 
-This will likely be changed in a future iteration of the provider. See [Splunk Observability Cloud Docs](https://developers.signalfx.com/detectors_reference.html#operation/Create%20Single%20Detector) for more information. For now, here are some example of how to configure each notification type:
+See [Splunk Observability Cloud Docs](https://dev.splunk.com/observability/reference/api/detectors/latest) for more information.
+
+Here are some example of how to configure each notification type:
 
 ### Email
 
@@ -75,15 +77,15 @@ notifications = ["Email,foo-alerts@bar.com"]
 
 ### Jira
 
-Note that the `credentialId` is the SignalFx-provided ID shown after setting up your Jira integration. (See also `signalfx_jira_integration`.)
+Note that the `credentialId` is the Splunk-provided ID shown after setting up your Jira integration. See also `signalfx_jira_integration`.
 
 ```
 notifications = ["Jira,credentialId"]
 ```
 
-### Opsgenie
+### OpsGenie
 
-Note that the `credentialId` is the SignalFx-provided ID shown after setting up your Opsgenie integration. `Team` here is hardcoded as the `responderType` as that is the only acceptable type as per the API docs.
+Note that the `credentialId` is the Splunk-provided ID shown after setting up your Opsgenie integration. `Team` here is hardcoded as the `responderType` as that is the only acceptable type as per the API docs.
 
 ```
 notifications = ["Opsgenie,credentialId,responderName,responderId,Team"]
@@ -97,7 +99,7 @@ notifications = ["PagerDuty,credentialId"]
 
 ### Slack
 
-Exclude the `#` on the channel name!
+Exclude the `#` on the channel name:
 
 ```
 notifications = ["Slack,credentialId,channel"]
@@ -119,22 +121,23 @@ Sends an email to every member of a team.
 notifications = ["TeamEmail,teamId"]
 ```
 
-### VictorOps
+### Splunk On-Call
 
 ```
 notifications = ["VictorOps,credentialId,routingKey"]
 ```
 
-### Webhook
+### Webhooks
 
-~> **NOTE** You need to include all the commas even if you only use a credential id below.
+You need to include all the commas even if you only use a credential id.
 
 You can either configure a Webhook to use an existing integration's credential id:
 ```
 notifications = ["Webhook,credentialId,,"]
 ```
 
-or configure one inline:
+Or configure one inline:
+
 ```
 notifications = ["Webhook,,secret,url"]
 ```
@@ -142,11 +145,11 @@ notifications = ["Webhook,,secret,url"]
 ## Arguments
 
 * `name` - (Required) Name of the detector.
-* `program_text` - (Required) Signalflow program text for the detector. More info [in the Splunk Observability Cloud docs](https://developers.signalfx.com/signalflow_analytics/signalflow_overview.html#_signalflow_programming_language).
+* `program_text` - (Required) Signalflow program text for the detector. More info [in the Splunk Observability Cloud docs](https://dev.splunk.com/observability/docs/signalflow/).
 * `description` - (Optional) Description of the detector.
 * `authorized_writer_teams` - (Optional) Team IDs that have write access to this detector. Remember to use an admin's token if using this feature and to include that admin's team id (or user id in `authorized_writer_users`).
 * `authorized_writer_users` - (Optional) User IDs that have write access to this detector. Remember to use an admin's token if using this feature and to include that admin's user id (or team id in `authorized_writer_teams`).
-* `max_delay` - (Optional) How long (in seconds) to wait for late datapoints. See [Delayed Datapoints](https://signalfx-product-docs.readthedocs-hosted.com/en/latest/charts/chart-builder.html#delayed-datapoints) for more info. Max value is `900` seconds (15 minutes). `Auto` (as little as possible) by default.
+* `max_delay` - (Optional) How long (in seconds) to wait for late datapoints. See [Delayed Datapoints](https://docs.splunk.com/observability/en/data-visualization/charts/chart-builder.html#delayed-datapoints) for more info. Max value is `900` seconds (15 minutes). `Auto` (as little as possible) by default.
 * `min_delay` - (Optional) How long (in seconds) to wait even if the datapoints are arriving in a timely fashion. Max value is 900 (15m).
 * `show_data_markers` - (Optional) When `true`, markers will be drawn for each datapoint within the visualization. `true` by default.
 * `show_event_lines` - (Optional) When `true`, the visualization will display a vertical line for each event trigger. `false` by default.
@@ -161,9 +164,9 @@ notifications = ["Webhook,,secret,url"]
     * `severity` - (Required) The severity of the rule, must be one of: `"Critical"`, `"Major"`, `"Minor"`, `"Warning"`, `"Info"`.
     * `description` - (Optional) Description for the rule. Displays as the alert condition in the Alert Rules tab of the detector editor in the web UI.
     * `disabled` - (Optional) When true, notifications and events will not be generated for the detect label. `false` by default.
-    * `notifications` - (Optional) List of strings specifying where notifications will be sent when an incident occurs. See [Create A Single Detector](https://developers.signalfx.com/detectors_reference.html#operation/Create%20Single%20Detector) for more info.
-    * `parameterized_body` - (Optional) Custom notification message body when an alert is triggered. See [Set Up Detectors to Trigger Alerts](https://docs.signalfx.com/en/latest/detect-alert/set-up-detectors.html#about-detectors#alert-settings) for more info.
-    * `parameterized_subject` - (Optional) Custom notification message subject when an alert is triggered. See [Set Up Detectors to Trigger Alerts](https://docs.signalfx.com/en/latest/detect-alert/set-up-detectors.html#about-detectors#alert-settings) for more info.
+    * `notifications` - (Optional) List of strings specifying where notifications will be sent when an incident occurs. See [Create A Single Detector](https://dev.splunk.com/observability/reference/api/detectors/latest) for more info.
+    * `parameterized_body` - (Optional) Custom notification message body when an alert is triggered. See [Set Up Detectors to Trigger Alerts](https://docs.splunk.com/observability/en/alerts-detectors-notifications/create-detectors-for-alerts.html) for more info.
+    * `parameterized_subject` - (Optional) Custom notification message subject when an alert is triggered. See [Set Up Detectors to Trigger Alerts](https://docs.splunk.com/observability/en/alerts-detectors-notifications/create-detectors-for-alerts.html) for more info.
     * `runbook_url` - (Optional) URL of page to consult when an alert is triggered. This can be used with custom notification messages.
     * `tip` - (Optional) Plain text suggested first course of action, such as a command line to execute. This can be used with custom notification messages.
 * `viz_options` - (Optional) Plot-level customization options, associated with a publish statement.
@@ -175,13 +178,12 @@ notifications = ["Webhook,,secret,url"]
 
 **Notes**
 
-It is highly recommended that you use both `max_delay` in your detector configuration and an `extrapolation` policy in your program text to reduce false positives/negatives.
+Use both `max_delay` in your detector configuration and an `extrapolation` policy in your program text to reduce false positives and false negatives.
 
-`max_delay` allows Splunk Observability Cloud to continue with computation if there is a lag in receiving data points.
+- `max_delay` allows Splunk Observability Cloud to continue with computation if there is a lag in receiving data points.
+- `extrapolation` allows you to specify how to handle missing data. An extrapolation policy can be added to individual signals by updating the data block in your `program_text`.
 
-`extrapolation` allows you to specify how to handle missing data. An extrapolation policy can be added to individual signals by updating the data block in your `program_text`.
-
-See [Delayed Datapoints](https://signalfx-product-docs.readthedocs-hosted.com/en/latest/charts/chart-builder.html#delayed-datapoints) for more info.
+See [Delayed Datapoints](https://docs.splunk.com/observability/en/data-visualization/charts/chart-builder.html#delayed-datapoints) for more info.
 
 ## Attributes
 

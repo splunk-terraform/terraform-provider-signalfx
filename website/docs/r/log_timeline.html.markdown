@@ -8,7 +8,8 @@ description: |-
 
 # Resource: signalfx_log_timeline
 
-You can add logs data to your Observability Cloud dashboards without turning your logs into metrics first. 
+You can add logs data to your Observability Cloud dashboards without turning your logs into metrics first.
+
 A log timeline chart displays timeline visualization in a dashboard and shows you in detail what is happening and why.
 
 ## Example

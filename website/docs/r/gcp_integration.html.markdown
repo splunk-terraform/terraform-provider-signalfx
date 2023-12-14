@@ -8,7 +8,7 @@ description: |-
 
 # Resource: signalfx_gcp_integration
 
-Splunk Observability Cloud GCP Integration
+Splunk Observability Cloud GCP Integration.
 
 ~> **NOTE** When managing integrations, use a session token of an administrator to authenticate the Splunk Observability Cloud servability Cloud provider. See [Operations that require a session token for an administrator](https://dev.splunk.com/observability/docs/administration/authtokens#Operations-that-require-a-session-token-for-an-administrator). Otherwise you'll receive a 4xx error.
 

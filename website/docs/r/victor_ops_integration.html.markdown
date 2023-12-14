@@ -16,7 +16,7 @@ Splunk On-Call integrations.
 
 ```tf
 resource "signalfx_victor_ops_integration" "vioctor_ops_myteam" {
-  name     = "VictorOps - My Team"
+  name     = "Splunk On-Call - My Team"
   enabled  = true
   post_url = "https://alert.victorops.com/integrations/generic/1234/alert/$key/$routing_key"
 }
@@ -26,7 +26,7 @@ resource "signalfx_victor_ops_integration" "vioctor_ops_myteam" {
 
 * `name` - (Required) Name of the integration.
 * `enabled` - (Required) Whether the integration is enabled.
-* `post_url` - (Optional) Victor Ops REST API URL.
+* `post_url` - (Optional) Splunk On-Call REST API URL.
 
 ## Attributes
 

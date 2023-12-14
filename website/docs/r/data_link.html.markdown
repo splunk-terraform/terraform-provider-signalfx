@@ -52,9 +52,9 @@ The following arguments are supported in the resource block:
 * `context_dashboard_id` - (Optional) If provided, scopes this data link to the supplied dashboard id. If omitted then the link will be global.
 * `target_external_url` - (Optional) Link to an external URL
   * `name` (Required) User-assigned target name. Use this value to differentiate between the link targets for a data link object.
-  * `url`- (Required) URL string for a Splunk instance or external system data link target. [See the supported template variables](https://developers.signalfx.com/administration/data_links_overview.html#_external_link_targets).
-  * `time_format` - (Optional) [Designates the format](https://developers.signalfx.com/administration/data_links_overview.html#_minimum_time_window) of `minimum_time_window` in the same data link target object. Must be one of `"ISO8601"`, `"EpochSeconds"` or `"Epoch"` (which is milliseconds). Defaults to `"ISO8601"`.
-  * `minimum_time_window` - (Optional) The [minimum time window](https://developers.signalfx.com/administration/data_links_overview.html#_minimum_time_window) for a search sent to an external site. Defaults to `6000`
+  * `url`- (Required) URL string for a Splunk instance or external system data link target. [See the supported template variables](https://dev.splunk.com/observability/docs/administration/datalinks/).
+  * `time_format` - (Optional) [Designates the format](https://dev.splunk.com/observability/docs/administration/datalinks/) of `minimum_time_window` in the same data link target object. Must be one of `"ISO8601"`, `"EpochSeconds"` or `"Epoch"` (which is milliseconds). Defaults to `"ISO8601"`.
+  * `minimum_time_window` - (Optional) The [minimum time window](https://dev.splunk.com/observability/docs/administration/datalinks/) for a search sent to an external site. Defaults to `6000`
   * `property_key_mapping` - Describes the relationship between Splunk Observability Cloud metadata keys and external system properties when the key names are different.
 * `target_signalfx_dashboard` - (Optional) Link to a Splunk Observability Cloud dashboard
   * `name` (Required) User-assigned target name. Use this value to differentiate between the link targets for a data link object.

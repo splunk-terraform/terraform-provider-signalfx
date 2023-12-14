@@ -39,7 +39,7 @@ resource "signalfx_single_value_chart" "mysvchart0" {
 The following arguments are supported in the resource block:
 
 * `name` - (Required) Name of the chart.
-* `program_text` - (Required) Signalflow program text for the chart. More info [in the Splunk Observability Cloud docs](https://developers.signalfx.com/signalflow_analytics/signalflow_overview.html#_signalflow_programming_language).
+* `program_text` - (Required) Signalflow program text for the chart. More info [in the Splunk Observability Cloud docs](https://dev.splunk.com/observability/docs/signalflow/).
 * `description` - (Optional) Description of the chart.
 * `color_by` - (Optional) Must be `"Dimension"`, `"Scale"` or `"Metric"`. `"Dimension"` by default.
 * `color_scale` - (Optional. `color_by` must be `"Scale"`) Single color range including both the color to display for that range and the borders of the range. Example: `[{ gt = 60, color = "blue" }, { lte = 60, color = "yellow" }]`. Look at this [link](https://docs.signalfx.com/en/latest/charts/chart-options-tab.html).

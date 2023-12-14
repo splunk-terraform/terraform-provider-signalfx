@@ -8,7 +8,9 @@ description: |-
 
 # Resource: signalfx_log_view
 
-You can add logs data to your Observability Cloud dashboards without turning your logs into metrics first. A log view displays log lines in a table form in a dashboard and shows you in detail what is happening and why.
+You can add logs data to your Observability Cloud dashboards without turning your logs into metrics first.
+
+A log view displays log lines in a table form in a dashboard and shows you in detail what is happening and why.
 
 ## Example
 

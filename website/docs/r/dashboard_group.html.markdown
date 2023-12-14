@@ -10,9 +10,9 @@ description: |-
 
 In the Splunk Observability Cloud web UI, a [dashboard group](https://developers.signalfx.com/dashboard_groups_reference.html) is a collection of dashboards.
 
-~> **NOTE** Dashboard groups cannot be accessed directly, but just via a dashboard contained in them. This is the reason why make show won't show any of yours dashboard groups.
+Dashboard groups cannot be accessed directly. You can access them through a dashboard within a group.
 
-~> **NOTE** When you want to "Change or remove write permissions for a user other than yourself" regarding dashboard groups, use a session token of an administrator to authenticate the Splunk Observability Cloud provider. See [Operations that require a session token for an administrator](https://dev.splunk.com/observability/docs/administration/authtokens#Operations-that-require-a-session-token-for-an-administrator). 
+~> **NOTE** When you want to change or remove write permissions for a user other than yourself regarding dashboard groups, use a session token of an administrator to authenticate the Splunk Observability Cloud provider. See [Operations that require a session token for an administrator](https://dev.splunk.com/observability/docs/administration/authtokens#Operations-that-require-a-session-token-for-an-administrator). 
 
 ## Example
 
@@ -29,7 +29,7 @@ resource "signalfx_dashboard_group" "mydashboardgroup0" {
 }
 ```
 
-## Example with Permissions
+## Example with permissions
 
 ```tf
 resource "signalfx_dashboard_group" "mydashboardgroup_withpermissions" {
@@ -51,7 +51,7 @@ resource "signalfx_dashboard_group" "mydashboardgroup_withpermissions" {
 }
 ```
 
-## Example With Mirrored Dashboards
+## Example With mirrored dashboards
 
 ```tf
 resource "signalfx_dashboard_group" "mydashboardgroup_withmirrors" {
@@ -93,7 +93,7 @@ The following arguments are supported in the resource block:
   * `principal_id` - (Required) ID of the user, team, or organization for which you're granting permissions.
   * `principal_type` - (Required) Clarify whether this permission configuration is for a user, a team, or an organization. Value can be one of "USER", "TEAM", or "ORG".
   * `actions` - (Required) Action the user, team, or organization can take with the dashboard group. List of values (value can be "READ" or "WRITE").
-* `dashboard` - (Optional) [Mirrored dashboards](https://docs.signalfx.com/en/latest/dashboards/dashboard-mirrors.html) in this dashboard group. **Note:** This feature is not present in all accounts. Please contact support if you are unsure.
+* `dashboard` - (Optional) [Mirrored dashboards](https://docs.splunk.com/observability/en/data-visualization/dashboards/dashboard-share-clone-mirror.html#mirror-dashboard) in this dashboard group. **Note:** This feature is not present in all accounts. Please contact support if you are unsure.
   * `dashboard_id` - (Required) The dashboard id to mirror
   * `name_override` - (Optional) The name that will override the original dashboards's name.
   * `description_override` - (Optional) The description that will override the original dashboards's description.

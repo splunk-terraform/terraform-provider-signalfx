@@ -8,7 +8,7 @@ description: |-
 
 # Resource: signalfx_jira_integration
 
-Splunk Observability Cloud Jira integrations. For help with this integration see [Integration with Jira](https://docs.signalfx.com/en/latest/admin-guide/integrate-notifications.html#integrate-with-jira).
+Splunk Observability Cloud Jira integrations. For help with this integration see [Integration with Jira](https://docs.splunk.com/observability/en/admin/notif-services/jira.html).
 
 ~> **NOTE** When managing integrations, use a session token of an administrator to authenticate the Splunk Observability Cloud provider. See [Operations that require a session token for an administrator](https://dev.splunk.com/observability/docs/administration/authtokens#Operations-that-require-a-session-token-for-an-administrator). Otherwise you'll receive a 4xx error.
 
