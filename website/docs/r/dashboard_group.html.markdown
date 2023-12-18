@@ -3,7 +3,7 @@ layout: "signalfx"
 page_title: "Splunk Observability Cloud: signalfx_dashboard_group"
 sidebar_current: "docs-signalfx-resource-dashboard-group"
 description: |-
-  Allows Terraform to create and manage sashboard groups in Splunk Observability Cloud
+  Allows Terraform to create and manage dashboard groups in Splunk Observability Cloud
 ---
 
 # Resource: signalfx_dashboard_group

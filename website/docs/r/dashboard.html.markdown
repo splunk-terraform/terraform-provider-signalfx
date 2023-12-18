@@ -10,7 +10,7 @@ description: |-
 
 A dashboard is a curated collection of specific charts and supports dimensional [filters](https://docs.splunk.com/observability/en/data-visualization/dashboards/dashboard-create-customize.html#customize-dashboard-filters), [dashboard variables](https://docs.splunk.com/observability/en/data-visualization/dashboards/dashboard-create-customize.html#customize-dashboard-variables) and [time range](https://docs.splunk.com/observability/en/data-visualization/use-time-range-selector.html) options. These options are applied to all charts in the dashboard, providing a consistent view of the data displayed in that dashboard. This also means that when you open a chart to drill down for more details, you are viewing the same data that is visible in the dashboard view.
 
-Since every dashboard is included in a [dashboard group](dashboard_group.html), which a collection of dashboards, you need to create that first and reference it as shown in the example.
+Since every dashboard is included in a [dashboard group](dashboard_group.html), which is a collection of dashboards, you need to create that first and reference it as shown in the example.
 
 ~> **NOTE** When you want to change or remove write permissions for a user other than yourself regarding dashboards, use a session token of an administrator to authenticate the Splunk Observability Cloud provider. See [Operations that require a session token for an administrator](https://dev.splunk.com/observability/docs/administration/authtokens#Operations-that-require-a-session-token-for-an-administrator). 
 

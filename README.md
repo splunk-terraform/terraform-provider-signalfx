@@ -48,7 +48,7 @@ If you wish to work on the provider, you need the following:
 To compile the provider, run `make build`. This builds the provider and put its binary inside the `$GOPATH/bin` directory:
 
    ```sh
-   $ make bin
+   $ make build
    ...
    $ $GOPATH/bin/terraform-provider-signalfx
    ...

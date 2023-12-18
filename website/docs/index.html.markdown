@@ -3,13 +3,12 @@ layout: "signalfx"
 page_title: "Provider: SignalFx"
 sidebar_current: "docs-signalfx-index"
 description: |-
-  Use the Splunk Observability Cloud provider, formerly known as Splunk Observability Cloud provider, to interact with the resources supported by Splunk Observability Cloud. Configure the provider with the proper credentials before using it.
+  Use the Splunk Observability Cloud provider, formerly known as SignalFx Terraform provider, to interact with the resources supported by Splunk Observability Cloud. Configure the provider with the proper credentials before using it.
 ---
 
 # Splunk Observability Cloud provider
 
-The [Splunk Observability Cloud](https://www.splunk.com/en_us/products/observability.html) provider lets you interact with 
-the resources supported by Splunk Observability Cloud. You must configure the provider with credentials before using it.
+The [Splunk Observability Cloud](https://www.splunk.com/en_us/products/observability.html) provider, formerly known as SignalFx Terraform provider, lets you interact with the resources supported by Splunk Observability Cloud. You must configure the provider with credentials before using it.
 
 Use the navigation to learn more about the available resources.
 
