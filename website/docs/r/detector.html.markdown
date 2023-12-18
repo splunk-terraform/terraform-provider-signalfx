@@ -121,7 +121,7 @@ Sends an email to every member of a team.
 notifications = ["TeamEmail,teamId"]
 ```
 
-### Splunk On-Call
+### Splunk On-Call (formerly VictorOps)
 
 ```
 notifications = ["VictorOps,credentialId,routingKey"]
