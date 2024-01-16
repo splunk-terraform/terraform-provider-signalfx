@@ -1,6 +1,6 @@
 ---
 layout: "signalfx"
-page_title: "Splunk Observability: signalfx_aws_external_integration"
+page_title: "Splunk Observability Cloud: signalfx_aws_external_integration"
 sidebar_current: "docs-signalfx-resource-aws-external-integration"
 description: |-
   Allows Terraform to create and manage Splunk Observability AWS External ID Integrations
@@ -8,13 +8,13 @@ description: |-
 
 # Resource: signalfx_aws_external_integration
 
-Splunk Observability AWS CloudWatch integrations using Role ARNs. For help with this integration see [Connect to AWS CloudWatch](https://docs.signalfx.com/en/latest/integrations/amazon-web-services.html#connect-to-aws).
+Splunk Observability AWS CloudWatch integrations using Role ARNs. For help with this integration see [Connect to AWS CloudWatch](https://docs.splunk.com/observability/en/gdi/get-data-in/connect/aws/aws-apiconfig.html).
 
 ~> **NOTE** When managing integrations, use a session token of an administrator to authenticate the Splunk Observability provider. See [Operations that require a session token for an administrator](https://dev.splunk.com/observability/docs/administration/authtokens#Operations-that-require-a-session-token-for-an-administrator).
 
-~> **WARNING** This resource implements a part of a workflow. You must use it with `signalfx_aws_integration`. Check with Splunk Observability support for your realm's AWS account id.
+~> **WARNING** This resource implements part of a workflow. Use it with `signalfx_aws_integration`. Check with Splunk support for your realm's AWS account id.
 
-## Example Usage
+## Example
 
 ```tf
 resource "signalfx_aws_external_integration" "aws_myteam_extern" {
@@ -40,7 +40,7 @@ data "aws_iam_policy_document" "signalfx_assume_policy" {
 
 resource "aws_iam_role" "aws_splunk_role" {
   name               = "signalfx-reads-from-cloudwatch2"
-  description        = "signalfx integration to read out data and send it to signalfxs aws account"
+  description        = "Splunk Observability Cloud integration to read out data and send it to signalfxs aws account"
   assume_role_policy = data.aws_iam_policy_document.signalfx_assume_policy.json
 }
 
@@ -151,14 +151,14 @@ resource "signalfx_aws_integration" "aws_myteam" {
 
 ```
 
-## Argument Reference
+## Arguments
 
 * `name` - (Required) The name of this integration
 
-## Attribute Reference
+## Attributes
 
 In addition to all arguments above, the following attributes are exported:
 
 * `id` - The ID of this integration, used with `signalfx_aws_integration`
 * `external_id` - The external ID to use with your IAM role and with `signalfx_aws_integration`.
-* `signalfx_aws_account` - The AWS Account ARN to use with your policies/roles, provided by Splunk Observability.
+* `signalfx_aws_account` - The AWS Account ARN to use with your policies/roles, provided by Splunk Observability Cloud.

@@ -1,17 +1,18 @@
 ---
 layout: "signalfx"
-page_title: "SignalFx: signalfx_log_timeline"
+page_title: "Splunk Observability Cloud: signalfx_log_timeline"
 sidebar_current: "docs-signalfx-resource-log-timeline"
 description: |-
-  Allows Terraform to create and manage log timelines
+  Allows Terraform to create and manage log timelines in Splunk Observability Cloud
 ---
 
 # Resource: signalfx_log_timeline
 
-You can add logs data to your Observability Cloud dashboards without turning your logs into metrics first. 
+You can add logs data to your Observability Cloud dashboards without turning your logs into metrics first.
+
 A log timeline chart displays timeline visualization in a dashboard and shows you in detail what is happening and why.
 
-## Example Usage
+## Example
 
 ```tf
 resource "signalfx_log_timeline" "my_log_timeline" {
@@ -27,19 +28,19 @@ resource "signalfx_log_timeline" "my_log_timeline" {
 }
 ```
 
-## Argument Reference
+## Arguments
 
 The following arguments are supported in the resource block:
 
 * `name` - (Required) Name of the log timeline.
 * `program_text` - (Required) Signalflow program text for the log timeline. More info at https://dev.splunk.com/observability/docs/.
 * `description` - (Optional) Description of the log timeline.
-* `time_range` - (Optional) From when to display data. SignalFx time syntax (e.g. `"-5m"`, `"-1h"`). Conflicts with `start_time` and `end_time`.
+* `time_range` - (Optional) From when to display data. Splunk Observability Cloud time syntax (e.g. `"-5m"`, `"-1h"`). Conflicts with `start_time` and `end_time`.
 * `start_time` - (Optional) Seconds since epoch. Used for visualization. Conflicts with `time_range`.
 * `end_time` - (Optional) Seconds since epoch. Used for visualization. Conflicts with `time_range`.
 * `default_connection` - (Optional) The connection that the log timeline uses to fetch data. This could be Splunk Enterprise, Splunk Enterprise Cloud or Observability Cloud.
 
-## Attributes Reference
+## Attributes
 
 In a addition to all arguments above, the following attributes are exported:
 

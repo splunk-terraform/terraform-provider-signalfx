@@ -23,7 +23,7 @@ resource "signalfx_victor_ops_integration" "victor_ops_myteamXX" {
 }
 `
 
-// Commented out because SignalFx seems to validate this integration even if
+// Commented out because Splunk Observability Cloud seems to validate this integration even if
 // it is disabled.
 // func TestAccCreateUpdateIntegrationVictorOps(t *testing.T) {
 // 	resource.Test(t, resource.TestCase{

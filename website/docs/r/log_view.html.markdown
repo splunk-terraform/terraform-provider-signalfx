@@ -1,16 +1,18 @@
 ---
 layout: "signalfx"
-page_title: "SignalFx: signalfx_log_view"
+page_title: "Splunk Observability Cloud: signalfx_log_view"
 sidebar_current: "docs-signalfx-resource-log-view"
 description: |-
-  Allows Terraform to create and manage log views
+  Allows Terraform to create and manage log views in Splunk Observability Cloud
 ---
 
 # Resource: signalfx_log_view
 
-You can add logs data to your Observability Cloud dashboards without turning your logs into metrics first. A log view displays log lines in a table form in a dashboard and shows you in detail what is happening and why.
+You can add logs data to your Observability Cloud dashboards without turning your logs into metrics first.
 
-## Example Usage
+A log view displays log lines in a table form in a dashboard and shows you in detail what is happening and why.
+
+## Example
 
 ```tf
 resource "signalfx_log_view" "my_log_view" {
@@ -49,21 +51,21 @@ resource "signalfx_log_view" "my_log_view" {
 }
 ```
 
-## Argument Reference
+## Arguments
 
 The following arguments are supported in the resource block:
 
 * `name` - (Required) Name of the log view.
 * `program_text` - (Required) Signalflow program text for the log view. More info at https://developers.signalfx.com/docs/signalflow-overview.
 * `description` - (Optional) Description of the log view.
-* `time_range` - (Optional) From when to display data. SignalFx time syntax (e.g. `"-5m"`, `"-1h"`). Conflicts with `start_time` and `end_time`.
+* `time_range` - (Optional) From when to display data. Splunk Observability Cloud time syntax (e.g. `"-5m"`, `"-1h"`). Conflicts with `start_time` and `end_time`.
 * `start_time` - (Optional) Seconds since epoch. Used for visualization. Conflicts with `time_range`.
 * `end_time` - (Optional) Seconds since epoch. Used for visualization. Conflicts with `time_range`.
 * `columns` - (Optional) The column headers to show on the log view.
 * `sort_options` - (Optional) The sorting options configuration to specify if the log view table needs to be sorted in a particular field.
 * `default_connection` - (Optional) The connection that the log view uses to fetch data. This could be Splunk Enterprise, Splunk Enterprise Cloud or Observability Cloud.
 
-## Attributes Reference
+## Attributes
 
 In a addition to all arguments above, the following attributes are exported:
 

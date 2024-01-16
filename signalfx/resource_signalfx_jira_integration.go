@@ -68,7 +68,7 @@ func integrationJiraResource() *schema.Resource {
 			"issue_type": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Issue type (for example, Story) for tickets that Jira creates for detector notifications. SignalFx validates issue types, so you must specify a type that's valid for the Jira project specified in `projectKey`.",
+				Description: "Issue type (for example, Story) for tickets that Jira creates for detector notifications. Splunk Observability Cloud validates issue types, so you must specify a type that's valid for the Jira project specified in `projectKey`.",
 			},
 			"project_key": &schema.Schema{
 				Type:        schema.TypeString,

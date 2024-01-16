@@ -1,4 +1,13 @@
-## Unreleased 
+## Unreleased
+
+## 9.0.1
+
+IMPROVEMENTS:
+* Updated documentation with correct names and terminology. [#458](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/458)
+* Style and grammar improvements in the docs. [#458](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/458)
+
+BUGFIXES:
+* Fixed broken links in the documentation. [#458](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/458)
 
 ## 9.0.0
 BREAKING CHANGES:

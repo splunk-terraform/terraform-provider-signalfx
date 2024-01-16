@@ -1,16 +1,16 @@
 ---
 layout: "signalfx"
-page_title: "SignalFx: signalfx_text_chart"
+page_title: "Splunk Observability Cloud: signalfx_text_chart"
 sidebar_current: "docs-signalfx-resource-text-chart"
 description: |-
-  Allows Terraform to create and manage SignalFx text notes
+  Allows Terraform to create and manage text notes in Splunk Observability Cloud
 ---
 
 # Resource: signalfx_text_chart
 
 This special type of chart doesn’t display any metric data. Rather, it lets you place a text note on the dashboard.
 
-## Example Usage
+## Example
 
 ```tf
 resource "signalfx_text_chart" "mynote0" {
@@ -38,7 +38,7 @@ resource "signalfx_text_chart" "mynote0" {
 }
 ```
 
-## Argument Reference
+## Arguments
 
 The following arguments are supported in the resource block:
 
@@ -46,7 +46,7 @@ The following arguments are supported in the resource block:
 * `markdown` - (Required) Markdown text to display.
 * `description` - (Optional) Description of the text note.
 
-## Attributes Reference
+## Attributes
 
 In a addition to all arguments above, the following attributes are exported:
 

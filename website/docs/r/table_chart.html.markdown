@@ -1,16 +1,16 @@
 ---
 layout: "signalfx"
-page_title: "SignalFx: signalfx_table_chart"
+page_title: "Splunk Observability Cloud: signalfx_table_chart"
 sidebar_current: "docs-signalfx-resource-table-chart"
 description: |-
-  Allows Terraform to create and manage SignalFx Data Table Charts
+  Allows Terraform to create and manage data table charts in Splunk Observability Cloud
 ---
 
 # Resource: signalfx_table_chart
 
-This special type of chart displays a Data Table. This Table can be grouped by a Dimension.
+This special type of chart displays a data table. This table can be grouped by a dimension.
 
-## Example Usage
+## Example
 
 ```tf
 # signalfx_list_chart.Logs-Exec_0:
@@ -24,7 +24,7 @@ resource "signalfx_table_chart" "table_0" {
 }
 ```
 
-## Argument Reference
+## Arguments
 
 The following arguments are supported in the resource block:
 
@@ -33,7 +33,7 @@ The following arguments are supported in the resource block:
 * `description` - (Optional) Description of the table chart.
 * `group_by` - (Optional) Dimension to group by
 
-## Attributes Reference
+## Attributes
 
 In a addition to all arguments above, the following attributes are exported:
 

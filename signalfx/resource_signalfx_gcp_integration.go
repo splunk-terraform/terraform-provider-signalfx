@@ -91,7 +91,7 @@ func integrationGCPResource() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     true,
-				Description: "If enabled, SignalFx will sync also Google Cloud Metrics data. If disabled, SignalFx will import only metadata. Defaults to true.",
+				Description: "If enabled, Splunk Observability Cloud will sync also Google Cloud Metrics data. If disabled, Splunk Observability Cloud will import only metadata. Defaults to true.",
 			},
 		},
 

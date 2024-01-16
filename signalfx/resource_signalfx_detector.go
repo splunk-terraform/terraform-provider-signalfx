@@ -348,7 +348,7 @@ func getPayloadDetector(d *schema.ResourceData) (*detector.CreateUpdateDetectorR
 		for _, tag := range val.(*schema.Set).List() {
 			tags = append(tags, tag.(string))
 		}
-		log.Printf("[DEBUG] SignalFx the following tags will be set: %s", tags)
+		log.Printf("[DEBUG] Splunk Observability Cloud the following tags will be set: %s", tags)
 	}
 
 	cudr := &detector.CreateUpdateDetectorRequest{

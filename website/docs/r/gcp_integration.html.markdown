@@ -1,18 +1,18 @@
 ---
 layout: "signalfx"
-page_title: "SignalFx: signalfx_gcp_integration"
+page_title: "Splunk Observability Cloud: signalfx_gcp_integration"
 sidebar_current: "docs-signalfx-resource-gcp-integration"
 description: |-
-  Allows Terraform to create and manage SignalFx GCP Integrations
+  Allows Terraform to create and manage GCP Integrations for Splunk Observability Cloud
 ---
 
 # Resource: signalfx_gcp_integration
 
-SignalFx GCP Integration
+Splunk Observability Cloud GCP Integration.
 
-~> **NOTE** When managing integrations, use a session token of an administrator to authenticate the SignalFx provider. See [Operations that require a session token for an administrator](https://dev.splunk.com/observability/docs/administration/authtokens#Operations-that-require-a-session-token-for-an-administrator). Otherwise you'll receive a 4xx error.
+~> **NOTE** When managing integrations, use a session token of an administrator to authenticate the Splunk  Observability Cloud provider. See [Operations that require a session token for an administrator](https://dev.splunk.com/observability/docs/administration/authtokens#Operations-that-require-a-session-token-for-an-administrator). Otherwise you'll receive a 4xx error.
 
-## Example Usage
+## Example
 
 ```tf
 resource "signalfx_gcp_integration" "gcp_myteam" {
@@ -33,7 +33,7 @@ resource "signalfx_gcp_integration" "gcp_myteam" {
 }
 ```
 
-## Argument Reference
+## Arguments
 
 * `custom_metric_type_domains` - (Optional) List of additional GCP service domain names that Splunk Observability Cloud will monitor. See [Custom Metric Type Domains documentation](https://dev.splunk.com/observability/docs/integrations/gcp_integration_overview/#Custom-metric-type-domains)
 * `enabled` - (Required) Whether the integration is enabled.
@@ -46,7 +46,7 @@ resource "signalfx_gcp_integration" "gcp_myteam" {
 * `services` - (Optional) GCP service metrics to import. Can be an empty list, or not included, to import 'All services'. See [Google Cloud Platform services](https://docs.splunk.com/Observability/gdi/get-data-in/integrations.html#google-cloud-platform-services) for a list of valid values.
 * `use_metric_source_project_for_quota` - (Optional) When this value is set to true Observability Cloud will force usage of a quota from the project where metrics are stored. For this to work the service account provided for the project needs to be provided with serviceusage.services.use permission or Service Usage Consumer role in this project. When set to false default quota settings are used.
 
-## Attributes Reference
+## Attributes
 
 In addition to all arguments above, the following attributes are exported:
 
