@@ -61,7 +61,7 @@ var (
 		"parameterized_subject": {
 			Type:        schema.TypeString,
 			Optional:    true,
-			Description: "Custom notification message subject when an alert is triggered. See https://d    evelopers.signalfx.com/v2/reference#detector-model for more info",
+			Description: "Custom notification message subject when an alert is triggered. See https://developers.signalfx.com/v2/reference#detector-model for more info",
 		},
 		"runbook_url": {
 			Type:        schema.TypeString,
