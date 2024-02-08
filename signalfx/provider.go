@@ -115,6 +115,7 @@ func Provider() *schema.Provider {
 			"signalfx_log_timeline":             logTimelineResource(),
 			"signalfx_table_chart":              tableChartResource(),
 			"signalfx_metric_ruleset":           metricRulesetResource(),
+			"signalfx_slo":                      sloResource(),
 		},
 		ConfigureFunc: signalfxConfigure,
 	}
