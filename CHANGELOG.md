@@ -1,5 +1,10 @@
 ## Unreleased
 
+## 9.1.0
+
+IMPROVEMENTS:
+* Add resource/resource_signalfx_slo to support creating SLO via terraform [#463](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/463)
+
 ## 9.0.1
 
 IMPROVEMENTS:

@@ -20,6 +20,62 @@ const (
 	DetectorAppPath = "/detector/"
 )
 
+var (
+	detectorRuleSchema = map[string]*schema.Schema{
+		"severity": {
+			Type:         schema.TypeString,
+			Required:     true,
+			ValidateFunc: validateSeverity,
+			Description:  "The severity of the rule, must be one of: Critical, Warning, Major, Minor, Info",
+		},
+		"detect_label": {
+			Type:        schema.TypeString,
+			Required:    true,
+			Description: "A detect label which matches a detect label within the program text",
+		},
+		"description": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "Description of the rule",
+		},
+		"notifications": {
+			Type:     schema.TypeList,
+			Optional: true,
+			Elem: &schema.Schema{
+				Type:         schema.TypeString,
+				ValidateFunc: validateNotification,
+			},
+			Description: "List of strings specifying where notifications will be sent when an incident occurs. See https://developers.signalfx.com/v2/docs/detector-model#notifications-models for more info",
+		},
+		"disabled": {
+			Type:        schema.TypeBool,
+			Optional:    true,
+			Default:     false,
+			Description: "(default: false) When true, notifications and events will not be generated for the detect label",
+		},
+		"parameterized_body": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "Custom notification message body when an alert is triggered. See https://developers.signalfx.com/v2/reference#detector-model for more info",
+		},
+		"parameterized_subject": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "Custom notification message subject when an alert is triggered. See https://developers.signalfx.com/v2/reference#detector-model for more info",
+		},
+		"runbook_url": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "URL of page to consult when an alert is triggered",
+		},
+		"tip": {
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "Plain text suggested first course of action, such as a command to execute.",
+		},
+	}
+)
+
 func detectorResource() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
@@ -32,7 +88,7 @@ func detectorResource() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				Description:  "Signalflow program text for the detector. More info at \"https://developers.signalfx.com/docs/signalflow-overview\"",
-				ValidateFunc: validation.StringLenBetween(18, 50000),
+				ValidateFunc: validation.StringLenBetween(1, 50000),
 			},
 			"description": {
 				Type:        schema.TypeString,
@@ -113,108 +169,56 @@ func detectorResource() *schema.Resource {
 				Required:    true,
 				Description: "Set of rules used for alerting",
 				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"severity": &schema.Schema{
-							Type:         schema.TypeString,
-							Required:     true,
-							ValidateFunc: validateSeverity,
-							Description:  "The severity of the rule, must be one of: Critical, Warning, Major, Minor, Info",
-						},
-						"detect_label": &schema.Schema{
-							Type:        schema.TypeString,
-							Required:    true,
-							Description: "A detect label which matches a detect label within the program text",
-						},
-						"description": &schema.Schema{
-							Type:        schema.TypeString,
-							Optional:    true,
-							Description: "Description of the rule",
-						},
-						"notifications": &schema.Schema{
-							Type:     schema.TypeList,
-							Optional: true,
-							Elem: &schema.Schema{
-								Type:         schema.TypeString,
-								ValidateFunc: validateNotification,
-							},
-							Description: "List of strings specifying where notifications will be sent when an incident occurs. See https://developers.signalfx.com/v2/docs/detector-model#notifications-models for more info",
-						},
-						"disabled": &schema.Schema{
-							Type:        schema.TypeBool,
-							Optional:    true,
-							Default:     false,
-							Description: "(default: false) When true, notifications and events will not be generated for the detect label",
-						},
-						"parameterized_body": &schema.Schema{
-							Type:        schema.TypeString,
-							Optional:    true,
-							Description: "Custom notification message body when an alert is triggered. See https://developers.signalfx.com/v2/reference#detector-model for more info",
-						},
-						"parameterized_subject": &schema.Schema{
-							Type:        schema.TypeString,
-							Optional:    true,
-							Description: "Custom notification message subject when an alert is triggered. See https://d    evelopers.signalfx.com/v2/reference#detector-model for more info",
-						},
-						"runbook_url": &schema.Schema{
-							Type:        schema.TypeString,
-							Optional:    true,
-							Description: "URL of page to consult when an alert is triggered",
-						},
-						"tip": &schema.Schema{
-							Type:        schema.TypeString,
-							Optional:    true,
-							Description: "Plain text suggested first course of action, such as a command to execute.",
-						},
-					},
+					Schema: detectorRuleSchema,
 				},
 				Set: resourceRuleHash,
 			},
-			"authorized_writer_teams": &schema.Schema{
+			"authorized_writer_teams": {
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "Team IDs that have write access to this dashboard",
 			},
-			"authorized_writer_users": &schema.Schema{
+			"authorized_writer_users": {
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "User IDs that have write access to this dashboard",
 			},
-			"viz_options": &schema.Schema{
+			"viz_options": {
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "Plot-level customization options, associated with a publish statement",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"label": &schema.Schema{
+						"label": {
 							Type:        schema.TypeString,
 							Required:    true,
 							Description: "The label used in the publish statement that displays the plot (metric time series data) you want to customize",
 						},
-						"color": &schema.Schema{
+						"color": {
 							Type:         schema.TypeString,
 							Optional:     true,
 							Description:  "Color to use",
 							ValidateFunc: validatePerSignalColor,
 						},
-						"display_name": &schema.Schema{
+						"display_name": {
 							Type:        schema.TypeString,
 							Optional:    true,
 							Description: "Specifies an alternate value for the Plot Name column of the Data Table associated with the chart.",
 						},
-						"value_unit": &schema.Schema{
+						"value_unit": {
 							Type:         schema.TypeString,
 							Optional:     true,
 							ValidateFunc: validateUnitTimeChart,
 							Description:  "A unit to attach to this plot. Units support automatic scaling (eg thousands of bytes will be displayed as kilobytes)",
 						},
-						"value_prefix": &schema.Schema{
+						"value_prefix": {
 							Type:        schema.TypeString,
 							Optional:    true,
 							Description: "An arbitrary prefix to display with the value of this plot",
 						},
-						"value_suffix": &schema.Schema{
+						"value_suffix": {
 							Type:        schema.TypeString,
 							Optional:    true,
 							Description: "An arbitrary suffix to display with the value of this plot",
@@ -222,7 +226,7 @@ func detectorResource() *schema.Resource {
 					},
 				},
 			},
-			"label_resolutions": &schema.Schema{
+			"label_resolutions": {
 				Type:        schema.TypeMap,
 				Computed:    true,
 				Description: "Resolutions of the detector alerts in milliseconds that indicate how often data is analyzed to determine if an alert should be triggered",
@@ -230,7 +234,7 @@ func detectorResource() *schema.Resource {
 					Type: schema.TypeInt,
 				},
 			},
-			"url": &schema.Schema{
+			"url": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "URL of the detector",
@@ -292,50 +296,9 @@ func getPayloadDetector(d *schema.ResourceData) (*detector.CreateUpdateDetectorR
 	rulesList := make([]*detector.Rule, len(tfRules))
 	for i, tfRule := range tfRules {
 		tfRule := tfRule.(map[string]interface{})
-		rule := &detector.Rule{
-			Description: tfRule["description"].(string),
-			DetectLabel: tfRule["detect_label"].(string),
-			Disabled:    tfRule["disabled"].(bool),
-		}
-
-		tfSev := tfRule["severity"].(string)
-		sev := detector.INFO
-		switch tfSev {
-		case "Critical":
-			sev = detector.CRITICAL
-		case "Warning":
-			sev = detector.WARNING
-		case "Major":
-			sev = detector.MAJOR
-		case "Minor":
-			sev = detector.MINOR
-		case "Info":
-			sev = detector.INFO
-		}
-		rule.Severity = sev
-
-		if val, ok := tfRule["parameterized_body"]; ok {
-			rule.ParameterizedBody = val.(string)
-		}
-
-		if val, ok := tfRule["parameterized_subject"]; ok {
-			rule.ParameterizedSubject = val.(string)
-		}
-
-		if val, ok := tfRule["runbook_url"]; ok {
-			rule.RunbookUrl = val.(string)
-		}
-
-		if val, ok := tfRule["tip"]; ok {
-			rule.Tip = val.(string)
-		}
-
-		if notifications, ok := tfRule["notifications"]; ok {
-			notify, err := getNotifications(notifications.([]interface{}))
-			if err != nil {
-				return nil, err
-			}
-			rule.Notifications = notify
+		rule, err := getDetectorRule(tfRule)
+		if err != nil {
+			return nil, err
 		}
 		rulesList[i] = rule
 	}
@@ -391,6 +354,58 @@ func getPayloadDetector(d *schema.ResourceData) (*detector.CreateUpdateDetectorR
 	}
 
 	return cudr, nil
+}
+
+func getDetectorRule(tfRule map[string]interface{}) (*detector.Rule, error) {
+	rule := &detector.Rule{
+		Description: tfRule["description"].(string),
+		Disabled:    tfRule["disabled"].(bool),
+	}
+
+	if detectLabel, ok := tfRule["detect_label"]; ok {
+		rule.DetectLabel = detectLabel.(string)
+	}
+
+	tfSev := tfRule["severity"].(string)
+	sev := detector.INFO
+	switch tfSev {
+	case "Critical":
+		sev = detector.CRITICAL
+	case "Warning":
+		sev = detector.WARNING
+	case "Major":
+		sev = detector.MAJOR
+	case "Minor":
+		sev = detector.MINOR
+	case "Info":
+		sev = detector.INFO
+	}
+	rule.Severity = sev
+
+	if val, ok := tfRule["parameterized_body"]; ok {
+		rule.ParameterizedBody = val.(string)
+	}
+
+	if val, ok := tfRule["parameterized_subject"]; ok {
+		rule.ParameterizedSubject = val.(string)
+	}
+
+	if val, ok := tfRule["runbook_url"]; ok {
+		rule.RunbookUrl = val.(string)
+	}
+
+	if val, ok := tfRule["tip"]; ok {
+		rule.Tip = val.(string)
+	}
+
+	if notifications, ok := tfRule["notifications"]; ok {
+		notify, err := getNotifications(notifications.([]interface{}))
+		if err != nil {
+			return nil, err
+		}
+		rule.Notifications = notify
+	}
+	return rule, nil
 }
 
 func getVisualizationOptionsDetector(d *schema.ResourceData) *detector.Visualization {
@@ -622,25 +637,10 @@ func detectorAPIToTF(d *schema.ResourceData, det *detector.Detector) error {
 
 	rules := make([]map[string]interface{}, len(det.Rules))
 	for i, r := range det.Rules {
-		rule := make(map[string]interface{})
-		rule["severity"] = r.Severity
-		rule["detect_label"] = r.DetectLabel
-		rule["description"] = r.Description
-
-		notifications := make([]string, len(r.Notifications))
-		for i, not := range r.Notifications {
-			tfNot, err := getNotifyStringFromAPI(not)
-			if err != nil {
-				return err
-			}
-			notifications[i] = tfNot
+		rule, err := getTfDetectorRule(r)
+		if err != nil {
+			return err
 		}
-		rule["notifications"] = notifications
-		rule["disabled"] = r.Disabled
-		rule["parameterized_body"] = r.ParameterizedBody
-		rule["parameterized_subject"] = r.ParameterizedSubject
-		rule["runbook_url"] = r.RunbookUrl
-		rule["tip"] = r.Tip
 		rules[i] = rule
 	}
 	if err := d.Set("rule", rules); err != nil {
@@ -648,6 +648,29 @@ func detectorAPIToTF(d *schema.ResourceData, det *detector.Detector) error {
 	}
 
 	return nil
+}
+
+func getTfDetectorRule(r *detector.Rule) (map[string]interface{}, error) {
+	rule := make(map[string]interface{})
+	rule["severity"] = r.Severity
+	rule["detect_label"] = r.DetectLabel
+	rule["description"] = r.Description
+
+	notifications := make([]string, len(r.Notifications))
+	for i, not := range r.Notifications {
+		tfNot, err := getNotifyStringFromAPI(not)
+		if err != nil {
+			return nil, err
+		}
+		notifications[i] = tfNot
+	}
+	rule["notifications"] = notifications
+	rule["disabled"] = r.Disabled
+	rule["parameterized_body"] = r.ParameterizedBody
+	rule["parameterized_subject"] = r.ParameterizedSubject
+	rule["runbook_url"] = r.RunbookUrl
+	rule["tip"] = r.Tip
+	return rule, nil
 }
 
 func detectorUpdate(d *schema.ResourceData, meta interface{}) error {
