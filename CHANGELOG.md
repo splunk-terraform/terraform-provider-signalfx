@@ -1,5 +1,10 @@
 ## Unreleased
 
+## 9.1.1
+
+IMPROVEMENTS:
+* Small correction in slo docs [#466](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/466)
+
 ## 9.1.0
 
 IMPROVEMENTS:

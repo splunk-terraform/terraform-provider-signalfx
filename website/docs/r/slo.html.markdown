@@ -6,7 +6,7 @@ description: |-
   Allows Terraform to create and manage SLOs in Splunk Observability Cloud
 ---
 
-# Resource: signalfx_detector
+# Resource: signalfx_slo
 
 Provides a Splunk Observability Cloud slo resource. This can be used to create and manage SLOs.
 
