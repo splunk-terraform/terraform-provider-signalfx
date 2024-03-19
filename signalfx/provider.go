@@ -197,9 +197,9 @@ func signalfxConfigure(data *schema.ResourceData) (interface{}, error) {
 	retryClient.RetryMax = retryMaxAttempts
 	retryClient.RetryWaitMin = time.Second * time.Duration(int64(retryWaitMinSeconds))
 	retryClient.RetryWaitMax = time.Second * time.Duration(int64(retryWaitMaxSeconds))
+	retryClient.HTTPClient.Timeout = time.Second * time.Duration(int64(totalTimeoutSeconds))
 	retryClient.HTTPClient.Transport = netTransport
 	standardClient := retryClient.StandardClient()
-	standardClient.Timeout = time.Second * time.Duration(int64(totalTimeoutSeconds))
 
 	client, err := sfx.NewClient(config.AuthToken,
 		sfx.APIUrl(config.APIURL),
