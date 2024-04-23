@@ -1,5 +1,10 @@
 ## Unreleased
 
+## 9.1.2
+
+BUGFIXES:
+* Fix HTTP retry [#467](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/467) [#468](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/468)
+
 ## 9.1.1
 
 IMPROVEMENTS:
