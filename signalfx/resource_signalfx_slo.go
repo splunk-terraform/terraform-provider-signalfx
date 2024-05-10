@@ -28,6 +28,8 @@ const (
 	targetLabel                 = "target"
 	sloLabel                    = "slo"
 	compliancePeriodLabel       = "compliance_period"
+	cycleTypeLabel              = "cycle_type"
+	cycleStartLabel             = "cycle_start"
 	alertRuleLabel              = "alert_rule"
 	ruleLabel                   = "rule"
 	parametersLabel             = "parameters"
@@ -104,7 +106,7 @@ func sloResource() *schema.Resource {
 							Type:         schema.TypeString,
 							Required:     true,
 							Description:  "SLO target type can be the following type: `RollingWindow`",
-							ValidateFunc: validation.StringInSlice([]string{slo.RollingWindowTarget}, false),
+							ValidateFunc: validation.StringInSlice([]string{slo.RollingWindowTarget, slo.CalendarWindowTarget}, false),
 						},
 						sloLabel: {
 							Type:         schema.TypeFloat,
@@ -116,6 +118,19 @@ func sloResource() *schema.Resource {
 							Type:         schema.TypeString,
 							Optional:     true,
 							Description:  "(Required for `RollingWindow` type) Compliance period of this SLO. This value must be within the range of 1d (1 days) to 30d (30 days), inclusive.",
+							ValidateFunc: validation.StringIsNotEmpty,
+						},
+						cycleTypeLabel: {
+							Type:         schema.TypeString,
+							Optional:     true,
+							Description:  "(Required for `CalendarWindow` type) The cycle type of the calendar window, e.g. week, month.",
+							ValidateFunc: validation.StringInSlice([]string{"week", "month"}, false),
+						},
+						cycleStartLabel: {
+							Type:         schema.TypeString,
+							Optional:     true,
+							Computed:     true,
+							Description:  "(Optional for `CalendarWindow` type)  It can be used to change the cycle start time. For example, you can specify sunday as the start of the week (instead of the default monday)",
 							ValidateFunc: validation.StringIsNotEmpty,
 						},
 						alertRuleLabel: {
@@ -371,6 +386,11 @@ func getApiTargets(tfTargets []interface{}) ([]slo.SloTarget, error) {
 			apiTarget.RollingWindowSloTarget = &slo.RollingWindowSloTarget{
 				CompliancePeriod: tfTarget[compliancePeriodLabel].(string),
 			}
+		case slo.CalendarWindowTarget:
+			apiTarget.CalendarWindowSloTarget = &slo.CalendarWindowSloTarget{
+				CycleStart: tfTarget[cycleStartLabel].(string),
+				CycleType:  tfTarget[cycleTypeLabel].(string),
+			}
 		default:
 			return nil, fmt.Errorf("unsupported SLO target type: %s", apiTarget.Type)
 		}
@@ -620,6 +640,9 @@ func getTfTargets(sloApiObject *slo.SloObject) ([]map[string]interface{}, error)
 		switch apiTarget.Type {
 		case slo.RollingWindowTarget:
 			tfTarget[compliancePeriodLabel] = apiTarget.RollingWindowSloTarget.CompliancePeriod
+		case slo.CalendarWindowTarget:
+			tfTarget[cycleTypeLabel] = apiTarget.CalendarWindowSloTarget.CycleType
+			tfTarget[cycleStartLabel] = apiTarget.CalendarWindowSloTarget.CycleStart
 		default:
 			return nil, fmt.Errorf("unsupported SLO target type: %s", apiTarget.Type)
 		}
