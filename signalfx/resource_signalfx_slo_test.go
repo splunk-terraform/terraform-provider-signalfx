@@ -54,6 +54,8 @@ resource "signalfx_slo" "test_slo" {
 			rule {
 				severity = "Critical"
 				notifications = ["%s"]
+				parameterized_body = "test"
+				parameterized_subject = "test"
 				parameters {
 					fire_lasting = "%s"
 				}
@@ -65,6 +67,8 @@ resource "signalfx_slo" "test_slo" {
 
 			rule {
 				severity = "Warning"
+				parameterized_body = "test"
+				parameterized_subject = "test"
 				parameters {
 					short_window_1 = "%s"
 				}
@@ -96,6 +100,8 @@ resource "signalfx_slo" "test_slo" {
 			rule {
 				severity = "Critical"
 				notifications = ["%s"]
+				parameterized_body = "test"
+				parameterized_subject = "test"
 				parameters {
 					fire_lasting = "%s"
 				}
@@ -107,6 +113,8 @@ resource "signalfx_slo" "test_slo" {
 
 			rule {
 				severity = "Warning"
+				parameterized_body = "test"
+				parameterized_subject = "test"	
 				parameters {
 					percent_error_budget_left = %s					
 				}

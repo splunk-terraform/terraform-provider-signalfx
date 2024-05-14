@@ -1,5 +1,10 @@
 ## Unreleased
 
+## 9.1.3
+
+IMPROVEMENTS:
+* Add an option to specify calendar targets for SLO [#476](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/476)
+
 ## 9.1.2
 
 BUGFIXES:
