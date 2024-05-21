@@ -16,10 +16,16 @@ Splunk Observability Cloud webhook integration.
 
 ```tf
 resource "signalfx_webhook_integration" "webhook_myteam" {
-  name          = "Webhook - My Team"
-  enabled       = true
-  url           = "https://www.example.com"
-  shared_secret = "abc1234"
+  name             = "Webhook - My Team"
+  enabled          = true
+  url              = "https://www.example.com"
+  shared_secret    = "abc1234"
+  method           = "POST"
+  payload_template = <<-EOF
+    {
+      "incidentId": "{{{incidentId}}}"
+    }
+  EOF
 
   headers {
     header_key   = "some_header"
@@ -34,6 +40,8 @@ resource "signalfx_webhook_integration" "webhook_myteam" {
 * `enabled` - (Required) Whether the integration is enabled.
 * `url` - (Required) The URL to request
 * `shared_secret` - (Optional)
+* `method` - (Optional) HTTP method used for the webhook request, such as 'GET', 'POST' and 'PUT'
+* `payload_template` - (Optional) Template for the payload to be sent with the webhook request in JSON format
 * `headers` - (Optional) A header to send with the request
   * `header_key` - (Required) The key of the header to send
   * `header_value` - (Required) The value of the header to send

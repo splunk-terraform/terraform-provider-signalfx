@@ -9,11 +9,19 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
+const payloadTemplate = `{
+    "incidentId": "{{{incidentId}}}"
+}
+`
+
 const newIntegrationWebhookConfig = `
 resource "signalfx_webhook_integration" "webhook_myteamXX" {
     name = "Webhook - My Team"
-    enabled = true
-    url = "https://www.example.com"
+    enabled = false
+    url = "https://www.example.com/v1"
+    method = "GET"
+    payload_template = <<-EOF
+%s EOF
 
     headers {
       header_key = "foo"
@@ -26,11 +34,14 @@ const updatedIntegrationWebhookConfig = `
 resource "signalfx_webhook_integration" "webhook_myteamXX" {
     name = "Webhook - My Team NEW"
     enabled = true
-    url = "https://www.example.com"
+    url = "https://www.example.com/v2"
+    method = "POST"
+    payload_template = <<-EOF
+%s EOF
 
     headers {
       header_key = "foo"
-      header_value = "bar"
+      header_value = "foobar"
     }
 }
 `
@@ -43,11 +54,16 @@ func TestAccCreateUpdateIntegrationWebhook(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Create It
 			{
-				Config: newIntegrationWebhookConfig,
+				Config: fmt.Sprintf(newIntegrationWebhookConfig, payloadTemplate),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckIntegrationWebhookResourceExists,
 					resource.TestCheckResourceAttr("signalfx_webhook_integration.webhook_myteamXX", "name", "Webhook - My Team"),
-					resource.TestCheckResourceAttr("signalfx_webhook_integration.webhook_myteamXX", "enabled", "true"),
+					resource.TestCheckResourceAttr("signalfx_webhook_integration.webhook_myteamXX", "enabled", "false"),
+					resource.TestCheckResourceAttr("signalfx_webhook_integration.webhook_myteamXX", "url", "https://www.example.com/v1"),
+					resource.TestCheckResourceAttr("signalfx_webhook_integration.webhook_myteamXX", "method", "GET"),
+					resource.TestCheckResourceAttr("signalfx_webhook_integration.webhook_myteamXX", "payload_template", payloadTemplate),
+					resource.TestCheckResourceAttr("signalfx_webhook_integration.webhook_myteamXX", "headers.0.header_key", "foo"),
+					resource.TestCheckResourceAttr("signalfx_webhook_integration.webhook_myteamXX", "headers.0.header_value", "bar"),
 				),
 			},
 			{
@@ -58,11 +74,16 @@ func TestAccCreateUpdateIntegrationWebhook(t *testing.T) {
 			},
 			// Update It
 			{
-				Config: updatedIntegrationWebhookConfig,
+				Config: fmt.Sprintf(updatedIntegrationWebhookConfig, payloadTemplate),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckIntegrationWebhookResourceExists,
 					resource.TestCheckResourceAttr("signalfx_webhook_integration.webhook_myteamXX", "name", "Webhook - My Team NEW"),
 					resource.TestCheckResourceAttr("signalfx_webhook_integration.webhook_myteamXX", "enabled", "true"),
+					resource.TestCheckResourceAttr("signalfx_webhook_integration.webhook_myteamXX", "url", "https://www.example.com/v2"),
+					resource.TestCheckResourceAttr("signalfx_webhook_integration.webhook_myteamXX", "method", "POST"),
+					resource.TestCheckResourceAttr("signalfx_webhook_integration.webhook_myteamXX", "payload_template", payloadTemplate),
+					resource.TestCheckResourceAttr("signalfx_webhook_integration.webhook_myteamXX", "headers.0.header_key", "foo"),
+					resource.TestCheckResourceAttr("signalfx_webhook_integration.webhook_myteamXX", "headers.0.header_value", "foobar"),
 				),
 			},
 		},
