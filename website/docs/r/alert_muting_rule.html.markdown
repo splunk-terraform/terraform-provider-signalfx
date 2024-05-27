@@ -29,6 +29,11 @@ resource "signalfx_alert_muting_rule" "rool_mooter_one" {
     property       = "foo"
     property_value = "bar"
   }
+
+  recurrence {
+    unit = "d"
+    value = 2
+  }
 }
 ```
 
@@ -42,6 +47,9 @@ resource "signalfx_alert_muting_rule" "rool_mooter_one" {
   * `property` - (Required) The property to filter.
   * `property_value` - (Required) The property value to filter.
   * `negated` - (Optional) Determines if this is a "not" filter. Defaults to `false`.
+* `recurrence` - (Optional) Defines the recurrence of the muting rule. Allows setting a recurring muting rule based on specified days or weeks.
+  * `unit` - (Required) The unit of the period. Can be days (d) or weeks (w).
+  * `value` - (Required) The amount of time, expressed as an integer, applicable to the unit specified.
 
 ## Attributes
 
