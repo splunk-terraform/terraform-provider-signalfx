@@ -1,5 +1,12 @@
 ## Unreleased
 
+## 9.1.4
+
+IMPROVEMENTS:
+
+* `signalfx_alert_muting_rule`: added an optional field: `recurrence` [#480](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/480)
+* `signalfx_webhook_integration`: added optional fields: `method`, `payloadTemplate` [#479](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/479)
+
 ## 9.1.3
 
 IMPROVEMENTS:
