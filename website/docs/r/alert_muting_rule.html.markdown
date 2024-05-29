@@ -1,20 +1,20 @@
 ---
 layout: "signalfx"
-page_title: "Observability Cloud: signalfx_alert_muting_rule"
+page_title: "Splunk Observability Cloud: signalfx_alert_muting_rule"
 sidebar_current: "docs-signalfx-resource-alert-muting-rule"
 description: |-
-  Allows Terraform to create and manage Observability Cloud Alert Muting Rules
+  Allows Terraform to create and manage Splunk Observability Cloud Alert Muting Rules
 ---
 
 # Resource: signalfx_alert_muting_rule
 
-Provides an Observability Cloud resource for managing alert muting rules. See [Mute Notifications](https://docs.splunk.com/Observability/alerts-detectors-notifications/mute-notifications.html) for more information.
+Provides a Splunk Observability Cloud resource for managing alert muting rules. See [Mute Notifications](https://docs.splunk.com/Observability/alerts-detectors-notifications/mute-notifications.html) for more information.
 
-~> **WARNING** Observability Cloud does not allow the start time of a **currently active** muting rule to be modified. As such, attempting to modify a currently active rule will destroy the existing rule and create a new rule. This may result in the emission of notifications.
+Splunk Observability Cloud currently allows linking an alert muting rule with only one detector ID. Specifying multiple detector IDs makes the muting rule obsolete.
 
-~> **WARNING** Observability Cloud currently allows linking alert muting rule with only one detector ID. Specifying multiple detector IDs will make the muting rule obsolete.
+~> **WARNING** Splunk Observability Cloud does not allow the start time of a **currently active** muting rule to be modified. Attempting to modify a currently active rule destroys the existing rule and creates a new rule. This might result in the emission of notifications.
 
-## Example Usage
+## Example
 
 ```tf
 resource "signalfx_alert_muting_rule" "rool_mooter_one" {
@@ -29,10 +29,15 @@ resource "signalfx_alert_muting_rule" "rool_mooter_one" {
     property       = "foo"
     property_value = "bar"
   }
+
+  recurrence {
+    unit = "d"
+    value = 2
+  }
 }
 ```
 
-## Argument Reference
+## Arguments
 
 * `description` - (Required) The description for this muting rule
 * `start_time` - (Required) Starting time of an alert muting rule as a Unit time stamp in seconds.
@@ -42,8 +47,11 @@ resource "signalfx_alert_muting_rule" "rool_mooter_one" {
   * `property` - (Required) The property to filter.
   * `property_value` - (Required) The property value to filter.
   * `negated` - (Optional) Determines if this is a "not" filter. Defaults to `false`.
+* `recurrence` - (Optional) Defines the recurrence of the muting rule. Allows setting a recurring muting rule based on specified days or weeks.
+  * `unit` - (Required) The unit of the period. Can be days (d) or weeks (w).
+  * `value` - (Required) The amount of time, expressed as an integer, applicable to the unit specified.
 
-## Attributes Reference
+## Attributes
 
 In a addition to all arguments above, the following attributes are exported:
 

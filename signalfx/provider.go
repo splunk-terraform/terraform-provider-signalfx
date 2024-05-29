@@ -42,19 +42,19 @@ func Provider() *schema.Provider {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("SFX_AUTH_TOKEN", ""),
-				Description: "SignalFx auth token",
+				Description: "Splunk Observability Cloud auth token",
 			},
 			"api_url": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("SFX_API_URL", "https://api.signalfx.com"),
-				Description: "API URL for your SignalFx org, may include a realm",
+				Description: "API URL for your Splunk Observability Cloud org, may include a realm",
 			},
 			"custom_app_url": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("SFX_CUSTOM_APP_URL", "https://app.signalfx.com"),
-				Description: "Application URL for your SignalFx org, often customized for organizations using SSO",
+				Description: "Application URL for your Splunk Observability Cloud org, often customized for organizations using SSO",
 			},
 			"timeout_seconds": {
 				Type:        schema.TypeInt,
@@ -115,6 +115,7 @@ func Provider() *schema.Provider {
 			"signalfx_log_timeline":             logTimelineResource(),
 			"signalfx_table_chart":              tableChartResource(),
 			"signalfx_metric_ruleset":           metricRulesetResource(),
+			"signalfx_slo":                      sloResource(),
 		},
 		ConfigureFunc: signalfxConfigure,
 	}
@@ -196,9 +197,9 @@ func signalfxConfigure(data *schema.ResourceData) (interface{}, error) {
 	retryClient.RetryMax = retryMaxAttempts
 	retryClient.RetryWaitMin = time.Second * time.Duration(int64(retryWaitMinSeconds))
 	retryClient.RetryWaitMax = time.Second * time.Duration(int64(retryWaitMaxSeconds))
+	retryClient.HTTPClient.Timeout = time.Second * time.Duration(int64(totalTimeoutSeconds))
+	retryClient.HTTPClient.Transport = netTransport
 	standardClient := retryClient.StandardClient()
-	standardClient.Timeout = time.Second * time.Duration(int64(totalTimeoutSeconds))
-	standardClient.Transport = netTransport
 
 	client, err := sfx.NewClient(config.AuthToken,
 		sfx.APIUrl(config.APIURL),

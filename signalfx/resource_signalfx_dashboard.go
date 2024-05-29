@@ -53,7 +53,7 @@ func dashboardResource() *schema.Resource {
 				Type:          schema.TypeString,
 				Optional:      true,
 				ValidateFunc:  validateSignalfxRelativeTime,
-				Description:   "From when to display data. SignalFx time syntax (e.g. -5m, -1h)",
+				Description:   "From when to display data. Splunk Observability Cloud time syntax (e.g. -5m, -1h)",
 				ConflictsWith: []string{"start_time", "end_time"},
 			},
 			"start_time": &schema.Schema{

@@ -1,4 +1,40 @@
-## Unreleased 
+## Unreleased
+
+## 9.1.4
+
+IMPROVEMENTS:
+
+* `signalfx_alert_muting_rule`: added an optional field: `recurrence` [#480](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/480)
+* `signalfx_webhook_integration`: added optional fields: `method`, `payloadTemplate` [#479](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/479)
+
+## 9.1.3
+
+IMPROVEMENTS:
+* Add an option to specify calendar targets for SLO [#476](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/476)
+
+## 9.1.2
+
+BUGFIXES:
+* Fix HTTP retry [#467](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/467) [#468](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/468)
+
+## 9.1.1
+
+IMPROVEMENTS:
+* Small correction in slo docs [#466](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/466)
+
+## 9.1.0
+
+IMPROVEMENTS:
+* Add resource/resource_signalfx_slo to support creating SLO via terraform [#463](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/463)
+
+## 9.0.1
+
+IMPROVEMENTS:
+* Updated documentation with correct names and terminology. [#458](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/458)
+* Style and grammar improvements in the docs. [#458](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/458)
+
+BUGFIXES:
+* Fixed broken links in the documentation. [#458](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/458)
 
 ## 9.0.0
 BREAKING CHANGES:

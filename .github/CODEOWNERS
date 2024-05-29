@@ -1,1 +1,4 @@
-* @jrcamp @benkeith-splunk
+* @atoulme @benkeith-splunk
+signalfx/resource_signalfx_slo.go @dwalasek
+signalfx/resource_signalfx_slo_test.go @dwalasek
+website/docs/r/slo.html.markdown @dwalasek

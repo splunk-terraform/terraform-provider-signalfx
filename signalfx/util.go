@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	// Workaround for Signalfx bug related to post processing and lastUpdatedTime
+	// Workaround for Splunk Observability Cloud bug related to post processing and lastUpdatedTime
 	OFFSET         = 10000.0
 	CHART_API_PATH = "/v2/chart"
 	CHART_APP_PATH = "/chart/"
@@ -238,7 +238,7 @@ func resourceRead(url string, sfxToken string, d *schema.ResourceData) error {
 		if err != nil {
 			return fmt.Errorf("Failed unmarshaling for the resource %s during read: %s", d.Get("name"), err.Error())
 		}
-		// This implies the resource was modified in the Signalfx UI and therefore it is not synced.
+		// This implies the resource was modified in the Splunk Observability Cloud UI and therefore it is not synced.
 		last_updated := mapped_resp["lastUpdated"].(float64)
 		if last_updated > (d.Get("last_updated").(float64) + OFFSET) {
 			d.Set("synced", false)
@@ -246,10 +246,10 @@ func resourceRead(url string, sfxToken string, d *schema.ResourceData) error {
 		}
 	} else {
 		if status_code == 404 && strings.Contains(string(resp_body), " not found") {
-			// This implies that the resouce was deleted in the Signalfx UI and therefore we need to recreate it
+			// This implies that the resouce was deleted in the Splunk Observability Cloud UI and therefore we need to recreate it
 			d.SetId("")
 		} else {
-			return fmt.Errorf("For the resource '%s' SignalFx returned status %d: \n%s", d.Get("name"), status_code, resp_body)
+			return fmt.Errorf("For the resource '%s' Splunk Observability Cloud returned status %d: \n%s", d.Get("name"), status_code, resp_body)
 		}
 	}
 
@@ -271,7 +271,7 @@ func resourceCreate(url string, sfxToken string, payload []byte, d *schema.Resou
 		d.Set("last_updated", mapped_resp["lastUpdated"].(float64))
 		d.Set("synced", true)
 	} else {
-		return fmt.Errorf("For the resource %s SignalFx returned status %d: \n%s", d.Get("name"), status_code, resp_body)
+		return fmt.Errorf("For the resource %s Splunk Observability Cloud returned status %d: \n%s", d.Get("name"), status_code, resp_body)
 	}
 	return nil
 }
@@ -291,7 +291,7 @@ func resourceUpdate(url string, sfxToken string, payload []byte, d *schema.Resou
 		d.Set("synced", true)
 		d.Set("last_updated", mapped_resp["lastUpdated"].(float64))
 	} else {
-		return fmt.Errorf("For the resource '%s' SignalFx returned status %d: \n%s", d.Get("name"), status_code, resp_body)
+		return fmt.Errorf("For the resource '%s' Splunk Observability Cloud returned status %d: \n%s", d.Get("name"), status_code, resp_body)
 	}
 	return nil
 }
@@ -307,7 +307,7 @@ func resourceDelete(url string, sfxToken string, d *schema.ResourceData) error {
 	if status_code < 400 || status_code == 404 {
 		d.SetId("")
 	} else {
-		return fmt.Errorf("For the resource  %s SignalFx returned status %d: \n%s", d.Get("name"), status_code, resp_body)
+		return fmt.Errorf("For the resource  %s Splunk Observability Cloud returned status %d: \n%s", d.Get("name"), status_code, resp_body)
 	}
 	return nil
 }
@@ -367,20 +367,20 @@ func getLegendFieldOptions(d *schema.ResourceData) *chart.DataTableOptions {
 }
 
 /*
-Util method to validate SignalFx specific string format.
+Util method to validate Splunk Observability Cloud specific string format.
 */
 func validateSignalfxRelativeTime(v interface{}, k string) (we []string, errors []error) {
 	ts := v.(string)
 
 	r, _ := regexp.Compile("-([0-9]+)[mhdw]")
 	if !r.MatchString(ts) {
-		errors = append(errors, fmt.Errorf("%s not allowed. Please use milliseconds from epoch or SignalFx time syntax (e.g. -5m, -1h)", ts))
+		errors = append(errors, fmt.Errorf("%s not allowed. Please use milliseconds from epoch or Splunk Observability Cloud time syntax (e.g. -5m, -1h)", ts))
 	}
 	return
 }
 
 /*
-*  Util method to convert from Signalfx string format to milliseconds
+*  Util method to convert from Splunk Observability Cloud string format to milliseconds
  */
 func fromRangeToMilliSeconds(timeRange string) (int, error) {
 	r := regexp.MustCompile("-([0-9]+)([mhdw])")

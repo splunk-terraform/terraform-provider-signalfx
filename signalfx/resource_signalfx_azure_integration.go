@@ -37,7 +37,7 @@ func integrationAzureResource() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				Sensitive:   true,
-				Description: "Azure application ID for the SignalFx app.",
+				Description: "Azure application ID for the Splunk Observability Cloud app.",
 			},
 			"custom_namespaces_per_service": &schema.Schema{
 				Type:     schema.TypeSet,
@@ -65,7 +65,7 @@ func integrationAzureResource() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				Sensitive:   true,
-				Description: "Azure secret key that associates the SignalFx app in Azure with the Azure tenant.",
+				Description: "Azure secret key that associates the Splunk Observability Cloud app in Azure with the Azure tenant.",
 			},
 			"poll_rate": &schema.Schema{
 				Type:         schema.TypeInt,
@@ -81,7 +81,7 @@ func integrationAzureResource() *schema.Resource {
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
-				Description: "List of Microsoft Azure service names for the Azure services you want SignalFx to monitor. SignalFx only supports certain services, and if you specify an unsupported one, you receive an API error.",
+				Description: "List of Microsoft Azure service names for the Azure services you want Splunk Observability Cloud to monitor. Splunk Observability Cloud only supports certain services, and if you specify an unsupported one, you receive an API error.",
 			},
 			"additional_services": &schema.Schema{
 				Type:     schema.TypeList,
@@ -110,19 +110,19 @@ func integrationAzureResource() *schema.Resource {
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
-				Description: "List of Azure subscriptions that SignalFx should monitor.",
+				Description: "List of Azure subscriptions that Splunk Observability Cloud should monitor.",
 			},
 			"sync_guest_os_namespaces": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
-				Description: "If enabled, SignalFx will try to sync additional namespaces for VMs (including VMs in scale sets): telegraf/mem, telegraf/cpu, azure.vm.windows.guest (these are namespaces recommended by Azure when enabling their Diagnostic Extension). If there are no metrics there, no new datapoints will be ingested.",
+				Description: "If enabled, Splunk Observability Cloud will try to sync additional namespaces for VMs (including VMs in scale sets): telegraf/mem, telegraf/cpu, azure.vm.windows.guest (these are namespaces recommended by Azure when enabling their Diagnostic Extension). If there are no metrics there, no new datapoints will be ingested.",
 			},
 			"import_azure_monitor": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     true,
-				Description: "If enabled, SignalFx will sync also Azure Monitor data. If disabled, SignalFx will import only metadata. Defaults to true.",
+				Description: "If enabled, Splunk Observability Cloud will sync also Azure Monitor data. If disabled, Splunk Observability Cloud will import only metadata. Defaults to true.",
 			},
 			"tenant_id": &schema.Schema{
 				Type:        schema.TypeString,
