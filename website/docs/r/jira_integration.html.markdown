@@ -1,18 +1,18 @@
 ---
 layout: "signalfx"
-page_title: "SignalFx: signalfx_jira_integration"
+page_title: "Splunk Observability Cloud: signalfx_jira_integration"
 sidebar_current: "docs-signalfx-resource-jira-integration"
 description: |-
-  Allows Terraform to create and manage SignalFx Jira Integrations
+  Allows Terraform to create and manage Jira Integrations for Splunk Observability Cloud
 ---
 
 # Resource: signalfx_jira_integration
 
-SignalFx Jira integrations. For help with this integration see [Integration with Jira](https://docs.signalfx.com/en/latest/admin-guide/integrate-notifications.html#integrate-with-jira).
+Splunk Observability Cloud Jira integrations. For help with this integration see [Integration with Jira](https://docs.splunk.com/observability/en/admin/notif-services/jira.html).
 
-~> **NOTE** When managing integrations use a session token for an administrator to authenticate the SignalFx provider. See [Operations that require a session token for an administrator](https://dev.splunk.com/observability/docs/administration/authtokens#Operations-that-require-a-session-token-for-an-administrator). Otherwise you'll receive a 4xx error.
+~> **NOTE** When managing integrations, use a session token of an administrator to authenticate the Splunk Observability Cloud provider. See [Operations that require a session token for an administrator](https://dev.splunk.com/observability/docs/administration/authtokens#Operations-that-require-a-session-token-for-an-administrator). Otherwise you'll receive a 4xx error.
 
-## Example Usage
+## Example
 
 ```tf
 resource "signalfx_jira_integration" "jira_myteamXX" {
@@ -38,7 +38,7 @@ resource "signalfx_jira_integration" "jira_myteamXX" {
 ```
 
 
-## Argument Reference
+## Arguments
 
 * `name` - (Required) Name of the integration.
 * `enabled` - (Required) Whether the integration is enabled.
@@ -48,12 +48,12 @@ resource "signalfx_jira_integration" "jira_myteamXX" {
 * `username` - (Required if `auth_method` is `UsernameAndPassword`) User name used to authenticate the Jira integration.
 * `password` - (Required if `auth_method` is `UsernameAndPassword`) Password used to authenticate the Jira integration.
 * `base_url` - (Required) Base URL of the Jira instance that's integrated with SignalFx.
-* `issue_type` - (Required) Issue type (for example, Story) for tickets that Jira creates for detector notifications. SignalFx validates issue types, so you must specify a type that's valid for the Jira project specified in `projectKey`.
+* `issue_type` - (Required) Issue type (for example, Story) for tickets that Jira creates for detector notifications. Splunk Observability Cloud validates issue types, so you must specify a type that's valid for the Jira project specified in `projectKey`.
 * `project_key` - (Required) Jira key of an existing project. When Jira creates a new ticket for a detector notification, the ticket is assigned to this project.
 * `assignee_name` - (Required) Jira user name for the assignee.
 * `assignee_display_name` - (Optional) Jira display name for the assignee.
 
-## Attributes Reference
+## Attributes
 
 In a addition to all arguments above, the following attributes are exported:
 

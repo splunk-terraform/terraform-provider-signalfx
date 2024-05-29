@@ -13,9 +13,9 @@ import (
 	"time"
 
 	"github.com/bgentry/go-netrc/netrc"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/logging"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/go-retryablehttp"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/logging"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/mitchellh/go-homedir"
 	sfx "github.com/signalfx/signalfx-go"
 
@@ -35,26 +35,26 @@ type signalfxConfig struct {
 	Client       *sfx.Client
 }
 
-func Provider() terraform.ResourceProvider {
+func Provider() *schema.Provider {
 	sfxProvider = &schema.Provider{
 		Schema: map[string]*schema.Schema{
 			"auth_token": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("SFX_AUTH_TOKEN", ""),
-				Description: "SignalFx auth token",
+				Description: "Splunk Observability Cloud auth token",
 			},
 			"api_url": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("SFX_API_URL", "https://api.signalfx.com"),
-				Description: "API URL for your SignalFx org, may include a realm",
+				Description: "API URL for your Splunk Observability Cloud org, may include a realm",
 			},
 			"custom_app_url": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("SFX_CUSTOM_APP_URL", "https://app.signalfx.com"),
-				Description: "Application URL for your SignalFx org, often customized for organizations using SSO",
+				Description: "Application URL for your Splunk Observability Cloud org, often customized for organizations using SSO",
 			},
 			"timeout_seconds": {
 				Type:        schema.TypeInt,
@@ -62,11 +62,26 @@ func Provider() terraform.ResourceProvider {
 				Default:     120,
 				Description: "Timeout duration for a single HTTP call in seconds. Defaults to 120",
 			},
+			"retry_max_attempts": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Default:     4,
+				Description: "Max retries for a single HTTP call. Defaults to 4",
+			},
+			"retry_wait_min_seconds": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Default:     1,
+				Description: "Minimum retry wait for a single HTTP call in seconds. Defaults to 1",
+			},
+			"retry_wait_max_seconds": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Default:     30,
+				Description: "Maximum retry wait for a single HTTP call in seconds. Defaults to 30",
+			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
-			"signalfx_aws_services":          dataSourceAwsServices(),
-			"signalfx_azure_services":        dataSourceAzureServices(),
-			"signalfx_gcp_services":          dataSourceGcpServices(),
 			"signalfx_dimension_values":      dataSourceDimensionValues(),
 			"signalfx_pagerduty_integration": dataSourcePagerDutyIntegration(),
 		},
@@ -97,7 +112,10 @@ func Provider() terraform.ResourceProvider {
 			"signalfx_victor_ops_integration":   integrationVictorOpsResource(),
 			"signalfx_webhook_integration":      integrationWebhookResource(),
 			"signalfx_log_view":                 logViewResource(),
+			"signalfx_log_timeline":             logTimelineResource(),
 			"signalfx_table_chart":              tableChartResource(),
+			"signalfx_metric_ruleset":           metricRulesetResource(),
+			"signalfx_slo":                      sloResource(),
 		},
 		ConfigureFunc: signalfxConfigure,
 	}
@@ -153,7 +171,7 @@ func signalfxConfigure(data *schema.ResourceData) (interface{}, error) {
 		config.CustomAppURL = customAppURL.(string)
 	}
 
-	var netTransport = logging.NewTransport("SignalFx", &http.Transport{
+	netTransport := logging.NewTransport("SignalFx", &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
 		DialContext: (&net.Dialer{
 			Timeout: 5 * time.Second,
@@ -167,13 +185,25 @@ func signalfxConfigure(data *schema.ResourceData) (interface{}, error) {
 	providerUserAgent := fmt.Sprintf("Terraform/%s terraform-provider-signalfx/%s", sfxProvider.TerraformVersion, pv)
 
 	totalTimeoutSeconds := data.Get("timeout_seconds").(int)
+	retryMaxAttempts := data.Get("retry_max_attempts").(int)
+	retryWaitMinSeconds := data.Get("retry_wait_min_seconds").(int)
+	retryWaitMaxSeconds := data.Get("retry_wait_max_seconds").(int)
 	log.Printf("[DEBUG] SignalFx: HTTP Timeout is %d seconds", totalTimeoutSeconds)
+	log.Printf("[DEBUG] SignalFx: HTTP max retry attempts: %d", retryMaxAttempts)
+	log.Printf("[DEBUG] SignalFx: HTTP retry wait min is %d seconds", retryWaitMinSeconds)
+	log.Printf("[DEBUG] SignalFx: HTTP retry wait max is %d seconds", retryWaitMaxSeconds)
+
+	retryClient := retryablehttp.NewClient()
+	retryClient.RetryMax = retryMaxAttempts
+	retryClient.RetryWaitMin = time.Second * time.Duration(int64(retryWaitMinSeconds))
+	retryClient.RetryWaitMax = time.Second * time.Duration(int64(retryWaitMaxSeconds))
+	retryClient.HTTPClient.Timeout = time.Second * time.Duration(int64(totalTimeoutSeconds))
+	retryClient.HTTPClient.Transport = netTransport
+	standardClient := retryClient.StandardClient()
+
 	client, err := sfx.NewClient(config.AuthToken,
 		sfx.APIUrl(config.APIURL),
-		sfx.HTTPClient(&http.Client{
-			Timeout:   time.Second * time.Duration(int64(totalTimeoutSeconds)),
-			Transport: netTransport,
-		}),
+		sfx.HTTPClient(standardClient),
 		sfx.UserAgent(fmt.Sprintf(providerUserAgent)),
 	)
 	if err != nil {

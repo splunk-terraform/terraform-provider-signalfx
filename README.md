@@ -1,61 +1,66 @@
-Terraform `signalfx` Provider
-=========================
+# Splunk Observability Cloud Terraform Provider (`signalfx`)
 
+Splunk Observability Cloud is a Software as a Service (SaaS) solution for infrastructure monitoring (Splunk IM), application performance monitoring (Splunk APM), real user monitoring (Splunk RUM), and synthetic monitoring (Splunk Synthetic Monitoring). For more information, see [the official documentation](https://docs.splunk.com/observability/en/).
+
+Use this Terraform provider to automate the configuration of Splunk Observability Cloud.
+
+- Documentation: https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs
 - Website: https://www.terraform.io
 - [![Gitter chat](https://badges.gitter.im/hashicorp-terraform/Lobby.png)](https://gitter.im/hashicorp-terraform/Lobby)
 - Mailing list: [Google Groups](http://groups.google.com/group/terraform-tool)
 
-Requirements
-------------
+## Requirements
 
--	[Terraform](https://www.terraform.io/downloads.html) 0.10.x
--	[Go](https://golang.org/doc/install) 1.11 (to build the provider plugin)
+-	[Terraform](https://www.terraform.io/downloads.html) 0.12.x or higher
+-	[Go](https://golang.org/doc/install) 1.19 or higher to build the provider plugin
 
-Building The Provider
----------------------
+## Build the provider
 
-Clone repository to: `$GOPATH/src/github.com/splunk-terraform/terraform-provider-signalfx`
+To build the provider, follow these steps:
 
-```sh
-$ git clone git@github.com:splunk-terraform/terraform-provider-signalfx.git $GOPATH/src/github.com/splunk-terraform/terraform-provider-signalfx
-```
+1. Clone the repository to: `$GOPATH/src/github.com/splunk-terraform/terraform-provider-signalfx`:
 
-Enter the provider directory and build the provider
+   ```sh
+   $ git clone git@github.com:splunk-terraform/terraform-provider-signalfx.git $GOPATH/src/github.com/splunk-terraform/terraform-provider-signalfx
+   ```
 
-```sh
-$ cd $GOPATH/src/github.com/splunk-terraform/terraform-provider-signalfx
-$ make build
-```
+1. Enter the provider directory and build the provider:
 
-Using the provider
-----------------------
-If you're building the provider, follow the instructions to [install it as a plugin.](https://www.terraform.io/docs/plugins/basics.html#installing-a-plugin) After placing it into your plugins directory,  run `terraform init` to initialize it.
+   ```sh
+   $ cd $GOPATH/src/github.com/splunk-terraform/terraform-provider-signalfx
+   $ make build
+   ```
 
-Further [usage documentation is available on the Terraform website](https://www.terraform.io/docs/providers/signalfx/index.html).
+## Use the provider
 
-Developing the Provider
----------------------------
+If you're building the provider, follow the instructions to [install it as a plugin.](https://www.terraform.io/docs/plugins/basics.html#installing-a-plugin). After placing it into your plugins directory,  run `terraform init` to initialize it.
 
-If you wish to work on the provider, you'll first need [Go](http://www.golang.org) installed on your machine (version 1.11+ is *required*). You'll also need to correctly setup a [GOPATH](http://golang.org/doc/code.html#GOPATH), as well as adding `$GOPATH/bin` to your `$PATH`.
+Further [usage documentation](https://www.terraform.io/docs/providers/signalfx/index.html) is available on the Terraform website.
 
-To compile the provider, run `make build`. This will build the provider and put the provider binary in the `$GOPATH/bin` directory.
+## Develop the provider
 
-```sh
-$ make bin
-...
-$ $GOPATH/bin/terraform-provider-signalfx
-...
-```
+If you wish to work on the provider, you need the following:
 
-In order to test the provider, you can simply run `make test`.
+- [Go](http://www.golang.org) version 1.11 or higher
+- Configured [GOPATH](http://golang.org/doc/code.html#GOPATH)
+- `$GOPATH/bin` added to your `$PATH`
 
-```sh
-$ make test
-```
+To compile the provider, run `make build`. This builds the provider and put its binary inside the `$GOPATH/bin` directory:
 
-In order to run the full suite of Acceptance tests, run `make testacc`.
+   ```sh
+   $ make build
+   ...
+   $ $GOPATH/bin/terraform-provider-signalfx
+   ...
+   ```
 
-*Note:* Acceptance tests create real resources, and often cost money to run.
+To test the provider, run the following command:
+
+   ```sh
+   $ make test
+   ```
+
+To run the full suite of acceptance tests, run `make testacc`.
 
 ```sh
 $ export SFX_API_URL=https://api.signalfx.com # or https://api.eu0.signalfx.com
@@ -63,14 +68,19 @@ $ export SFX_AUTH_TOKEN=XXXXXX
 $ make testacc
 ```
 
-To also run the AWS integration tests for CloudWatch Metric Streams and AWS logs synchronization, you must create an actual AWS IAM user with an access key and secret that SignalFx can use to manage AWS resources, and define the `SFX_TEST_AWS_ACCESS_KEY_ID` and `SFX_TEST_AWS_SECRET_ACCESS_KEY` environment variables:
+> [!IMPORTANT]
+> Acceptance tests create real resources, and often cost money to run.
+
+### Run AWS integration tests
+
+To run the AWS integration tests for CloudWatch Metric Streams and AWS logs synchronization, create an AWS IAM user with an access key and secret that Splunk Observability Cloud can use to manage AWS resources, and define the `SFX_TEST_AWS_ACCESS_KEY_ID` and `SFX_TEST_AWS_SECRET_ACCESS_KEY` environment variables. For example:
 
 ```sh
 export SFX_TEST_AWS_ACCESS_KEY_ID=AKIAXXXXXX
 export SFX_TEST_AWS_SECRET_ACCESS_KEY=XXXXXX
 ```
 
-The following permissions must be granted. Additional permissions may be required to capture logs from specific AWS services.
+Grant the following permissions. Additional permissions may be required to capture logs from specific AWS services.
 
 ```
 "cloudwatch:DeleteMetricStream",
@@ -92,15 +102,19 @@ The following permissions must be granted. Additional permissions may be require
 
 See [Connect to AWS using the guided setup in Splunk Observability Cloud](https://docs.splunk.com/Observability/gdi/get-data-in/connect/aws/aws-wizardconfig.html) and [Enable CloudWatch Metric Streams](https://docs.splunk.com/Observability/gdi/get-data-in/connect/aws/aws-apiconfig.html#enable-cloudwatch-metric-streams) in Splunk documentation for more details about creating that IAM policy.
 
-Note that we use an IAM user instead of an IAM role as the latter requires an External ID that is only known at AWS integration creation time.
+> [!NOTE]
+> Use an IAM user instead of an IAM role, as the latter requires an External ID that is only known at AWS integration creation time.
 
-Releasing the Provider
-----------------------
+## Release the provider
 
-Install https://goreleaser.com/install/ if you don't already have it.
+To release the provider, install https://goreleaser.com/install/ if you don't already have it, then follow these steps:
 
- - Update changelog and create release in GH (vx.y.z format) in pre-release state
- - `git pull` (Locally)
- - `export GPG_TTY=$(tty)` (avoid gpg terminal issues if using iTerm2)
- - `GITHUB_TOKEN=xxx GPG_FINGERPRINT=xxx goreleaser --rm-dist` (github token must have `repo` scope)
- - Go back to release in github and mark as released/published
+1. Update the changelog and create a release in GH (vx.y.z format) in pre-release state
+
+1. `git pull` (Locally)
+
+1. `export GPG_TTY=$(tty)` (avoid gpg terminal issues if using iTerm2)
+
+1. `GITHUB_TOKEN=xxx GPG_FINGERPRINT=xxx goreleaser --rm-dist` (github token must have `repo` scope)
+
+1. Go back to release in github and mark as released/published

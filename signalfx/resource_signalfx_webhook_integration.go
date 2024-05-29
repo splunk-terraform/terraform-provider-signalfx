@@ -7,7 +7,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/signalfx/signalfx-go/integration"
 )
 
@@ -54,6 +54,16 @@ func integrationWebhookResource() *schema.Resource {
 					},
 				},
 			},
+			"method": &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "HTTP method used for the webhook request, such as 'GET', 'POST' and 'PUT'",
+			},
+			"payload_template": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Template for the payload to be sent with the webhook request in JSON format",
+			},
 		},
 
 		Create: integrationWebhookCreate,
@@ -81,10 +91,12 @@ func integrationWebhookExists(d *schema.ResourceData, meta interface{}) (bool, e
 
 func getWebhookPayloadIntegration(d *schema.ResourceData) *integration.WebhookIntegration {
 	webhook := &integration.WebhookIntegration{
-		Type:    "Webhook",
-		Name:    d.Get("name").(string),
-		Enabled: d.Get("enabled").(bool),
-		Url:     d.Get("url").(string),
+		Type:            "Webhook",
+		Name:            d.Get("name").(string),
+		Enabled:         d.Get("enabled").(bool),
+		Url:             d.Get("url").(string),
+		Method:          d.Get("method").(string),
+		PayloadTemplate: d.Get("payload_template").(string),
 	}
 
 	if val, ok := d.GetOk("shared_secret"); ok {
@@ -131,6 +143,12 @@ func webhookIntegrationAPIToTF(d *schema.ResourceData, og *integration.WebhookIn
 		return err
 	}
 	if err := d.Set("shared_secret", og.SharedSecret); err != nil {
+		return err
+	}
+	if err := d.Set("method", og.Method); err != nil {
+		return err
+	}
+	if err := d.Set("payload_template", og.PayloadTemplate); err != nil {
 		return err
 	}
 	if len(og.Headers) > 0 {

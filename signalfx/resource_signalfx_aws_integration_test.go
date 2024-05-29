@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -61,37 +62,6 @@ const newIntegrationAWSConfig = `
 
   resource "signalfx_aws_token_integration" "aws_tok_myteamXX" {
 	name = "AWS TF Test (token/new)"
-  }
-
-  resource "signalfx_aws_integration" "aws_myteam_tokXX" {
-	enabled = false
-
-	integration_id             = signalfx_aws_token_integration.aws_tok_myteamXX.id
-	token                      = "token123"
-	key                        = "key123"
-	regions                    = ["us-east-1"]
-	poll_rate                  = 300
-	import_cloud_watch         = true
-	enable_aws_usage           = true
-	use_get_metric_data_method = true
-
-	custom_namespace_sync_rule {
-	  default_action = "Exclude"
-	  filter_action  = "Include"
-	  filter_source  = "filter('code', '200')"
-	  namespace      = "AWS/SomeCustomNamespace"
-	}
-
-	custom_namespace_sync_rule {
-	  namespace = "custom"
-	}
-
-	namespace_sync_rule {
-	  default_action = "Exclude"
-	  filter_action  = "Include"
-	  filter_source  = "filter('code', '200')"
-	  namespace      = "AWS/EC2"
-	}
   }
 `
 
@@ -156,7 +126,6 @@ const updatedIntegrationAWSConfig = `
 	poll_rate                  = 300
 	import_cloud_watch         = true
 	enable_aws_usage           = true
-	use_get_metric_data_method = true
 
 	custom_namespace_sync_rule {
 	  default_action = "Exclude"
@@ -216,6 +185,24 @@ const updatedIntegrationAWSConfigLogsSync = `
   }
 `
 
+const emptyRegionsIntegrationAWSConfig = `
+  resource "signalfx_aws_external_integration" "aws_ext_myteamXX" {
+	name = "AWS TF Test (ext/new)"
+  }
+
+  resource "signalfx_aws_integration" "aws_myteamXX" {
+	enabled = false
+
+	integration_id     = signalfx_aws_external_integration.aws_ext_myteamXX.id
+	external_id        = signalfx_aws_external_integration.aws_ext_myteamXX.external_id
+	role_arn           = "arn:aws:iam::XXX:role/SignalFx-Read-Role"
+	regions            = []
+	poll_rate          = 300
+	import_cloud_watch = true
+	enable_aws_usage   = true
+  }
+`
+
 func TestAccCreateUpdateIntegrationAWS(t *testing.T) {
 	awsAccessKeyID := os.Getenv("SFX_TEST_AWS_ACCESS_KEY_ID")
 	awsSecretAccessKey := os.Getenv("SFX_TEST_AWS_SECRET_ACCESS_KEY")
@@ -231,15 +218,15 @@ func TestAccCreateUpdateIntegrationAWS(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckIntegrationAWSResourceExists,
 					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.#", "2"),
-					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.2980759070.namespace", "AWS/EC2"),
-					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.2980759070.metric", "NetworkPacketsIn"),
-					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.2980759070.stats.#", "2"),
-					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.2980759070.stats.1929087501", "p95"),
-					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.2980759070.stats.3729704193", "p99"),
-					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.529658192.namespace", "AWS/SomeCustomNamespace"),
-					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.529658192.metric", "TaskInstanceDuration"),
-					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.529658192.stats.#", "1"),
-					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.529658192.stats.1806468635", "sum"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.0.namespace", "AWS/EC2"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.0.metric", "NetworkPacketsIn"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.0.stats.#", "2"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.0.stats.0", "p95"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.0.stats.1", "p99"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.1.namespace", "AWS/SomeCustomNamespace"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.1.metric", "TaskInstanceDuration"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.1.stats.#", "1"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.1.stats.0", "sum"),
 				),
 			},
 			// Update
@@ -250,14 +237,14 @@ func TestAccCreateUpdateIntegrationAWS(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "name", "AWS TF Test (ext/updated)"),
 					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteam_tokXX", "name", "AWS TF Test (token/updated)"),
 					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.#", "2"),
-					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.3877068524.namespace", "AWS/EC2"),
-					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.3877068524.metric", "NetworkPacketsIn"),
-					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.3877068524.stats.#", "1"),
-					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.3877068524.stats.2598274585", "upper"),
-					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.997089140.namespace", "AWS/SomeCustomNamespace"),
-					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.997089140.metric", "TaskInstanceFailures"),
-					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.997089140.stats.#", "1"),
-					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.997089140.stats.1806468635", "sum"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.0.namespace", "AWS/EC2"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.0.metric", "NetworkPacketsIn"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.0.stats.#", "1"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.0.stats.0", "upper"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.1.namespace", "AWS/SomeCustomNamespace"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.1.metric", "TaskInstanceFailures"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.1.stats.#", "1"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.1.stats.0", "sum"),
 				),
 			},
 			// Update again to enable Cloudwatch Metric Streams synchronization
@@ -327,6 +314,19 @@ func TestAccCreateDeleteIntegrationAWSMetricStream(t *testing.T) {
 	})
 }
 
+func TestFailOnEmptyRegions(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config:      emptyRegionsIntegrationAWSConfig,
+				ExpectError: regexp.MustCompile("regions should be defined explicitly, see https://docs.splunk.com/Observability/gdi/get-data-in/connect/aws/aws-prereqs.html#supported-aws-regions"),
+			},
+		},
+	})
+}
+
 func testAccCheckIntegrationAWSResourceExists(s *terraform.State) error {
 	client := newTestClient()
 
@@ -360,14 +360,6 @@ func testAccIntegrationAWSDestroy(s *terraform.State) error {
 	}
 
 	return nil
-}
-
-func TestValidateAwsService(t *testing.T) {
-	_, errors := validateAwsService("AWS/Logs", "")
-	assert.Equal(t, 0, len(errors), "No errors for valid value")
-
-	_, errors = validateAwsService("InvalidService", "")
-	assert.Equal(t, 1, len(errors), "Errors for invalid value")
 }
 
 func TestValidateFilterAction(t *testing.T) {

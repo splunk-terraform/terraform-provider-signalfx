@@ -6,7 +6,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	notification "github.com/signalfx/signalfx-go/notification"
 	team "github.com/signalfx/signalfx-go/team"
 )

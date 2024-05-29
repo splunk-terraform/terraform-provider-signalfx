@@ -7,8 +7,8 @@ import (
 	"log"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/signalfx/signalfx-go/datalink"
 	"github.com/signalfx/signalfx-go/util"
 )
@@ -34,7 +34,7 @@ func dataLinkResource() *schema.Resource {
 			"target_signalfx_dashboard": &schema.Schema{
 				Type:        schema.TypeSet,
 				Optional:    true,
-				Description: "Link to a SignalFx dashboard",
+				Description: "Link to a Splunk Observability Cloud dashboard",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"dashboard_group_id": &schema.Schema{
@@ -89,7 +89,7 @@ func dataLinkResource() *schema.Resource {
 						"property_key_mapping": &schema.Schema{
 							Type:        schema.TypeMap,
 							Optional:    true,
-							Description: "Describes the relationship between SignalFx metadata keys and external system properties when the key names are different",
+							Description: "Describes the relationship between Splunk Observability Cloud metadata keys and external system properties when the key names are different",
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
@@ -117,7 +117,7 @@ func dataLinkResource() *schema.Resource {
 						"property_key_mapping": &schema.Schema{
 							Type:        schema.TypeMap,
 							Optional:    true,
-							Description: "Describes the relationship between SignalFx metadata keys and external system properties when the key names are different",
+							Description: "Describes the relationship between Splunk Observability Cloud metadata keys and external system properties when the key names are different",
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},

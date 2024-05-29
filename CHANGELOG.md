@@ -1,5 +1,111 @@
 ## Unreleased
 
+## 9.1.4
+
+IMPROVEMENTS:
+
+* `signalfx_alert_muting_rule`: added an optional field: `recurrence` [#480](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/480)
+* `signalfx_webhook_integration`: added optional fields: `method`, `payloadTemplate` [#479](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/479)
+
+## 9.1.3
+
+IMPROVEMENTS:
+* Add an option to specify calendar targets for SLO [#476](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/476)
+
+## 9.1.2
+
+BUGFIXES:
+* Fix HTTP retry [#467](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/467) [#468](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/468)
+
+## 9.1.1
+
+IMPROVEMENTS:
+* Small correction in slo docs [#466](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/466)
+
+## 9.1.0
+
+IMPROVEMENTS:
+* Add resource/resource_signalfx_slo to support creating SLO via terraform [#463](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/463)
+
+## 9.0.1
+
+IMPROVEMENTS:
+* Updated documentation with correct names and terminology. [#458](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/458)
+* Style and grammar improvements in the docs. [#458](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/458)
+
+BUGFIXES:
+* Fixed broken links in the documentation. [#458](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/458)
+
+## 9.0.0
+BREAKING CHANGES:
+* `signalfx_aws_integration` resource: The `regions` field is now required and no longer accepts an empty value.
+  Regions must be now declared explicitly to avoid unexpected increased cost whenever a new region is enabled
+  on the AWS account [#450](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/450)
+
+## 8.1.0
+IMPROVEMENTS:
+* Update documentation for `signalfx_gcp_integration` [#447](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/447)
+* Add Logs Timeline Chart resource [#448](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/448)
+
+## 8.0.0
+IMPROVEMENTS:
+* Remove AWS/Azure/GCP service (a.k.a. namespace) validation to make TF provider more flexible 
+  and rely on the Splunk Observability Cloud API validation logic. [#444](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/444)
+* Remove data resources signalfx_aws_services, signalfx_azure_services, signalfx_gcp_services 
+  as they were based on a no longer maintained lists in the signalfx-go library. Users may use 
+  empty list to specify "all services" instead or use strings to specify selected services. 
+* Fix external-id field handling when token based AWS integration is created in two separate
+  Terraform runs. [#445](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/445)
+* Update documentation for `signalfx_aws_integration` [#446](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/446)
+
+## 7.0.0
+BUGFIXES:
+* Fixes issue with calculating correct height of a row when using grid or column layout in dashboard
+
+IMPROVEMENTS:
+* Upgrade terraform SDK to v2 [#437](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/437)
+* Remove deprecated fields: `use_get_metric_data_method` in AWS integration resource and `whitelist` in GCP integration resource. [#430](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/430)
+* Upgrade signalfx-go to add new Azure services. [#436](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/436)
+
+BREAKING CHANGES:
+* `signalfx_azure_integration` resource: The `resource_filter_rules.filter.source` field has been
+  replaced with `resource_filter_rules.filter_source`, which is the string filter source itself.
+  This change is due to the previous implementation of the `filter` and `source` fields using
+  the wrong types -- the upgrade to the v2 SDK has stricter validation that required it to be changed.
+* `signalfx_metric_ruleset` resource: The `routing_rule` field has been changed to a set type that
+  requires the removal of the `=` after `routing_rule` -- the upgrade to the v2 SDK has stricter
+  validation that required it to be changed.
+
+## 6.24.0
+BUGFIXES:
+* Fixes backwards incompatibility for GCP integration resource introduced in `6.21.0` [#429](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/429)
+
+IMPROVEMENTS:
+* Deprecate `use_get_metric_data_method` in AWS integration resource [#428](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/428)
+
+## 6.23.0
+WARNING: This version is NOT backward compatible for GCP integration resource. This is fixed in 6.24.0
+
+IMPROVEMENTS:
+* provider: Use go-retryablehttp for automatic retries with exponential backoff. Add `retry_max_attempts` (default=4), `retry_wait_min_seconds` (default=1), and `retry_wait_max_seconds` (default=30) configuration options. [#416](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/416)
+* resource/signalfx_metric_ruleset: added along with docs
+
+## 6.22.0
+WARNING: This version is NOT backward compatible for GCP integration resource. This is fixed in 6.24.0
+
+BUGFIXES
+* resource/signalfx_table_chart: Added `color` option to `viz_options` to fix `Error: Invalid address to set: []string{"viz_options", "0", "color"}` [#410](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/410)
+
+## 6.21.0
+WARNING: This version is NOT backward compatible for GCP integration resource. This is fixed in 6.24.0
+
+IMPROVEMENTS:
+* resource/signalfx_gcp_integration: Add `custom_metric_type_domains` option and rename deprecated field `whitelist` to `include_list` [#412](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/412)
+
+BUGFIXES:
+* remove empty dashboards in tfstate when non-mirrored dashboards are included in a dashboard group [#413](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/413)
+
+## 6.20.0
  IMPROVEMENTS:
  * resource/signalfx_table_chart: Added `viz_options` option [#402](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/402)
 

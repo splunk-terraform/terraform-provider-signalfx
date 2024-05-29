@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/signalfx/signalfx-go/integration"
 )
 
@@ -36,8 +36,7 @@ func integrationAWSResource() *schema.Resource {
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Removed:     "Please specify the name in `signalfx_aws_external_integration` or `signalfx_aws_integration_token`",
-				Description: "Name of the integration",
+				Description: "Name of the integration. Please specify the name in `signalfx_aws_external_integration` or `signalfx_aws_integration_token`",
 			},
 			"enabled": &schema.Schema{
 				Type:        schema.TypeBool,
@@ -47,8 +46,7 @@ func integrationAWSResource() *schema.Resource {
 			"auth_method": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Removed:     "Use one of `signalfx_aws_external_integration` or `signalfx_aws_token_integration`",
-				Description: "The mechanism used to authenticate with AWS.",
+				Description: "The mechanism used to authenticate with AWS. Use one of `signalfx_aws_external_integration` or `signalfx_aws_token_integration` to define this",
 			},
 			"custom_cloudwatch_namespaces": &schema.Schema{
 				Type: schema.TypeSet,
@@ -56,37 +54,37 @@ func integrationAWSResource() *schema.Resource {
 					Type: schema.TypeString,
 				},
 				Optional:      true,
-				Description:   "List of custom AWS CloudWatch namespaces to monitor. Custom namespaces contain custom metrics that you define in AWS; SignalFx imports the metrics so you can monitor them.",
+				Description:   "List of custom AWS CloudWatch namespaces to monitor. Custom namespaces contain custom metrics that you define in AWS; Splunk Observability imports the metrics so you can monitor them.",
 				ConflictsWith: []string{"custom_namespace_sync_rule"},
 			},
 			"custom_namespace_sync_rule": &schema.Schema{
 				Type:          schema.TypeSet,
 				Optional:      true,
 				ConflictsWith: []string{"custom_cloudwatch_namespaces"},
-				Description:   "Each element controls the data collected by SignalFx for the specified namespace. If you specify this property, SignalFx ignores values in the \"custom_cloudwatch_namespaces\" property.",
+				Description:   "Each element controls the data collected by Splunk Observability for the specified namespace. If you specify this property, Splunk Observability ignores values in the \"custom_cloudwatch_namespaces\" property.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"default_action": {
 							Type:         schema.TypeString,
 							Optional:     true,
 							ValidateFunc: validateFilterAction,
-							Description:  "Controls the SignalFx default behavior for processing data from an AWS namespace. The available actions are one of \"Include\" or \"Exclude\".",
+							Description:  "Controls the Splunk Observability default behavior for processing data from an AWS namespace. Splunk Observability ignores this property unless you specify the `filter_action` and `filter_source` properties. If you do specify them, use this property to control how Splunk Observability treats data that doesn't match the filter. The available actions are one of \"Include\" or \"Exclude\".",
 						},
 						"filter_action": {
 							Type:         schema.TypeString,
 							Optional:     true,
 							ValidateFunc: validateFilterAction,
-							Description:  "Controls how SignalFx processes data from a custom AWS namespace. The available actions are one of \"Include\" or \"Exclude\".",
+							Description:  "Controls how Splunk Observability processes data from a custom AWS namespace. The available actions are one of \"Include\" or \"Exclude\".",
 						},
 						"filter_source": {
 							Type:        schema.TypeString,
 							Optional:    true,
-							Description: "Expression that selects the data that SignalFx should sync for the custom namespace associated with this sync rule. The expression uses the syntax defined for the SignalFlow `filter()` function; it can be any valid SignalFlow filter expression.",
+							Description: "Expression that selects the data that Splunk Observability should sync for the custom namespace associated with this sync rule. The expression uses the syntax defined for the SignalFlow `filter()` function; it can be any valid SignalFlow filter expression.",
 						},
 						"namespace": {
 							Type:        schema.TypeString,
 							Required:    true,
-							Description: "An AWS custom namespace having custom AWS metrics that you want to sync with SignalFx. See the AWS documentation on publishing metrics for more information.",
+							Description: "An AWS custom namespace having custom AWS metrics that you want to sync with Splunk Observability. See the AWS documentation on publishing metrics for more information.",
 						},
 					},
 				},
@@ -95,31 +93,30 @@ func integrationAWSResource() *schema.Resource {
 				Type:          schema.TypeSet,
 				Optional:      true,
 				ConflictsWith: []string{"services"},
-				Description:   "Each element in the array is an object that contains an AWS namespace name and a filter that controls the data that SignalFx collects for the namespace. If you specify this property, SignalFx ignores the values in the AWS CloudWatch Integration Model \"services\" property. If you don't specify either property, SignalFx syncs all data in all AWS namespaces.",
+				Description:   "Each element in the array is an object that contains an AWS namespace name and a filter that controls the data that Splunk Observability collects for the namespace. If you specify this property, Splunk Observability ignores the values in the AWS CloudWatch Integration Model \"services\" property. If you don't specify either property, Splunk Observability syncs all data in all AWS namespaces.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"default_action": {
 							Type:         schema.TypeString,
 							Optional:     true,
 							ValidateFunc: validateFilterAction,
-							Description:  "Controls the SignalFx default behavior for processing data from an AWS namespace. SignalFx ignores this property unless you specify the \"filter\" property in the namespace sync rule. If you do specify a filter, use this property to control how SignalFx treats data that doesn't match the filter. The available actions are one of \"Include\" or \"Exclude\".",
+							Description:  "Controls the Splunk Observability default behavior for processing data from an AWS namespace. Splunk Observability ignores this property unless you specify the `filter_action` and `filter_source` properties. If you do specify them, use this property to control how Splunk Observability treats data that doesn't match the filter. The available actions are one of \"Include\" or \"Exclude\".",
 						},
 						"filter_action": {
 							Type:         schema.TypeString,
 							Optional:     true,
 							ValidateFunc: validateFilterAction,
-							Description:  "Controls how SignalFx processes data from a custom AWS namespace. The available actions are one of \"Include\" or \"Exclude\".",
+							Description:  "Controls how Splunk Observability processes data from a custom AWS namespace. The available actions are one of \"Include\" or \"Exclude\".",
 						},
 						"filter_source": {
 							Type:        schema.TypeString,
 							Optional:    true,
-							Description: "Expression that selects the data that SignalFx should sync for the custom namespace associated with this sync rule. The expression uses the syntax defined for the SignalFlow `filter()` function; it can be any valid SignalFlow filter expression.",
+							Description: "Expression that selects the data that Splunk Observability should sync for the custom namespace associated with this sync rule. The expression uses the syntax defined for the SignalFlow `filter()` function; it can be any valid SignalFlow filter expression.",
 						},
 						"namespace": {
-							Type:         schema.TypeString,
-							Required:     true,
-							ValidateFunc: validateAwsService,
-							Description:  "An AWS namespace having custom AWS metrics that you want to sync with SignalFx. See the AWS documentation on publishing metrics for more information.",
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "An AWS namespace having custom AWS metrics that you want to sync with Splunk Observability. See the AWS documentation on publishing metrics for more information.",
 						},
 					},
 				},
@@ -127,12 +124,12 @@ func integrationAWSResource() *schema.Resource {
 			"enable_aws_usage": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Description: "Flag that controls how SignalFx imports usage metrics from AWS to use with AWS Cost Optimizer. If `true`, SignalFx imports the metrics.",
+				Description: "Flag that controls how Splunk Observability imports usage metrics from AWS to use with AWS Cost Optimizer. If `true`, Splunk Observability imports the metrics.",
 			},
 			"import_cloud_watch": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Description: "Flag that controls how SignalFx imports Cloud Watch metrics. If true, SignalFx imports Cloud Watch metrics from AWS.",
+				Description: "Flag that controls how Splunk Observability imports Cloud Watch metrics. If true, Splunk Observability imports Cloud Watch metrics from AWS.",
 			},
 			"key": {
 				Type:          schema.TypeString,
@@ -143,11 +140,11 @@ func integrationAWSResource() *schema.Resource {
 			},
 			"regions": {
 				Type:     schema.TypeSet,
-				Optional: true,
+				Required: true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
-				Description: "List of AWS regions that SignalFx should monitor.",
+				Description: "List of AWS regions that Splunk Observability should monitor.",
 			},
 			"role_arn": {
 				Type:          schema.TypeString,
@@ -159,10 +156,9 @@ func integrationAWSResource() *schema.Resource {
 				Type:     schema.TypeSet,
 				Optional: true,
 				Elem: &schema.Schema{
-					Type:         schema.TypeString,
-					ValidateFunc: validateAwsService,
+					Type: schema.TypeString,
 				},
-				Description: "List of AWS services that you want SignalFx to monitor. Each element is a string designating an AWS service.",
+				Description: "List of AWS services that you want Splunk Observability to monitor. Each element is a string designating an AWS service.",
 			},
 			"token": {
 				Type:          schema.TypeString,
@@ -183,12 +179,6 @@ func integrationAWSResource() *schema.Resource {
 				Sensitive:     true,
 				ConflictsWith: []string{"token", "key"},
 				Description:   "Used with `signalfx_aws_external_integration`. Use this property to specify the external id.",
-			},
-			"use_get_metric_data_method": &schema.Schema{
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     false,
-				Description: "Enables the use of Amazon's GetMetricData API. Defaults to `false`.",
 			},
 			"use_metric_streams_sync": &schema.Schema{
 				Type:        schema.TypeBool,
@@ -211,12 +201,12 @@ func integrationAWSResource() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
-				Description: "Controls how SignalFx checks for large amounts of data for this AWS integration. If true, SignalFx monitors the amount of data coming in from the integration.",
+				Description: "Controls how Splunk Observability checks for large amounts of data for this AWS integration. If true, Splunk Observability monitors the amount of data coming in from the integration.",
 			},
 			"metric_stats_to_sync": &schema.Schema{
 				Type:        schema.TypeSet,
 				Optional:    true,
-				Description: "Each element in the array is an object that contains an AWS namespace name, AWS metric name and a list of statistics that SignalFx collects for this metric. If you specify this property, SignalFx retrieves only specified AWS statistics. If you don't specify this property, SignalFx retrieves the AWS standard set of statistics.",
+				Description: "Each element in the array is an object that contains an AWS namespace name, AWS metric name and a list of statistics that Splunk Observability collects for this metric. If you specify this property, Splunk Observability retrieves only specified AWS statistics. If you don't specify this property, Splunk Observability retrieves the AWS standard set of statistics.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"namespace": &schema.Schema{
@@ -244,7 +234,7 @@ func integrationAWSResource() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
-				Description: "Indicates that SignalFx should sync metrics and metadata from custom AWS namespaces only (see the `custom_namespace_sync_rule` field for details). Defaults to `false`.",
+				Description: "Indicates that Splunk Observability should sync metrics and metadata from custom AWS namespaces only (see the `custom_namespace_sync_rule` field for details). Defaults to `false`.",
 			},
 		},
 
@@ -316,9 +306,6 @@ func awsIntegrationAPIToTF(d *schema.ResourceData, aws *integration.AwsCloudWatc
 		return err
 	}
 	if err := d.Set("poll_rate", aws.PollRate/1000); err != nil {
-		return err
-	}
-	if err := d.Set("use_get_metric_data_method", aws.UseGetMetricDataMethod); err != nil {
 		return err
 	}
 	if err := d.Set("use_metric_streams_sync", aws.MetricStreamsSyncState == "ENABLED"); err != nil {
@@ -449,7 +436,6 @@ func getPayloadAWSIntegration(d *schema.ResourceData) (*integration.AwsCloudWatc
 		Enabled:                  d.Get("enabled").(bool),
 		EnableAwsUsage:           d.Get("enable_aws_usage").(bool),
 		ImportCloudWatch:         d.Get("import_cloud_watch").(bool),
-		UseGetMetricDataMethod:   d.Get("use_get_metric_data_method").(bool),
 		EnableCheckLargeVolume:   d.Get("enable_check_large_volume").(bool),
 		SyncCustomNamespacesOnly: d.Get("sync_custom_namespaces_only").(bool),
 	}
@@ -510,6 +496,8 @@ func getPayloadAWSIntegration(d *schema.ResourceData) (*integration.AwsCloudWatc
 			}
 			aws.Regions = regions
 		}
+	} else {
+		return nil, fmt.Errorf("regions should be defined explicitly, see https://docs.splunk.com/Observability/gdi/get-data-in/connect/aws/aws-prereqs.html#supported-aws-regions")
 	}
 
 	if val, ok := d.GetOk("services"); ok {
@@ -757,16 +745,5 @@ func validateFilterAction(v interface{}, k string) (we []string, errors []error)
 	if value != string(integration.EXCLUDE) && value != string(integration.INCLUDE) {
 		errors = append(errors, fmt.Errorf("%s not allowed; filter action must be one of %s or %s", value, integration.EXCLUDE, integration.INCLUDE))
 	}
-	return
-}
-
-func validateAwsService(v interface{}, k string) (we []string, errors []error) {
-	value := v.(string)
-	for key, _ := range integration.AWSServiceNames {
-		if key == value {
-			return
-		}
-	}
-	errors = append(errors, fmt.Errorf("%s not allowed; consult the documentation for a list of valid AWS Service names", value))
 	return
 }

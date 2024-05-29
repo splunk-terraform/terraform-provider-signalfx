@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 const newIntegrationOpsgenieConfig = `
@@ -25,7 +25,7 @@ resource "signalfx_opsgenie_integration" "opsgenie_myteamXX" {
 }
 `
 
-// Commented out because SignalFx seems to validate this integration even if
+// Commented out because Splunk Observability Cloud seems to validate this integration even if
 // it is disabled.
 // func TestAccCreateUpdateIntegrationOpsgenie(t *testing.T) {
 // 	resource.Test(t, resource.TestCase{

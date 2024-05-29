@@ -6,8 +6,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 const newDashConfig = `
@@ -174,7 +174,6 @@ resource "signalfx_data_link" "my_data_link_dash" {
     property_value = "pvalue"
 
     target_external_url {
-			is_default = false
       name = "ex_url"
       time_format = "ISO8601"
       url = "https://www.example.com"
@@ -349,7 +348,6 @@ resource "signalfx_data_link" "my_data_link_dash" {
     property_value = "pvalue2"
 
     target_external_url {
-			is_default = false
       name = "ex_url"
       time_format = "ISO8601"
       url = "https://www.example.com"
@@ -377,23 +375,23 @@ func TestAccCreateUpdateDashboardGroup(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "time_range", "-30m"),
 					// Filters
 					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "filter.#", "1"),
-					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "filter.1325118228.apply_if_exist", "true"),
-					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "filter.1325118228.negated", "true"),
-					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "filter.1325118228.property", "collector"),
-					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "filter.1325118228.values.#", "2"),
-					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "filter.1325118228.values.3211103030", "cpu"),
-					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "filter.1325118228.values.3846648755", "Diamond"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "filter.0.apply_if_exist", "true"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "filter.0.negated", "true"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "filter.0.property", "collector"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "filter.0.values.#", "2"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "filter.0.values.1", "cpu"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "filter.0.values.0", "Diamond"),
 					// Variables
 					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "variable.#", "1"),
-					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "variable.3642329230.property", "region"),
-					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "variable.3642329230.description", "a region"),
-					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "variable.3642329230.alias", "theregion"),
-					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "variable.3642329230.apply_if_exist", "true"),
-					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "variable.3642329230.replace_only", "true"),
-					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "variable.3642329230.restricted_suggestions", "true"),
-					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "variable.3642329230.values.#", "1"),
-					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "variable.3642329230.values.318300922", "uswest-1"),
-					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "variable.3642329230.values_suggested.#", "1"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "variable.0.property", "region"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "variable.0.description", "a region"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "variable.0.alias", "theregion"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "variable.0.apply_if_exist", "true"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "variable.0.replace_only", "true"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "variable.0.restricted_suggestions", "true"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "variable.0.values.#", "1"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "variable.0.values.0", "uswest-1"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "variable.0.values_suggested.#", "1"),
 					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "event_overlay.#", "1"),
 					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "event_overlay.0.color", "lilac"),
 					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "event_overlay.0.label", "a event overlabel"),
@@ -403,7 +401,7 @@ func TestAccCreateUpdateDashboardGroup(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "event_overlay.0.source.0.negated", "true"),
 					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "event_overlay.0.source.0.property", "region"),
 					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "event_overlay.0.source.0.values.#", "1"),
-					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "event_overlay.0.source.0.values.318300922", "uswest-1"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "event_overlay.0.source.0.values.0", "uswest-1"),
 					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "event_overlay.0.type", "detectorEvents"),
 
 					// Selected Event Overlays
@@ -414,7 +412,7 @@ func TestAccCreateUpdateDashboardGroup(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "selected_event_overlay.0.source.0.negated", "true"),
 					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "selected_event_overlay.0.source.0.property", "region"),
 					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "selected_event_overlay.0.source.0.values.#", "1"),
-					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "selected_event_overlay.0.source.0.values.318300922", "uswest-1"),
+					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "selected_event_overlay.0.source.0.values.0", "uswest-1"),
 					resource.TestCheckResourceAttr("signalfx_dashboard.mydashboard0", "selected_event_overlay.0.type", "detectorEvents"),
 
 					// Charts

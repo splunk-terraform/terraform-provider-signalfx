@@ -7,7 +7,7 @@ import (
 	"log"
 	"math"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 // This is an arbtirary limit and could be changed. I just don't think it

@@ -1,9 +1,9 @@
 ---
 layout: "signalfx"
-page_title: "SignalFx: signalfx_single_value_chart"
+page_title: "Splunk Observability Cloud: signalfx_single_value_chart"
 sidebar_current: "docs-signalfx-resource-single-value-chart"
 description: |-
-  Allows Terraform to create and manage SignalFx single value charts
+  Allows Terraform to create and manage single value charts in Splunk Observability Cloud
 ---
 
 # Resource: signalfx_single_value_chart
@@ -12,7 +12,7 @@ This chart type displays a single number in a large font, representing the curre
 
 If the time period is in the past, the number represents the value of the metric near the end of the time period.
 
-## Example Usage
+## Example
 
 ```tf
 resource "signalfx_single_value_chart" "mysvchart0" {
@@ -34,12 +34,12 @@ resource "signalfx_single_value_chart" "mysvchart0" {
 }
 ```
 
-## Argument Reference
+## Arguments
 
 The following arguments are supported in the resource block:
 
 * `name` - (Required) Name of the chart.
-* `program_text` - (Required) Signalflow program text for the chart. More info [in the SignalFx docs](https://developers.signalfx.com/signalflow_analytics/signalflow_overview.html#_signalflow_programming_language).
+* `program_text` - (Required) Signalflow program text for the chart. More info [in the Splunk Observability Cloud docs](https://dev.splunk.com/observability/docs/signalflow/).
 * `description` - (Optional) Description of the chart.
 * `color_by` - (Optional) Must be `"Dimension"`, `"Scale"` or `"Metric"`. `"Dimension"` by default.
 * `color_scale` - (Optional. `color_by` must be `"Scale"`) Single color range including both the color to display for that range and the borders of the range. Example: `[{ gt = 60, color = "blue" }, { lte = 60, color = "yellow" }]`. Look at this [link](https://docs.signalfx.com/en/latest/charts/chart-options-tab.html).
@@ -52,17 +52,17 @@ The following arguments are supported in the resource block:
     * `label` - (Required) Label used in the publish statement that displays the plot (metric time series data) you want to customize.
     * `display_name` - (Optional) Specifies an alternate value for the Plot Name column of the Data Table associated with the chart.
     * `color` - (Optional) The color to use. Must be one of gray, blue, light_blue, navy, dark_orange, orange, dark_yellow, magenta, cerise, pink, violet, purple, gray_blue, dark_green, green, aquamarine, red, yellow, vivid_yellow, light_green, or lime_green.
-    * `value_unit` - (Optional) A unit to attach to this plot. Units support automatic scaling (eg thousands of bytes will be displayed as kilobytes). Values values are `Bit, Kilobit, Megabit, Gigabit, Terabit, Petabit, Exabit, Zettabit, Yottabit, Byte, Kibibyte, Mebibyte, Gigibyte, Tebibyte, Pebibyte, Exbibyte, Zebibyte, Yobibyte, Nanosecond, Microsecond, Millisecond, Second, Minute, Hour, Day, Week`.
+    * `value_unit` - (Optional) A unit to attach to this plot. Units support automatic scaling (eg thousands of bytes will be displayed as kilobytes). Values values are `Bit, Kilobit, Megabit, Gigabit, Terabit, Petabit, Exabit, Zettabit, Yottabit, Byte, Kibibyte, Mebibyte, Gibibyte (note: this was previously typoed as Gigibyte), Tebibyte, Pebibyte, Exbibyte, Zebibyte, Yobibyte, Nanosecond, Microsecond, Millisecond, Second, Minute, Hour, Day, Week`.
     * `value_prefix`, `value_suffix` - (Optional) Arbitrary prefix/suffix to display with the value of this plot.
 * `unit_prefix` - (Optional) Must be `"Metric"` or `"Binary"`. `"Metric"` by default.
 * `max_delay` - (Optional) How long (in seconds) to wait for late datapoints
 * `refresh_interval` - (Optional) How often (in seconds) to refresh the value.
 * `max_precision` - (Optional) The maximum precision to for value displayed.
 * `is_timestamp_hidden` - (Optional) Whether to hide the timestamp in the chart. `false` by default.
-* `secondary_visualization` - (Optional) The type of secondary visualization. Can be `None`, `Radial`, `Linear`, or `Sparkline`. If unset, the SignalFx default is used (`None`).
+* `secondary_visualization` - (Optional) The type of secondary visualization. Can be `None`, `Radial`, `Linear`, or `Sparkline`. If unset, the Splunk Observability Cloud default is used (`None`).
 * `show_spark_line` - (Optional) Whether to show a trend line below the current value. `false` by default.
 
-## Attributes Reference
+## Attributes
 
 In a addition to all arguments above, the following attributes are exported:
 

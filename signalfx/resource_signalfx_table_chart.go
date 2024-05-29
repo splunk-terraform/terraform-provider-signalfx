@@ -7,8 +7,8 @@ import (
 	"log"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	chart "github.com/signalfx/signalfx-go/chart"
 )
 
@@ -98,6 +98,12 @@ func tableChartResource() *schema.Resource {
 							Required:    true,
 							Description: "The label used in the publish statement that displays the plot (metric time series data) you want to customize",
 						},
+						"color": &schema.Schema{
+							Type:         schema.TypeString,
+							Optional:     true,
+							Description:  "Color to use",
+							ValidateFunc: validatePerSignalColor,
+						},
 						"display_name": &schema.Schema{
 							Type:        schema.TypeString,
 							Optional:    true,
@@ -150,7 +156,7 @@ func getPayloadTableChart(d *schema.ResourceData) (*chart.CreateUpdateChartReque
 		return nil, err
 	}
 
-	if vizOptions := getPerSignalVizOptions(d); len(vizOptions) > 0 {
+	if vizOptions := getPerSignalVizOptions(d, false); len(vizOptions) > 0 {
 		options.PublishLabelOptions = vizOptions
 	}
 

@@ -7,8 +7,8 @@ import (
 	"log"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	dashboard_group "github.com/signalfx/signalfx-go/dashboard_group"
 )
 
@@ -484,8 +484,6 @@ func dashboardGroupAPIToTF(d *schema.ResourceData, dg *dashboard_group.Dashboard
 	}
 
 	if len(dg.DashboardConfigs) > 0 {
-		dConfigs := make([]map[string]interface{}, len(dg.DashboardConfigs))
-
 		// Collect a list of mirrored dashboard configs
 		config := meta.(*signalfxConfig)
 		mirroredDashboardConfigs, err := getMirroredDashboardConfigs(config, d)
@@ -493,6 +491,7 @@ func dashboardGroupAPIToTF(d *schema.ResourceData, dg *dashboard_group.Dashboard
 			return err
 		}
 
+		dConfigs := make([]map[string]interface{}, len(mirroredDashboardConfigs))
 		for i, dc := range mirroredDashboardConfigs {
 			dConf := make(map[string]interface{})
 			dConf["config_id"] = dc.ConfigId

@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/signalfx/signalfx-go/integration"
 	"log"
 	"strings"
@@ -32,7 +32,7 @@ func IntegrationAWSRead(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	if int.ExternalId != "" {
+	if int.AuthMethod == integration.EXTERNAL_ID && int.ExternalId != "" {
 		if err := d.Set("external_id", int.ExternalId); err != nil {
 			return err
 		}

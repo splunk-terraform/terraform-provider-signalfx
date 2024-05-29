@@ -7,38 +7,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-const newAlertMutingRuleConfig = `
-resource "signalfx_alert_muting_rule" "rool_mooter_one" {
-    description = "mooted it"
-
-    start_time = 1573063243
-
-    filter {
-      property = "foo"
-      property_value = "bar"
-    }
-}
-`
-
-const updatedAlertMutingRuleConfig = `
-resource "signalfx_alert_muting_rule" "rool_mooter_one" {
-    description = "mooted it NEW"
-
-    start_time = 1573063243
-
-    filter {
-      property = "foo"
-      property_value = "bar"
-    }
-}
-`
-
 func TestAccCreateUpdateFutureAlertMutingRule(t *testing.T) {
-
 	firstTime := time.Now().Unix() + 86400
 	secondTime := time.Now().Unix() + (86400 * 2)
 
@@ -52,6 +25,11 @@ func TestAccCreateUpdateFutureAlertMutingRule(t *testing.T) {
 	      property = "foo"
 	      property_value = "bar"
 	    }
+
+        recurrence {
+          unit = "d"
+          value = 2
+        }
 	}
 	`, firstTime)
 
@@ -65,6 +43,11 @@ func TestAccCreateUpdateFutureAlertMutingRule(t *testing.T) {
 	      property = "foo"
 	      property_value = "bar"
 	    }
+
+        recurrence {
+          unit = "d"
+          value = 4
+        }
 	}
 	`, secondTime)
 
@@ -80,6 +63,8 @@ func TestAccCreateUpdateFutureAlertMutingRule(t *testing.T) {
 					testAccCreateUpdateAlertMutingRuleResourceExists,
 					resource.TestCheckResourceAttr("signalfx_alert_muting_rule.rool_mooter_two", "description", "mooted it FUTURE"),
 					resource.TestCheckResourceAttr("signalfx_alert_muting_rule.rool_mooter_two", "start_time", strconv.Itoa(int(firstTime))),
+					resource.TestCheckResourceAttr("signalfx_alert_muting_rule.rool_mooter_two", "recurrence.0.unit", "d"),
+					resource.TestCheckResourceAttr("signalfx_alert_muting_rule.rool_mooter_two", "recurrence.0.value", "2"),
 				),
 			},
 			{
@@ -97,14 +82,12 @@ func TestAccCreateUpdateFutureAlertMutingRule(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCreateUpdateAlertMutingRuleResourceExists,
 					resource.TestCheckResourceAttr("signalfx_alert_muting_rule.rool_mooter_two", "start_time", strconv.Itoa(int(secondTime))),
+					resource.TestCheckResourceAttr("signalfx_alert_muting_rule.rool_mooter_two", "recurrence.0.unit", "d"),
+					resource.TestCheckResourceAttr("signalfx_alert_muting_rule.rool_mooter_two", "recurrence.0.value", "4"),
 				),
 			},
 		},
 	})
-}
-
-func TestAccCreateUpdateAlertMutingRule(t *testing.T) {
-
 }
 
 func testAccCreateUpdateAlertMutingRuleResourceExists(s *terraform.State) error {

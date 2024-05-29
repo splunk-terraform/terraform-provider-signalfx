@@ -5,12 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"log"
 	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/signalfx/signalfx-go/alertmuting"
 )
 
@@ -53,6 +53,27 @@ func alertMutingRuleResource() *schema.Resource {
 							Optional:    true,
 							Default:     false,
 							Description: "(false by default) whether this filter should be a \"not\" filter",
+						},
+					},
+				},
+			},
+			"recurrence": {
+				Type:     schema.TypeSet,
+				Optional: true,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"unit": {
+							Type:         schema.TypeString,
+							Required:     true,
+							ValidateFunc: validation.StringInSlice([]string{"d", "w"}, false),
+							Description:  "unit of the period. Can be days (d) or weeks (w)",
+						},
+						"value": {
+							Type:         schema.TypeInt,
+							Required:     true,
+							Description:  "amount of time, expressed as an integer applicable to the unit",
+							ValidateFunc: validation.IntAtLeast(1),
 						},
 					},
 				},
@@ -124,6 +145,17 @@ func getPayloadAlertMutingRule(d *schema.ResourceData) (*alertmuting.CreateUpdat
 		Filters:     filterList,
 		StartTime:   int64(d.Get("start_time").(int) * 1000),
 		StopTime:    int64(d.Get("stop_time").(int) * 1000),
+	}
+
+	if recurrence, ok := d.GetOk("recurrence"); ok {
+		tfRecurrences := recurrence.(*schema.Set).List()
+		if len(tfRecurrences) > 0 {
+			recurrence := tfRecurrences[0].(map[string]interface{})
+			cuamrr.Recurrence = &alertmuting.AlertMutingRuleRecurrence{
+				Unit:  recurrence["unit"].(string),
+				Value: int32(recurrence["value"].(int)),
+			}
+		}
 	}
 
 	return cuamrr, nil
@@ -230,6 +262,17 @@ func alertMutingRuleAPIToTF(d *schema.ResourceData, amr *alertmuting.AlertMuting
 		if err := d.Set("stop_time", amr.StopTime/1000); err != nil {
 			return err
 		}
+	}
+
+	if amr.Recurrence != nil {
+		d.Set("recurrence", []interface{}{
+			map[string]interface{}{
+				"unit":  amr.Recurrence.Unit,
+				"value": amr.Recurrence.Value,
+			},
+		})
+	} else {
+		d.Set("recurrence", nil)
 	}
 
 	return nil

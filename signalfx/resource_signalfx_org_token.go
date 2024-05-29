@@ -8,7 +8,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/signalfx/signalfx-go/orgtoken"
 )
 
@@ -107,12 +107,12 @@ func orgTokenResource() *schema.Resource {
 							Type:        schema.TypeInt,
 							Optional:    true,
 							Default:     -1,
-							Description: "DPM level at which SignalFx sends the notification for this token. If you don't specify a notification, SignalFx sends the generic notification.",
+							Description: "DPM level at which Splunk Observability Cloud sends the notification for this token. If you don't specify a notification, Splunk Observability Cloud sends the generic notification.",
 						},
 						"dpm_limit": &schema.Schema{
 							Type:        schema.TypeInt,
 							Required:    true,
-							Description: "The datapoints per minute (dpm) limit for this token. If you exceed this limit, SignalFx sends out an alert.",
+							Description: "The datapoints per minute (dpm) limit for this token. If you exceed this limit, Splunk Observability Cloud sends out an alert.",
 						},
 					},
 				},

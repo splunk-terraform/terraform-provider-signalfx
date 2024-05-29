@@ -1,18 +1,18 @@
 ---
 layout: "signalfx"
-page_title: "SignalFx: signalfx_time_chart"
+page_title: "Splunk Observability Cloud: signalfx_time_chart"
 sidebar_current: "docs-signalfx-resource-time-chart"
 description: |-
-  Allows Terraform to create and manage SignalFx time charts
+  Allows Terraform to create and manage time charts in Splunk Observability Cloud
 ---
 
 # Resource: signalfx_time_chart
 
-Provides a SignalFx time chart resource. This can be used to create and manage the different types of time charts.
+Provides a Splunk Observability Cloud time chart resource. This can be used to create and manage the different types of time charts.
 
 Time charts display data points over a period of time.
 
-## Example Usage
+## Example
 
 ```tf
 resource "signalfx_time_chart" "mychart0" {
@@ -49,15 +49,15 @@ resource "signalfx_time_chart" "mychart0" {
 }
 ```
 
-## Argument Reference
+## Arguments
 
 The following arguments are supported in the resource block:
 
 * `name` - (Required) Name of the chart.
-* `program_text` - (Required) Signalflow program text for the chart. More info [in the SignalFx docs](https://developers.signalfx.com/signalflow_analytics/signalflow_overview.html#_signalflow_programming_language).
+* `program_text` - (Required) Signalflow program text for the chart. More info [in the Splunk Observability Cloud docs](https://dev.splunk.com/observability/docs/signalflow/).
 * `plot_type` - (Optional) The default plot display style for the visualization. Must be `"LineChart"`, `"AreaChart"`, `"ColumnChart"`, or `"Histogram"`. Default: `"LineChart"`.
 * `description` - (Optional) Description of the chart.
-* `axes_precision` - (Optional) Specifies the digits SignalFx displays for values plotted on the chart. Defaults to `3`.
+* `axes_precision` - (Optional) Specifies the digits Splunk Observability Cloud displays for values plotted on the chart. Defaults to `3`.
 * `unit_prefix` - (Optional) Must be `"Metric"` or `"Binary`". `"Metric"` by default.
 * `color_by` - (Optional) Must be `"Dimension"` or `"Metric"`. `"Dimension"` by default.
 * `minimum_resolution` - (Optional) The minimum resolution (in seconds) to use for computing the underlying program.
@@ -90,7 +90,7 @@ The following arguments are supported in the resource block:
     * `color` - (Optional) Color to use : gray, blue, azure, navy, brown, orange, yellow, iris, magenta, pink, purple, violet, lilac, emerald, green, aquamarine.
     * `axis` - (Optional) Y-axis associated with values for this plot. Must be either `right` or `left`.
     * `plot_type` - (Optional) The visualization style to use. Must be `"LineChart"`, `"AreaChart"`, `"ColumnChart"`, or `"Histogram"`. Chart level `plot_type` by default.
-    * `value_unit` - (Optional) A unit to attach to this plot. Units support automatic scaling (eg thousands of bytes will be displayed as kilobytes). Values values are `Bit, Kilobit, Megabit, Gigabit, Terabit, Petabit, Exabit, Zettabit, Yottabit, Byte, Kibibyte, Mebibyte, Gigibyte, Tebibyte, Pebibyte, Exbibyte, Zebibyte, Yobibyte, Nanosecond, Microsecond, Millisecond, Second, Minute, Hour, Day, Week`.
+    * `value_unit` - (Optional) A unit to attach to this plot. Units support automatic scaling (eg thousands of bytes will be displayed as kilobytes). Values values are `Bit, Kilobit, Megabit, Gigabit, Terabit, Petabit, Exabit, Zettabit, Yottabit, Byte, Kibibyte, Mebibyte, Gibibyte (note: this was previously typoed as Gigibyte), Tebibyte, Pebibyte, Exbibyte, Zebibyte, Yobibyte, Nanosecond, Microsecond, Millisecond, Second, Minute, Hour, Day, Week`.
     * `value_prefix`, `value_suffix` - (Optional) Arbitrary prefix/suffix to display with the value of this plot.
 * `event_options` - (Optional) Event customization options, associated with a publish statement. You will need to use this to change settings for any `events(…)` statements you use.
     * `label` - (Required) Label used in the publish statement that displays the event query you want to customize.
@@ -106,9 +106,9 @@ The following arguments are supported in the resource block:
 * `show_event_lines` - (Optional) Whether vertical highlight lines should be drawn in the visualizations at times when events occurred. `false` by default.
 * `show_data_markers` - (Optional) Show markers (circles) for each datapoint used to draw line or area charts. `false` by default.
 * `stacked` - (Optional) Whether area and bar charts in the visualization should be stacked. `false` by default.
-* `timezone` - (Optional) Time zone that SignalFlow uses as the basis of calendar window transformation methods. For example, if you set "timezone": "Europe/Paris" and then use the transformation sum(cycle="week", cycle_start="Monday") in your chart's SignalFlow program, the calendar window starts on Monday, Paris time. See the [full list of timezones for more](https://developers.signalfx.com/signalflow_analytics/signalflow_overview.html#_supported_signalflow_time_zones). `"UTC"` by default.
+* `timezone` - (Optional) Time zone that SignalFlow uses as the basis of calendar window transformation methods. For example, if you set "timezone": "Europe/Paris" and then use the transformation sum(cycle="week", cycle_start="Monday") in your chart's SignalFlow program, the calendar window starts on Monday, Paris time. See the [full list of timezones for more](https://dev.splunk.com/observability/docs/signalflow/). `"UTC"` by default.
 
-## Attributes Reference
+## Attributes
 
 In a addition to all arguments above, the following attributes are exported:
 

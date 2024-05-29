@@ -7,8 +7,8 @@ import (
 	"log"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/signalfx/signalfx-go/integration"
 )
 
@@ -37,8 +37,15 @@ func integrationGCPResource() *schema.Resource {
 				Optional:    true,
 				Description: "GCP enabled services",
 				Elem: &schema.Schema{
-					Type:         schema.TypeString,
-					ValidateFunc: validateGcpService,
+					Type: schema.TypeString,
+				},
+			},
+			"custom_metric_type_domains": &schema.Schema{
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Description: "List of additional GCP service domain names that you want to monitor",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 			"project_service_keys": &schema.Schema{
@@ -66,10 +73,10 @@ func integrationGCPResource() *schema.Resource {
 				Default:     false,
 				Description: "When this value is set to true Observability Cloud will force usage of a quota from the project where metrics are stored. For this to work the service account provided for the project needs to be provided with serviceusage.services.use permission or Service Usage Consumer role in this project. When set to false default quota settings are used.",
 			},
-			"whitelist": &schema.Schema{
+			"include_list": &schema.Schema{
 				Type:        schema.TypeSet,
 				Optional:    true,
-				Description: "Compute Metadata Whitelist",
+				Description: "List of custom metadata keys that you want Observability Cloud to collect for Compute Engine instances.",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -84,7 +91,7 @@ func integrationGCPResource() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     true,
-				Description: "If enabled, SignalFx will sync also Google Cloud Metrics data. If disabled, SignalFx will import only metadata. Defaults to true.",
+				Description: "If enabled, Splunk Observability Cloud will sync also Google Cloud Metrics data. If disabled, Splunk Observability Cloud will import only metadata. Defaults to true.",
 			},
 		},
 
@@ -165,8 +172,12 @@ func getGCPPayloadIntegration(d *schema.ResourceData) *integration.GCPIntegratio
 		gcp.ProjectServiceKeys = serviceKeys
 	}
 
-	if val, ok := d.GetOk("whitelist"); ok {
-		gcp.Whitelist = expandStringSetToSlice(val.(*schema.Set))
+	if val, ok := d.GetOk("include_list"); ok {
+		gcp.IncludeList = expandStringSetToSlice(val.(*schema.Set))
+	}
+
+	if val, ok := d.GetOk("custom_metric_type_domains"); ok {
+		gcp.CustomMetricTypeDomains = expandStringSetToSlice(val.(*schema.Set))
 	}
 
 	return gcp
@@ -208,7 +219,11 @@ func gcpIntegrationAPIToTF(d *schema.ResourceData, gcp *integration.GCPIntegrati
 	// Note that the API doesn't return the project keys so we ignore them,
 	// because there's not much reason to poke at just the project id.
 
-	if err := d.Set("whitelist", flattenStringSliceToSet(gcp.Whitelist)); err != nil {
+	if err := d.Set("include_list", flattenStringSliceToSet(gcp.IncludeList)); err != nil {
+		return err
+	}
+
+	if err := d.Set("custom_metric_type_domains", flattenStringSliceToSet(gcp.CustomMetricTypeDomains)); err != nil {
 		return err
 	}
 
@@ -257,15 +272,4 @@ func integrationGCPDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 
 	return config.Client.DeleteGCPIntegration(context.TODO(), d.Id())
-}
-
-func validateGcpService(v interface{}, k string) (we []string, errors []error) {
-	value := v.(string)
-	for key, _ := range integration.GcpServiceNames {
-		if key == value {
-			return
-		}
-	}
-	errors = append(errors, fmt.Errorf("%s not allowed; consult the documentation for a list of valid GCP service names", value))
-	return
 }

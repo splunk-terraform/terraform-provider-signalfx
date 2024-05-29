@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/signalfx/signalfx-go/dashboard"
 	"github.com/signalfx/signalfx-go/util"
 )
@@ -53,7 +53,7 @@ func dashboardResource() *schema.Resource {
 				Type:          schema.TypeString,
 				Optional:      true,
 				ValidateFunc:  validateSignalfxRelativeTime,
-				Description:   "From when to display data. SignalFx time syntax (e.g. -5m, -1h)",
+				Description:   "From when to display data. Splunk Observability Cloud time syntax (e.g. -5m, -1h)",
 				ConflictsWith: []string{"start_time", "end_time"},
 			},
 			"start_time": &schema.Schema{
@@ -649,7 +649,7 @@ func getDashboardColumns(d *schema.ResourceData) []*dashboard.DashboardChart {
 				Width:   int32(column["width"].(int)),
 			}
 
-			currentRow++
+			currentRow += column["height"].(int)
 			charts = append(charts, item)
 		}
 	}
@@ -659,7 +659,7 @@ func getDashboardColumns(d *schema.ResourceData) []*dashboard.DashboardChart {
 func getDashboardGrids(d *schema.ResourceData) []*dashboard.DashboardChart {
 	grids := d.Get("grid").([]interface{})
 	charts := make([]*dashboard.DashboardChart, 0)
-	// We must keep track of the row outside of the loop as there might be many
+	// We must keep track of the row outside the loop as there might be many
 	// grids to draw.
 	currentRow := 0
 	for _, grid := range grids {
@@ -669,7 +669,7 @@ func getDashboardGrids(d *schema.ResourceData) []*dashboard.DashboardChart {
 		currentColumn := 0
 		for _, chartID := range grid["chart_ids"].([]interface{}) {
 			if currentColumn+width > 12 {
-				currentRow++
+				currentRow += grid["height"].(int)
 				currentColumn = 0
 			}
 
@@ -683,7 +683,7 @@ func getDashboardGrids(d *schema.ResourceData) []*dashboard.DashboardChart {
 			currentColumn += width
 			charts = append(charts, item)
 		}
-		currentRow++ // Increment the row for the next grid
+		currentRow += grid["height"].(int) // Increment the row for the next grid
 	}
 	return charts
 }

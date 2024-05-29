@@ -7,8 +7,8 @@ import (
 	"log"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/signalfx/signalfx-go/integration"
 )
 
@@ -37,7 +37,7 @@ func integrationAzureResource() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				Sensitive:   true,
-				Description: "Azure application ID for the SignalFx app.",
+				Description: "Azure application ID for the Splunk Observability Cloud app.",
 			},
 			"custom_namespaces_per_service": &schema.Schema{
 				Type:     schema.TypeSet,
@@ -65,7 +65,7 @@ func integrationAzureResource() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				Sensitive:   true,
-				Description: "Azure secret key that associates the SignalFx app in Azure with the Azure tenant.",
+				Description: "Azure secret key that associates the Splunk Observability Cloud app in Azure with the Azure tenant.",
 			},
 			"poll_rate": &schema.Schema{
 				Type:         schema.TypeInt,
@@ -79,10 +79,9 @@ func integrationAzureResource() *schema.Resource {
 				Required: true,
 				MinItems: 1,
 				Elem: &schema.Schema{
-					Type:         schema.TypeString,
-					ValidateFunc: validateAzureService,
+					Type: schema.TypeString,
 				},
-				Description: "List of Microsoft Azure service names for the Azure services you want SignalFx to monitor. SignalFx only supports certain services, and if you specify an unsupported one, you receive an API error.",
+				Description: "List of Microsoft Azure service names for the Azure services you want Splunk Observability Cloud to monitor. Splunk Observability Cloud only supports certain services, and if you specify an unsupported one, you receive an API error.",
 			},
 			"additional_services": &schema.Schema{
 				Type:     schema.TypeList,
@@ -92,23 +91,15 @@ func integrationAzureResource() *schema.Resource {
 				},
 				Description: "Additional Azure resource types that you want to sync with Observability Cloud.",
 			},
-			"resource_filter_rules": &schema.Schema{
+			"resource_filter_rules": {
 				Type:        schema.TypeList,
 				Optional:    true,
 				Description: "List of rules for filtering Azure resources by their tags. The source of each filter rule must be in the form filter('key', 'value'). You can join multiple filter statements using the and and or operators. Referenced keys are limited to tags and must start with the azure_tag_ prefix..",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"filter": &schema.Schema{
-							Type:     schema.TypeMap,
+						"filter_source": {
+							Type:     schema.TypeString,
 							Required: true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"source": &schema.Schema{
-										Type:     schema.TypeString,
-										Required: true,
-									},
-								},
-							},
 						},
 					},
 				},
@@ -119,19 +110,19 @@ func integrationAzureResource() *schema.Resource {
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
-				Description: "List of Azure subscriptions that SignalFx should monitor.",
+				Description: "List of Azure subscriptions that Splunk Observability Cloud should monitor.",
 			},
 			"sync_guest_os_namespaces": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
-				Description: "If enabled, SignalFx will try to sync additional namespaces for VMs (including VMs in scale sets): telegraf/mem, telegraf/cpu, azure.vm.windows.guest (these are namespaces recommended by Azure when enabling their Diagnostic Extension). If there are no metrics there, no new datapoints will be ingested.",
+				Description: "If enabled, Splunk Observability Cloud will try to sync additional namespaces for VMs (including VMs in scale sets): telegraf/mem, telegraf/cpu, azure.vm.windows.guest (these are namespaces recommended by Azure when enabling their Diagnostic Extension). If there are no metrics there, no new datapoints will be ingested.",
 			},
 			"import_azure_monitor": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     true,
-				Description: "If enabled, SignalFx will sync also Azure Monitor data. If disabled, SignalFx will import only metadata. Defaults to true.",
+				Description: "If enabled, Splunk Observability Cloud will sync also Azure Monitor data. If disabled, Splunk Observability Cloud will import only metadata. Defaults to true.",
 			},
 			"tenant_id": &schema.Schema{
 				Type:        schema.TypeString,
@@ -256,11 +247,9 @@ func azureIntegrationAPIToTF(d *schema.ResourceData, azure *integration.AzureInt
 	if len(azure.ResourceFilterRules) > 0 {
 		var rules []map[string]interface{}
 		for _, v := range azure.ResourceFilterRules {
-			filter := map[string]string{
-				"source": v.Filter.Source,
-			}
+			filter_source := v.Filter.Source
 			rules = append(rules, map[string]interface{}{
-				"filter": filter,
+				"filter_source": filter_source,
 			})
 		}
 		if err := d.Set("resource_filter_rules", rules); err != nil {
@@ -296,9 +285,9 @@ func getPayloadAzureIntegration(d *schema.ResourceData) (*integration.AzureInteg
 	if val, ok := d.GetOk("services"); ok {
 		tfServices := val.(*schema.Set).List()
 		services := make([]integration.AzureService, len(tfServices))
-		for i, s := range tfServices {
-			s := s.(string)
-			services[i] = integration.AzureServiceNames[s]
+		for i, v := range tfServices {
+			v := integration.AzureService(v.(string))
+			services[i] = v
 		}
 		azure.Services = services
 	}
@@ -341,11 +330,10 @@ func getPayloadAzureIntegration(d *schema.ResourceData) (*integration.AzureInteg
 		resourceFilterRulesTF := val.([]interface{})
 		resourceFilterRules := make([]integration.AzureFilterRule, len(resourceFilterRulesTF))
 		for i, rfrTF := range resourceFilterRulesTF {
-			filterTF := rfrTF.(map[string]interface{})
-			sourceTF := filterTF["filter"].(map[string]interface{})
+			ruleTF := rfrTF.(map[string]interface{})
 			resourceFilterRules[i] = integration.AzureFilterRule{
 				Filter: integration.AzureFilterExpression{
-					Source: sourceTF["source"].(string)}}
+					Source: ruleTF["filter_source"].(string)}}
 		}
 		azure.ResourceFilterRules = resourceFilterRules
 	}
@@ -401,15 +389,4 @@ func integrationAzureDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 
 	return config.Client.DeleteAzureIntegration(context.TODO(), d.Id())
-}
-
-func validateAzureService(v interface{}, k string) (we []string, errors []error) {
-	value := v.(string)
-	for key, _ := range integration.AzureServiceNames {
-		if key == value {
-			return
-		}
-	}
-	errors = append(errors, fmt.Errorf("%s not allowed; consult the documentation for a list of valid Azure service names", value))
-	return
 }
