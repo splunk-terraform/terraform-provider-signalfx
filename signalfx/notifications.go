@@ -9,24 +9,28 @@ import (
 )
 
 const (
-	BigPandaNotificationType   string = "BigPanda"
-	EmailNotificationType      string = "Email"
-	JiraNotificationType       string = "Jira"
-	Office365NotificationType  string = "Office365"
-	OpsgenieNotificationType   string = "Opsgenie"
-	PagerDutyNotificationType  string = "PagerDuty"
-	ServiceNowNotificationType string = "ServiceNow"
-	SlackNotificationType      string = "Slack"
-	TeamNotificationType       string = "Team"
-	TeamEmailNotificationType  string = "TeamEmail"
-	VictorOpsNotificationType  string = "VictorOps"
-	WebhookNotificationType    string = "Webhook"
-	XMattersNotificationType   string = "XMatters"
+	AmazonEventBrigeNotificationType string = "AmazonEventBridge"
+	BigPandaNotificationType         string = "BigPanda"
+	EmailNotificationType            string = "Email"
+	JiraNotificationType             string = "Jira"
+	Office365NotificationType        string = "Office365"
+	OpsgenieNotificationType         string = "Opsgenie"
+	PagerDutyNotificationType        string = "PagerDuty"
+	ServiceNowNotificationType       string = "ServiceNow"
+	SlackNotificationType            string = "Slack"
+	TeamNotificationType             string = "Team"
+	TeamEmailNotificationType        string = "TeamEmail"
+	VictorOpsNotificationType        string = "VictorOps"
+	WebhookNotificationType          string = "Webhook"
+	XMattersNotificationType         string = "XMatters"
 )
 
 func getNotifyStringFromAPI(not *notification.Notification) (string, error) {
 	nt := not.Type
 	switch nt {
+	case AmazonEventBrigeNotificationType:
+		aeb := not.Value.(*notification.AmazonEventBrigeNotification)
+		return fmt.Sprintf("%s,%s", nt, aeb.CredentialId), nil
 	case BigPandaNotificationType:
 		bp := not.Value.(*notification.BigPandaNotification)
 		return fmt.Sprintf("%s,%s", nt, bp.CredentialId), nil
@@ -79,6 +83,11 @@ func getNotifications(tfNotifications []interface{}) ([]*notification.Notificati
 		var n interface{}
 
 		switch vars[0] {
+		case AmazonEventBrigeNotificationType:
+			n = &notification.AmazonEventBrigeNotification{
+				Type:         vars[0],
+				CredentialId: vars[1],
+			}
 		case BigPandaNotificationType:
 			n = &notification.BigPandaNotification{
 				Type:         vars[0],
@@ -175,7 +184,7 @@ func validateNotification(val interface{}, key string) (warns []string, errs []e
 	}
 
 	switch parts[0] {
-	case BigPandaNotificationType, JiraNotificationType, Office365NotificationType, ServiceNowNotificationType, PagerDutyNotificationType, TeamNotificationType, TeamEmailNotificationType, XMattersNotificationType:
+	case AmazonEventBrigeNotificationType, BigPandaNotificationType, JiraNotificationType, Office365NotificationType, ServiceNowNotificationType, PagerDutyNotificationType, TeamNotificationType, TeamEmailNotificationType, XMattersNotificationType:
 		// These are ok, but have no further validation
 	case EmailNotificationType:
 		if !strings.Contains(parts[1], "@") {

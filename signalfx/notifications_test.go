@@ -113,6 +113,13 @@ func TestNotifyStringFromAPI(t *testing.T) {
 				CredentialId: "XXX",
 			},
 		},
+		&notification.Notification{
+			Type: AmazonEventBrigeNotificationType,
+			Value: &notification.AmazonEventBrigeNotification{
+				Type:         AmazonEventBrigeNotificationType,
+				CredentialId: "XXX",
+			},
+		},
 	}
 
 	expected := []string{
@@ -130,6 +137,7 @@ func TestNotifyStringFromAPI(t *testing.T) {
 		"ServiceNow,XXX",
 		"VictorOps,XXX,YYY",
 		"XMatters,XXX",
+		"AmazonEventBridge,XXX",
 	}
 
 	for i, v := range values {
@@ -163,6 +171,7 @@ func TestNotifyValidationBad(t *testing.T) {
 		"ServiceNow",
 		"VictorOps,XXX",
 		"XMatters",
+		"AmazonEventBridge",
 	}
 
 	for _, v := range busted {
@@ -186,6 +195,7 @@ func TestGetNotifications(t *testing.T) {
 		"ServiceNow,credId",
 		"VictorOps,credId,routingKey",
 		"XMatters,credId",
+		"AmazonEventBridge,credId",
 	}
 
 	expected := []*notification.Notification{
@@ -284,6 +294,13 @@ func TestGetNotifications(t *testing.T) {
 			Type: XMattersNotificationType,
 			Value: &notification.XMattersNotification{
 				Type:         XMattersNotificationType,
+				CredentialId: "credId",
+			},
+		},
+		&notification.Notification{
+			Type: AmazonEventBrigeNotificationType,
+			Value: &notification.AmazonEventBrigeNotification{
+				Type:         AmazonEventBrigeNotificationType,
 				CredentialId: "credId",
 			},
 		},
