@@ -125,8 +125,8 @@ github.com/rogpeppe/go-internal v1.6.1/go.mod h1:xXDCJY+GAPziupqXw64V24skbSoqbTE
 github.com/rogpeppe/go-internal v1.6.2 h1:aIihoIOHCiLZHxyoNQ+ABL4NKhFTgKLBdMLyEAh98m0=
 github.com/rogpeppe/go-internal v1.6.2/go.mod h1:xXDCJY+GAPziupqXw64V24skbSoqbTEfhy4qGm1nDQc=
 github.com/sergi/go-diff v1.2.0 h1:XU+rvMAioB0UC3q1MFrIQy4Vo5/4VsRDQQXHsEya6xQ=
-github.com/signalfx/signalfx-go v1.36.0 h1:btfNrjb/MWAku7Ibj5BUamArVkyV9XI/fYqA0ytLdEo=
-github.com/signalfx/signalfx-go v1.36.0/go.mod h1:aVrA69k02raBhDtIL1l+KBu+H5eEmS5b0IFbqgKh7eg=
+github.com/signalfx/signalfx-go v1.36.1-0.20240613150536-43123c77db5e h1:0oqoep3AQjctx69Yzgw1AUDEq4lQwek+Xipk+gny3TU=
+github.com/signalfx/signalfx-go v1.36.1-0.20240613150536-43123c77db5e/go.mod h1:aVrA69k02raBhDtIL1l+KBu+H5eEmS5b0IFbqgKh7eg=
 github.com/skeema/knownhosts v1.2.0 h1:h9r9cf0+u7wSE+M183ZtMGgOJKiL96brpaz5ekfJCpM=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.6.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
