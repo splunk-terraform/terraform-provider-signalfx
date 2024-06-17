@@ -65,7 +65,7 @@ func TestValidateSeverityNotAllowed(t *testing.T) {
 
 const newDetectorConfig = `
 resource "signalfx_team" "detectorTeam" {
-    name = "Super Cool Team"
+    name = "Splunk Team"
     description = "Detector Team"
 
     notifications_critical = [ "Email,test@example.com" ]
@@ -123,6 +123,7 @@ resource "signalfx_detector" "application_delay" {
     show_event_lines = true
     disable_sampling = true
     time_range = 3600
+	tags = ["tag-1","tag-2","tag-3"]
 
     program_text = <<-EOF
         signal = data('app.delay2').max().publish('app delay')
@@ -145,6 +146,39 @@ resource "signalfx_detector" "application_delay" {
 				runbook_url = "https://www.example.com"
     }
 
+		viz_options {
+			label = "app delay"
+			color = "orange"
+			value_unit = "Second"
+		}
+}
+`
+
+const secondUpdatedDetectorConfig = `
+resource "signalfx_detector" "application_delay" {
+    name = "max average delay UPDATED"
+    description = "your application is slowER"
+    max_delay = 60
+    min_delay = 30
+    timezone = "Europe/Paris"
+
+    show_data_markers = true
+    show_event_lines = true
+    disable_sampling = true
+    time_range = 3600
+
+    program_text = <<-EOF
+        signal = data('app.delay2').max().publish('app delay')
+        detect(when(signal > 60, '5m')).publish('Processing old messages 5m')
+        EOF
+    rule {
+        description = "NEW maximum > 60 for 5m"
+        severity = "Warning"
+        detect_label = "Processing old messages 5m"
+        notifications = ["Email,foo-alerts@example.com"]
+				runbook_url = "https://www.example.com"
+				tip = "reboot it"
+    }
 		viz_options {
 			label = "app delay"
 			color = "orange"
@@ -279,7 +313,10 @@ func TestAccCreateUpdateDetector(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "name", "max average delay UPDATED"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "description", "your application is slowER"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "timezone", "Europe/Paris"),
-					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "tags.#", "0"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "tags.#", "3"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "tags.0", "tag-1"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "tags.1", "tag-2"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "tags.2", "tag-3"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "teams.#", "0"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "max_delay", "60"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "min_delay", "30"),
@@ -316,6 +353,39 @@ func TestAccCreateUpdateDetector(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.0.runbook_url", "https://www.example.com"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.0.severity", "Critical"),
 					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.0.tip", ""),
+
+					// Force sleep before refresh at the end of test execution
+					waitBeforeTestStepPlanRefresh,
+				),
+			},
+			// Subsequent Update
+			{
+				Config: secondUpdatedDetectorConfig,
+				Check: resource.ComposeTestCheckFunc(
+					waitBeforeTestStepPlanRefresh,
+					testAccCheckDetectorResourceExists,
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "name", "max average delay UPDATED"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "description", "your application is slowER"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "timezone", "Europe/Paris"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "tags.#", "0"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "teams.#", "0"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "max_delay", "60"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "min_delay", "30"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay",
+						"time_range", "3600"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "program_text", "signal = data('app.delay2').max().publish('app delay')\ndetect(when(signal > 60, '5m')).publish('Processing old messages 5m')\n"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "show_data_markers", "true"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "show_event_lines", "true"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "disable_sampling", "true"),
+
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.#", "1"),
+
+					// Rule #1
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.0.description", "NEW maximum > 60 for 5m"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.0.notifications.0", "Email,foo-alerts@example.com"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.0.severity", "Warning"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.0.runbook_url", "https://www.example.com"),
+					resource.TestCheckResourceAttr("signalfx_detector.application_delay", "rule.0.tip", "reboot it"),
 				),
 			},
 		},
@@ -326,7 +396,7 @@ func waitBeforeTestStepPlanRefresh(s *terraform.State) error {
 	// Gives time to the API to properly update info before read them again
 	// required to make the acceptance tests always passing, see:
 	// https://github.com/splunk-terraform/terraform-provider-signalfx/pull/306#issuecomment-870417521
-	time.Sleep(1 * time.Second)
+	time.Sleep(30 * time.Second)
 	return nil
 }
 

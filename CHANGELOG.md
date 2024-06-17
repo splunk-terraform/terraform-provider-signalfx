@@ -1,5 +1,10 @@
 ## Unreleased
 
+## 9.1.5
+
+BUGFIXES:
+* Fix an issue with removing all teams/tags/authorized users/authorized teams from detector resource [#489](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/489)
+
 ## 9.1.4
 
 IMPROVEMENTS:
