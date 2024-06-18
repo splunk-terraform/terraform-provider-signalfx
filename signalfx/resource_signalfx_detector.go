@@ -306,7 +306,7 @@ func getPayloadDetector(d *schema.ResourceData) (*detector.CreateUpdateDetectorR
 	maxDelay := int32(d.Get("max_delay").(int) * 1000)
 	minDelay := int32(d.Get("min_delay").(int) * 1000)
 
-	var tags []string
+	tags := []string{}
 	if val, ok := d.GetOk("tags"); ok {
 		for _, tag := range val.(*schema.Set).List() {
 			tags = append(tags, tag.(string))
@@ -326,32 +326,33 @@ func getPayloadDetector(d *schema.ResourceData) (*detector.CreateUpdateDetectorR
 		Tags:              tags,
 	}
 
+	authorizedTeams := []string{}
 	if val, ok := d.GetOk("authorized_writer_teams"); ok {
-		var teams []string
 		tfValues := val.(*schema.Set).List()
 		for _, v := range tfValues {
-			teams = append(teams, v.(string))
+			authorizedTeams = append(authorizedTeams, v.(string))
 		}
-		cudr.AuthorizedWriters.Teams = teams
 	}
+	cudr.AuthorizedWriters.Teams = authorizedTeams
+
+	authorizedUsers := []string{}
 	if val, ok := d.GetOk("authorized_writer_users"); ok {
-		var users []string
 		tfValues := val.(*schema.Set).List()
 		for _, v := range tfValues {
-			users = append(users, v.(string))
+			authorizedUsers = append(authorizedUsers, v.(string))
 		}
-		cudr.AuthorizedWriters.Users = users
 	}
+	cudr.AuthorizedWriters.Users = authorizedUsers
 
 	cudr.VisualizationOptions = getVisualizationOptionsDetector(d)
 
+	teams := []string{}
 	if val, ok := d.GetOk("teams"); ok {
-		teams := []string{}
 		for _, t := range val.(*schema.Set).List() {
 			teams = append(teams, t.(string))
 		}
-		cudr.Teams = teams
 	}
+	cudr.Teams = teams
 
 	return cudr, nil
 }
