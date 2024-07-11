@@ -238,7 +238,20 @@ func detectorResource() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "URL of the detector",
-			}},
+			},
+			"detector_origin": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Default:      "Standard",
+				Description:  "Indicates how a detector was created",
+				ValidateFunc: validation.StringInSlice([]string{"Standard", "AutoDetectCustomization"}, false),
+			},
+			"parent_detector_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "ID of the parent AutoDetect detector from which this detector is customized and created. This property is required for detectors with detector_origin of type AutoDetectCustomization.",
+			},
+		},
 
 		SchemaVersion: 1,
 		StateUpgraders: []schema.StateUpgrader{
@@ -324,6 +337,8 @@ func getPayloadDetector(d *schema.ResourceData) (*detector.CreateUpdateDetectorR
 		Rules:             rulesList,
 		AuthorizedWriters: &detector.AuthorizedWriters{},
 		Tags:              tags,
+		DetectorOrigin:    d.Get("detector_origin").(string),
+		ParentDetectorId:  d.Get("parent_detector_id").(string),
 	}
 
 	authorizedTeams := []string{}
@@ -565,6 +580,12 @@ func detectorAPIToTF(d *schema.ResourceData, det *detector.Detector) error {
 		return err
 	}
 	if err := d.Set("teams", det.Teams); err != nil {
+		return err
+	}
+	if err := d.Set("detector_origin", det.DetectorOrigin); err != nil {
+		return err
+	}
+	if err := d.Set("parent_detector_id", det.ParentDetectorId); err != nil {
 		return err
 	}
 
@@ -861,9 +882,11 @@ func validateProgramText(ctx context.Context, d *schema.ResourceDiff, meta inter
 	config := meta.(*signalfxConfig)
 
 	err := config.Client.ValidateDetector(context.Background(), &detector.ValidateDetectorRequestModel{
-		Name:        d.Get("name").(string),
-		ProgramText: d.Get("program_text").(string),
-		Rules:       rulesList,
+		Name:             d.Get("name").(string),
+		ProgramText:      d.Get("program_text").(string),
+		Rules:            rulesList,
+		DetectorOrigin:   d.Get("detector_origin").(string),
+		ParentDetectorId: d.Get("parent_detector_id").(string),
 	})
 	if err != nil {
 		return err
