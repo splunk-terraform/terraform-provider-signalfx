@@ -1,5 +1,11 @@
 ## Unreleased
 
+## 9.1.6
+
+IMPROVEMENTS:
+
+* `signalfx_detector`: added an optional fields: `detector_origin` and `parent_detector_id` - to enable the creation of custom AutoDetect detectors via terraform. [#490](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/490)
+
 ## 9.1.5
 
 BUGFIXES:

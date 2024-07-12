@@ -84,6 +84,7 @@ resource "signalfx_detector" "application_delay" {
     tags = ["tag-1","tag-2"]
     teams = [signalfx_team.detectorTeam.id]
     timezone = "Europe/Paris"
+    detector_origin = "Standard"
 
     program_text = <<-EOF
         signal = data('app.delay').max().publish('app delay')
@@ -225,6 +226,38 @@ resource "signalfx_detector" "high_cpu_utilization" {
 }
 `
 
+// invalid AutoDetect customization detector - missing parent_detector_id
+const invalidAutoDetectCustomizationConfig = `
+resource "signalfx_detector" "high_cpu_utilization" {
+    name = "detector from TF"
+    max_delay = 30
+    min_delay = 15
+    tags = ["tag-1","tag-2"]
+    timezone = "Europe/Paris"
+    detector_origin = "AutoDetectCustomization"
+
+    program_text = <<-EOF
+        signal = data('app.delay').max().publish('app delay')
+        detect(when(signal > 60, '5m')).publish('Processing old messages 5m')
+        detect(when(signal > 60, '30m')).publish('Processing old messages 30m')
+        EOF
+    rule {
+        description = "maximum > 60 for 5m"
+        severity = "Warning"
+        detect_label = "Processing old messages 5m"
+        notifications = ["Email,foo-alerts@example.com"]
+    }
+    rule {
+        description = "maximum > 60 for 30m"
+        severity = "Critical"
+        detect_label = "Processing old messages 30m"
+        notifications = ["Email,foo-alerts@example.com"]
+    }
+}
+
+
+`
+
 func TestAccCreateUpdateDetector(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -240,6 +273,12 @@ func TestAccCreateUpdateDetector(t *testing.T) {
 			// Check invalid rulesConfig
 			{
 				Config:      invalidRulesConfig,
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("Unexpected status code"),
+			},
+			// Check invalid AutoDetect customization
+			{
+				Config:      invalidAutoDetectCustomizationConfig,
 				PlanOnly:    true,
 				ExpectError: regexp.MustCompile("Unexpected status code"),
 			},
