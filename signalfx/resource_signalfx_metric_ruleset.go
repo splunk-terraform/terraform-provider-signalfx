@@ -433,8 +433,8 @@ func metricRulesetAPIToTF(d *schema.ResourceData, metricRuleset *metric_ruleset.
 				"enabled": rule.Enabled,
 			}
 
-			filters := make([]map[string]interface{}, len(rule.Matcher.DimensionMatcher.Filters))
-			for j, filter := range rule.Matcher.DimensionMatcher.Filters {
+			filters := make([]map[string]interface{}, len(rule.Matcher.Filters))
+			for j, filter := range rule.Matcher.Filters {
 				entry := map[string]interface{}{
 					"property":       filter.Property,
 					"property_value": filter.PropertyValue,
@@ -444,7 +444,7 @@ func metricRulesetAPIToTF(d *schema.ResourceData, metricRuleset *metric_ruleset.
 			}
 
 			matcher := map[string]interface{}{
-				"type":    rule.Matcher.DimensionMatcher.Type,
+				"type":    rule.Matcher.Type,
 				"filters": filters,
 			}
 			excRule["matcher"] = []map[string]interface{}{matcher}
@@ -512,11 +512,10 @@ func getExceptionRules(tfRules []interface{}) []metric_ruleset.ExceptionRule {
 	var exceptionRulesList []metric_ruleset.ExceptionRule
 	for _, tfRule := range tfRules {
 		newTfRule := tfRule.(map[string]interface{})
-		ruleName := newTfRule["name"].(string)
 		rule := metric_ruleset.ExceptionRule{
-			Name:    &ruleName,
+			Name:    newTfRule["name"].(string),
 			Enabled: newTfRule["enabled"].(bool),
-			Matcher: getMatcher(newTfRule),
+			Matcher: getDimensionMatcher(newTfRule),
 		}
 		exceptionRulesList = append(exceptionRulesList, rule)
 	}
@@ -539,6 +538,21 @@ func getMatcher(tfRule map[string]interface{}) metric_ruleset.MetricMatcher {
 	}
 
 	return metricMatcher
+}
+
+func getDimensionMatcher(tfRule map[string]interface{}) metric_ruleset.DimensionMatcher {
+	matcher := tfRule["matcher"].(*schema.Set).List()[0].(map[string]interface{})
+	filters := make([]interface{}, 0)
+	if matcher["filters"] != nil {
+		filters = matcher["filters"].([]interface{})
+	}
+
+	dimensionMatcher := metric_ruleset.DimensionMatcher{
+		Type:    matcher["type"].(string),
+		Filters: getFilters(filters),
+	}
+
+	return dimensionMatcher
 }
 
 func getFilters(filters []interface{}) []metric_ruleset.PropertyFilter {
