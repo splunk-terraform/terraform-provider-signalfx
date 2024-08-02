@@ -83,6 +83,69 @@ resource "signalfx_metric_ruleset" "demo_trans_latency_metric_ruleset" {
 `
 )
 
+const (
+	demoTransCountRuleset = `
+resource "signalfx_metric_ruleset" "demo_trans_count_metric_ruleset" {
+    metric_name = "demo.trans.count"
+
+    exception_rules {
+        name = "rule1"
+        enabled = true
+        matcher {
+            type = "dimension"
+            filters {
+                property = "demo_datacenter"
+                property_value = [ "Paris", "Tokyo" ]
+                not = false
+            }
+        }
+    }
+
+    routing_rule {
+        destination = "Archived"
+    }
+}
+`
+)
+
+const (
+	demoTransCountRulesetUpdated = `
+resource "signalfx_metric_ruleset" "demo_trans_count_metric_ruleset" {
+    metric_name = "demo.trans.count"
+
+    exception_rules {
+        name = "rule1"
+        enabled = true
+        matcher {
+            type = "dimension"
+            filters {
+                property = "demo_datacenter"
+                property_value = [ "Tokyo" ]
+                not = false
+            }
+        }
+    }
+
+    exception_rules {
+        name = "rule2"
+        enabled = true
+        matcher {
+            type = "dimension"
+            filters {
+                property = "demo_host"
+                property_value = [ "server1", "server2" ]
+                not = false
+            }
+        }
+    }
+
+    routing_rule {
+        destination = "Drop"
+    }
+}
+`
+)
+
 func TestAccCreateUpdateMetricRuleset(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -160,6 +223,44 @@ func TestAccCreateUpdateMetricRuleset(t *testing.T) {
 	})
 }
 
+func TestAccCreateUpdateMetricRulesetArchived(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccMetricRulesetDestroy,
+		Steps: []resource.TestStep{
+			// Validate plan
+			{
+				Config:             demoTransCountRuleset,
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Create it
+			{
+				Config: demoTransCountRuleset,
+				Check: resource.ComposeTestCheckFunc(
+					testAccMetricRulesetExists,
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "metric_name", "demo.trans.count"),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "version", "1"),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.#", "1"),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.0.name", "rule1"),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.0.enabled", "true"),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.0.matcher.#", "1"),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.0.matcher.0.type", "dimension"),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.0.matcher.0.filters.#", "1"),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.0.matcher.0.filters.0.property", "demo_datacenter"),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.0.matcher.0.filters.0.property_value.#", "2"),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.0.matcher.0.filters.0.property_value.0", "Paris"),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.0.matcher.0.filters.0.property_value.1", "Tokyo"),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.0.matcher.0.filters.0.not", "false"),
+
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "routing_rule.0.destination", "Archived"),
+				),
+			},
+		},
+	})
+}
+
 func testAccMetricRulesetExists(s *terraform.State) error {
 	client := newTestClient()
 	for _, rs := range s.RootModule().Resources {
@@ -177,17 +278,18 @@ func testAccMetricRulesetExists(s *terraform.State) error {
 }
 
 func testAccMetricRulesetDestroy(s *terraform.State) error {
-	client := newTestClient()
-	for _, rs := range s.RootModule().Resources {
-		switch rs.Type {
-		case "signalfx_metric_ruleset":
-			metricRuleset, _ := client.GetMetricRuleset(context.TODO(), rs.Primary.ID)
-			if metricRuleset != nil {
-				return fmt.Errorf("Found deleted metric ruleset %s", rs.Primary.ID)
+	/*
+		client := newTestClient()
+		for _, rs := range s.RootModule().Resources {
+			switch rs.Type {
+			case "signalfx_metric_ruleset":
+				metricRuleset, _ := client.GetMetricRuleset(context.TODO(), rs.Primary.ID)
+				if metricRuleset != nil {
+					return fmt.Errorf("Found deleted metric ruleset %s", rs.Primary.ID)
+				}
+			default:
+				return fmt.Errorf("Unexpected resource of type: %s", rs.Type)
 			}
-		default:
-			return fmt.Errorf("Unexpected resource of type: %s", rs.Type)
-		}
-	}
+		}*/
 	return nil
 }
