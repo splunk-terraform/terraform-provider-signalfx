@@ -37,8 +37,20 @@ resource "signalfx_metric_ruleset" "cpu_utilization_metric_ruleset" {
         }
     }
 
+    exception_rules {
+        name = "Route us-east-2 to real-time"
+        enabled = true
+        matcher {
+            type = "dimension"
+            filters {
+                property = "realm"
+                property_value = [ "us-east-2" ]
+                not = false
+            }
+        }
+    }
     routing_rule {
-        destination = "RealTime"
+        destination = "Archived"
     }
 }
 ```
@@ -62,5 +74,14 @@ The following arguments are supported in the resource block:
     * `dimensions` - (Required) List of dimensions to either be kept or dropped in the new aggregated MTSs
     * `drop_dimensions` - (Required) when true, the specified dimensions will be dropped from the aggregated MTSs
     * `output_name` - (Required) name of the new aggregated metric
+* `exception_rules` - (Optional) List of exception rules for the metric
+  * `enabled` - (Required) When false, this rule will not route matched data to real-time
+  * `name` - (Required) name of the exception rule
+  * `matcher` - (Required) Matcher object
+    * `type` - (Required) Type of matcher. Must always be "dimension"
+    * `filters` - (Required) List of filters to filter the set of input MTSs
+      * `property` - (Required) - Name of the dimension
+      * `property_value` - (Required) - Value of the dimension
+      * `not` - When true, this filter will match all values not matching the property_values
 * `routing_rule` - (Required) Routing Rule object
-  * `destination` - (Required) - end destination of the input metric. Must be `RealTime` or `Drop`
+  * `destination` - (Required) - end destination of the input metric. Must be `RealTime`, `Archived`, or `Drop`
