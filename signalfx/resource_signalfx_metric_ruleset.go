@@ -172,6 +172,26 @@ func metricRulesetResource() *schema.Resource {
 								},
 							},
 						},
+						"restoration": {
+							Type:        schema.TypeSet,
+							Optional:    true,
+							Description: "Restoration for this rule",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"restoration_id": {
+										Type:     schema.TypeString,
+										Computed: true,
+										// Optional:    true,
+										Description: "ID of the restoration job.",
+									},
+									"start_time": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										Description: "Time from which the restoration job will restore archived data, in the form of *nix time in milliseconds.",
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -449,6 +469,14 @@ func metricRulesetAPIToTF(d *schema.ResourceData, metricRuleset *metric_ruleset.
 			}
 			excRule["matcher"] = []map[string]interface{}{matcher}
 
+			if rule.HasRestoration() {
+				restoration := map[string]interface{}{
+					"restoration_id": *rule.Restoration.RestorationId,
+					"start_time":     strconv.FormatInt(*rule.Restoration.StartTime, 10),
+				}
+				excRule["restoration"] = []map[string]interface{}{restoration}
+			}
+
 			rules[i] = excRule
 		}
 		if err := d.Set("exception_rules", rules); err != nil {
@@ -513,14 +541,45 @@ func getExceptionRules(tfRules []interface{}) []metric_ruleset.ExceptionRule {
 	for _, tfRule := range tfRules {
 		newTfRule := tfRule.(map[string]interface{})
 		rule := metric_ruleset.ExceptionRule{
-			Name:    newTfRule["name"].(string),
-			Enabled: newTfRule["enabled"].(bool),
-			Matcher: getDimensionMatcher(newTfRule),
+			Name:        newTfRule["name"].(string),
+			Enabled:     newTfRule["enabled"].(bool),
+			Matcher:     getDimensionMatcher(newTfRule),
+			Restoration: &metric_ruleset.ExceptionRuleRestorationFields{},
 		}
+		restFields := getRestoration(newTfRule)
+		rule.Restoration = &restFields
 		exceptionRulesList = append(exceptionRulesList, rule)
 	}
 
 	return exceptionRulesList
+}
+
+func getRestoration(tfRule map[string]interface{}) metric_ruleset.ExceptionRuleRestorationFields {
+	if tfRule["restoration"] != nil && len(tfRule["restoration"].(*schema.Set).List()) > 0 {
+		restoration := tfRule["restoration"].(*schema.Set).List()[0].(map[string]interface{})
+
+		var restorationId = ""
+		val, ok := restoration["restoration_id"]
+		if ok {
+			restorationId = val.(string)
+		} else {
+			log.Printf("[DEBUG] SignalFx: restoration_id does not exist.")
+		}
+		startTime, err := strconv.ParseInt(restoration["start_time"].(string), 10, 64)
+		if err != nil {
+			panic(err)
+		}
+
+		restorationFields := &metric_ruleset.ExceptionRuleRestorationFields{
+			RestorationId: &restorationId,
+			StartTime:     &startTime,
+		}
+		return *restorationFields
+	} else {
+		restorationFields := &metric_ruleset.ExceptionRuleRestorationFields{}
+		return *restorationFields
+	}
+
 }
 
 func getMatcher(tfRule map[string]interface{}) metric_ruleset.MetricMatcher {
