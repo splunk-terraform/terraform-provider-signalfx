@@ -15,8 +15,9 @@ const (
 	demoTransLatencyRuleset = `
 resource "signalfx_metric_ruleset" "demo_trans_latency_metric_ruleset" {
     metric_name = "demo.trans.latency"
+	description = "demo_trans_latency_metric_ruleset with aggregation"
 
-    aggregation_rules {
+	aggregation_rules {
         name = "rule1"
         enabled = true
         matcher {
@@ -33,6 +34,7 @@ resource "signalfx_metric_ruleset" "demo_trans_latency_metric_ruleset" {
             drop_dimensions = false
             output_name = "demo_trans_latency.by.demo_datacenter.agg"
         }
+		description = "aggregation rule 1"
     }
 
     routing_rule {
@@ -46,6 +48,7 @@ const (
 	demoTransLatencyRulesetUpdated = `
 resource "signalfx_metric_ruleset" "demo_trans_latency_metric_ruleset" {
     metric_name = "demo.trans.latency"
+	description = "demo_trans_latency_metric_ruleset with aggregation updated"
 
     aggregation_rules {
         name = "newRule1"
@@ -64,6 +67,7 @@ resource "signalfx_metric_ruleset" "demo_trans_latency_metric_ruleset" {
             drop_dimensions = false
             output_name = "demo_trans_latency.by.demo_datacenter.agg"
         }
+		description = "aggregation rule 1 updated"
     }
 
     aggregation_rules {
@@ -77,6 +81,7 @@ resource "signalfx_metric_ruleset" "demo_trans_latency_metric_ruleset" {
             drop_dimensions = false
             output_name = "demo_trans_latency.by.demo_host.agg"
         }
+		description = "aggregation rule 2"
     }
 
     routing_rule {
@@ -106,6 +111,7 @@ resource "signalfx_metric_ruleset" "demo_trans_count_metric_ruleset" {
 
     exception_rules {
         name = "rule2"
+		description ="exception rule 2"
         enabled = true
         matcher {
             type = "dimension"
@@ -132,6 +138,7 @@ resource "signalfx_metric_ruleset" "demo_trans_count_metric_ruleset" {
 
     exception_rules {
         name = "rule1"
+		description = "exception rule 1"
         enabled = true
         matcher {
             type = "dimension"
@@ -221,7 +228,7 @@ resource "signalfx_metric_ruleset" "demo_trans_count_metric_ruleset" {
 `
 )
 
-func TestAccCreateUpdateMetricRuleset(t *testing.T) {
+func TestAccMetricRulesetAggregation(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
@@ -239,6 +246,7 @@ func TestAccCreateUpdateMetricRuleset(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccMetricRulesetExists,
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_latency_metric_ruleset", "metric_name", "demo.trans.latency"),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_latency_metric_ruleset", "description", "demo_trans_latency_metric_ruleset with aggregation"),
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_latency_metric_ruleset", "version", "1"),
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_latency_metric_ruleset", "aggregation_rules.#", "1"),
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_latency_metric_ruleset", "aggregation_rules.0.name", "rule1"),
@@ -256,6 +264,8 @@ func TestAccCreateUpdateMetricRuleset(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_latency_metric_ruleset", "aggregation_rules.0.aggregator.0.drop_dimensions", "false"),
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_latency_metric_ruleset", "aggregation_rules.0.aggregator.0.dimensions.#", "1"),
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_latency_metric_ruleset", "aggregation_rules.0.aggregator.0.dimensions.0", "demo_customer"),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_latency_metric_ruleset", "aggregation_rules.0.description", "aggregation rule 1"),
+
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_latency_metric_ruleset", "routing_rule.0.destination", "RealTime"),
 				),
 			},
@@ -265,6 +275,7 @@ func TestAccCreateUpdateMetricRuleset(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccMetricRulesetExists,
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_latency_metric_ruleset", "metric_name", "demo.trans.latency"),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_latency_metric_ruleset", "description", "demo_trans_latency_metric_ruleset with aggregation updated"),
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_latency_metric_ruleset", "version", "2"),
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_latency_metric_ruleset", "aggregation_rules.#", "2"),
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_latency_metric_ruleset", "aggregation_rules.0.name", "newRule1"),
@@ -282,6 +293,8 @@ func TestAccCreateUpdateMetricRuleset(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_latency_metric_ruleset", "aggregation_rules.0.aggregator.0.drop_dimensions", "false"),
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_latency_metric_ruleset", "aggregation_rules.0.aggregator.0.dimensions.#", "1"),
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_latency_metric_ruleset", "aggregation_rules.0.aggregator.0.dimensions.0", "demo_customer"),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_latency_metric_ruleset", "aggregation_rules.0.description", "aggregation rule 1 updated"),
+
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_latency_metric_ruleset", "aggregation_rules.1.name", ""),
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_latency_metric_ruleset", "aggregation_rules.1.enabled", "false"),
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_latency_metric_ruleset", "aggregation_rules.1.matcher.#", "1"),
@@ -291,14 +304,15 @@ func TestAccCreateUpdateMetricRuleset(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_latency_metric_ruleset", "aggregation_rules.1.aggregator.0.drop_dimensions", "false"),
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_latency_metric_ruleset", "aggregation_rules.1.aggregator.0.dimensions.#", "1"),
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_latency_metric_ruleset", "aggregation_rules.1.aggregator.0.dimensions.0", "demo_host"),
-					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_latency_metric_ruleset", "routing_rule.0.destination", "Archived"),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_latency_metric_ruleset", "aggregation_rules.1.description", "aggregation rule 2"),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_latency_metric_ruleset", "routing_rule.0.destination", "Drop"),
 				),
 			},
 		},
 	})
 }
 
-func TestAccCreateUpdateMetricRulesetArchived(t *testing.T) {
+func TestAccMetricRulesetArchived(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
@@ -316,9 +330,11 @@ func TestAccCreateUpdateMetricRulesetArchived(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccMetricRulesetExists,
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "metric_name", "demo.trans.count"),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "description", ""),
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "version", "1"),
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.#", "2"),
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.0.name", "rule1"),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.0.description", ""),
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.0.enabled", "true"),
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.0.matcher.#", "1"),
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.0.matcher.0.type", "dimension"),
@@ -329,6 +345,7 @@ func TestAccCreateUpdateMetricRulesetArchived(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.0.matcher.0.filters.0.not", "false"),
 
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.1.name", "rule2"),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.1.description", "exception rule 2"),
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.1.enabled", "true"),
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.1.matcher.#", "1"),
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.1.matcher.0.type", "dimension"),
@@ -354,10 +371,12 @@ func TestAccCreateUpdateMetricRulesetArchived(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccMetricRulesetExists,
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "metric_name", "demo.trans.count"),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "description", ""),
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "version", "2"),
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.#", "3"),
 
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.0.name", "rule1"),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.0.description", "exception rule 1"),
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.0.enabled", "true"),
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.0.matcher.#", "1"),
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.0.matcher.0.type", "dimension"),
@@ -369,6 +388,7 @@ func TestAccCreateUpdateMetricRulesetArchived(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.0.matcher.0.filters.0.not", "false"),
 
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.1.name", "rule2"),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.1.description", ""),
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.1.enabled", "true"),
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.1.matcher.#", "1"),
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.1.matcher.0.type", "dimension"),
@@ -379,6 +399,7 @@ func TestAccCreateUpdateMetricRulesetArchived(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.1.matcher.0.filters.0.not", "false"),
 
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.2.name", "rule3"),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.2.description", ""),
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.2.enabled", "true"),
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.2.matcher.#", "1"),
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.2.matcher.0.type", "dimension"),
@@ -405,10 +426,12 @@ func TestAccCreateUpdateMetricRulesetArchived(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccMetricRulesetExists,
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "metric_name", "demo.trans.count"),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "description", ""),
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "version", "3"),
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.#", "2"),
 
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.0.name", "rule1"),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.0.description", ""),
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.0.enabled", "true"),
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.0.matcher.#", "1"),
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.0.matcher.0.type", "dimension"),
@@ -420,6 +443,7 @@ func TestAccCreateUpdateMetricRulesetArchived(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.0.matcher.0.filters.0.not", "false"),
 
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.1.name", "rule3"),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.1.description", ""),
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.1.enabled", "true"),
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.1.matcher.#", "1"),
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.demo_trans_count_metric_ruleset", "exception_rules.1.matcher.0.type", "dimension"),
@@ -442,7 +466,7 @@ func TestAccCreateUpdateMetricRulesetArchived(t *testing.T) {
 	})
 }
 
-func TestAccCreateUpdateRestoration(t *testing.T) {
+func TestAccMetricRulesetRestoration(t *testing.T) {
 	// 15 minutes ago in milliseconds
 	startTime := (time.Now().Unix() - 900) * 1000
 

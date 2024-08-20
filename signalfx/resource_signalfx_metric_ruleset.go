@@ -26,6 +26,11 @@ func metricRulesetResource() *schema.Resource {
 				Computed:    true,
 				Description: "Version of the ruleset",
 			},
+			"description": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Information about the metric ruleset.",
+			},
 			"aggregation_rules": {
 				Type:        schema.TypeList,
 				Optional:    true,
@@ -36,6 +41,11 @@ func metricRulesetResource() *schema.Resource {
 							Type:        schema.TypeString,
 							Optional:    true,
 							Description: "Name of this aggregation rule",
+						},
+						"description": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "Information about an aggregation rule.",
 						},
 						"enabled": {
 							Type:        schema.TypeBool,
@@ -126,6 +136,11 @@ func metricRulesetResource() *schema.Resource {
 							Type:        schema.TypeString,
 							Optional:    true,
 							Description: "Name of this exception rule",
+						},
+						"description": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "Information about an exception rule.",
 						},
 						"enabled": {
 							Type:        schema.TypeBool,
@@ -258,6 +273,7 @@ func metricRulesetCreate(d *schema.ResourceData, meta interface{}) error {
 		AggregationRules: payloadReq.AggregationRules,
 		ExceptionRules:   payloadReq.ExceptionRules,
 		MetricName:       *payloadReq.MetricName,
+		Description:      payloadReq.Description,
 		RoutingRule:      *payloadReq.RoutingRule,
 	}
 
@@ -275,6 +291,7 @@ func metricRulesetCreate(d *schema.ResourceData, meta interface{}) error {
 		MetricName:        metricRulesetResp.MetricName,
 		AggregationRules:  metricRulesetResp.AggregationRules,
 		ExceptionRules:    metricRulesetResp.ExceptionRules,
+		Description:       metricRulesetResp.Description,
 		RoutingRule:       metricRulesetResp.RoutingRule,
 		Creator:           metricRulesetResp.Creator,
 		Created:           metricRulesetResp.Created,
@@ -296,6 +313,7 @@ func metricRulesetRead(d *schema.ResourceData, meta interface{}) error {
 		Id:                metricRulesetResp.Id,
 		Version:           metricRulesetResp.Version,
 		MetricName:        metricRulesetResp.MetricName,
+		Description:       metricRulesetResp.Description,
 		AggregationRules:  metricRulesetResp.AggregationRules,
 		ExceptionRules:    metricRulesetResp.ExceptionRules,
 		RoutingRule:       metricRulesetResp.RoutingRule,
@@ -322,6 +340,7 @@ func metricRulesetUpdate(d *schema.ResourceData, meta interface{}) error {
 		AggregationRules: payloadReq.AggregationRules,
 		ExceptionRules:   payloadReq.ExceptionRules,
 		MetricName:       payloadReq.MetricName,
+		Description:      payloadReq.Description,
 		RoutingRule:      payloadReq.RoutingRule,
 		Version:          currentMetricRuleset.Version,
 	}
@@ -348,6 +367,7 @@ func metricRulesetUpdate(d *schema.ResourceData, meta interface{}) error {
 		LastUpdatedByName: metricRulesetResp.LastUpdatedByName,
 		LastUpdated:       metricRulesetResp.LastUpdated,
 		MetricName:        metricRulesetResp.MetricName,
+		Description:       metricRulesetResp.Description,
 		RoutingRule:       metricRulesetResp.RoutingRule,
 		Version:           metricRulesetResp.Version,
 	}
@@ -382,6 +402,9 @@ func metricRulesetAPIToTF(d *schema.ResourceData, metricRuleset *metric_ruleset.
 	if err := d.Set("metric_name", metricRuleset.MetricName); err != nil {
 		return err
 	}
+	if err := d.Set("description", metricRuleset.Description); err != nil {
+		return err
+	}
 
 	versionStr := strconv.FormatInt(*metricRuleset.Version, 10)
 	if err := d.Set("version", versionStr); err != nil {
@@ -406,8 +429,9 @@ func metricRulesetAPIToTF(d *schema.ResourceData, metricRuleset *metric_ruleset.
 		rules := make([]map[string]interface{}, len(metricRuleset.AggregationRules))
 		for i, rule := range metricRuleset.AggregationRules {
 			aggRule := map[string]interface{}{
-				"name":    rule.Name,
-				"enabled": rule.Enabled,
+				"name":        rule.Name,
+				"enabled":     rule.Enabled,
+				"description": rule.Description,
 			}
 
 			filters := make([]map[string]interface{}, len(rule.Matcher.DimensionMatcher.Filters))
@@ -449,8 +473,9 @@ func metricRulesetAPIToTF(d *schema.ResourceData, metricRuleset *metric_ruleset.
 		rules := make([]map[string]interface{}, len(metricRuleset.ExceptionRules))
 		for i, rule := range metricRuleset.ExceptionRules {
 			excRule := map[string]interface{}{
-				"name":    rule.Name,
-				"enabled": rule.Enabled,
+				"name":        rule.Name,
+				"enabled":     rule.Enabled,
+				"description": rule.Description,
 			}
 
 			filters := make([]map[string]interface{}, len(rule.Matcher.Filters))
@@ -469,12 +494,14 @@ func metricRulesetAPIToTF(d *schema.ResourceData, metricRuleset *metric_ruleset.
 			}
 			excRule["matcher"] = []map[string]interface{}{matcher}
 
-			if rule.HasRestoration() {
-				restoration := map[string]interface{}{
-					"restoration_id": *rule.Restoration.RestorationId,
-					"start_time":     strconv.FormatInt(*rule.Restoration.StartTime, 10),
+			if val, ok := rule.GetRestorationOk(); ok {
+				if val.StartTime != nil && *val.StartTime > int64(0) {
+					restoration := map[string]interface{}{
+						"restoration_id": *val.RestorationId,
+						"start_time":     strconv.FormatInt(*val.StartTime, 10),
+					}
+					excRule["restoration"] = []map[string]interface{}{restoration}
 				}
-				excRule["restoration"] = []map[string]interface{}{restoration}
 			}
 
 			rules[i] = excRule
@@ -495,8 +522,13 @@ func metricRulesetAPIToTF(d *schema.ResourceData, metricRuleset *metric_ruleset.
 
 func getPayloadMetricRuleset(d *schema.ResourceData) (*metric_ruleset.MetricRuleset, error) {
 	metricName := d.Get("metric_name").(string)
+	var description = ""
+	if val, ok := d.GetOk("description"); ok {
+		description = val.(string)
+	}
 	cudr := &metric_ruleset.MetricRuleset{
 		MetricName:       &metricName,
+		Description:      &description,
 		AggregationRules: []metric_ruleset.AggregationRule{},
 		ExceptionRules:   []metric_ruleset.ExceptionRule{},
 		RoutingRule:      &metric_ruleset.RoutingRule{},
@@ -524,11 +556,16 @@ func getAggregationRules(tfRules []interface{}) []metric_ruleset.AggregationRule
 	for _, tfRule := range tfRules {
 		newTfRule := tfRule.(map[string]interface{})
 		ruleName := newTfRule["name"].(string)
+		var description = ""
+		if val, ok := newTfRule["description"]; ok {
+			description = val.(string)
+		}
 		rule := metric_ruleset.AggregationRule{
-			Name:       &ruleName,
-			Enabled:    newTfRule["enabled"].(bool),
-			Matcher:    getMatcher(newTfRule),
-			Aggregator: getAggregator(newTfRule),
+			Name:        &ruleName,
+			Description: &description,
+			Enabled:     newTfRule["enabled"].(bool),
+			Matcher:     getMatcher(newTfRule),
+			Aggregator:  getAggregator(newTfRule),
 		}
 		aggregationRulesList = append(aggregationRulesList, rule)
 	}
@@ -540,14 +577,19 @@ func getExceptionRules(tfRules []interface{}) []metric_ruleset.ExceptionRule {
 	var exceptionRulesList []metric_ruleset.ExceptionRule
 	for _, tfRule := range tfRules {
 		newTfRule := tfRule.(map[string]interface{})
+		var description = ""
+		if val, ok := newTfRule["description"]; ok {
+			description = val.(string)
+		}
 		rule := metric_ruleset.ExceptionRule{
 			Name:        newTfRule["name"].(string),
+			Description: &description,
 			Enabled:     newTfRule["enabled"].(bool),
 			Matcher:     getDimensionMatcher(newTfRule),
-			Restoration: &metric_ruleset.ExceptionRuleRestorationFields{},
+			Restoration: metric_ruleset.ExceptionRuleRestorationFields{},
 		}
 		restFields := getRestoration(newTfRule)
-		rule.Restoration = &restFields
+		rule.Restoration = restFields
 		exceptionRulesList = append(exceptionRulesList, rule)
 	}
 

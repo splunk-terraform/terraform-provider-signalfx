@@ -17,9 +17,11 @@ Provides an Observability Cloud resource for managing metric rulesets.
 ```tf
 resource "signalfx_metric_ruleset" "cpu_utilization_metric_ruleset" {
     metric_name = "cpu.utilization"
+    description = "Routing ruleset for cpu.utilization"
 
     aggregation_rules {
         name = "cpu.utilization by service rule"
+        description = "Aggregates cpu.utilization data by service"
         enabled = true
         matcher {
             type = "dimension"
@@ -38,7 +40,8 @@ resource "signalfx_metric_ruleset" "cpu_utilization_metric_ruleset" {
     }
 
     exception_rules {
-        name = "Route us-east-2 to real-time"
+        name = "Exception rule us-east-2"
+        description = "Routes us-east-2 data to real-time"
         enabled = true
         matcher {
             type = "dimension"
@@ -60,9 +63,11 @@ resource "signalfx_metric_ruleset" "cpu_utilization_metric_ruleset" {
 The following arguments are supported in the resource block:
 
 * `metric_name` - (Required) Name of the input metric
+* `description` - (Optional) Information about the metric ruleset
 * `aggregation_rules` - (Optional) List of aggregation rules for the metric
   * `enabled` - (Required) When false, this rule will not generate aggregated MTSs
   * `name` - (Optional) name of the aggregation rule
+  * `description` - (Optional) Information about an aggregation rule
   * `matcher` - (Required) Matcher object
     * `type` - (Required) Type of matcher. Must always be "dimension"
     * `filters` - (Optional) List of filters to filter the set of input MTSs
@@ -77,11 +82,15 @@ The following arguments are supported in the resource block:
 * `exception_rules` - (Optional) List of exception rules for the metric
   * `enabled` - (Required) When false, this rule will not route matched data to real-time
   * `name` - (Required) name of the exception rule
+  * `description` - (Optional) Information about an exception rule
   * `matcher` - (Required) Matcher object
     * `type` - (Required) Type of matcher. Must always be "dimension"
     * `filters` - (Required) List of filters to filter the set of input MTSs
       * `property` - (Required) - Name of the dimension
       * `property_value` - (Required) - Value of the dimension
       * `not` - When true, this filter will match all values not matching the property_values
+  * `restoration` - (Optional) Properties of a restoration job
+    * `start_time` - (Required) Time from which the restoration job will restore archived data, in the form of *nix time in milliseconds
+
 * `routing_rule` - (Required) Routing Rule object
   * `destination` - (Required) - end destination of the input metric. Must be `RealTime`, `Archived`, or `Drop`
