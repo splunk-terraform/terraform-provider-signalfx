@@ -586,10 +586,10 @@ func getExceptionRules(tfRules []interface{}) []metric_ruleset.ExceptionRule {
 			Description: &description,
 			Enabled:     newTfRule["enabled"].(bool),
 			Matcher:     getDimensionMatcher(newTfRule),
-			Restoration: metric_ruleset.ExceptionRuleRestorationFields{},
+			Restoration: &metric_ruleset.ExceptionRuleRestorationFields{},
 		}
 		restFields := getRestoration(newTfRule)
-		rule.Restoration = restFields
+		rule.Restoration = &restFields
 		exceptionRulesList = append(exceptionRulesList, rule)
 	}
 
