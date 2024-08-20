@@ -495,7 +495,7 @@ func metricRulesetAPIToTF(d *schema.ResourceData, metricRuleset *metric_ruleset.
 			excRule["matcher"] = []map[string]interface{}{matcher}
 
 			if val, ok := rule.GetRestorationOk(); ok {
-				if val.StartTime != nil && *val.StartTime > int64(0) {
+				if val != nil && val.StartTime != nil && *val.StartTime > int64(0) {
 					restoration := map[string]interface{}{
 						"restoration_id": *val.RestorationId,
 						"start_time":     strconv.FormatInt(*val.StartTime, 10),
