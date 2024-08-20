@@ -601,8 +601,7 @@ func getRestoration(tfRule map[string]interface{}) metric_ruleset.ExceptionRuleR
 		restoration := tfRule["restoration"].(*schema.Set).List()[0].(map[string]interface{})
 
 		var restorationId = ""
-		val, ok := restoration["restoration_id"]
-		if ok {
+		if val, ok := restoration["restoration_id"]; ok {
 			restorationId = val.(string)
 		} else {
 			log.Printf("[DEBUG] SignalFx: restoration_id does not exist.")
