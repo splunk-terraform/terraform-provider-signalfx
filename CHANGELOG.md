@@ -1,5 +1,12 @@
 ## Unreleased
 
+## 9.1.7
+
+IMPROVEMENTS:
+
+* `signalfx_metric_ruleset`: Updated `routing_rule` field to support routing to `Achived` destination.
+  * Added optional `exception_rules` field to support exception rules when a metric is routed to `Archived` [#491](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/491)
+
 ## 9.1.6
 
 IMPROVEMENTS:
