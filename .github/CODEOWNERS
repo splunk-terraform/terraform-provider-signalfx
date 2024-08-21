@@ -2,3 +2,6 @@
 signalfx/resource_signalfx_slo.go @dwalasek
 signalfx/resource_signalfx_slo_test.go @dwalasek
 website/docs/r/slo.html.markdown @dwalasek
+signalfx/resource_signalfx_metric_ruleset.go @echoi-splk @kevalds51 @ndmoeller
+signalfx/resource_signalfx_metric_ruleset_test.go @echoi-splk @kevalds51 @ndmoeller
+website/docs/r/metric_ruleset.html.markdown @echoi-splk @kevalds51 @ndmoeller
