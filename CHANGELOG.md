@@ -1,6 +1,9 @@
 ## Unreleased
 
-## 9.2.0
+## 9.1.8
+
+NOTES:
+* Update to README.md; No Functionality Change [#494](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/494)
 
 ## 9.1.7
 
