@@ -469,6 +469,7 @@ func TestAccMetricRulesetArchived(t *testing.T) {
 func TestAccMetricRulesetRestoration(t *testing.T) {
 	// 15 minutes ago in milliseconds
 	startTime := (time.Now().Unix() - 900) * 1000
+	stopTime := (time.Now().Unix() - 200) * 1000
 
 	archivedCartSizeRestore := fmt.Sprintf(`
 resource "signalfx_metric_ruleset" "cart_size" {
@@ -487,13 +488,14 @@ resource "signalfx_metric_ruleset" "cart_size" {
         }
 		restoration {
 			start_time = %d
+			stop_time = %d
 		}
     }
 
 	routing_rule {
         destination = "Archived"
     }
-}	`, startTime)
+}	`, startTime, stopTime)
 
 	archivedCartSizeRestoreUpdate := fmt.Sprintf(`
 resource "signalfx_metric_ruleset" "cart_size" {
@@ -512,13 +514,14 @@ resource "signalfx_metric_ruleset" "cart_size" {
         }
 		restoration {
 			start_time = %d
+			stop_time = %d
 		}
     }
 
 	routing_rule {
         destination = "Archived"
     }
-}	`, startTime)
+}	`, startTime, stopTime)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -550,6 +553,7 @@ resource "signalfx_metric_ruleset" "cart_size" {
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.cart_size", "exception_rules.0.matcher.0.filters.0.not", "false"),
 
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.cart_size", "exception_rules.0.restoration.0.start_time", strconv.FormatInt(startTime, 10)),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.cart_size", "exception_rules.0.restoration.0.stop_time", strconv.FormatInt(stopTime, 10)),
 				),
 			},
 			// Validate plan
@@ -578,6 +582,7 @@ resource "signalfx_metric_ruleset" "cart_size" {
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.cart_size", "exception_rules.0.matcher.0.filters.0.not", "false"),
 
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.cart_size", "exception_rules.0.restoration.0.start_time", strconv.FormatInt(startTime, 10)),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.cart_size", "exception_rules.0.restoration.0.stop_time", strconv.FormatInt(stopTime, 10)),
 				),
 			},
 		},
