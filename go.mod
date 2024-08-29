@@ -2,8 +2,6 @@ module github.com/splunk-terraform/terraform-provider-signalfx
 
 go 1.21
 
-toolchain go1.23.0
-
 require (
 	github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d
 	github.com/davecgh/go-spew v1.1.1
