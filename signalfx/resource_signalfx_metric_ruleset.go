@@ -204,6 +204,11 @@ func metricRulesetResource() *schema.Resource {
 										Optional:    true,
 										Description: "Time from which the restoration job will restore archived data, in the form of *nix time in milliseconds.",
 									},
+									"stop_time": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										Description: "Time to which the restoration job will restore archived data, in the form of *nix time in milliseconds.",
+									},
 								},
 							},
 						},
@@ -495,10 +500,11 @@ func metricRulesetAPIToTF(d *schema.ResourceData, metricRuleset *metric_ruleset.
 			excRule["matcher"] = []map[string]interface{}{matcher}
 
 			if val, ok := rule.GetRestorationOk(); ok {
-				if val != nil && val.StartTime != nil && *val.StartTime > int64(0) {
+				if val != nil && val.StartTime != nil && *val.StartTime > int64(0) && val.StopTime != nil && *val.StopTime > int64(0) {
 					restoration := map[string]interface{}{
 						"restoration_id": *val.RestorationId,
 						"start_time":     strconv.FormatInt(*val.StartTime, 10),
+						"stop_time":      strconv.FormatInt(*val.StopTime, 10),
 					}
 					excRule["restoration"] = []map[string]interface{}{restoration}
 				}
@@ -611,9 +617,15 @@ func getRestoration(tfRule map[string]interface{}) metric_ruleset.ExceptionRuleR
 			panic(err)
 		}
 
+		stopTime, err := strconv.ParseInt(restoration["stop_time"].(string), 10, 64)
+		if err != nil {
+			panic(err)
+		}
+
 		restorationFields := &metric_ruleset.ExceptionRuleRestorationFields{
 			RestorationId: &restorationId,
 			StartTime:     &startTime,
+			StopTime:      &stopTime,
 		}
 		return *restorationFields
 	} else {

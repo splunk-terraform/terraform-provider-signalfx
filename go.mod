@@ -1,6 +1,8 @@
 module github.com/splunk-terraform/terraform-provider-signalfx
 
-go 1.20
+go 1.21
+
+toolchain go1.23.0
 
 require (
 	github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d
@@ -8,7 +10,7 @@ require (
 	github.com/hashicorp/go-retryablehttp v0.7.7
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.34.0
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/signalfx/signalfx-go v1.40.0
+	github.com/signalfx/signalfx-go v1.40.1
 	github.com/stretchr/testify v1.9.0
 )
 
