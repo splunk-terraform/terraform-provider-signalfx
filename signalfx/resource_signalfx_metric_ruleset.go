@@ -201,7 +201,7 @@ func metricRulesetResource() *schema.Resource {
 									},
 									"start_time": {
 										Type:        schema.TypeString,
-										Optional:    true,
+										Required:    true,
 										Description: "Time from which the restoration job will restore archived data, in the form of *nix time in milliseconds.",
 									},
 									"stop_time": {
