@@ -194,9 +194,8 @@ func metricRulesetResource() *schema.Resource {
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"restoration_id": {
-										Type:     schema.TypeString,
-										Computed: true,
-										// Optional:    true,
+										Type:        schema.TypeString,
+										Computed:    true,
 										Description: "ID of the restoration job.",
 									},
 									"start_time": {

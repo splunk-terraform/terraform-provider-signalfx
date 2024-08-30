@@ -91,7 +91,7 @@ The following arguments are supported in the resource block:
       * `not` - When true, this filter will match all values not matching the property_values
   * `restoration` - (Optional) Properties of a restoration job
     * `start_time` - (Required) Time from which the restoration job will restore archived data, in the form of *nix time in milliseconds
-    * `stop_time` - (Required) Time to which the restoration job will restore archived data, in the form of *nix time in milliseconds
+    * `stop_time` - (Optional) Time to which the restoration job will restore archived data, in the form of *nix time in milliseconds
 
 * `routing_rule` - (Required) Routing Rule object
   * `destination` - (Required) - end destination of the input metric. Must be `RealTime`, `Archived`, or `Drop`
