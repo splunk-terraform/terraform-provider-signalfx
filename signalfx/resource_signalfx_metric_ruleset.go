@@ -616,16 +616,20 @@ func getRestoration(tfRule map[string]interface{}) metric_ruleset.ExceptionRuleR
 			panic(err)
 		}
 
-		stopTime, err1 := strconv.ParseInt(restoration["stop_time"].(string), 10, 64)
-		if err1 != nil {
-			panic(err1)
-		}
-
 		restorationFields := &metric_ruleset.ExceptionRuleRestorationFields{
 			RestorationId: &restorationId,
 			StartTime:     &startTime,
-			StopTime:      &stopTime,
 		}
+
+		val := restoration["stop_time"]
+		if val != nil && len(val.(string)) > 0 {
+			stopTime, err1 := strconv.ParseInt(val.(string), 10, 64)
+			if err1 != nil {
+				panic(err1)
+			}
+			restorationFields.StopTime = &stopTime
+		}
+
 		return *restorationFields
 	} else {
 		restorationFields := &metric_ruleset.ExceptionRuleRestorationFields{}
