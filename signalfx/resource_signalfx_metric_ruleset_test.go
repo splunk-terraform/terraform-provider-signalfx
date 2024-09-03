@@ -672,7 +672,6 @@ resource "signalfx_metric_ruleset" "cart_size" {
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.cart_size", "exception_rules.0.matcher.0.filters.0.not", "false"),
 
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.cart_size", "exception_rules.0.restoration.0.start_time", strconv.FormatInt(startTime, 10)),
-					//resource.TestCheckResourceAttr("signalfx_metric_ruleset.cart_size", "exception_rules.0.restoration.0.stop_time", strconv.FormatInt(stopTime, 10)),
 				),
 			},
 			// Validate plan
@@ -701,7 +700,6 @@ resource "signalfx_metric_ruleset" "cart_size" {
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.cart_size", "exception_rules.0.matcher.0.filters.0.not", "false"),
 
 					resource.TestCheckResourceAttr("signalfx_metric_ruleset.cart_size", "exception_rules.0.restoration.0.start_time", strconv.FormatInt(startTime, 10)),
-					//resource.TestCheckResourceAttr("signalfx_metric_ruleset.cart_size", "exception_rules.0.restoration.0.stop_time", strconv.FormatInt(stopTime, 10)),
 				),
 			},
 		},
