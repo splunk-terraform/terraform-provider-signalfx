@@ -469,6 +469,128 @@ func TestAccMetricRulesetArchived(t *testing.T) {
 func TestAccMetricRulesetRestoration(t *testing.T) {
 	// 15 minutes ago in milliseconds
 	startTime := (time.Now().Unix() - 900) * 1000
+	stopTime := (time.Now().Unix() - 200) * 1000
+
+	archivedCartSizeRestore := fmt.Sprintf(`
+resource "signalfx_metric_ruleset" "cart_size" {
+    metric_name = "cart.size"
+
+    exception_rules {
+        name = "rule1"
+        enabled = true
+        matcher {
+            type = "dimension"
+            filters {
+                property = "customer-spend"
+                property_value = [ "low" ]
+                not = false
+            }
+        }
+		restoration {
+			start_time = %d
+			stop_time = %d
+		}
+    }
+
+	routing_rule {
+        destination = "Archived"
+    }
+}	`, startTime, stopTime)
+
+	archivedCartSizeRestoreUpdate := fmt.Sprintf(`
+resource "signalfx_metric_ruleset" "cart_size" {
+    metric_name = "cart.size"
+
+    exception_rules {
+        name = "rule1"
+        enabled = true
+        matcher {
+            type = "dimension"
+            filters {
+                property = "customer-spend"
+                property_value = [ "low", "medium" ]
+                not = false
+            }
+        }
+		restoration {
+			start_time = %d
+			stop_time = %d
+		}
+    }
+
+	routing_rule {
+        destination = "Archived"
+    }
+}	`, startTime, stopTime)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccMetricRulesetDestroy,
+		Steps: []resource.TestStep{
+			// Validate plan
+			{
+				Config:             archivedCartSizeRestore,
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Create a new Archived Ruleset metric cart.size with restoration
+			{
+				Config: archivedCartSizeRestore,
+				Check: resource.ComposeTestCheckFunc(
+					testAccMetricRulesetExists,
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.cart_size", "metric_name", "cart.size"),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.cart_size", "version", "1"),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.cart_size", "exception_rules.#", "1"),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.cart_size", "exception_rules.0.name", "rule1"),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.cart_size", "exception_rules.0.enabled", "true"),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.cart_size", "exception_rules.0.matcher.#", "1"),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.cart_size", "exception_rules.0.matcher.0.type", "dimension"),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.cart_size", "exception_rules.0.matcher.0.filters.#", "1"),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.cart_size", "exception_rules.0.matcher.0.filters.0.property", "customer-spend"),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.cart_size", "exception_rules.0.matcher.0.filters.0.property_value.#", "1"),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.cart_size", "exception_rules.0.matcher.0.filters.0.property_value.0", "low"),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.cart_size", "exception_rules.0.matcher.0.filters.0.not", "false"),
+
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.cart_size", "exception_rules.0.restoration.0.start_time", strconv.FormatInt(startTime, 10)),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.cart_size", "exception_rules.0.restoration.0.stop_time", strconv.FormatInt(stopTime, 10)),
+				),
+			},
+			// Validate plan
+			{
+				Config:             archivedCartSizeRestoreUpdate,
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Update ruleset by adding filter property medium.
+			{
+				Config: archivedCartSizeRestoreUpdate,
+				Check: resource.ComposeTestCheckFunc(
+					testAccMetricRulesetExists,
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.cart_size", "metric_name", "cart.size"),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.cart_size", "version", "2"),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.cart_size", "exception_rules.#", "1"),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.cart_size", "exception_rules.0.name", "rule1"),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.cart_size", "exception_rules.0.enabled", "true"),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.cart_size", "exception_rules.0.matcher.#", "1"),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.cart_size", "exception_rules.0.matcher.0.type", "dimension"),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.cart_size", "exception_rules.0.matcher.0.filters.#", "1"),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.cart_size", "exception_rules.0.matcher.0.filters.0.property", "customer-spend"),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.cart_size", "exception_rules.0.matcher.0.filters.0.property_value.#", "2"),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.cart_size", "exception_rules.0.matcher.0.filters.0.property_value.0", "low"),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.cart_size", "exception_rules.0.matcher.0.filters.0.property_value.1", "medium"),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.cart_size", "exception_rules.0.matcher.0.filters.0.not", "false"),
+
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.cart_size", "exception_rules.0.restoration.0.start_time", strconv.FormatInt(startTime, 10)),
+					resource.TestCheckResourceAttr("signalfx_metric_ruleset.cart_size", "exception_rules.0.restoration.0.stop_time", strconv.FormatInt(stopTime, 10)),
+				),
+			},
+		},
+	})
+}
+func TestAccMetricRulesetRestorationNoStopTime(t *testing.T) {
+	// 15 minutes ago in milliseconds
+	startTime := (time.Now().Unix() - 900) * 1000
 
 	archivedCartSizeRestore := fmt.Sprintf(`
 resource "signalfx_metric_ruleset" "cart_size" {
@@ -583,7 +705,6 @@ resource "signalfx_metric_ruleset" "cart_size" {
 		},
 	})
 }
-
 func testAccMetricRulesetExists(s *terraform.State) error {
 	client := newTestClient()
 	for _, rs := range s.RootModule().Resources {

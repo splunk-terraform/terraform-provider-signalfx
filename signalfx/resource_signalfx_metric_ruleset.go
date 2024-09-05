@@ -194,15 +194,19 @@ func metricRulesetResource() *schema.Resource {
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"restoration_id": {
-										Type:     schema.TypeString,
-										Computed: true,
-										// Optional:    true,
+										Type:        schema.TypeString,
+										Computed:    true,
 										Description: "ID of the restoration job.",
 									},
 									"start_time": {
 										Type:        schema.TypeString,
-										Optional:    true,
+										Required:    true,
 										Description: "Time from which the restoration job will restore archived data, in the form of *nix time in milliseconds.",
+									},
+									"stop_time": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										Description: "Time to which the restoration job will restore archived data, in the form of *nix time in milliseconds.",
 									},
 								},
 							},
@@ -495,10 +499,11 @@ func metricRulesetAPIToTF(d *schema.ResourceData, metricRuleset *metric_ruleset.
 			excRule["matcher"] = []map[string]interface{}{matcher}
 
 			if val, ok := rule.GetRestorationOk(); ok {
-				if val != nil && val.StartTime != nil && *val.StartTime > int64(0) {
+				if val != nil && val.StartTime != nil && *val.StartTime > int64(0) && val.StopTime != nil && *val.StopTime > int64(0) {
 					restoration := map[string]interface{}{
 						"restoration_id": *val.RestorationId,
 						"start_time":     strconv.FormatInt(*val.StartTime, 10),
+						"stop_time":      strconv.FormatInt(*val.StopTime, 10),
 					}
 					excRule["restoration"] = []map[string]interface{}{restoration}
 				}
@@ -615,6 +620,16 @@ func getRestoration(tfRule map[string]interface{}) metric_ruleset.ExceptionRuleR
 			RestorationId: &restorationId,
 			StartTime:     &startTime,
 		}
+
+		val := restoration["stop_time"]
+		if val != nil && len(val.(string)) > 0 {
+			stopTime, err1 := strconv.ParseInt(val.(string), 10, 64)
+			if err1 != nil {
+				panic(err1)
+			}
+			restorationFields.StopTime = &stopTime
+		}
+
 		return *restorationFields
 	} else {
 		restorationFields := &metric_ruleset.ExceptionRuleRestorationFields{}
