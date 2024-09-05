@@ -1,5 +1,12 @@
 ## Unreleased
 
+## 9.2.0
+
+IMPROVEMENTS:
+
+* `signalfx_metric_ruleset`: Updated restoration under Archived Metrics Exception Rules
+  * Add optional `stopTime` field and update `startTime` as a required field [#496](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/496)-
+
 ## 9.1.7
 
 IMPROVEMENTS:
