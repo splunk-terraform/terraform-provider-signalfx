@@ -3,8 +3,8 @@ package signalfx
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/davecgh/go-spew/spew"
@@ -32,8 +32,10 @@ func resetGlobals() {
 	HomeConfigPath = OldHomeConfigPath
 }
 
-func createTempConfigFile(content string, name string) (*os.File, error) {
-	tmpfile, err := ioutil.TempFile(os.TempDir(), name)
+func createTempConfigFile(tb testing.TB, content string, name string) (*os.File, error) {
+	tb.Helper()
+
+	tmpfile, err := os.Create(filepath.Join(tb.TempDir(), name))
 	if err != nil {
 		return nil, fmt.Errorf("Error creating temporary test file. err: %s", err.Error())
 	}
@@ -86,17 +88,11 @@ func TestProviderConfigureFromNothing(t *testing.T) {
 
 func TestProviderConfigureFromTerraform(t *testing.T) {
 	defer resetGlobals()
-	tmpfileSystem, err := createTempConfigFile(`{"useless_config":"foo","auth_token":"ZZZ"}`, "signalfx.conf")
+	tmpfileSystem, err := createTempConfigFile(t, `{"useless_config":"foo","auth_token":"ZZZ"}`, "signalfx.conf")
 	if err != nil {
 		t.Fatal(err.Error())
 	}
-	defer os.Remove(tmpfileSystem.Name())
 	SystemConfigPath = tmpfileSystem.Name()
-	tmpfileHome, err := createTempConfigFile(`{"auth_token":"WWW"}`, "signalfx.conf")
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-	defer os.Remove(tmpfileHome.Name())
 
 	old := os.Getenv("SFX_AUTH_TOKEN")
 	os.Setenv("SFX_AUTH_TOKEN", "YYY")
@@ -152,13 +148,13 @@ func TestProviderConfigureFromTerraformOnly(t *testing.T) {
 
 func TestProviderConfigureFromEnvironment(t *testing.T) {
 	defer resetGlobals()
-	tmpfileSystem, err := createTempConfigFile(`{"useless_config":"foo","auth_token":"ZZZ"}`, "signalfx.conf")
+	tmpfileSystem, err := createTempConfigFile(t, `{"useless_config":"foo","auth_token":"ZZZ"}`, "signalfx.conf")
 	if err != nil {
 		t.Fatal(err.Error())
 	}
-	defer os.Remove(tmpfileSystem.Name())
+
 	SystemConfigPath = tmpfileSystem.Name()
-	tmpfileHome, err := createTempConfigFile(`{"auth_token":"WWW"}`, "signalfx.conf")
+	tmpfileHome, err := createTempConfigFile(t, `{"auth_token":"WWW"}`, "signalfx.conf")
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -223,22 +219,20 @@ func TestProviderConfigureFromEnvironmentOnly(t *testing.T) {
 
 func TestSignalFxConfigureFromHomeFile(t *testing.T) {
 	defer resetGlobals()
-	tmpfileSystem, err := createTempConfigFile(`{"useless_config":"foo","auth_token":"ZZZ"}`, "signalfx.conf")
+	tmpfileSystem, err := createTempConfigFile(t, `{"useless_config":"foo","auth_token":"ZZZ"}`, "signalfx.conf")
 	if err != nil {
 		t.Fatal(err.Error())
 	}
-	defer os.Remove(tmpfileSystem.Name())
 
 	old := os.Getenv("SFX_AUTH_TOKEN")
 	defer os.Setenv("SFX_AUTH_TOKEN", old)
 	os.Unsetenv("SFX_AUTH_TOKEN")
 
 	SystemConfigPath = tmpfileSystem.Name()
-	tmpfileHome, err := createTempConfigFile(`{"auth_token":"WWW"}`, "signalfx.conf")
+	tmpfileHome, err := createTempConfigFile(t, `{"auth_token":"WWW"}`, "signalfx.conf")
 	if err != nil {
 		t.Fatal(err.Error())
 	}
-	defer os.Remove(tmpfileHome.Name())
 	HomeConfigPath = tmpfileHome.Name()
 	raw := make(map[string]interface{})
 
@@ -254,13 +248,12 @@ func TestSignalFxConfigureFromHomeFile(t *testing.T) {
 
 func TestSignalFxConfigureFromNetrcFile(t *testing.T) {
 	defer resetGlobals()
-	tmpfileSystem, err := createTempConfigFile(`{"useless_config":"foo","auth_token":"ZZZ"}`, "signalfx.conf")
+	tmpfileSystem, err := createTempConfigFile(t, `{"useless_config":"foo","auth_token":"ZZZ"}`, "signalfx.conf")
 	if err != nil {
 		t.Fatal(err.Error())
 	}
-	defer os.Remove(tmpfileSystem.Name())
 	SystemConfigPath = tmpfileSystem.Name()
-	tmpfileHome, err := createTempConfigFile(`machine api.signalfx.com login auth_login password WWW`, ".netrc")
+	tmpfileHome, err := createTempConfigFile(t, `machine api.signalfx.com login auth_login password WWW`, ".netrc")
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -297,7 +290,7 @@ func TestSignalFxConfigureFromNetrcFile(t *testing.T) {
 func TestSignalFxConfigureFromHomeFileOnly(t *testing.T) {
 	defer resetGlobals()
 	SystemConfigPath = "filedoesnotexist"
-	tmpfileHome, err := createTempConfigFile(`{"auth_token":"WWW"}`, "signalfx.conf")
+	tmpfileHome, err := createTempConfigFile(t, `{"auth_token":"WWW"}`, "signalfx.conf")
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -345,11 +338,10 @@ func TestSignalFxConfigureFromSystemFileOnly(t *testing.T) {
 	defer os.Setenv("SFX_CUSTOM_APP_URL", old)
 	os.Unsetenv("SFX_CUSTOM_APP_URL")
 
-	tmpfileSystem, err := createTempConfigFile(`{"useless_config":"foo","auth_token":"ZZZ"}`, "signalfx.conf")
+	tmpfileSystem, err := createTempConfigFile(t, `{"useless_config":"foo","auth_token":"ZZZ"}`, "signalfx.conf")
 	if err != nil {
 		t.Fatal(err.Error())
 	}
-	defer os.Remove(tmpfileSystem.Name())
 	SystemConfigPath = tmpfileSystem.Name()
 	HomeConfigPath = "filedoesnotexist"
 	raw := make(map[string]interface{})
@@ -377,11 +369,10 @@ func TestReadConfigFileFileNotFound(t *testing.T) {
 
 func TestReadConfigFileParseError(t *testing.T) {
 	config := signalfxConfig{}
-	tmpfile, err := createTempConfigFile(`{"auth_tok`, "signalfx.conf")
+	tmpfile, err := createTempConfigFile(t, `{"auth_tok`, "signalfx.conf")
 	if err != nil {
 		t.Fatal(err.Error())
 	}
-	defer os.Remove(tmpfile.Name())
 
 	err = readConfigFile(tmpfile.Name(), &config)
 	assert.Contains(t, err.Error(), "failed to parse config file")
@@ -389,11 +380,10 @@ func TestReadConfigFileParseError(t *testing.T) {
 
 func TestReadConfigFileSuccess(t *testing.T) {
 	config := signalfxConfig{}
-	tmpfile, err := createTempConfigFile(`{"useless_config":"foo","auth_token":"XXX"}`, "signalfx.conf")
+	tmpfile, err := createTempConfigFile(t, `{"useless_config":"foo","auth_token":"XXX"}`, "signalfx.conf")
 	if err != nil {
 		t.Fatal(err.Error())
 	}
-	defer os.Remove(tmpfile.Name())
 
 	err = readConfigFile(tmpfile.Name(), &config)
 	assert.Nil(t, err)

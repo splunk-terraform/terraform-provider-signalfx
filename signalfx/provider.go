@@ -3,7 +3,6 @@ package signalfx
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -216,7 +215,7 @@ func signalfxConfigure(data *schema.ResourceData) (interface{}, error) {
 }
 
 func readConfigFile(configPath string, config *signalfxConfig) error {
-	configFile, err := ioutil.ReadFile(configPath)
+	configFile, err := os.ReadFile(configPath)
 	if err != nil {
 		return fmt.Errorf("failed to open config file. %s", err.Error())
 	}
