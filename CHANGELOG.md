@@ -1,5 +1,11 @@
 ## Unreleased
 
+## 9.2.1
+
+BUGFIXES:
+
+* documentation: Update metric_ruleset.html.markdown https://github.com/splunk-terraform/terraform-provider-signalfx/pull/501 to fix indentation
+
 ## 9.2.0
 
 IMPROVEMENTS:
