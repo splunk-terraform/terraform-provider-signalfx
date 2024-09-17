@@ -3,7 +3,7 @@ layout: "signalfx"
 page_title: "Splunk Observability Cloud: signalfx_metric_ruleset"
 sidebar_current: "docs-signalfx-resource-metric-ruleset"
 description: |-
-Allows Terraform to create and manage Splunk Infrastructure Monitoring metric rulesets
+  Allows Terraform to create and manage Splunk Infrastructure Monitoring metric rulesets
 ---
 
 # Resource: signalfx_metric_ruleset
