@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"math"
 	"net/http"
 	"net/url"
@@ -110,7 +110,7 @@ func sendRequest(method string, url string, token string, payload []byte) (int, 
 		return -1, nil, fmt.Errorf("Failed sending %s request to Signalfx: %s", method, err.Error())
 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	defer resp.Body.Close()
 
 	if err != nil {
