@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
 	tfext "github.com/splunk-terraform/terraform-provider-signalfx/internal/tfextension"
 )
 
@@ -21,9 +22,6 @@ func TimeZoneLocation() schema.SchemaValidateDiagFunc {
 			)
 		}
 		_, err := time.LoadLocation(tz)
-		if err == nil {
-			return nil
-		}
 		return tfext.AsErrorDiagnostics(err, p)
 
 	}
