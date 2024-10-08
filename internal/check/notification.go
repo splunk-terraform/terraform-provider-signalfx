@@ -2,27 +2,29 @@ package check
 
 import (
 	"fmt"
-	"time"
-	_ "time/tzdata" // Importing time zone database to ensure there is failover option
 
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/common"
 	tfext "github.com/splunk-terraform/terraform-provider-signalfx/internal/tfextension"
 )
 
-func TimeZoneLocation() schema.SchemaValidateDiagFunc {
+func Notification() schema.SchemaValidateDiagFunc {
 	return func(i interface{}, p cty.Path) diag.Diagnostics {
-		tz, ok := i.(string)
+		s, ok := i.(string)
 		if !ok {
 			return tfext.AsErrorDiagnostics(
-				fmt.Errorf("expected %v as string", i),
+				fmt.Errorf("expected %v to be of type string", i),
 				p,
 			)
 		}
-		_, err := time.LoadLocation(tz)
+		// Using the helper library to avoid repeating code
+		_, err := common.NewNotificationFromString(s)
+		if err == nil {
+			return nil
+		}
 		return tfext.AsErrorDiagnostics(err, p)
-
 	}
 }
