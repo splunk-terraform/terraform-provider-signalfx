@@ -15,7 +15,7 @@ import (
 )
 
 func SeverityLevel() schema.SchemaValidateDiagFunc {
-	return func(i interface{}, p cty.Path) diag.Diagnostics {
+	return func(i any, p cty.Path) diag.Diagnostics {
 		value, ok := i.(string)
 		if !ok {
 			return tfext.AsErrorDiagnostics(

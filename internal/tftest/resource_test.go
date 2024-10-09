@@ -32,7 +32,7 @@ func TestResourceOperationTestCaseCreate(t *testing.T) {
 		{
 			name: "create method set",
 			resource: &schema.Resource{
-				Create: func(rd *schema.ResourceData, i interface{}) error {
+				Create: func(*schema.ResourceData, any) error {
 					return nil
 				},
 			},
@@ -41,7 +41,7 @@ func TestResourceOperationTestCaseCreate(t *testing.T) {
 		{
 			name: "create method fails",
 			resource: &schema.Resource{
-				Create: func(rd *schema.ResourceData, i interface{}) error {
+				Create: func(*schema.ResourceData, any) error {
 					return errors.New("failed")
 				},
 			},
@@ -52,7 +52,7 @@ func TestResourceOperationTestCaseCreate(t *testing.T) {
 		{
 			name: "create context method set",
 			resource: &schema.Resource{
-				CreateContext: func(ctx context.Context, rd *schema.ResourceData, i interface{}) diag.Diagnostics {
+				CreateContext: func(context.Context, *schema.ResourceData, any) diag.Diagnostics {
 					return nil
 				},
 			},
@@ -61,7 +61,7 @@ func TestResourceOperationTestCaseCreate(t *testing.T) {
 		{
 			name: "create context method fails",
 			resource: &schema.Resource{
-				CreateContext: func(ctx context.Context, rd *schema.ResourceData, i interface{}) diag.Diagnostics {
+				CreateContext: func(context.Context, *schema.ResourceData, any) diag.Diagnostics {
 					return tfext.AsWarnDiagnostics(errors.New("warn"))
 				},
 			},
@@ -72,7 +72,7 @@ func TestResourceOperationTestCaseCreate(t *testing.T) {
 		{
 			name: "create without timeout set",
 			resource: &schema.Resource{
-				CreateWithoutTimeout: func(ctx context.Context, rd *schema.ResourceData, i interface{}) diag.Diagnostics {
+				CreateWithoutTimeout: func(context.Context, *schema.ResourceData, any) diag.Diagnostics {
 					return nil
 				},
 			},
@@ -80,7 +80,7 @@ func TestResourceOperationTestCaseCreate(t *testing.T) {
 		{
 			name: "create without timeout fails",
 			resource: &schema.Resource{
-				CreateWithoutTimeout: func(ctx context.Context, rd *schema.ResourceData, i interface{}) diag.Diagnostics {
+				CreateWithoutTimeout: func(context.Context, *schema.ResourceData, any) diag.Diagnostics {
 					return diag.Errorf("failed")
 				},
 			},
@@ -92,13 +92,13 @@ func TestResourceOperationTestCaseCreate(t *testing.T) {
 		tcase := &ResourceOperationTestCase[any]{
 			Name:     tc.name,
 			Resource: tc.resource,
-			Encoder: func(t *any, rd *schema.ResourceData) error {
+			Encoder: func(*any, *schema.ResourceData) error {
 				return nil
 			},
-			Decoder: func(rd *schema.ResourceData) (*any, error) {
+			Decoder: func(*schema.ResourceData) (*any, error) {
 				return nil, nil
 			},
-			Meta: func(tb testing.TB) any {
+			Meta: func(testing.TB) any {
 				return nil
 			},
 			Issues: tc.expect,
@@ -126,7 +126,7 @@ func TestResourceOperationTestCaseRead(t *testing.T) {
 		{
 			name: "read method set",
 			resource: &schema.Resource{
-				Read: func(rd *schema.ResourceData, i interface{}) error {
+				Read: func(*schema.ResourceData, any) error {
 					return nil
 				},
 			},
@@ -135,7 +135,7 @@ func TestResourceOperationTestCaseRead(t *testing.T) {
 		{
 			name: "read method fails",
 			resource: &schema.Resource{
-				Read: func(rd *schema.ResourceData, i interface{}) error {
+				Read: func(*schema.ResourceData, any) error {
 					return errors.New("failed")
 				},
 			},
@@ -146,7 +146,7 @@ func TestResourceOperationTestCaseRead(t *testing.T) {
 		{
 			name: "read context method set",
 			resource: &schema.Resource{
-				ReadContext: func(ctx context.Context, rd *schema.ResourceData, i interface{}) diag.Diagnostics {
+				ReadContext: func(context.Context, *schema.ResourceData, any) diag.Diagnostics {
 					return nil
 				},
 			},
@@ -155,7 +155,7 @@ func TestResourceOperationTestCaseRead(t *testing.T) {
 		{
 			name: "read context method fails",
 			resource: &schema.Resource{
-				ReadContext: func(ctx context.Context, rd *schema.ResourceData, i interface{}) diag.Diagnostics {
+				ReadContext: func(context.Context, *schema.ResourceData, any) diag.Diagnostics {
 					return tfext.AsWarnDiagnostics(errors.New("warn"))
 				},
 			},
@@ -166,7 +166,7 @@ func TestResourceOperationTestCaseRead(t *testing.T) {
 		{
 			name: "read without timeout set",
 			resource: &schema.Resource{
-				ReadWithoutTimeout: func(ctx context.Context, rd *schema.ResourceData, i interface{}) diag.Diagnostics {
+				ReadWithoutTimeout: func(context.Context, *schema.ResourceData, any) diag.Diagnostics {
 					return nil
 				},
 			},
@@ -174,7 +174,7 @@ func TestResourceOperationTestCaseRead(t *testing.T) {
 		{
 			name: "read without timeout fails",
 			resource: &schema.Resource{
-				ReadWithoutTimeout: func(ctx context.Context, rd *schema.ResourceData, i interface{}) diag.Diagnostics {
+				ReadWithoutTimeout: func(context.Context, *schema.ResourceData, any) diag.Diagnostics {
 					return diag.Errorf("failed")
 				},
 			},
@@ -186,13 +186,13 @@ func TestResourceOperationTestCaseRead(t *testing.T) {
 		tcase := &ResourceOperationTestCase[any]{
 			Name:     tc.name,
 			Resource: tc.resource,
-			Encoder: func(t *any, rd *schema.ResourceData) error {
+			Encoder: func(*any, *schema.ResourceData) error {
 				return nil
 			},
-			Decoder: func(rd *schema.ResourceData) (*any, error) {
+			Decoder: func(*schema.ResourceData) (*any, error) {
 				return nil, nil
 			},
-			Meta: func(tb testing.TB) any {
+			Meta: func(testing.TB) any {
 				return nil
 			},
 			Issues: tc.expect,
@@ -220,7 +220,7 @@ func TestResourceOperationTestCaseUpdate(t *testing.T) {
 		{
 			name: "update method set",
 			resource: &schema.Resource{
-				Update: func(rd *schema.ResourceData, i interface{}) error {
+				Update: func(*schema.ResourceData, any) error {
 					return nil
 				},
 			},
@@ -229,7 +229,7 @@ func TestResourceOperationTestCaseUpdate(t *testing.T) {
 		{
 			name: "update method fails",
 			resource: &schema.Resource{
-				Update: func(rd *schema.ResourceData, i interface{}) error {
+				Update: func(*schema.ResourceData, any) error {
 					return errors.New("failed")
 				},
 			},
@@ -240,7 +240,7 @@ func TestResourceOperationTestCaseUpdate(t *testing.T) {
 		{
 			name: "update method set",
 			resource: &schema.Resource{
-				UpdateContext: func(ctx context.Context, rd *schema.ResourceData, i interface{}) diag.Diagnostics {
+				UpdateContext: func(context.Context, *schema.ResourceData, any) diag.Diagnostics {
 					return nil
 				},
 			},
@@ -249,7 +249,7 @@ func TestResourceOperationTestCaseUpdate(t *testing.T) {
 		{
 			name: "update context method fails",
 			resource: &schema.Resource{
-				UpdateContext: func(ctx context.Context, rd *schema.ResourceData, i interface{}) diag.Diagnostics {
+				UpdateContext: func(context.Context, *schema.ResourceData, any) diag.Diagnostics {
 					return tfext.AsWarnDiagnostics(errors.New("warn"))
 				},
 			},
@@ -260,7 +260,7 @@ func TestResourceOperationTestCaseUpdate(t *testing.T) {
 		{
 			name: "update without timeout set",
 			resource: &schema.Resource{
-				UpdateWithoutTimeout: func(ctx context.Context, rd *schema.ResourceData, i interface{}) diag.Diagnostics {
+				UpdateWithoutTimeout: func(context.Context, *schema.ResourceData, any) diag.Diagnostics {
 					return nil
 				},
 			},
@@ -268,7 +268,7 @@ func TestResourceOperationTestCaseUpdate(t *testing.T) {
 		{
 			name: "update without timeout fails",
 			resource: &schema.Resource{
-				UpdateWithoutTimeout: func(ctx context.Context, rd *schema.ResourceData, i interface{}) diag.Diagnostics {
+				UpdateWithoutTimeout: func(context.Context, *schema.ResourceData, any) diag.Diagnostics {
 					return diag.Errorf("failed")
 				},
 			},
@@ -280,13 +280,13 @@ func TestResourceOperationTestCaseUpdate(t *testing.T) {
 		tcase := &ResourceOperationTestCase[any]{
 			Name:     tc.name,
 			Resource: tc.resource,
-			Encoder: func(t *any, rd *schema.ResourceData) error {
+			Encoder: func(*any, *schema.ResourceData) error {
 				return nil
 			},
-			Decoder: func(rd *schema.ResourceData) (*any, error) {
+			Decoder: func(*schema.ResourceData) (*any, error) {
 				return nil, nil
 			},
-			Meta: func(tb testing.TB) any {
+			Meta: func(testing.TB) any {
 				return nil
 			},
 			Issues: tc.expect,
@@ -314,7 +314,7 @@ func TestResourceOperationTestCaseDelete(t *testing.T) {
 		{
 			name: "delete method set",
 			resource: &schema.Resource{
-				Delete: func(rd *schema.ResourceData, i interface{}) error {
+				Delete: func(*schema.ResourceData, any) error {
 					return nil
 				},
 			},
@@ -323,7 +323,7 @@ func TestResourceOperationTestCaseDelete(t *testing.T) {
 		{
 			name: "delete method fails",
 			resource: &schema.Resource{
-				Delete: func(rd *schema.ResourceData, i interface{}) error {
+				Delete: func(*schema.ResourceData, any) error {
 					return errors.New("failed")
 				},
 			},
@@ -334,7 +334,7 @@ func TestResourceOperationTestCaseDelete(t *testing.T) {
 		{
 			name: "delete method set",
 			resource: &schema.Resource{
-				DeleteContext: func(ctx context.Context, rd *schema.ResourceData, i interface{}) diag.Diagnostics {
+				DeleteContext: func(context.Context, *schema.ResourceData, any) diag.Diagnostics {
 					return nil
 				},
 			},
@@ -343,7 +343,7 @@ func TestResourceOperationTestCaseDelete(t *testing.T) {
 		{
 			name: "delete context method fails",
 			resource: &schema.Resource{
-				DeleteContext: func(ctx context.Context, rd *schema.ResourceData, i interface{}) diag.Diagnostics {
+				DeleteContext: func(context.Context, *schema.ResourceData, any) diag.Diagnostics {
 					return tfext.AsWarnDiagnostics(errors.New("warn"))
 				},
 			},
@@ -354,7 +354,7 @@ func TestResourceOperationTestCaseDelete(t *testing.T) {
 		{
 			name: "delete without timeout set",
 			resource: &schema.Resource{
-				DeleteWithoutTimeout: func(ctx context.Context, rd *schema.ResourceData, i interface{}) diag.Diagnostics {
+				DeleteWithoutTimeout: func(context.Context, *schema.ResourceData, any) diag.Diagnostics {
 					return nil
 				},
 			},
@@ -362,7 +362,7 @@ func TestResourceOperationTestCaseDelete(t *testing.T) {
 		{
 			name: "delete without timeout fails",
 			resource: &schema.Resource{
-				DeleteWithoutTimeout: func(ctx context.Context, rd *schema.ResourceData, i interface{}) diag.Diagnostics {
+				DeleteWithoutTimeout: func(context.Context, *schema.ResourceData, any) diag.Diagnostics {
 					return diag.Errorf("failed")
 				},
 			},
@@ -374,13 +374,13 @@ func TestResourceOperationTestCaseDelete(t *testing.T) {
 		tcase := &ResourceOperationTestCase[any]{
 			Name:     tc.name,
 			Resource: tc.resource,
-			Encoder: func(t *any, rd *schema.ResourceData) error {
+			Encoder: func(*any, *schema.ResourceData) error {
 				return nil
 			},
-			Decoder: func(rd *schema.ResourceData) (*any, error) {
+			Decoder: func(*schema.ResourceData) (*any, error) {
 				return nil, nil
 			},
-			Meta: func(tb testing.TB) any {
+			Meta: func(testing.TB) any {
 				return nil
 			},
 			Issues: tc.expect,

@@ -29,7 +29,6 @@ func TestLoadClient(t *testing.T) {
 			err:  nil,
 		},
 	} {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -88,7 +87,6 @@ func TestLoadApplicationURL(t *testing.T) {
 			errVal:    "parse \"domain\": invalid URI for request",
 		},
 	} {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -124,7 +122,7 @@ func TestMetaValidation(t *testing.T) {
 			},
 		},
 	} {
-		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 

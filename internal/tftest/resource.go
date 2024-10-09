@@ -43,7 +43,7 @@ type ResourceOperationTestCase[T any] struct {
 }
 
 func (tc ResourceOperationTestCase[T]) TestCreate(t *testing.T) {
-	var operation schema.CreateContextFunc = func(ctx context.Context, rd *schema.ResourceData, i interface{}) diag.Diagnostics {
+	var operation schema.CreateContextFunc = func(context.Context, *schema.ResourceData, any) diag.Diagnostics {
 		return diag.Errorf("no create operation defined")
 	}
 
@@ -71,7 +71,7 @@ func (tc ResourceOperationTestCase[T]) TestCreate(t *testing.T) {
 }
 
 func (tc ResourceOperationTestCase[T]) TestRead(t *testing.T) {
-	var operation schema.ReadContextFunc = func(ctx context.Context, rd *schema.ResourceData, i interface{}) diag.Diagnostics {
+	var operation schema.ReadContextFunc = func(context.Context, *schema.ResourceData, any) diag.Diagnostics {
 		return diag.Errorf("no read operation defined")
 	}
 
@@ -97,7 +97,7 @@ func (tc ResourceOperationTestCase[T]) TestRead(t *testing.T) {
 }
 
 func (tc ResourceOperationTestCase[T]) TestUpdate(t *testing.T) {
-	var operation schema.UpdateContextFunc = func(ctx context.Context, rd *schema.ResourceData, i interface{}) diag.Diagnostics {
+	var operation schema.UpdateContextFunc = func(context.Context, *schema.ResourceData, any) diag.Diagnostics {
 		return diag.Errorf("no update operation defined")
 	}
 
@@ -123,7 +123,7 @@ func (tc ResourceOperationTestCase[T]) TestUpdate(t *testing.T) {
 }
 
 func (tc ResourceOperationTestCase[T]) TestDelete(t *testing.T) {
-	var operation schema.DeleteContextFunc = func(ctx context.Context, rd *schema.ResourceData, i interface{}) diag.Diagnostics {
+	var operation schema.DeleteContextFunc = func(context.Context, *schema.ResourceData, any) diag.Diagnostics {
 		return diag.Errorf("no delete operation defined")
 	}
 

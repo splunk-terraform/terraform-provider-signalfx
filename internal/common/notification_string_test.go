@@ -273,7 +273,6 @@ func TestNewNotificationFromString(t *testing.T) {
 			errVal: "invalid notification type \"invalid\"",
 		},
 	} {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 

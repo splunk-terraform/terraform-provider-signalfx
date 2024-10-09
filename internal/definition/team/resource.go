@@ -81,7 +81,7 @@ func newResourceRead() schema.ReadContextFunc {
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		tflog.Debug(ctx, "Succesfully fetched team data")
+		tflog.Debug(ctx, "Successfully fetched team data")
 
 		u, err := pmeta.LoadApplicationURL(ctx, meta, AppPath, tm.Id)
 		if err != nil {

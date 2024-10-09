@@ -45,7 +45,7 @@ func LoadClient(ctx context.Context, meta any) (*signalfx.Client, error) {
 }
 
 // LoadApplicationURL will generate the FQDN using the set CustomAppURL from the meta value.
-func LoadApplicationURL(ctx context.Context, meta any, fragments ...string) (string, error) {
+func LoadApplicationURL(_ context.Context, meta any, fragments ...string) (string, error) {
 	m, ok := meta.(*Meta)
 	if !ok {
 		return "", ErrMetaNotProvided

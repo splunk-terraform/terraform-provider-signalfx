@@ -33,20 +33,19 @@ func TestMetaLookupFuncs(t *testing.T) {
 		},
 		{
 			name: "provider failed",
-			fn: func(ctx context.Context, s *Meta) error {
+			fn: func(context.Context, *Meta) error {
 				return errors.New("failed")
 			},
 			expect: "failed",
 		},
 		{
 			name: "provider success",
-			fn: func(ctx context.Context, s *Meta) error {
+			fn: func(context.Context, *Meta) error {
 				return nil
 			},
 			expect: "",
 		},
 	} {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -120,7 +119,7 @@ func TestFileProviderLookup(t *testing.T) {
 			errVal:  "",
 		},
 	} {
-		tc := tc
+
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -169,7 +168,7 @@ func TestUserFileMetaLookup(t *testing.T) {
 		},
 		{
 			name: "failed to load user",
-			current: func(t *testing.T) func() (*user.User, error) {
+			current: func(*testing.T) func() (*user.User, error) {
 				return func() (*user.User, error) {
 					return nil, errors.New("user not found")
 				}
@@ -181,7 +180,6 @@ func TestUserFileMetaLookup(t *testing.T) {
 		},
 		// Since this extends FileProviderLookup, there is no need to repeat tests
 	} {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			// Since concurrent test can depend on the same directory,
 			// parallel is not enabled.
@@ -218,7 +216,7 @@ func TestNetrcMetaProvider(t *testing.T) {
 	}{
 		{
 			name: "no path set",
-			newFile: func(t *testing.T) (path string) {
+			newFile: func(*testing.T) (path string) {
 				return ""
 			},
 			expect: Meta{},
@@ -268,7 +266,6 @@ func TestNetrcMetaProvider(t *testing.T) {
 			errVal: "",
 		},
 	} {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
