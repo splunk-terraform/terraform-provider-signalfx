@@ -61,13 +61,11 @@ lint: $(GOLANGCI_LINT)
 lint-fix:
 	$(GOLANGCI_LINT) run -v --fix
 
-build: fmtcheck
-	go install
+build:
+	go build
 
-test: fmtcheck
-	go test -i $(TEST) || exit 1
-	echo $(TEST) | \
-		xargs -t -n4 go test $(TESTARGS) -timeout=30s -parallel=4
+test:
+	go test --cover --race -v --timeout 30s ./...
 
 test-with-cover:
 	mkdir -p $(PWD)/coverage/unit || true
@@ -77,7 +75,7 @@ test-with-cover:
 	go tool covdata textfmt -i=./coverage/unit -o ./coverage.txt
 
 
-testacc: fmtcheck
+testacc:
 	TF_ACC=1 go test $(TEST) -v $(TESTARGS) -timeout 120m
 
 fmt:
