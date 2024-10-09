@@ -7,5 +7,5 @@ package tools
 
 import (
 	_ "github.com/google/addlicense"
+	_ "golang.org/x/vuln/cmd/govulncheck"
 )
-go

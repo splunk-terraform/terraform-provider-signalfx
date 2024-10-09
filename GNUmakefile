@@ -12,6 +12,7 @@ TOOLS_PKG_NAMES := $(shell grep -E $(TOOLS_MOD_REGEX) < $(TOOLS_MOD_DIR)/tools.g
 TOOLS_BIN_NAMES := $(addprefix $(TOOLS_BIN_DIR)/, $(notdir $(shell echo $(TOOLS_PKG_NAMES))))
 
 ADDLICENCESE := $(TOOLS_BIN_DIR)/addlicense
+GOVULNCHECK  := $(TOOLS_BIN_DIR)/govulncheck
 
 default: build
 
@@ -46,6 +47,10 @@ checklicense: $(ADDLICENCESE)
 		else \
 			echo "Check License finished successfully"; \
 		fi
+
+.PHONY: govulncheck
+govulncheck: $(GOVULNCHECK)
+	$(GOVULNCHECK)
 
 build: fmtcheck
 	go install

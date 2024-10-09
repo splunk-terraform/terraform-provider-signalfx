@@ -1,0 +1,35 @@
+---
+name: "Vulnerability Workflow"
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+env:
+  GO_VERSION: "1.23"
+
+jobs:
+  check:
+    name: check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the codebase.
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Caching dependency
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+            ~/go/bin
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+      - name: Go Vulncheck
+        run: make govulncheck
