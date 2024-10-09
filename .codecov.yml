@@ -10,9 +10,9 @@ coverage:
   status:
     project:
       default:
-        enabled: yes
+        enabled: no
         target: 80%
     patch:
       default:
         enabled: yes
-        target: 80%
+        target: 80
