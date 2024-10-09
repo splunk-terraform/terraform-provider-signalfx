@@ -36,7 +36,7 @@ addlicense: $(ADDLICENCESE)
 		fi
 
 .PHONY: checklicense
-checklicense:
+checklicense: $(ADDLICENCESE)
 	@ADDLICENCESEOUT=`$(ADDLICENCESE) -check $(SRC_GO_FILES) 2>&1`; \
 		if [ "$$ADDLICENCESEOUT" ]; then \
 			echo "$(ADDLICENCESE) FAILED => add License errors:\n"; \
