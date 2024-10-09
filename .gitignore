@@ -10,4 +10,6 @@ terraform-provider-signalfx
 dist
 .idea
 
+# Generated files/directories as a result of CI/tooling actions
 /coverage
+/.tools

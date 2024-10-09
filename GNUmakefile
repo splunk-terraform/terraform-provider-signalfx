@@ -24,7 +24,7 @@ $(TOOLS_BIN_NAMES): $(TOOLS_BIN_DIR) $(TOOLS_MOD_DIR)/go.mod
 
 .PHONY: addlicense
 addlicense: $(TOOLS_BIN_DIR)/addlicense
-	$^ -s=only -y "" -c "Splunk, Inc." $(SRC_GO_FILES)
+	$^ -s=only -y "" -c "Splunk, Inc." -l mpl $(SRC_GO_FILES)
 
 build: fmtcheck
 	go install
