@@ -3,7 +3,28 @@ GOFMT_FILES?=$$(find . -name '*.go' |grep -v vendor)
 WEBSITE_REPO=github.com/hashicorp/terraform-website
 PKG_NAME=signalfx
 
+SRC_ROOT        := $(shell git rev-parse --show-toplevel)
+SRC_GO_FILES    := $(shell find $(SRC_ROOT) -name '*.go')
+TOOLS_MOD_DIR   := $(SRC_ROOT)/internal/tools
+TOOLS_BIN_DIR   := $(SRC_ROOT)/.tools
+TOOLS_MOD_REGEX := "\s+_\s+\".*\""
+TOOLS_PKG_NAMES := $(shell grep -E $(TOOLS_MOD_REGEX) < $(TOOLS_MOD_DIR)/tools.go | tr -d " _\"" | grep -vE '/v[0-9]+$$')
+TOOLS_BIN_NAMES := $(addprefix $(TOOLS_BIN_DIR)/, $(notdir $(shell echo $(TOOLS_PKG_NAMES))))
+
 default: build
+
+.PHONY: install-tools
+install-tools: $(TOOLS_BIN_NAMES)
+
+$(TOOLS_BIN_DIR):
+	mkdir -p $@
+
+$(TOOLS_BIN_NAMES): $(TOOLS_BIN_DIR) $(TOOLS_MOD_DIR)/go.mod
+	go -C $(TOOLS_MOD_DIR) build -o $@ -trimpath $(filter %/$(notdir $@),$(TOOLS_PKG_NAMES))
+
+.PHONY: addlicense
+addlicense: $(TOOLS_BIN_DIR)/addlicense
+	$^ -s=only -y "" -c "Splunk, Inc." $(SRC_GO_FILES)
 
 build: fmtcheck
 	go install
