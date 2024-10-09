@@ -9,3 +9,5 @@ crash.log
 terraform-provider-signalfx
 dist
 .idea
+
+/coverage
