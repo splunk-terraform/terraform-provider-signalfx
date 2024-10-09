@@ -18,6 +18,7 @@ test-with-cover:
 	go test --race --timeout 300s --cover ./... \
 		-covermode=atomic \
 		-args -test.gocoverdir="$(PWD)/coverage/unit"
+	go tool covdata textfmt -i=./coverage/unit -o ./coverage.txt
 
 
 testacc: fmtcheck
