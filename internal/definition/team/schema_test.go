@@ -41,7 +41,6 @@ func TestDecodeTerraform(t *testing.T) {
 			errVal: "invalid notification string \"0\", not enough commas",
 		},
 	} {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -153,7 +152,6 @@ func TestEncodeTerraform(t *testing.T) {
 			errVal: "Invalid address to set: []string{\"notifications_default\"}",
 		},
 	} {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 

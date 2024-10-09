@@ -58,7 +58,6 @@ func TestAppendDiagnostics(t *testing.T) {
 			},
 		},
 	} {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -100,7 +99,6 @@ func TestAsErrorDiagnostics(t *testing.T) {
 			},
 		},
 	} {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			assert.Equal(t, tc.expect, tc.value)
 		})
@@ -135,7 +133,6 @@ func TestAsWarnDiagnostics(t *testing.T) {
 			},
 		},
 	} {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			assert.Equal(t, tc.expect, tc.value)
 		})

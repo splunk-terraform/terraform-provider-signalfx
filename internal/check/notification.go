@@ -12,7 +12,7 @@ import (
 )
 
 func Notification() schema.SchemaValidateDiagFunc {
-	return func(i interface{}, p cty.Path) diag.Diagnostics {
+	return func(i any, p cty.Path) diag.Diagnostics {
 		s, ok := i.(string)
 		if !ok {
 			return tfext.AsErrorDiagnostics(

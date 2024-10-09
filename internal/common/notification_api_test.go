@@ -207,7 +207,6 @@ func TestNewStringFromAPI(t *testing.T) {
 			errVal: "",
 		},
 	} {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 

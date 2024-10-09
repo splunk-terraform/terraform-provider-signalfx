@@ -41,7 +41,6 @@ func TestTimeZoneLocation(t *testing.T) {
 			},
 		},
 	} {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
