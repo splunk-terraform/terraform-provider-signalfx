@@ -55,6 +55,9 @@ jobs:
             ~/go/pkg/mod
             ~/go/bin
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-
       - name: Test
-        run: make test
+        run: make test-with-cover
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}

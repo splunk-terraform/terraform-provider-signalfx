@@ -13,6 +13,13 @@ test: fmtcheck
 	echo $(TEST) | \
 		xargs -t -n4 go test $(TESTARGS) -timeout=30s -parallel=4
 
+test-with-cover:
+	mkdir -p $(PWD)/coverage/unit || true
+	go test --race --timeout 300s --cover ./... \
+		-covermode=atomic \
+		-args -test.gocoverdir="$(PWD)/coverage/unit"
+
+
 testacc: fmtcheck
 	TF_ACC=1 go test $(TEST) -v $(TESTARGS) -timeout 120m
 
