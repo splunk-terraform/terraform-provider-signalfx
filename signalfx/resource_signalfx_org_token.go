@@ -227,7 +227,7 @@ func getPayloadOrgToken(d *schema.ResourceData) (*orgtoken.CreateUpdateTokenRequ
 	}
 
 	if notifications, ok := d.GetOk("notifications"); ok {
-		notify, err := common.NewNotificationList(notifications.([]interface{}))
+		notify, err := common.NewNotificationList(notifications.([]any))
 		if err != nil {
 			return nil, err
 		}

@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	notification "github.com/signalfx/signalfx-go/notification"
 	team "github.com/signalfx/signalfx-go/team"
 
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/check"
@@ -131,42 +130,42 @@ func getPayloadTeam(d *schema.ResourceData) (*team.CreateUpdateTeamRequest, erro
 	t.Members = members
 
 	if val, ok := d.GetOk("notifications_critical"); ok {
-		nots, err := common.NewNotificationList(val.([]interface{}))
+		nots, err := common.NewNotificationList(val.([]any))
 		if err != nil {
 			return t, err
 		}
 		t.NotificationLists.Critical = nots
 	}
 	if val, ok := d.GetOk("notifications_default"); ok {
-		nots, err := common.NewNotificationList(val.([]interface{}))
+		nots, err := common.NewNotificationList(val.([]any))
 		if err != nil {
 			return t, err
 		}
 		t.NotificationLists.Default = nots
 	}
 	if val, ok := d.GetOk("notifications_info"); ok {
-		nots, err := common.NewNotificationList(val.([]interface{}))
+		nots, err := common.NewNotificationList(val.([]any))
 		if err != nil {
 			return t, err
 		}
 		t.NotificationLists.Info = nots
 	}
 	if val, ok := d.GetOk("notifications_major"); ok {
-		nots, err := common.NewNotificationList(val.([]interface{}))
+		nots, err := common.NewNotificationList(val.([]any))
 		if err != nil {
 			return t, err
 		}
 		t.NotificationLists.Major = nots
 	}
 	if val, ok := d.GetOk("notifications_minor"); ok {
-		nots, err := common.NewNotificationList(val.([]interface{}))
+		nots, err := common.NewNotificationList(val.([]any))
 		if err != nil {
 			return t, err
 		}
 		t.NotificationLists.Minor = nots
 	}
 	if val, ok := d.GetOk("notifications_warning"); ok {
-		nots, err := common.NewNotificationList(val.([]interface{}))
+		nots, err := common.NewNotificationList(val.([]any))
 		if err != nil {
 			return t, err
 		}
@@ -174,79 +173,6 @@ func getPayloadTeam(d *schema.ResourceData) (*team.CreateUpdateTeamRequest, erro
 	}
 
 	return t, nil
-}
-
-func getNotificationObject(item map[string]interface{}) (*notification.Notification, error) {
-	t := item["type"].(string)
-	var nValue interface{}
-	switch t {
-	case "BigPanda":
-		nValue = &notification.BigPandaNotification{
-			Type:         t,
-			CredentialId: item["credentialId"].(string),
-		}
-	case "Email":
-		nValue = &notification.EmailNotification{
-			Type:  t,
-			Email: item["email"].(string),
-		}
-	case "Office365":
-		nValue = &notification.Office365Notification{
-			Type:         t,
-			CredentialId: item["credentialId"].(string),
-		}
-	case "Opsgenie":
-		nValue = &notification.OpsgenieNotification{
-			Type:          t,
-			CredentialId:  item["credentialId"].(string),
-			ResponderName: item["responderName"].(string),
-			ResponderId:   item["responderId"].(string),
-			ResponderType: item["responderType"].(string),
-		}
-	case "PagerDuty":
-		nValue = &notification.PagerDutyNotification{
-			Type:         t,
-			CredentialId: item["credentialId"].(string),
-		}
-	case "Slack":
-		nValue = &notification.SlackNotification{
-			Type:         t,
-			CredentialId: item["credentialId"].(string),
-			Channel:      item["channel"].(string),
-		}
-	case "Team":
-		nValue = &notification.TeamNotification{
-			Type: t,
-			Team: item["team"].(string),
-		}
-	case "TeamEmail":
-		nValue = &notification.TeamEmailNotification{
-			Type: t,
-			Team: item["team"].(string),
-		}
-	case "VictorOps":
-		nValue = &notification.VictorOpsNotification{
-			Type:         t,
-			CredentialId: item["credentialId"].(string),
-			RoutingKey:   item["routingKey"].(string),
-		}
-	case "Webhook":
-		nValue = &notification.WebhookNotification{
-			Type:   t,
-			Secret: item["secret"].(string),
-			Url:    item["url"].(string),
-		}
-	case "XMatters":
-		nValue = &notification.XMattersNotification{
-			Type:         t,
-			CredentialId: item["credentialId"].(string),
-		}
-	}
-
-	return &notification.Notification{
-		Type:  t,
-		Value: nValue,
-	}, nil
 }
 
 func teamCreate(d *schema.ResourceData, meta interface{}) error {
@@ -298,7 +224,7 @@ func teamAPIToTF(d *schema.ResourceData, t *team.Team) error {
 	}
 
 	if len(t.NotificationLists.Critical) > 0 {
-		nots, err := getNotificationsFromAPI(t.NotificationLists.Critical)
+		nots, err := common.NewNotificationStringList(t.NotificationLists.Critical)
 		if err != nil {
 			return err
 		}
@@ -306,53 +232,41 @@ func teamAPIToTF(d *schema.ResourceData, t *team.Team) error {
 		d.Set("notifications_critical", nots)
 	}
 	if len(t.NotificationLists.Default) > 0 {
-		nots, err := getNotificationsFromAPI(t.NotificationLists.Default)
+		nots, err := common.NewNotificationStringList(t.NotificationLists.Default)
 		if err != nil {
 			return err
 		}
 		d.Set("notifications_default", nots)
 	}
 	if len(t.NotificationLists.Info) > 0 {
-		nots, err := getNotificationsFromAPI(t.NotificationLists.Info)
+		nots, err := common.NewNotificationStringList(t.NotificationLists.Info)
 		if err != nil {
 			return err
 		}
 		d.Set("notifications_info", nots)
 	}
 	if len(t.NotificationLists.Major) > 0 {
-		nots, err := getNotificationsFromAPI(t.NotificationLists.Major)
+		nots, err := common.NewNotificationStringList(t.NotificationLists.Major)
 		if err != nil {
 			return err
 		}
 		d.Set("notifications_major", nots)
 	}
 	if len(t.NotificationLists.Minor) > 0 {
-		nots, err := getNotificationsFromAPI(t.NotificationLists.Minor)
+		nots, err := common.NewNotificationStringList(t.NotificationLists.Minor)
 		if err != nil {
 			return err
 		}
 		d.Set("notifications_minor", nots)
 	}
 	if len(t.NotificationLists.Warning) > 0 {
-		nots, err := getNotificationsFromAPI(t.NotificationLists.Warning)
+		nots, err := common.NewNotificationStringList(t.NotificationLists.Warning)
 		if err != nil {
 			return err
 		}
 		d.Set("notifications_warning", nots)
 	}
 	return nil
-}
-
-func getNotificationsFromAPI(nots []*notification.Notification) ([]string, error) {
-	results := make([]string, len(nots))
-	for i, not := range nots {
-		s, err := common.NewNotificationStringFromAPI(not)
-		if err != nil {
-			return nil, err
-		}
-		results[i] = s
-	}
-	return results, nil
 }
 
 func teamRead(d *schema.ResourceData, meta interface{}) error {

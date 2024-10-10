@@ -21,3 +21,18 @@ func NewNotificationList(items []any) ([]*notification.Notification, error) {
 	}
 	return values, nil
 }
+
+func NewNotificationStringList(items []*notification.Notification) ([]string, error) {
+	if len(items) == 0 {
+		return nil, nil
+	}
+	values := make([]string, len(items))
+	for i, v := range items {
+		var err error
+		values[i], err = NewNotificationStringFromAPI(v)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return values, nil
+}
