@@ -59,3 +59,55 @@ func TestNewNotificationList(t *testing.T) {
 		})
 	}
 }
+
+func TestNewNotificationStringList(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name   string
+		items  []*notification.Notification
+		expect []string
+		errVal string
+	}{
+		{
+			name:   "nil",
+			items:  nil,
+			expect: nil,
+			errVal: "",
+		},
+		{
+			name:   "empty",
+			items:  []*notification.Notification{},
+			expect: nil,
+			errVal: "",
+		},
+		{
+			name: "valid notification",
+			items: []*notification.Notification{
+				{Type: "Email", Value: &notification.EmailNotification{Type: "Email", Email: "example@com"}},
+			},
+			expect: []string{"Email,example@com"},
+			errVal: "",
+		},
+		{
+			name: "invalid notification",
+			items: []*notification.Notification{
+				{Type: "Provider", Value: nil},
+			},
+			expect: nil,
+			errVal: "unknown type <nil> provided",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			items, err := NewNotificationStringList(tc.items)
+			assert.Equal(t, tc.expect, items, "Must match the expected values")
+			if tc.errVal != "" {
+				assert.EqualError(t, err, tc.errVal, "Must match the expected value")
+			} else {
+				assert.NoError(t, err, "Must not error")
+			}
+		})
+	}
+}
