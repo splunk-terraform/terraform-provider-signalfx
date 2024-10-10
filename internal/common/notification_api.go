@@ -9,7 +9,7 @@ import (
 	"github.com/signalfx/signalfx-go/notification"
 )
 
-func NewStringFromAPI(n *notification.Notification) (string, error) {
+func NewNotificationStringFromAPI(n *notification.Notification) (string, error) {
 	if n == nil {
 		return "", fmt.Errorf("nil value provided")
 	}

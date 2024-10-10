@@ -12,6 +12,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	notification "github.com/signalfx/signalfx-go/notification"
 	team "github.com/signalfx/signalfx-go/team"
+
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/check"
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/common"
 )
 
 const (
@@ -41,8 +44,8 @@ func teamResource() *schema.Resource {
 				Type:     schema.TypeList,
 				Optional: true,
 				Elem: &schema.Schema{
-					Type:         schema.TypeString,
-					ValidateFunc: validateNotification,
+					Type:             schema.TypeString,
+					ValidateDiagFunc: check.Notification(),
 				},
 				Description: "List of notification destinations to use for the critical alerts category.",
 			},
@@ -50,8 +53,8 @@ func teamResource() *schema.Resource {
 				Type:     schema.TypeList,
 				Optional: true,
 				Elem: &schema.Schema{
-					Type:         schema.TypeString,
-					ValidateFunc: validateNotification,
+					Type:             schema.TypeString,
+					ValidateDiagFunc: check.Notification(),
 				},
 				Description: "List of notification destinations to use for the default alerts category.",
 			},
@@ -59,8 +62,8 @@ func teamResource() *schema.Resource {
 				Type:     schema.TypeList,
 				Optional: true,
 				Elem: &schema.Schema{
-					Type:         schema.TypeString,
-					ValidateFunc: validateNotification,
+					Type:             schema.TypeString,
+					ValidateDiagFunc: check.Notification(),
 				},
 				Description: "List of notification destinations to use for the info alerts category.",
 			},
@@ -68,8 +71,8 @@ func teamResource() *schema.Resource {
 				Type:     schema.TypeList,
 				Optional: true,
 				Elem: &schema.Schema{
-					Type:         schema.TypeString,
-					ValidateFunc: validateNotification,
+					Type:             schema.TypeString,
+					ValidateDiagFunc: check.Notification(),
 				},
 				Description: "List of notification destinations to use for the major alerts category.",
 			},
@@ -77,8 +80,8 @@ func teamResource() *schema.Resource {
 				Type:     schema.TypeList,
 				Optional: true,
 				Elem: &schema.Schema{
-					Type:         schema.TypeString,
-					ValidateFunc: validateNotification,
+					Type:             schema.TypeString,
+					ValidateDiagFunc: check.Notification(),
 				},
 				Description: "List of notification destinations to use for the minor alerts category.",
 			},
@@ -86,8 +89,8 @@ func teamResource() *schema.Resource {
 				Type:     schema.TypeList,
 				Optional: true,
 				Elem: &schema.Schema{
-					Type:         schema.TypeString,
-					ValidateFunc: validateNotification,
+					Type:             schema.TypeString,
+					ValidateDiagFunc: check.Notification(),
 				},
 				Description: "List of notification destinations to use for the warning alerts category.",
 			},
@@ -128,42 +131,42 @@ func getPayloadTeam(d *schema.ResourceData) (*team.CreateUpdateTeamRequest, erro
 	t.Members = members
 
 	if val, ok := d.GetOk("notifications_critical"); ok {
-		nots, err := getNotificationList(val.([]interface{}))
+		nots, err := common.NewNotificationList(val.([]interface{}))
 		if err != nil {
 			return t, err
 		}
 		t.NotificationLists.Critical = nots
 	}
 	if val, ok := d.GetOk("notifications_default"); ok {
-		nots, err := getNotificationList(val.([]interface{}))
+		nots, err := common.NewNotificationList(val.([]interface{}))
 		if err != nil {
 			return t, err
 		}
 		t.NotificationLists.Default = nots
 	}
 	if val, ok := d.GetOk("notifications_info"); ok {
-		nots, err := getNotificationList(val.([]interface{}))
+		nots, err := common.NewNotificationList(val.([]interface{}))
 		if err != nil {
 			return t, err
 		}
 		t.NotificationLists.Info = nots
 	}
 	if val, ok := d.GetOk("notifications_major"); ok {
-		nots, err := getNotificationList(val.([]interface{}))
+		nots, err := common.NewNotificationList(val.([]interface{}))
 		if err != nil {
 			return t, err
 		}
 		t.NotificationLists.Major = nots
 	}
 	if val, ok := d.GetOk("notifications_minor"); ok {
-		nots, err := getNotificationList(val.([]interface{}))
+		nots, err := common.NewNotificationList(val.([]interface{}))
 		if err != nil {
 			return t, err
 		}
 		t.NotificationLists.Minor = nots
 	}
 	if val, ok := d.GetOk("notifications_warning"); ok {
-		nots, err := getNotificationList(val.([]interface{}))
+		nots, err := common.NewNotificationList(val.([]interface{}))
 		if err != nil {
 			return t, err
 		}
@@ -171,14 +174,6 @@ func getPayloadTeam(d *schema.ResourceData) (*team.CreateUpdateTeamRequest, erro
 	}
 
 	return t, nil
-}
-
-// Convert the list of TF data into proper objects
-func getNotificationList(items []interface{}) ([]*notification.Notification, error) {
-	if len(items) == 0 {
-		return nil, nil
-	}
-	return getNotifications(items)
 }
 
 func getNotificationObject(item map[string]interface{}) (*notification.Notification, error) {
@@ -351,7 +346,7 @@ func teamAPIToTF(d *schema.ResourceData, t *team.Team) error {
 func getNotificationsFromAPI(nots []*notification.Notification) ([]string, error) {
 	results := make([]string, len(nots))
 	for i, not := range nots {
-		s, err := getNotifyStringFromAPI(not)
+		s, err := common.NewNotificationStringFromAPI(not)
 		if err != nil {
 			return nil, err
 		}

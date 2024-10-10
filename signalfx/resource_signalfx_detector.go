@@ -17,6 +17,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/signalfx/signalfx-go/detector"
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/check"
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/common"
 )
 
 const (
@@ -45,8 +47,8 @@ var (
 			Type:     schema.TypeList,
 			Optional: true,
 			Elem: &schema.Schema{
-				Type:         schema.TypeString,
-				ValidateFunc: validateNotification,
+				Type:             schema.TypeString,
+				ValidateDiagFunc: check.Notification(),
 			},
 			Description: "List of strings specifying where notifications will be sent when an incident occurs. See https://developers.signalfx.com/v2/docs/detector-model#notifications-models for more info",
 		},
@@ -418,7 +420,7 @@ func getDetectorRule(tfRule map[string]interface{}) (*detector.Rule, error) {
 	}
 
 	if notifications, ok := tfRule["notifications"]; ok {
-		notify, err := getNotifications(notifications.([]interface{}))
+		notify, err := common.NewNotificationList(notifications.([]interface{}))
 		if err != nil {
 			return nil, err
 		}
@@ -683,7 +685,7 @@ func getTfDetectorRule(r *detector.Rule) (map[string]interface{}, error) {
 
 	notifications := make([]string, len(r.Notifications))
 	for i, not := range r.Notifications {
-		tfNot, err := getNotifyStringFromAPI(not)
+		tfNot, err := common.NewNotificationStringFromAPI(not)
 		if err != nil {
 			return nil, err
 		}
