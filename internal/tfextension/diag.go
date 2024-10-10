@@ -8,6 +8,7 @@ import (
 
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"go.uber.org/multierr"
 )
 
 // AppendDiagnostics is to be used similar to combining errors together
@@ -18,21 +19,39 @@ func AppendDiagnostics(diags diag.Diagnostics, values ...diag.Diagnostic) diag.D
 
 // AsErrorDiagnostics is the same as `diag.FromErr`, however, it allow allows
 // adding the attribute values that are provided in CRUD operations.
-func AsErrorDiagnostics(err error, path ...cty.Path) diag.Diagnostics {
-	return newDiagnostics(diag.Error, err, path...)
+func AsErrorDiagnostics(err error, path ...cty.Path) (issues diag.Diagnostics) {
+	return newUnwrapErrors(diag.Error, err, path...)
 }
 
 // AsWarnDiagnostics is the same as `diag.FromErr`, however, it sets the severity as Warning
 // and allows for appending the attribute path as part of the values.
-func AsWarnDiagnostics(err error, path ...cty.Path) diag.Diagnostics {
-	return newDiagnostics(diag.Warning, err, path...)
+func AsWarnDiagnostics(err error, path ...cty.Path) (issues diag.Diagnostics) {
+	return newUnwrapErrors(diag.Warning, err, path...)
 }
 
-func newDiagnostics(sev diag.Severity, summary error, path ...cty.Path) diag.Diagnostics {
-	if summary == nil {
+func newUnwrapErrors(sev diag.Severity, err error, path ...cty.Path) (issues diag.Diagnostics) {
+	if err == nil {
 		return nil
 	}
-	return diag.Diagnostics{
-		{Severity: sev, Summary: summary.Error(), AttributePath: slices.Concat(path...)},
+
+	// Checking to see if there is any joined errors
+	// so it can be unpacked into seperate reported issues.
+	// This useses the unpublished errors' [interface{ Unwrap() []error }]
+	// and if that is unset it then checks the uber's implementation.
+	var errs []error
+	if v, ok := err.(interface{ Unwarp() []error }); ok {
+		errs = v.Unwarp()
 	}
+
+	if len(errs) == 0 {
+		errs = multierr.Errors(err)
+	}
+
+	for _, err := range errs {
+		issues = AppendDiagnostics(issues, diag.Diagnostic{
+			Severity: sev, Summary: err.Error(), AttributePath: slices.Concat(path...),
+		})
+	}
+
+	return issues
 }
