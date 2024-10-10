@@ -151,7 +151,7 @@ func encodeTerraform(tm *team.Team, rd *schema.ResourceData) error {
 		}
 		items := make([]string, len(values))
 		for i, n := range values {
-			s, err := common.NewStringFromAPI(n)
+			s, err := common.NewNotificationStringFromAPI(n)
 			if err != nil {
 				return err
 			}
