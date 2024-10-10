@@ -420,7 +420,7 @@ func getDetectorRule(tfRule map[string]interface{}) (*detector.Rule, error) {
 	}
 
 	if notifications, ok := tfRule["notifications"]; ok {
-		notify, err := common.NewNotificationList(notifications.([]interface{}))
+		notify, err := common.NewNotificationList(notifications.([]any))
 		if err != nil {
 			return nil, err
 		}
