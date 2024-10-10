@@ -101,6 +101,16 @@ func TestAsErrorDiagnostics(t *testing.T) {
 				{Severity: diag.Error, Summary: "bad entry", AttributePath: cty.IndexStringPath("attr")},
 			},
 		},
+		{
+			name: "multiple errors reported",
+			value: AsErrorDiagnostics(
+				errors.Join(errors.New("failed to validate entry #1"), errors.New("failed to validate entry #2")),
+			),
+			expect: diag.Diagnostics{
+				{Severity: diag.Error, Summary: "failed to validate entry #1"},
+				{Severity: diag.Error, Summary: "failed to validate entry #2"},
+			},
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			assert.Equal(t, tc.expect, tc.value)
@@ -133,6 +143,16 @@ func TestAsWarnDiagnostics(t *testing.T) {
 			value: AsWarnDiagnostics(errors.New("bad entry"), cty.IndexStringPath("attr")),
 			expect: diag.Diagnostics{
 				{Severity: diag.Warning, Summary: "bad entry", AttributePath: cty.IndexStringPath("attr")},
+			},
+		},
+		{
+			name: "multiple errors reported",
+			value: AsWarnDiagnostics(
+				errors.Join(errors.New("failed to validate entry #1"), errors.New("failed to validate entry #2")),
+			),
+			expect: diag.Diagnostics{
+				{Severity: diag.Warning, Summary: "failed to validate entry #1"},
+				{Severity: diag.Warning, Summary: "failed to validate entry #2"},
 			},
 		},
 	} {
