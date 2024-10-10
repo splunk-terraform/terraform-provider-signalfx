@@ -11,8 +11,9 @@ TOOLS_MOD_REGEX := "\s+_\s+\".*\""
 TOOLS_PKG_NAMES := $(shell grep -E $(TOOLS_MOD_REGEX) < $(TOOLS_MOD_DIR)/tools.go | tr -d " _\"" | grep -vE '/v[0-9]+$$')
 TOOLS_BIN_NAMES := $(addprefix $(TOOLS_BIN_DIR)/, $(notdir $(shell echo $(TOOLS_PKG_NAMES))))
 
-ADDLICENCESE := $(TOOLS_BIN_DIR)/addlicense
-GOVULNCHECK  := $(TOOLS_BIN_DIR)/govulncheck
+ADDLICENCESE  := $(TOOLS_BIN_DIR)/addlicense
+GOVULNCHECK   := $(TOOLS_BIN_DIR)/govulncheck
+GOLANGCI_LINT := $(TOOLS_BIN_DIR)/golangci-lint
 
 default: build
 
@@ -52,13 +53,19 @@ checklicense: $(ADDLICENCESE)
 govulncheck: $(GOVULNCHECK)
 	$(GOVULNCHECK)
 
-build: fmtcheck
-	go install
+.PHONY: lint
+lint: $(GOLANGCI_LINT)
+	$(GOLANGCI_LINT) run -v
 
-test: fmtcheck
-	go test -i $(TEST) || exit 1
-	echo $(TEST) | \
-		xargs -t -n4 go test $(TESTARGS) -timeout=30s -parallel=4
+.PHONY: lint-fix
+lint-fix:
+	$(GOLANGCI_LINT) run -v --fix
+
+build:
+	go build
+
+test:
+	go test --cover --race -v --timeout 30s ./...
 
 test-with-cover:
 	mkdir -p $(PWD)/coverage/unit || true
@@ -68,26 +75,11 @@ test-with-cover:
 	go tool covdata textfmt -i=./coverage/unit -o ./coverage.txt
 
 
-testacc: fmtcheck
+testacc:
 	TF_ACC=1 go test $(TEST) -v $(TESTARGS) -timeout 120m
-
-vet:
-	@echo "go vet ."
-	@go vet $$(go list ./... | grep -v vendor/) ; if [ $$? -eq 1 ]; then \
-		echo ""; \
-		echo "Vet found suspicious constructs. Please check the reported constructs"; \
-		echo "and fix them if necessary before submitting the code for review."; \
-		exit 1; \
-	fi
 
 fmt:
 	gofmt -w $(GOFMT_FILES)
-
-fmtcheck:
-	@sh -c "'$(CURDIR)/scripts/gofmtcheck.sh'"
-
-errcheck:
-	@sh -c "'$(CURDIR)/scripts/errcheck.sh'"
 
 
 test-compile:
