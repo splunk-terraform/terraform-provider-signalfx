@@ -3,6 +3,9 @@ codecov:
   # only use the latest copy on main branch
   strict_yaml_branch: main
 
+ignore:
+- "signalfx"
+
 coverage:
   precision: 2
   round: down
