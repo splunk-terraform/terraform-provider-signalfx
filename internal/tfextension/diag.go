@@ -39,8 +39,8 @@ func newUnwrapErrors(sev diag.Severity, err error, path ...cty.Path) (issues dia
 	// This useses the unpublished errors' [interface{ Unwrap() []error }]
 	// and if that is unset it then checks the uber's implementation.
 	var errs []error
-	if v, ok := err.(interface{ Unwarp() []error }); ok {
-		errs = v.Unwarp()
+	if v, ok := err.(interface{ Unwrap() []error }); ok {
+		errs = v.Unwrap()
 	}
 
 	if len(errs) == 0 {
