@@ -35,7 +35,7 @@ func newUnwrapErrors(sev diag.Severity, err error, path ...cty.Path) (issues dia
 	}
 
 	// Checking to see if there is any joined errors
-	// so it can be unpacked into seperate reported issues.
+	// so it can be unpacked into separate reported issues.
 	// This useses the unpublished errors' [interface{ Unwrap() []error }]
 	// and if that is unset it then checks the uber's implementation.
 	var errs []error

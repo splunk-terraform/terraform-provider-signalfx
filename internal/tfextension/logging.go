@@ -5,7 +5,7 @@ package tfext
 
 import "time"
 
-// LogFields is an extention to logging fields parameter
+// LogFields is an extension to logging fields parameter
 // to help as a convience and provides some level of standards.
 type LogFields map[string]any
 
