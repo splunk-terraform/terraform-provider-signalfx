@@ -19,7 +19,7 @@ run:
   exclude-dirs:
     # This package is what is being migrated across to `internal/definition` 
     # so ignoring existing issues that exist and 
-    - (^|/)signalfx($|/)
+    - signalfx
 
   # default is true. Enables skipping of directories:
   #   vendor$, third_party$, testdata$, examples$, Godeps$, builtin$
