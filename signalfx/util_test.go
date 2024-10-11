@@ -4,38 +4,10 @@
 package signalfx
 
 import (
-	"fmt"
-	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
-
-func TestSendRequestSuccess(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(200)
-		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprintln(w, `Test Response`)
-	}))
-	defer server.Close()
-
-	status_code, body, err := sendRequest("GET", server.URL, "token", nil)
-	assert.Equal(t, 200, status_code)
-	assert.Equal(t, "Test Response\n", string(body))
-	assert.Nil(t, err)
-}
-
-func TestSendRequestResponseNotFound(t *testing.T) {
-	// Handler returns 404 page not found
-	server := httptest.NewServer(http.NotFoundHandler())
-	defer server.Close()
-
-	status_code, body, err := sendRequest("POST", server.URL, "token", nil)
-	assert.Equal(t, 404, status_code)
-	assert.Contains(t, string(body), "page not found")
-	assert.Nil(t, err)
-}
 
 func TestGetNameFromChartColorsByIndex(t *testing.T) {
 	name, err := getNameFromChartColorsByIndex(4)
@@ -65,14 +37,6 @@ func TestGetNameFromFullPaletteColorsByIndex(t *testing.T) {
 	name, err = getNameFromPaletteColorsByIndex(44)
 	assert.Equal(t, "", name, "Expected empty string for missing index")
 	assert.Error(t, err, "Expected error for missing color index")
-}
-
-func TestSendRequestFail(t *testing.T) {
-	// Client will fail to send due to invalid URL
-	status_code, body, err := sendRequest("GET", "", "token", nil)
-	assert.Equal(t, -1, status_code)
-	assert.Nil(t, body)
-	assert.Contains(t, err.Error(), "Failed sending GET request")
 }
 
 func TestValidateSignalfxRelativeTimeMinutes(t *testing.T) {
@@ -129,18 +93,6 @@ func TestValidateFullPaletteColorsFail(t *testing.T) {
 func TestValidateSortByNoDirection(t *testing.T) {
 	_, errors := validateSortBy("foo", "sort_by")
 	assert.Equal(t, 1, len(errors))
-}
-
-func TestBuildURL(t *testing.T) {
-	u, error := buildURL("https://www.example.com", "/v2/chart", map[string]string{})
-	assert.NoError(t, error)
-	assert.Equal(t, "https://www.example.com/v2/chart", u)
-}
-
-func TestBuildURLWithParams(t *testing.T) {
-	u, error := buildURL("https://www.example.com", "/v2/chart", map[string]string{"foo": "bar"})
-	assert.NoError(t, error)
-	assert.Equal(t, "https://www.example.com/v2/chart?foo=bar", u)
 }
 
 func TestBuildAppURL(t *testing.T) {
