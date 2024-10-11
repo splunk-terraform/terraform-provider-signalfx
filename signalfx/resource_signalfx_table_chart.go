@@ -6,9 +6,7 @@ package signalfx
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -383,24 +381,4 @@ func tablechartDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 
 	return config.Client.DeleteChart(context.TODO(), d.Id())
-}
-
-/*
-Validates the color_range field against a list of allowed words.
-*/
-func validateTableChartColor(v interface{}, k string) (we []string, errors []error) {
-	value := v.(string)
-	keys := make([]string, 0, len(ChartColorsSlice))
-	found := false
-	for _, item := range ChartColorsSlice {
-		if value == item.name {
-			found = true
-		}
-		keys = append(keys, item.name)
-	}
-	if !found {
-		joinedColors := strings.Join(keys, ",")
-		errors = append(errors, fmt.Errorf("%s not allowed; must be either %s", value, joinedColors))
-	}
-	return
 }

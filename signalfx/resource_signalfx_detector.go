@@ -916,14 +916,3 @@ func HashCodeString(s string) int {
 	// v == MinInt
 	return 0
 }
-
-// Strings hashes a list of strings to a unique hashcode.
-func HashCodeStrings(strings []string) string {
-	var buf bytes.Buffer
-
-	for _, s := range strings {
-		buf.WriteString(fmt.Sprintf("%s-", s))
-	}
-
-	return fmt.Sprintf("%d", HashCodeString(buf.String()))
-}

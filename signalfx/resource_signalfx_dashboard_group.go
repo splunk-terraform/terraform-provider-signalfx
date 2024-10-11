@@ -649,16 +649,6 @@ func getMirroredDashboardConfigs(config *signalfxConfig, d *schema.ResourceData)
 	return out, nil
 }
 
-func getDashboardIDs(dashboardList interface{}) map[string]bool {
-	dashes := dashboardList.([]interface{})
-	dashIDs := map[string]bool{}
-	for _, d := range dashes {
-		dash := d.(map[string]interface{})
-		dashIDs[dash["dashboard_id"].(string)] = true
-	}
-	return dashIDs
-}
-
 func dashboardgroupDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 
