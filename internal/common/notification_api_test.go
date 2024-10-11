@@ -213,7 +213,7 @@ func TestNewStringFromAPI(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			actual, err := NewStringFromAPI(tc.nt)
+			actual, err := NewNotificationStringFromAPI(tc.nt)
 			require.Equal(t, tc.expect, actual, "Must match the expected error string")
 			if tc.errVal != "" {
 				require.EqualError(t, err, tc.errVal, "Must match the expected error message")
