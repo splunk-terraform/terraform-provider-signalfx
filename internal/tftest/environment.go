@@ -5,7 +5,6 @@ package tftest
 
 import (
 	"os"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -15,18 +14,20 @@ import (
 // that are used by the library and restores them once the tests is done.
 // Note this has be called before `t.Setenv` to ensure the original values are restored.
 func CleanEnvVars(t *testing.T) {
-	orig := os.Environ()
+	orig := make(map[string]string)
 	for _, k := range []string{
 		"SFX_AUTH_TOKEN",
 		"SFX_API_URL",
 	} {
-		assert.NoError(t, os.Unsetenv(k), "Unable to unset environment var %q", k)
+		if v, ok := os.LookupEnv(k); ok {
+			orig[k] = v
+			assert.NoError(t, os.Unsetenv(k), "Unable to unset environment var %q", k)
+		}
 	}
 
 	t.Cleanup(func() {
-		for _, kv := range orig {
-			values := strings.SplitN(kv, "=", 2)
-			assert.NoError(t, os.Setenv(values[0], values[1]), "Unable to restore environment var %q", kv)
+		for k, v := range orig {
+			assert.NoError(t, os.Setenv(k, v), "Unable to restore environment var %s=%s", k, v)
 		}
 	})
 }
