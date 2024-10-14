@@ -16,7 +16,7 @@ import (
 )
 
 // AcceptanceHandler is used to abstract some of the more raw
-// terraform test functionality and standardise how acceptance tests are invoked.
+// terraform test functionality and standardize how acceptance tests are invoked.
 type AcceptanceHandler struct {
 	beforeAll func()
 	provider  *schema.Provider

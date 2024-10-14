@@ -107,8 +107,7 @@ func TestAcceptanceHandlerTest(t *testing.T) {
 
 			handler.Test(t, []resource.TestStep{
 				{
-					Config:   "{}",
-					SkipFunc: func() (bool, error) { return true, nil },
+					Config: "{}", // Empty configuration
 				},
 			})
 		})
