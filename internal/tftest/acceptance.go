@@ -94,7 +94,7 @@ func (ah *AcceptanceHandler) Test(t *testing.T, steps []resource.TestStep) {
 	tc := resource.TestCase{
 		IsUnitTest: false,
 		ProviderFactories: map[string]func() (*schema.Provider, error){
-			"signalfx": func() (*schema.Provider, error) {
+			"signalfx": func() (*schema.Provider, error) { //nolint:unparam // Required signature
 				return ah.provider, nil
 			},
 		},
