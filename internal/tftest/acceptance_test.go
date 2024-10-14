@@ -4,7 +4,6 @@
 package tftest
 
 import (
-	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -70,7 +69,6 @@ func TestAcceptanceHandlerOptions(t *testing.T) {
 }
 
 func TestAcceptanceHandlerTest(t *testing.T) {
-
 	for _, tc := range []struct {
 		name    string
 		env     map[string]string
@@ -91,19 +89,9 @@ func TestAcceptanceHandlerTest(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			// Ensure that any values that might already be set
-			// are excluded for these test cases
-			globals := make(map[string]string)
-			t.Cleanup(func() {
-				// Restore the original values if any where defined
-				for k, v := range globals {
-					_ = os.Setenv(k, v)
-				}
-			})
+			CleanEnvVars(t)
+
 			for k, v := range tc.env {
-				if val, ok := os.LookupEnv(k); ok {
-					globals[k] = val
-				}
 				t.Setenv(k, v)
 			}
 
