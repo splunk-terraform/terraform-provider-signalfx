@@ -10,6 +10,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/tftest"
 )
 
 func TestProviderValidation(t *testing.T) {
@@ -37,7 +39,6 @@ func TestProviderHasResource(t *testing.T) {
 }
 
 func TestProviderConfiguration(t *testing.T) {
-	t.Parallel()
 
 	for _, tc := range []struct {
 		name    string
@@ -61,7 +62,7 @@ func TestProviderConfiguration(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
+			tftest.CleanEnvVars(t)
 
 			actual := New().Configure(
 				context.Background(),
