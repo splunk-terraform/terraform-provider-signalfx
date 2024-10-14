@@ -21,6 +21,7 @@ import (
 	"github.com/mitchellh/go-homedir"
 	sfx "github.com/signalfx/signalfx-go"
 
+	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
 	"github.com/splunk-terraform/terraform-provider-signalfx/version"
 )
 
@@ -30,12 +31,7 @@ var HomeConfigPath = ""
 
 var sfxProvider *schema.Provider
 
-type signalfxConfig struct {
-	AuthToken    string `json:"auth_token"`
-	APIURL       string `json:"api_url"`
-	CustomAppURL string `json:"custom_app_url"`
-	Client       *sfx.Client
-}
+type signalfxConfig = pmeta.Meta
 
 func Provider() *schema.Provider {
 	sfxProvider = &schema.Provider{

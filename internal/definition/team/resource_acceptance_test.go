@@ -43,6 +43,38 @@ func TestAcceptance(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "original lifecycle",
+			steps: []resource.TestStep{
+				{
+					Config: tftest.LoadConfig("testdata/resource_team.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("signalfx_team.example_test", "name", "my team"),
+						resource.TestCheckResourceAttr("signalfx_team.example_test", "description", "An example of team"),
+					),
+				},
+				// Update Everything
+				{
+					Config: tftest.LoadConfig("testdata/resource_team_updated.tf"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr("signalfx_team.example_test", "name", "my team"),
+						resource.TestCheckResourceAttr("signalfx_team.example_test", "description", "An example of team"),
+						resource.TestCheckResourceAttr("signalfx_team.example_test", "notifications_critical.#", "1"),
+						resource.TestCheckResourceAttr("signalfx_team.example_test", "notifications_critical.0", "Email,test@example.com"),
+						resource.TestCheckResourceAttr("signalfx_team.example_test", "notifications_default.#", "1"),
+						resource.TestCheckResourceAttr("signalfx_team.example_test", "notifications_default.0", "Webhook,,secret,https://www.example.com"),
+						resource.TestCheckResourceAttr("signalfx_team.example_test", "notifications_info.#", "1"),
+						resource.TestCheckResourceAttr("signalfx_team.example_test", "notifications_info.0", "Webhook,,secret,https://www.example.com/2"),
+						resource.TestCheckResourceAttr("signalfx_team.example_test", "notifications_major.#", "1"),
+						resource.TestCheckResourceAttr("signalfx_team.example_test", "notifications_major.0", "Webhook,,secret,https://www.example.com/3"),
+						resource.TestCheckResourceAttr("signalfx_team.example_test", "notifications_minor.#", "1"),
+						resource.TestCheckResourceAttr("signalfx_team.example_test", "notifications_minor.0", "Webhook,,secret,https://www.example.com/4"),
+						resource.TestCheckResourceAttr("signalfx_team.example_test", "notifications_warning.#", "1"),
+						resource.TestCheckResourceAttr("signalfx_team.example_test", "notifications_warning.0", "Webhook,,secret,https://www.example.com/5"),
+					),
+				},
+			},
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			base := []tftest.AcceptanceHandlerOption{
