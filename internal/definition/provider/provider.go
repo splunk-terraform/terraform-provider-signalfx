@@ -70,7 +70,7 @@ func New() *schema.Provider {
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"signalfx_team": team.NewResource(),
+			team.ResourceName: team.NewResource(),
 		},
 		DataSourcesMap:       map[string]*schema.Resource{},
 		ConfigureContextFunc: configureProvider,
