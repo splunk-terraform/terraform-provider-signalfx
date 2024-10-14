@@ -64,8 +64,6 @@ func (tc ResourceOperationTestCase[T]) TestCreate(t *testing.T) {
 	}
 
 	t.Run(tc.Name, func(t *testing.T) {
-		t.Parallel()
-
 		tc.testOperation(t, tc.Resource, operation)
 	})
 }
@@ -153,6 +151,8 @@ func (tc ResourceOperationTestCase[T]) testOperation(
 	resource *schema.Resource,
 	op func(context.Context, *schema.ResourceData, any) diag.Diagnostics,
 ) {
+	t.Parallel()
+
 	rd := resource.TestResourceData()
 	require.NoError(t, tc.Encoder(tc.Input, rd), "Must not error encoding input value into resource data")
 
