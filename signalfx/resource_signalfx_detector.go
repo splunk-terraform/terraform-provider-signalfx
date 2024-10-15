@@ -295,7 +295,7 @@ func timeRangeStateUpgradeV0(ctx context.Context, rawState map[string]interface{
 
 	log.Printf("[DEBUG] SignalFx: Upgrading Detector State %v", rawState["time_range"])
 	if tr, ok := rawState["time_range"].(string); ok {
-		millis, err := fromRangeToMilliSeconds(tr)
+		millis, err := common.FromTimeRangeToMilliseconds(tr)
 		if err != nil {
 			return rawState, err
 		}
