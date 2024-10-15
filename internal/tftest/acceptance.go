@@ -43,7 +43,7 @@ func WithAcceptanceBeforeAll(before func()) AcceptanceHandlerOption {
 	}
 }
 
-func NewAcceptanceHandler(opts []AcceptanceHandlerOption) *AcceptanceHandler {
+func NewAcceptanceHandler(opts ...AcceptanceHandlerOption) *AcceptanceHandler {
 	ah := &AcceptanceHandler{
 		provider: &schema.Provider{
 			Schema:               make(map[string]*schema.Schema),
@@ -79,6 +79,11 @@ func (ah *AcceptanceHandler) Test(t *testing.T, steps []resource.TestStep) {
 			"Missing required environment variables to run tests, Please set the listed variables below:\n",
 			strings.Join(msgs, "\n"),
 		)
+		return
+	}
+	if err := ah.Validate(); err != nil {
+		t.Log("Validation had the following errors:", err)
+		t.Fail()
 		return
 	}
 

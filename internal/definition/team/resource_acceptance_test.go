@@ -15,7 +15,6 @@ import (
 func TestAcceptance(t *testing.T) {
 	for _, tc := range []struct {
 		name  string
-		opts  []tftest.AcceptanceHandlerOption
 		steps []resource.TestStep
 	}{
 		{
@@ -77,13 +76,12 @@ func TestAcceptance(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			base := []tftest.AcceptanceHandlerOption{
+
+			tftest.NewAcceptanceHandler(
 				tftest.WithAcceptanceResources(map[string]*schema.Resource{
 					ResourceName: NewResource(),
 				}),
-			}
-
-			tftest.NewAcceptanceHandler(append(base, tc.opts...)).
+			).
 				Test(t, tc.steps)
 		})
 	}

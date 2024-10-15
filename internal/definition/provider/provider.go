@@ -17,7 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/signalfx/signalfx-go"
 
-	"github.com/splunk-terraform/terraform-provider-signalfx/internal/definition/dimensions"
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/definition/dimension"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/definition/team"
 	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
 	tfext "github.com/splunk-terraform/terraform-provider-signalfx/internal/tfextension"
@@ -74,7 +74,7 @@ func New() *schema.Provider {
 			team.ResourceName: team.NewResource(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
-			dimensions.DataSourceName: dimensions.NewDataSource(),
+			dimension.DataSourceName: dimension.NewDataSource(),
 		},
 		ConfigureContextFunc: configureProvider,
 	}

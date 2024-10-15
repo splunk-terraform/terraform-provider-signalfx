@@ -58,7 +58,7 @@ func TestAcceptanceHandlerOptions(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			err := NewAcceptanceHandler(tc.opts).Validate()
+			err := NewAcceptanceHandler(tc.opts...).Validate()
 			if tc.errVal != "" {
 				assert.EqualError(t, err, tc.errVal, "Must match the expected value")
 			} else {
@@ -95,11 +95,11 @@ func TestAcceptanceHandlerTest(t *testing.T) {
 				t.Setenv(k, v)
 			}
 
-			handler := NewAcceptanceHandler([]AcceptanceHandlerOption{
+			handler := NewAcceptanceHandler(
 				WithAcceptanceResources(map[string]*schema.Resource{
 					"nop": {},
 				}),
-			})
+			)
 
 			t.Cleanup(func() {
 				assert.Equal(t, tc.skipped, t.Skipped(), "Must have been skipped")

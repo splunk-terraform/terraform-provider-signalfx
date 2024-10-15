@@ -24,9 +24,8 @@ const (
 
 func NewDataSource() *schema.Resource {
 	return &schema.Resource{
-		SchemaFunc:    newSchema,
-		ReadContext:   readDimensions,
-		SchemaVersion: 1,
+		SchemaFunc:  newSchema,
+		ReadContext: readDimensions,
 	}
 }
 
@@ -47,6 +46,7 @@ func readDimensions(ctx context.Context, rd *schema.ResourceData, meta any) (iss
 
 	for offset := 0; offset < limit; offset += PageLimit {
 		tflog.Debug(ctx, "Performing dimension search operation", tfext.NewLogFields().
+			Field("query", query).
 			Field("limit", limit).
 			Field("offset", offset).
 			Field("order_by", orderby),
@@ -59,9 +59,10 @@ func readDimensions(ctx context.Context, rd *schema.ResourceData, meta any) (iss
 
 		count = int(resp.Count)
 		for _, dim := range resp.Results {
-			results = append(results, dim.Value)
+			if len(results) < limit {
+				results = append(results, dim.Value)
+			}
 		}
-
 	}
 
 	rd.SetId(query)

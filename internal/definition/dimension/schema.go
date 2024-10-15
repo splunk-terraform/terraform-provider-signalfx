@@ -24,7 +24,7 @@ func newSchema() map[string]*schema.Schema {
 			Optional:     true,
 			Default:      1000,
 			Description:  "This allows you to define how many dimensions are returned as the values output.",
-			ValidateFunc: validation.IntBetween(100, 10_000),
+			ValidateFunc: validation.IntBetween(0, 10_000),
 		},
 		"values": {
 			Type:        schema.TypeList,
