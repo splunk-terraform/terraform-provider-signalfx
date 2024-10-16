@@ -58,7 +58,7 @@ func TestHashSchema(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			assert.Equal(t, tc.code, HashSchema(tc.rule), "Must match the expected rule")
+			assert.Equal(t, tc.code, Hash(tc.rule), "Must match the expected rule")
 		})
 	}
 }

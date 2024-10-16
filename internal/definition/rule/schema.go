@@ -71,7 +71,7 @@ func NewSchema() map[string]*schema.Schema {
 	}
 }
 
-func HashSchema(v any) int {
+func Hash(v any) int {
 	var (
 		hash = crc32.NewIEEE()
 		rule = v.(map[string]any)
