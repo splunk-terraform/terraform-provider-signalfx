@@ -39,37 +39,6 @@ func TestGetNameFromFullPaletteColorsByIndex(t *testing.T) {
 	assert.Error(t, err, "Expected error for missing color index")
 }
 
-func TestValidateSignalfxRelativeTimeMinutes(t *testing.T) {
-	_, errors := validateSignalfxRelativeTime("-5m", "time_range")
-	assert.Equal(t, 0, len(errors))
-}
-
-func TestValidateSignalfxRelativeTimeHours(t *testing.T) {
-	_, errors := validateSignalfxRelativeTime("-5h", "time_range")
-	assert.Equal(t, 0, len(errors))
-}
-
-func TestValidateSignalfxRelativeTimeDays(t *testing.T) {
-	_, errors := validateSignalfxRelativeTime("-5d", "time_range")
-	assert.Equal(t, 0, len(errors))
-}
-
-func TestValidateSignalfxRelativeTimeWeeks(t *testing.T) {
-	_, errors := validateSignalfxRelativeTime("-5w", "time_range")
-	assert.Equal(t, 0, len(errors))
-}
-
-func TestValidateSignalfxRelativeTimeNotAllowed(t *testing.T) {
-	_, errors := validateSignalfxRelativeTime("-5M", "time_range")
-	assert.Equal(t, 1, len(errors))
-}
-
-func TestConversionSignalfxRelativeTimeIntoMs(t *testing.T) {
-	ms, err := fromRangeToMilliSeconds("-15m")
-	assert.Equal(t, 900000, ms)
-	assert.Nil(t, err)
-}
-
 func TestValidateSortByAscending(t *testing.T) {
 	_, errors := validateSortBy("+foo", "sort_by")
 	assert.Equal(t, 0, len(errors))

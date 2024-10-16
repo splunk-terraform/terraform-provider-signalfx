@@ -15,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/signalfx/signalfx-go/dashboard"
 	"github.com/signalfx/signalfx-go/util"
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/check"
 )
 
 const (
@@ -53,11 +54,11 @@ func dashboardResource() *schema.Resource {
 				ValidateFunc: validateChartsResolution,
 			},
 			"time_range": &schema.Schema{
-				Type:          schema.TypeString,
-				Optional:      true,
-				ValidateFunc:  validateSignalfxRelativeTime,
-				Description:   "From when to display data. Splunk Observability Cloud time syntax (e.g. -5m, -1h)",
-				ConflictsWith: []string{"start_time", "end_time"},
+				Type:             schema.TypeString,
+				Optional:         true,
+				ValidateDiagFunc: check.TimeRange(),
+				Description:      "From when to display data. Splunk Observability Cloud time syntax (e.g. -5m, -1h)",
+				ConflictsWith:    []string{"start_time", "end_time"},
 			},
 			"start_time": &schema.Schema{
 				Type:          schema.TypeInt,
