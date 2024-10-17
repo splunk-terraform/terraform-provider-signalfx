@@ -12,7 +12,6 @@ type ColorPalette struct {
 	//
 	// Note:
 	// - the names used for the colors are best guesses since they are not named within the documentation.
-	// - Values can be referenced more than once to improve UX.
 	named map[string]int32
 	// Index are the values table that is defined in
 	// https://dev.splunk.com/observability/docs/chartsdashboards/charts_overview/#Chart-color-palettes
@@ -23,40 +22,27 @@ func NewColorPalette() ColorPalette {
 	return ColorPalette{
 		named: map[string]int32{
 			"red":         0,
+			"gold":        1,
+			"iris":        2,
+			"green":       3,
+			"jade":        4,
+			"gray":        5,
+			"blue":        6,
+			"azure":       7,
+			"navy":        8,
+			"brown":       9,
 			"orange":      10,
 			"yellow":      11,
-			"green":       19,
-			"blue":        6,
-			"indigo":      17,
-			"violet":      15,
-			"brown":       9,
-			"dark_red":    0,
-			"crayola":     1,
-			"dark_orange": 9,
-			"peridot":     2,
-			"dark_yellow": 11,
-			"gold":        11,
-			"lime_green":  3,
-			"sage":        4,
-			"dark_green":  18,
-			"emerald":     18,
-			"chartreuse":  19,
-			"aquamarine":  20,
-			"light_blue":  7,
-			"navy":        21,
-			"azue":        8,
-			"iris":        21,
-			"purple":      16,
 			"magenta":     12,
-			"grape":       12,
-			"lilac":       17,
 			"cerise":      13,
 			"pink":        14,
-			"gray":        5,
-			"grey_blue":   21,
-			"azure":       6,
-			"greenyellow": 3,
-			"jade":        18,
+			"violet":      15,
+			"purple":      16,
+			"lilac":       17,
+			"emerald":     18,
+			"chartreuse":  19,
+			"yellowgreen": 20,
+			"aquamarine":  21,
 		},
 		// These values should be exactly matching to:
 		// https://dev.splunk.com/observability/docs/chartsdashboards/charts_overview/#Chart-color-palettes
@@ -87,12 +73,22 @@ func NewColorPalette() ColorPalette {
 	}
 }
 
-func (cp ColorPalette) GetColorIndex(name string) (int32, bool) {
+func (cp ColorPalette) ColorIndex(name string) (int32, bool) {
 	index, exist := cp.named[name]
 	return index, exist
 }
 
-func (cp ColorPalette) GetHexCodebyIndex(index int32) (string, bool) {
+func (cp ColorPalette) IndexColorName(index int32) (string, bool) {
+	color := ""
+	for name, idx := range cp.named {
+		if index == idx {
+			color = name
+		}
+	}
+	return color, color != ""
+}
+
+func (cp ColorPalette) HexCodebyIndex(index int32) (string, bool) {
 	hex := ""
 	if int(index) < len(cp.index) {
 		hex = cp.index[index]
