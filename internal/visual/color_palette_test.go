@@ -19,16 +19,28 @@ func TestColorPalette(t *testing.T) {
 	)
 
 	for _, name := range cp.Names() {
-		idx, exist := cp.GetColorIndex(name)
+		idx, exist := cp.ColorIndex(name)
 		require.True(t, exist, "Must return a valid result reading index")
 		seen[int(idx)]++
-		hex, exist := cp.GetHexCodebyIndex(idx)
+		hex, exist := cp.HexCodebyIndex(idx)
 		assert.NotEmpty(t, hex, "Must have returned the expected hex code")
 		assert.True(t, exist, "Must have found the hex code value")
 	}
 
 	for idx := range seen {
-		assert.GreaterOrEqual(t, seen[idx], 1, "Must have seen each value at least once")
+		assert.Equal(t, 1, seen[idx], "Must have seen index %d once", idx)
+	}
+}
+
+func TestColorPaletteIndexColorName(t *testing.T) {
+	t.Parallel()
+
+	cp := NewColorPalette()
+	for idx, expect := range cp.Names() {
+		//nolint:gosec // Ignore warning for int overflow
+		actual, exist := cp.IndexColorName(int32(idx))
+		assert.True(t, exist, "Color must exist")
+		assert.Equal(t, expect, actual, "Must match the expect index %d", idx)
 	}
 }
 
@@ -36,9 +48,13 @@ func TestHistoricalNames(t *testing.T) {
 	t.Parallel()
 
 	for _, name := range []string{
+		"red",
+		"gold",
+		"iris",
+		"jade",
 		"gray",
-		"blue",
 		"azure",
+		"blue",
 		"navy",
 		"brown",
 		"orange",
@@ -48,17 +64,13 @@ func TestHistoricalNames(t *testing.T) {
 		"pink",
 		"violet",
 		"lilac",
-		"iris",
 		"emerald",
 		"green",
 		"aquamarine",
-		"red",
-		"gold",
-		"greenyellow",
+		"yellowgreen",
 		"chartreuse",
-		"jade",
 	} {
-		_, ok := NewColorPalette().GetColorIndex(name)
+		_, ok := NewColorPalette().ColorIndex(name)
 		assert.True(t, ok, "Must have the %q set as an option", name)
 	}
 }

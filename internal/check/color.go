@@ -24,7 +24,7 @@ func ColorName() schema.SchemaValidateDiagFunc {
 			)
 		}
 		cp := visual.NewColorPalette()
-		if _, exist := cp.GetColorIndex(s); exist {
+		if _, exist := cp.ColorIndex(s); exist {
 			return nil
 		}
 		return tfext.AsErrorDiagnostics(

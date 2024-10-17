@@ -33,10 +33,8 @@ func TestColorName(t *testing.T) {
 				{
 					Severity: diag.Error,
 					Summary: "value \"nop\" is not allowed; must be one of " +
-						"[dark_red red crayola peridot greenyellow lime_green sage " +
-						"gray azure blue light_blue azue brown dark_orange orange dark_yellow " +
-						"gold yellow grape magenta cerise pink violet purple indigo lilac " +
-						"dark_green emerald jade chartreuse green aquamarine grey_blue iris navy]",
+						"[red gold iris green jade gray blue azure navy brown orange yellow " +
+						"magenta cerise pink violet purple lilac emerald chartreuse yellowgreen aquamarine]",
 				},
 			},
 		},
