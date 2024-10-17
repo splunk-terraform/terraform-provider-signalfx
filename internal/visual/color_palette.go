@@ -13,7 +13,7 @@ type ColorPalette struct {
 	// Note:
 	// - the names used for the colors are best guesses since they are not named within the documentation.
 	// - Values can be referenced more than once to improve UX.
-	named map[string]int
+	named map[string]int32
 	// Index are the values table that is defined in
 	// https://dev.splunk.com/observability/docs/chartsdashboards/charts_overview/#Chart-color-palettes
 	index []string
@@ -21,7 +21,7 @@ type ColorPalette struct {
 
 func NewColorPalette() ColorPalette {
 	return ColorPalette{
-		named: map[string]int{
+		named: map[string]int32{
 			"red":         0,
 			"orange":      10,
 			"yellow":      11,
@@ -89,7 +89,7 @@ func NewColorPalette() ColorPalette {
 
 func (cp ColorPalette) GetColorIndex(name string) (int32, bool) {
 	index, exist := cp.named[name]
-	return int32(index), exist
+	return index, exist
 }
 
 func (cp ColorPalette) GetHexCodebyIndex(index int32) (string, bool) {
@@ -101,12 +101,12 @@ func (cp ColorPalette) GetHexCodebyIndex(index int32) (string, bool) {
 }
 
 func (cp ColorPalette) Names() []string {
-	words := make(map[int][]string, len(cp.named))
+	words := make(map[int32][]string, len(cp.named))
 	for name, index := range cp.named {
 		words[index] = append(words[index], name)
 	}
 	names := make([]string, 0, len(cp.named))
-	for i := 0; i < len(cp.index); i++ {
+	for i := int32(0); int(i) < len(cp.index); i++ {
 		colors := words[i]
 		slices.Sort(colors)
 		names = append(names, colors...)
