@@ -36,10 +36,10 @@ func TestColorPaletteIndexColorName(t *testing.T) {
 	t.Parallel()
 
 	cp := NewColorPalette()
-	for idx, name := range cp.Names() {
-		index, exist := cp.ColorIndex(name)
+	for idx, expect := range cp.Names() {
+		actual, exist := cp.IndexColorName(int32(idx))
 		assert.True(t, exist, "Color must exist")
-		assert.EqualValues(t, idx, index, "Must match the expect index for %s", name)
+		assert.Equal(t, expect, actual, "Must match the expect index %d", idx)
 	}
 }
 
