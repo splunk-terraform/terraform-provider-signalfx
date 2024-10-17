@@ -37,6 +37,7 @@ func TestColorPaletteIndexColorName(t *testing.T) {
 
 	cp := NewColorPalette()
 	for idx, expect := range cp.Names() {
+		//nolint:gosec // Ignore warning for int overflow
 		actual, exist := cp.IndexColorName(int32(idx))
 		assert.True(t, exist, "Color must exist")
 		assert.Equal(t, expect, actual, "Must match the expect index %d", idx)
