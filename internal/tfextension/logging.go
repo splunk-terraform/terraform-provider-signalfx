@@ -3,7 +3,10 @@
 
 package tfext
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 // LogFields is an extension to logging fields parameter
 // to help as a convience and provides some level of standards.
@@ -38,5 +41,12 @@ func (lf LogFields) Duration(key string, val time.Duration) LogFields {
 // if the field already exists, it is overwritten.
 func (lf LogFields) Field(key string, val any) LogFields {
 	lf[key] = val
+	return lf
+}
+
+func (lf LogFields) JSON(key string, val any) LogFields {
+	if buf, err := json.Marshal(val); err == nil {
+		lf[key] = string(buf)
+	}
 	return lf
 }
