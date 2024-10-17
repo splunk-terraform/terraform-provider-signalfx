@@ -44,6 +44,13 @@ func TestLogFields(t *testing.T) {
 			lf:     NewLogFields().Field("example", 1),
 			expect: map[string]any{"example": 1},
 		},
+		{
+			name: "json field",
+			lf:   NewLogFields().JSON("data", map[string]any{"hello": "world"}),
+			expect: map[string]any{
+				"data": `{"hello":"world"}`,
+			},
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
