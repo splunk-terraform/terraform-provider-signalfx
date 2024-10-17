@@ -3,8 +3,6 @@
 
 package visual
 
-import "slices"
-
 type ColorPalette struct {
 	// Named is the convience lookup table that allows
 	// a user to type the color they want to use and
@@ -97,15 +95,9 @@ func (cp ColorPalette) HexCodebyIndex(index int32) (string, bool) {
 }
 
 func (cp ColorPalette) Names() []string {
-	words := make(map[int32][]string, len(cp.named))
-	for name, index := range cp.named {
-		words[index] = append(words[index], name)
-	}
-	names := make([]string, 0, len(cp.named))
-	for i := int32(0); int(i) < len(cp.index); i++ {
-		colors := words[i]
-		slices.Sort(colors)
-		names = append(names, colors...)
+	names := make([]string, len(cp.named))
+	for name, idx := range cp.named {
+		names[idx] = name
 	}
 	return names
 }
