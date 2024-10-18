@@ -57,12 +57,7 @@ func newResourceCreate() schema.CreateContextFunc {
 			"id": tm.Id,
 		})
 
-		u, err := pmeta.LoadApplicationURL(ctx, meta, AppPath, tm.Id)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-
-		if err := rd.Set("url", u); err != nil {
+		if err := rd.Set("url", pmeta.LoadApplicationURL(ctx, meta, AppPath, tm.Id)); err != nil {
 			return diag.FromErr(err)
 		}
 
@@ -83,12 +78,7 @@ func newResourceRead() schema.ReadContextFunc {
 		}
 		tflog.Debug(ctx, "Successfully fetched team data")
 
-		u, err := pmeta.LoadApplicationURL(ctx, meta, AppPath, tm.Id)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-
-		if err := rd.Set("url", u); err != nil {
+		if err := rd.Set("url", pmeta.LoadApplicationURL(ctx, meta, AppPath, tm.Id)); err != nil {
 			return diag.FromErr(err)
 		}
 
@@ -118,12 +108,7 @@ func newResourceUpdate() schema.UpdateContextFunc {
 			return diag.FromErr(err)
 		}
 
-		u, err := pmeta.LoadApplicationURL(ctx, meta, AppPath, tm.Id)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-
-		if err := rd.Set("url", u); err != nil {
+		if err := rd.Set("url", pmeta.LoadApplicationURL(ctx, meta, AppPath, tm.Id)); err != nil {
 			return diag.FromErr(err)
 		}
 

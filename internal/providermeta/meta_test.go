@@ -46,14 +46,12 @@ func TestLoadApplicationURL(t *testing.T) {
 		meta      any
 		fragments []string
 		url       string
-		errVal    string
 	}{
 		{
 			name:      "no meta set",
 			meta:      nil,
 			fragments: []string{},
 			url:       "",
-			errVal:    "expected to implement type Meta",
 		},
 		{
 			name: "custom domain set",
@@ -62,7 +60,6 @@ func TestLoadApplicationURL(t *testing.T) {
 			},
 			fragments: []string{},
 			url:       "http://custom.signalfx.com/",
-			errVal:    "",
 		},
 		{
 			name: "custom domain with fragments",
@@ -74,8 +71,7 @@ func TestLoadApplicationURL(t *testing.T) {
 				"aaaa",
 				"edit",
 			},
-			url:    "http://custom.signalfx.com/#detector/aaaa/edit",
-			errVal: "",
+			url: "http://custom.signalfx.com/#detector/aaaa/edit",
 		},
 		{
 			name: "invalid domain set",
@@ -84,19 +80,13 @@ func TestLoadApplicationURL(t *testing.T) {
 			},
 			fragments: []string{},
 			url:       "",
-			errVal:    "parse \"domain\": invalid URI for request",
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			u, err := LoadApplicationURL(context.Background(), tc.meta, tc.fragments...)
+			u := LoadApplicationURL(context.Background(), tc.meta, tc.fragments...)
 			require.Equal(t, tc.url, u, "Must match the expected url")
-			if tc.errVal != "" {
-				require.EqualError(t, err, tc.errVal, "Must match expected error message")
-			} else {
-				require.NoError(t, err, "Must not error when loading url")
-			}
 		})
 	}
 }
