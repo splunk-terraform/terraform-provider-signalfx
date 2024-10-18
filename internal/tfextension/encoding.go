@@ -20,3 +20,11 @@ type (
 	// This is to be used when interfacing with other packages.
 	EncodeTerraformFunc[T any] func(t *T, rd *schema.ResourceData) error
 )
+
+func NopDecodeTerraform[T any](*schema.ResourceData) (*T, error) {
+	return nil, nil
+}
+
+func NopEncodeTerraform[T any](*T, *schema.ResourceData) error {
+	return nil
+}
