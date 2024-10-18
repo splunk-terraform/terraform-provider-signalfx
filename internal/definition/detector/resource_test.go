@@ -323,6 +323,53 @@ func TestResourceUpdate(t *testing.T) {
 				{Severity: diag.Error, Summary: "expected to implement type Meta"},
 			},
 		},
+		{
+			Name: "Failed update",
+			Meta: tftest.NewTestHTTPMockMeta(map[string]http.HandlerFunc{
+				"PUT /v2/detector/id-01": func(w http.ResponseWriter, r *http.Request) {
+					_, _ = io.Copy(io.Discard, r.Body)
+					_ = r.Body.Close()
+
+					http.Error(w, "failed update", http.StatusInternalServerError)
+				},
+			}),
+			Decoder:  decodeTerraform,
+			Encoder:  encodeTerraform,
+			Resource: NewResource(),
+			Input:    &detector.Detector{Id: "id-01"},
+			Issues: diag.Diagnostics{
+				{Severity: diag.Error, Summary: "Bad status 500: failed update\n"},
+			},
+		},
+		{
+			Name: "Successful update",
+			Meta: tftest.NewTestHTTPMockMeta(map[string]http.HandlerFunc{
+				"PUT /v2/detector/id-01": func(w http.ResponseWriter, r *http.Request) {
+					if err := json.NewDecoder(r.Body).Decode(&detector.CreateUpdateDetectorRequest{}); err != nil {
+						http.Error(w, err.Error(), http.StatusInternalServerError)
+						return
+					}
+
+					_ = json.NewEncoder(w).Encode(&detector.Detector{
+						Id:   "id-01",
+						Tags: []string{"updated"},
+					})
+				},
+			}),
+			Decoder:  decodeTerraform,
+			Encoder:  encodeTerraform,
+			Resource: NewResource(),
+			Input:    &detector.Detector{Id: "id-01"},
+			Expect: &detector.Detector{
+				Id:                   "id-01",
+				Tags:                 []string{"updated"},
+				MinDelay:             common.AsPointer[int32](0),
+				MaxDelay:             common.AsPointer[int32](0),
+				Rules:                []*detector.Rule{},
+				AuthorizedWriters:    &detector.AuthorizedWriters{},
+				VisualizationOptions: &detector.Visualization{},
+			},
+		},
 	} {
 		tc.TestUpdate(t)
 	}
