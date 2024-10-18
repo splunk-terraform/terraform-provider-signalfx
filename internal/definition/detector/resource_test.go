@@ -42,6 +42,102 @@ func TestResourceCreate(t *testing.T) {
 				{Severity: diag.Error, Summary: "expected to implement type Meta"},
 			},
 		},
+		{
+			Name:     "Failed create",
+			Resource: NewResource(),
+			Encoder:  encodeTerraform,
+			Decoder:  decodeTerraform,
+			Meta: tftest.NewTestHTTPMockMeta(map[string]http.HandlerFunc{
+				"POST /v2/detector": func(w http.ResponseWriter, r *http.Request) {
+					_, _ = io.Copy(io.Discard, r.Body)
+					_ = r.Body.Close()
+
+					http.Error(w, "Failed create detector", http.StatusInternalServerError)
+				},
+			}),
+			Input: &detector.Detector{},
+			Issues: diag.Diagnostics{
+				{Severity: diag.Error, Summary: "Bad status 500: Failed create detector\n"},
+			},
+		},
+		{
+			Name:     "Successful create",
+			Resource: NewResource(),
+			Meta: tftest.NewTestHTTPMockMeta(map[string]http.HandlerFunc{
+				"POST /v2/detector": func(w http.ResponseWriter, r *http.Request) {
+					var req detector.CreateUpdateDetectorRequest
+					if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+						http.Error(w, err.Error(), http.StatusInternalServerError)
+						return
+					}
+
+					_ = json.NewEncoder(w).Encode(&detector.Detector{
+						Id:                   "id-01",
+						Name:                 req.Name,
+						Description:          req.Description,
+						AuthorizedWriters:    req.AuthorizedWriters,
+						TimeZone:             req.TimeZone,
+						MinDelay:             req.MinDelay,
+						MaxDelay:             req.MaxDelay,
+						ProgramText:          req.ProgramText,
+						Rules:                req.Rules,
+						Tags:                 req.Tags,
+						Teams:                req.Teams,
+						VisualizationOptions: req.VisualizationOptions,
+						ParentDetectorId:     req.ParentDetectorId,
+						DetectorOrigin:       req.DetectorOrigin,
+					})
+				},
+			}),
+			Encoder: encodeTerraform,
+			Decoder: decodeTerraform,
+			Input: &detector.Detector{
+				Id:                "id-01",
+				Name:              "test detector",
+				Description:       "An example detector response",
+				AuthorizedWriters: &detector.AuthorizedWriters{},
+				TimeZone:          "Australia/Sydney",
+				MaxDelay:          common.AsPointer[int32](100),
+				MinDelay:          common.AsPointer[int32](100),
+				ProgramText:       `detect(when(data('*').count() < 1)).publish('no data')`,
+				OverMTSLimit:      false,
+				Rules: []*detector.Rule{
+					{
+						DetectLabel: "no data",
+						Notifications: []*notification.Notification{
+							{Type: "Team", Value: &notification.TeamNotification{Type: "Team", Team: "awesome-team"}},
+						},
+					},
+				},
+				Tags:                 []string{"tag-01"},
+				Teams:                []string{"team-01"},
+				DetectorOrigin:       "Standard",
+				VisualizationOptions: &detector.Visualization{},
+			},
+			Expect: &detector.Detector{
+				Id:                "id-01",
+				Name:              "test detector",
+				Description:       "An example detector response",
+				AuthorizedWriters: &detector.AuthorizedWriters{},
+				TimeZone:          "Australia/Sydney",
+				MaxDelay:          common.AsPointer[int32](100000000),
+				MinDelay:          common.AsPointer[int32](100000000),
+				ProgramText:       `detect(when(data('*').count() < 1)).publish('no data')`,
+				OverMTSLimit:      false,
+				Rules: []*detector.Rule{
+					{
+						DetectLabel: "no data",
+						Notifications: []*notification.Notification{
+							{Type: "Team", Value: &notification.TeamNotification{Type: "Team", Team: "awesome-team"}},
+						},
+					},
+				},
+				Tags:                 []string{"tag-01"},
+				Teams:                []string{"team-01"},
+				DetectorOrigin:       "Standard",
+				VisualizationOptions: &detector.Visualization{},
+			},
+		},
 	} {
 		tc.TestCreate(t)
 	}
@@ -184,8 +280,8 @@ func TestResourceRead(t *testing.T) {
 				Description:       "An example detector response",
 				AuthorizedWriters: &detector.AuthorizedWriters{},
 				TimeZone:          "Australia/Sydney",
-				MaxDelay:          common.AsPointer[int32](100000),
-				MinDelay:          common.AsPointer[int32](100000),
+				MaxDelay:          common.AsPointer[int32](100000000),
+				MinDelay:          common.AsPointer[int32](100000000),
 				ProgramText:       `detect(when(data('*').count() < 1)).publish('no data')`,
 				OverMTSLimit:      true,
 				Rules: []*detector.Rule{
