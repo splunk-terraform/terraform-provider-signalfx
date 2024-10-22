@@ -32,7 +32,7 @@ func NewResource() *schema.Resource {
 			StateContext: schema.ImportStatePassthroughContext,
 		},
 		StateUpgraders: []schema.StateUpgrader{
-			{Type: stateV0State().CoreConfigSchema().ImpliedType(), Upgrade: stateMigrationV0, Version: 0},
+			{Type: v0state().CoreConfigSchema().ImpliedType(), Upgrade: v0stateMigration, Version: 0},
 		},
 	}
 }
@@ -67,12 +67,13 @@ func resourceCreate(ctx context.Context, data *schema.ResourceData, meta any) (i
 		return tfext.AsErrorDiagnostics(err)
 	}
 
-	endpoint, err := pmeta.LoadApplicationURL(ctx, meta, AppPath, resp.Id, "edit")
-	if err != nil {
-		issues = tfext.AppendDiagnostics(issues, tfext.AsErrorDiagnostics(err)...)
-	}
-
-	issues = tfext.AppendDiagnostics(issues, tfext.AsErrorDiagnostics(data.Set("url", endpoint))...)
+	issues = tfext.AppendDiagnostics(issues,
+		tfext.AsErrorDiagnostics(
+			data.Set("url",
+				pmeta.LoadApplicationURL(ctx, meta, AppPath, resp.Id, "edit"),
+			),
+		)...,
+	)
 
 	return tfext.AppendDiagnostics(
 		issues,
@@ -136,12 +137,11 @@ func resourceUpdate(ctx context.Context, data *schema.ResourceData, meta any) (i
 		return tfext.AsErrorDiagnostics(err)
 	}
 
-	endpoint, err := pmeta.LoadApplicationURL(ctx, meta, AppPath, resp.Id, "edit")
-	if err != nil {
-		issues = tfext.AppendDiagnostics(issues, tfext.AsErrorDiagnostics(err)...)
-	}
-
-	issues = tfext.AppendDiagnostics(issues, tfext.AsErrorDiagnostics(data.Set("url", endpoint))...)
+	issues = tfext.AppendDiagnostics(issues,
+		tfext.AsErrorDiagnostics(
+			data.Set("url", pmeta.LoadApplicationURL(ctx, meta, AppPath, resp.Id, "edit")),
+		)...,
+	)
 
 	return tfext.AppendDiagnostics(
 		issues,

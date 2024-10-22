@@ -21,7 +21,7 @@ func TestStateV0(t *testing.T) {
 				Optional: true,
 			},
 		},
-		stateV0State().Schema,
+		v0state().Schema,
 		"Must match the expected value",
 	)
 }
@@ -63,7 +63,7 @@ func TestStateMigrationV0(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			actual, err := stateMigrationV0(context.Background(), tc.state, nil)
+			actual, err := v0stateMigration(context.Background(), tc.state, nil)
 
 			assert.Equal(t, tc.expect, actual, "Must match the expected state")
 			if tc.errVal != "" {

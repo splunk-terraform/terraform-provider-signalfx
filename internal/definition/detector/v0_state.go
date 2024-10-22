@@ -13,7 +13,7 @@ import (
 	tfext "github.com/splunk-terraform/terraform-provider-signalfx/internal/tfextension"
 )
 
-func stateV0State() *schema.Resource {
+func v0state() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
 			"time_range": {Type: schema.TypeString, Optional: true},
@@ -21,7 +21,7 @@ func stateV0State() *schema.Resource {
 	}
 }
 
-func stateMigrationV0(ctx context.Context, state map[string]any, _ any) (map[string]any, error) {
+func v0stateMigration(ctx context.Context, state map[string]any, _ any) (map[string]any, error) {
 	tflog.Debug(ctx, "Upgrading detector state", tfext.NewLogFields().JSON("state", state))
 
 	if tr, ok := state["time_range"].(string); ok {
