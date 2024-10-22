@@ -5,7 +5,6 @@ package common
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 	"unicode"
 )
@@ -36,37 +35,27 @@ func FromTimeRangeToMilliseconds(tr string) (int, error) {
 	}
 
 	var (
-		orig   = tr
-		window = 0
-		val    []rune
+		total   = 0
+		partial = 0
 	)
+
 	for _, r := range strings.TrimPrefix(tr, "-") {
 		switch {
 		case unicode.IsDigit(r):
-			val = append(val, r)
+			partial = partial*10 + int(r-'0')
 		case isUnit(r):
-			if len(val) == 0 {
-				return 0, fmt.Errorf("invalid timerange %q: missing digits", orig)
+			if partial == 0 {
+				return 0, fmt.Errorf("invalid timerange %q: missing digits", tr)
 			}
-			v, err := strconv.Atoi(string(val))
-			if err != nil {
-				return 0, err
-			}
-			window += v * millistamps[r]
-			val = val[:0]
+			total, partial = (total + partial*millistamps[r]), 0
 		default:
-			return 0, fmt.Errorf("invalid timerange %q: unknown value", orig)
+			return 0, fmt.Errorf("invalid timerange %q: unknown value", tr)
 		}
 	}
 
-	if len(val) != 0 {
-		if window != 0 {
-			return 0, fmt.Errorf("invalid timerange %q: mixed syntax used", orig)
-		}
-		// It is assumed that without a unit suffix,
-		// the value is provided in milliseconds
-		return strconv.Atoi(string(val))
+	if partial != 0 && total != 0 {
+		return 0, fmt.Errorf("invalid timerange %q: mixed syntax used", tr)
 	}
 
-	return window, nil
+	return total + partial, nil
 }
