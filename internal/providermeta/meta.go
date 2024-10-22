@@ -13,6 +13,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/signalfx/signalfx-go"
 	"go.uber.org/multierr"
+
+	tfext "github.com/splunk-terraform/terraform-provider-signalfx/internal/tfextension"
 )
 
 var (
@@ -45,14 +47,16 @@ func LoadClient(ctx context.Context, meta any) (*signalfx.Client, error) {
 }
 
 // LoadApplicationURL will generate the FQDN using the set CustomAppURL from the meta value.
-func LoadApplicationURL(_ context.Context, meta any, fragments ...string) (string, error) {
+func LoadApplicationURL(ctx context.Context, meta any, fragments ...string) string {
 	m, ok := meta.(*Meta)
 	if !ok {
-		return "", ErrMetaNotProvided
+		tflog.Error(ctx, "Unable to convert to expected type")
+		return ""
 	}
 	u, err := url.ParseRequestURI(m.CustomAppURL)
 	if err != nil {
-		return "", err
+		tflog.Error(ctx, "Issue trying to parse custom app url", tfext.NewLogFields().Error(err))
+		return ""
 	}
 	// In order to currently set that fragment,
 	// the path needs to end with `/`
@@ -61,7 +65,7 @@ func LoadApplicationURL(_ context.Context, meta any, fragments ...string) (strin
 		u.Path += "/"
 	}
 	u.Fragment = path.Join(fragments...)
-	return u.String(), nil
+	return u.String()
 }
 
 func (s *Meta) Validate() (errs error) {
