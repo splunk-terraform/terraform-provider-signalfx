@@ -107,14 +107,16 @@ See [Connect to AWS using the guided setup in Splunk Observability Cloud](https:
 
 ## Release the provider
 
-To release the provider, install https://goreleaser.com/install/ (update to v2+ in you have an outdated version), then follow these steps:
+The releases are done via Github actions following these steps:
 
-1. Update the changelog and create a [release](https://github.com/splunk-terraform/terraform-provider-signalfx/releases) in GH (vx.y.z format) in **pre-release** state
+1. Create an pull request with the updated changelog.
 
-1. `git pull` (Locally)
+1. Merge updated changelog once approved.
 
-1. `export GPG_TTY=$(tty)` (avoid gpg terminal issues if using iTerm2)
+1. Pull the last changes on main with merged changelog update.
 
-1. `GITHUB_TOKEN=xxx GPG_FINGERPRINT=xxx goreleaser --clean` (github token must have `repo` scope)
+1. Tag the current commit with the next version.
+
+1. Wait for the CI automation to publish draft release to Github.
 
 1. Go back to the release in github and set "Set as the latest release"
