@@ -50,7 +50,7 @@ func newResourceCreate() schema.CreateContextFunc {
 			Members:           payload.Members,
 			NotificationLists: payload.NotificationLists,
 		})
-		if common.OnError(ctx, err, rd) != nil {
+		if common.HandleError(ctx, err, rd) != nil {
 			return diag.FromErr(err)
 		}
 
@@ -74,7 +74,7 @@ func newResourceRead() schema.ReadContextFunc {
 		}
 
 		tm, err := client.GetTeam(ctx, rd.Id())
-		if common.OnError(ctx, err, rd) != nil {
+		if common.HandleError(ctx, err, rd) != nil {
 			return diag.FromErr(err)
 		}
 
@@ -106,7 +106,7 @@ func newResourceUpdate() schema.UpdateContextFunc {
 			Members:           payload.Members,
 			NotificationLists: payload.NotificationLists,
 		})
-		if common.OnError(ctx, err, rd) != nil {
+		if common.HandleError(ctx, err, rd) != nil {
 			return diag.FromErr(err)
 		}
 
@@ -130,7 +130,7 @@ func newResourceDelete() schema.DeleteContextFunc {
 			"team-id": rd.Id(),
 		})
 
-		err = common.OnError(ctx, client.DeleteTeam(ctx, rd.Id()), rd)
+		err = common.HandleError(ctx, client.DeleteTeam(ctx, rd.Id()), rd)
 
 		return diag.FromErr(err)
 	}

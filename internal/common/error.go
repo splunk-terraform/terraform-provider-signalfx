@@ -14,11 +14,11 @@ import (
 	tfext "github.com/splunk-terraform/terraform-provider-signalfx/internal/tfextension"
 )
 
-// OnError handles the general case when the signalfx api returns
+// HandleError handles the general case when the signalfx api returns
 // an error, and it uses that information to determine what needs to happen.
 // This will ensure that the state is cleaned up given the error condition.
 // To help simplify error handling, it will always return the error provided.
-func OnError(ctx context.Context, err error, data *schema.ResourceData) error {
+func HandleError(ctx context.Context, err error, data *schema.ResourceData) error {
 	re, ok := signalfx.AsResponseError(err)
 	if !ok {
 		// Not a response error, pass it back

@@ -47,7 +47,7 @@ func TestOnError(t *testing.T) {
 			)
 			data.SetId("id")
 
-			assert.ErrorIs(t, tc.err, OnError(context.Background(), tc.err, data), "Must return the same error")
+			assert.ErrorIs(t, tc.err, HandleError(context.Background(), tc.err, data), "Must return the same error")
 			assert.Equal(t, tc.expect, data.Id(), "Must have the expected id")
 		})
 	}
