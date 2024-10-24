@@ -88,6 +88,34 @@ func TestResourceCreate(t *testing.T) {
 						DetectorOrigin:       req.DetectorOrigin,
 					})
 				},
+				"GET /v2/detector/id-01": func(w http.ResponseWriter, r *http.Request) {
+					_, _ = io.Copy(io.Discard, r.Body)
+					_ = r.Body.Close()
+
+					_ = json.NewEncoder(w).Encode(&detector.Detector{
+						Id:                "id-01",
+						Name:              "test detector",
+						Description:       "An example detector response",
+						AuthorizedWriters: &detector.AuthorizedWriters{},
+						TimeZone:          "Australia/Sydney",
+						MaxDelay:          common.AsPointer[int32](1000),
+						MinDelay:          common.AsPointer[int32](1000),
+						ProgramText:       `detect(when(data('*').count() < 1)).publish('no data')`,
+						OverMTSLimit:      false,
+						Rules: []*detector.Rule{
+							{
+								DetectLabel: "no data",
+								Notifications: []*notification.Notification{
+									{Type: "Team", Value: &notification.TeamNotification{Type: "Team", Team: "awesome-team"}},
+								},
+							},
+						},
+						Tags:                 []string{"tag-01"},
+						Teams:                []string{"team-01"},
+						DetectorOrigin:       "Standard",
+						VisualizationOptions: &detector.Visualization{},
+					})
+				},
 			}),
 			Encoder: encodeTerraform,
 			Decoder: decodeTerraform,

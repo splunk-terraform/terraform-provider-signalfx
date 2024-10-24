@@ -79,9 +79,14 @@ func resourceCreate(ctx context.Context, data *schema.ResourceData, meta any) (i
 		)...,
 	)
 
+	data.SetId(resp.Id)
+
+	// Some fields are only set from calling a the read operation,
+	// so to keep the output consistent, this defers the remaining
+	// effort to read to get the data
 	return tfext.AppendDiagnostics(
 		issues,
-		tfext.AsErrorDiagnostics(encodeTerraform(resp, data))...,
+		resourceRead(ctx, data, meta)...,
 	)
 }
 
@@ -101,6 +106,12 @@ func resourceRead(ctx context.Context, data *schema.ResourceData, meta any) (iss
 	if dt.OverMTSLimit {
 		issues = tfext.AppendDiagnostics(issues, tfext.AsWarnDiagnostics(fmt.Errorf("detector is over mts limit"))...)
 	}
+
+	issues = tfext.AppendDiagnostics(issues,
+		tfext.AsErrorDiagnostics(
+			data.Set("url", pmeta.LoadApplicationURL(ctx, meta, AppPath, dt.Id, "edit")),
+		)...,
+	)
 
 	return tfext.AppendDiagnostics(
 		issues,

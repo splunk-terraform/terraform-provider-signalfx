@@ -310,7 +310,7 @@ func encodeTerraform(dt *detector.Detector, rd *schema.ResourceData) error {
 				errs = multierr.Append(errs, rd.Set("start_time", *t.Start))
 				errs = multierr.Append(errs, rd.Set("end_time", *t.End))
 			case t.Range != nil:
-				errs = multierr.Append(errs, rd.Set("time_range", *t.Range))
+				errs = multierr.Append(errs, rd.Set("time_range", *t.Range/1000))
 			}
 		}
 		labels := make([]map[string]any, 0, len(viz.PublishLabelOptions))

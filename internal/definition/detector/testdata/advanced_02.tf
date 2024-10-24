@@ -1,4 +1,4 @@
-resource "signalfx_detector" "application_delay" {
+resource "signalfx_detector" "my_detector" {
   name        = "max average delay UPDATED"
   description = "your application is slowER"
   max_delay   = 60
