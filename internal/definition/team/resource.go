@@ -50,7 +50,7 @@ func newResourceCreate() schema.CreateContextFunc {
 			Members:           payload.Members,
 			NotificationLists: payload.NotificationLists,
 		})
-		if err != common.OnError(ctx, err, rd) {
+		if common.OnError(ctx, err, rd) != nil {
 			return diag.FromErr(err)
 		}
 
@@ -74,7 +74,7 @@ func newResourceRead() schema.ReadContextFunc {
 		}
 
 		tm, err := client.GetTeam(ctx, rd.Id())
-		if err != common.OnError(ctx, err, rd) {
+		if common.OnError(ctx, err, rd) != nil {
 			return diag.FromErr(err)
 		}
 
@@ -96,7 +96,7 @@ func newResourceUpdate() schema.UpdateContextFunc {
 		}
 
 		client, err := pmeta.LoadClient(ctx, meta)
-		if err != common.OnError(ctx, err, rd) {
+		if err != nil {
 			return diag.FromErr(err)
 		}
 
@@ -106,7 +106,7 @@ func newResourceUpdate() schema.UpdateContextFunc {
 			Members:           payload.Members,
 			NotificationLists: payload.NotificationLists,
 		})
-		if err != nil {
+		if common.OnError(ctx, err, rd) != nil {
 			return diag.FromErr(err)
 		}
 

@@ -21,7 +21,7 @@ import (
 func OnError(ctx context.Context, err error, data *schema.ResourceData) error {
 	re, ok := signalfx.AsResponseError(err)
 	if !ok {
-		// Not a repsonse error, pass it back
+		// Not a response error, pass it back
 		return err
 	}
 	switch re.Code() {
@@ -32,7 +32,7 @@ func OnError(ctx context.Context, err error, data *schema.ResourceData) error {
 		// Clear the id from the state when 404 is returned.
 		data.SetId("")
 	case http.StatusUnauthorized:
-		tflog.Error(ctx, "Token is not authorised", tfext.NewLogFields().
+		tflog.Error(ctx, "Token is not authorized", tfext.NewLogFields().
 			Field("route", re.Route()).
 			Field("code", re.Code()).
 			Field("details", re.Details()),

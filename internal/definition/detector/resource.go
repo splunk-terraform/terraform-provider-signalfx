@@ -64,7 +64,7 @@ func resourceCreate(ctx context.Context, data *schema.ResourceData, meta any) (i
 		ParentDetectorId:     dt.ParentDetectorId,
 		DetectorOrigin:       dt.DetectorOrigin,
 	})
-	if err != common.OnError(ctx, err, data) {
+	if common.OnError(ctx, err, data) != nil {
 		return tfext.AsErrorDiagnostics(err)
 	}
 
@@ -89,7 +89,7 @@ func resourceRead(ctx context.Context, data *schema.ResourceData, meta any) (iss
 	}
 
 	dt, err := client.GetDetector(ctx, data.Id())
-	if err != common.OnError(ctx, err, data) {
+	if common.OnError(ctx, err, data) != nil {
 		return tfext.AsErrorDiagnostics(err)
 	}
 
@@ -134,7 +134,7 @@ func resourceUpdate(ctx context.Context, data *schema.ResourceData, meta any) (i
 		ParentDetectorId:     dt.ParentDetectorId,
 		DetectorOrigin:       dt.DetectorOrigin,
 	})
-	if err != common.OnError(ctx, err, data) {
+	if common.OnError(ctx, err, data) != nil {
 		return tfext.AsErrorDiagnostics(err)
 	}
 
