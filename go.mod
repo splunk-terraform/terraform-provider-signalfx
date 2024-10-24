@@ -12,7 +12,7 @@ require (
 	github.com/hashicorp/terraform-plugin-log v0.9.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.34.0
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/signalfx/signalfx-go v1.40.1
+	github.com/signalfx/signalfx-go v1.41.0
 	github.com/stretchr/testify v1.9.0
 	go.uber.org/multierr v1.8.0
 )
