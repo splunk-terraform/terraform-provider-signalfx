@@ -95,9 +95,7 @@ func TestResourceOperationTestCaseCreate(t *testing.T) {
 			Encoder: func(*any, *schema.ResourceData) error {
 				return nil
 			},
-			Decoder: func(*schema.ResourceData) (*any, error) {
-				return nil, nil
-			},
+			Decoder: tfext.NopDecodeTerraform[any],
 			Meta: func(testing.TB) any {
 				return nil
 			},
@@ -186,12 +184,8 @@ func TestResourceOperationTestCaseRead(t *testing.T) {
 		tcase := &ResourceOperationTestCase[any]{
 			Name:     tc.name,
 			Resource: tc.resource,
-			Encoder: func(*any, *schema.ResourceData) error {
-				return nil
-			},
-			Decoder: func(*schema.ResourceData) (*any, error) {
-				return nil, nil
-			},
+			Encoder:  tfext.NopEncodeTerraform[any],
+			Decoder:  tfext.NopDecodeTerraform[any],
 			Meta: func(testing.TB) any {
 				return nil
 			},
@@ -280,12 +274,8 @@ func TestResourceOperationTestCaseUpdate(t *testing.T) {
 		tcase := &ResourceOperationTestCase[any]{
 			Name:     tc.name,
 			Resource: tc.resource,
-			Encoder: func(*any, *schema.ResourceData) error {
-				return nil
-			},
-			Decoder: func(*schema.ResourceData) (*any, error) {
-				return nil, nil
-			},
+			Encoder:  tfext.NopEncodeTerraform[any],
+			Decoder:  tfext.NopDecodeTerraform[any],
 			Meta: func(testing.TB) any {
 				return nil
 			},
@@ -374,12 +364,8 @@ func TestResourceOperationTestCaseDelete(t *testing.T) {
 		tcase := &ResourceOperationTestCase[any]{
 			Name:     tc.name,
 			Resource: tc.resource,
-			Encoder: func(*any, *schema.ResourceData) error {
-				return nil
-			},
-			Decoder: func(*schema.ResourceData) (*any, error) {
-				return nil, nil
-			},
+			Encoder:  tfext.NopEncodeTerraform[any],
+			Decoder:  tfext.NopDecodeTerraform[any],
 			Meta: func(testing.TB) any {
 				return nil
 			},
