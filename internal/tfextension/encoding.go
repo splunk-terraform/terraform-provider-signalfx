@@ -12,7 +12,7 @@ type (
 	// the terraform state data into the expected API type to be used.
 	//
 	// This is to be used when interfacing with other packages.
-	DecodeTerraformFunc[T any] func(rd Values) (*T, error)
+	DecodeTerraformFunc[T any] func(rd *schema.ResourceData) (*T, error)
 
 	// EncodeTerraformFunc is used to write the API response data into
 	// the terraform state.
@@ -21,7 +21,7 @@ type (
 	EncodeTerraformFunc[T any] func(t *T, rd *schema.ResourceData) error
 )
 
-func NopDecodeTerraform[T any](Values) (*T, error) {
+func NopDecodeTerraform[T any](*schema.ResourceData) (*T, error) {
 	return nil, nil
 }
 

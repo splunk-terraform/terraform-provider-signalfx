@@ -11,10 +11,9 @@ import (
 	"github.com/signalfx/signalfx-go/detector"
 
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/common"
-	tfext "github.com/splunk-terraform/terraform-provider-signalfx/internal/tfextension"
 )
 
-func DecodeTerraform(rd tfext.Values) ([]*detector.Rule, error) {
+func DecodeTerraform(rd *schema.ResourceData) ([]*detector.Rule, error) {
 	set, ok := rd.Get("rule").(*schema.Set)
 	if !ok {
 		return nil, errors.New("no field defined for rule")

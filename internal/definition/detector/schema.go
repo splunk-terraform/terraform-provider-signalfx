@@ -194,7 +194,7 @@ func newSchema() map[string]*schema.Schema {
 	}
 }
 
-func decodeTerraform(rd tfext.Values) (*detector.Detector, error) {
+func decodeTerraform(rd *schema.ResourceData) (*detector.Detector, error) {
 	d := &detector.Detector{
 		Id:                rd.Id(),
 		Name:              rd.Get("name").(string),
