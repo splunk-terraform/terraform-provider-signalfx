@@ -55,7 +55,7 @@ func TestResourceCreate(t *testing.T) {
 			Issues: diag.Diagnostics{
 				{
 					Severity: diag.Error,
-					Summary:  "Unexpected status code: 400: Failed to create\n",
+					Summary:  "route \"/v2/team\" had issues with status code 400",
 				},
 			},
 		},
@@ -186,7 +186,7 @@ func TestResourceRead(t *testing.T) {
 			Issues: diag.Diagnostics{
 				{
 					Severity: diag.Error,
-					Summary:  "Unexpected status code: 400: Failed to read\n",
+					Summary:  "route \"/v2/team/0001\" had issues with status code 400",
 				},
 			},
 		},
@@ -303,7 +303,7 @@ func TestResourceUpdate(t *testing.T) {
 			Issues: diag.Diagnostics{
 				{
 					Severity: diag.Error,
-					Summary:  "Unexpected status code: 400: Failed to update\n",
+					Summary:  "route \"/v2/team/0001\" had issues with status code 400",
 				},
 			},
 		},
@@ -387,7 +387,7 @@ func TestResourceDelete(t *testing.T) {
 			Issues: diag.Diagnostics{
 				{
 					Severity: diag.Error,
-					Summary:  "Unexpected status code: 400 Bad Request",
+					Summary:  "route \"/v2/team/0001\" had issues with status code 400",
 				},
 			},
 		},

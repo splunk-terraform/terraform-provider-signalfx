@@ -57,7 +57,7 @@ func TestResourceCreate(t *testing.T) {
 			}),
 			Input: &detector.Detector{},
 			Issues: diag.Diagnostics{
-				{Severity: diag.Error, Summary: "Bad status 500: Failed create detector\n"},
+				{Severity: diag.Error, Summary: "route \"/v2/detector\" had issues with status code 500"},
 			},
 		},
 		{
@@ -177,7 +177,7 @@ func TestResourceRead(t *testing.T) {
 				Id: "id-01",
 			},
 			Issues: diag.Diagnostics{
-				{Severity: diag.Error, Summary: "Bad status 400: failed to read body\n"},
+				{Severity: diag.Error, Summary: "route \"/v2/detector/id-01\" had issues with status code 400"},
 			},
 		},
 		{
@@ -338,7 +338,7 @@ func TestResourceUpdate(t *testing.T) {
 			Resource: NewResource(),
 			Input:    &detector.Detector{Id: "id-01"},
 			Issues: diag.Diagnostics{
-				{Severity: diag.Error, Summary: "Bad status 500: failed update\n"},
+				{Severity: diag.Error, Summary: "route \"/v2/detector/id-01\" had issues with status code 500"},
 			},
 		},
 		{
@@ -429,7 +429,7 @@ func TestResourceDelete(t *testing.T) {
 			},
 			Expect: nil,
 			Issues: diag.Diagnostics{
-				{Severity: diag.Error, Summary: "Unexpected status code: 400: invalid detector\n"},
+				{Severity: diag.Error, Summary: "route \"/v2/detector/detector-01\" had issues with status code 400"},
 			},
 		},
 	} {
