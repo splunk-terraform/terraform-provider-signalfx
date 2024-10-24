@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/signalfx/signalfx-go/team"
 
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/common"
 	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
 )
 
@@ -49,7 +50,7 @@ func newResourceCreate() schema.CreateContextFunc {
 			Members:           payload.Members,
 			NotificationLists: payload.NotificationLists,
 		})
-		if err != nil {
+		if common.HandleError(ctx, err, rd) != nil {
 			return diag.FromErr(err)
 		}
 
@@ -73,9 +74,10 @@ func newResourceRead() schema.ReadContextFunc {
 		}
 
 		tm, err := client.GetTeam(ctx, rd.Id())
-		if err != nil {
+		if common.HandleError(ctx, err, rd) != nil {
 			return diag.FromErr(err)
 		}
+
 		tflog.Debug(ctx, "Successfully fetched team data")
 
 		if err := rd.Set("url", pmeta.LoadApplicationURL(ctx, meta, AppPath, tm.Id)); err != nil {
@@ -104,7 +106,7 @@ func newResourceUpdate() schema.UpdateContextFunc {
 			Members:           payload.Members,
 			NotificationLists: payload.NotificationLists,
 		})
-		if err != nil {
+		if common.HandleError(ctx, err, rd) != nil {
 			return diag.FromErr(err)
 		}
 
@@ -128,6 +130,8 @@ func newResourceDelete() schema.DeleteContextFunc {
 			"team-id": rd.Id(),
 		})
 
-		return diag.FromErr(client.DeleteTeam(ctx, rd.Id()))
+		err = common.HandleError(ctx, client.DeleteTeam(ctx, rd.Id()), rd)
+
+		return diag.FromErr(err)
 	}
 }

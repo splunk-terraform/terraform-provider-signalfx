@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/signalfx/signalfx-go/detector"
 
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/common"
 	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
 	tfext "github.com/splunk-terraform/terraform-provider-signalfx/internal/tfextension"
 )
@@ -63,7 +64,7 @@ func resourceCreate(ctx context.Context, data *schema.ResourceData, meta any) (i
 		ParentDetectorId:     dt.ParentDetectorId,
 		DetectorOrigin:       dt.DetectorOrigin,
 	})
-	if err != nil {
+	if common.HandleError(ctx, err, data) != nil {
 		return tfext.AsErrorDiagnostics(err)
 	}
 
@@ -88,7 +89,7 @@ func resourceRead(ctx context.Context, data *schema.ResourceData, meta any) (iss
 	}
 
 	dt, err := client.GetDetector(ctx, data.Id())
-	if err != nil {
+	if common.HandleError(ctx, err, data) != nil {
 		return tfext.AsErrorDiagnostics(err)
 	}
 
@@ -133,7 +134,7 @@ func resourceUpdate(ctx context.Context, data *schema.ResourceData, meta any) (i
 		ParentDetectorId:     dt.ParentDetectorId,
 		DetectorOrigin:       dt.DetectorOrigin,
 	})
-	if err != nil {
+	if common.HandleError(ctx, err, data) != nil {
 		return tfext.AsErrorDiagnostics(err)
 	}
 
@@ -154,5 +155,6 @@ func resourceDelete(ctx context.Context, data *schema.ResourceData, meta any) di
 	if err != nil {
 		return tfext.AsErrorDiagnostics(err)
 	}
-	return tfext.AsErrorDiagnostics(client.DeleteDetector(ctx, data.Id()))
+	err = common.HandleError(ctx, client.DeleteDetector(ctx, data.Id()), data)
+	return tfext.AsErrorDiagnostics(err)
 }
