@@ -11,9 +11,10 @@ import (
 	"github.com/signalfx/signalfx-go/detector"
 
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/common"
+	tfext "github.com/splunk-terraform/terraform-provider-signalfx/internal/tfextension"
 )
 
-func DecodeTerraform(rd *schema.ResourceData) ([]*detector.Rule, error) {
+func DecodeTerraform(rd tfext.Values) ([]*detector.Rule, error) {
 	set, ok := rd.Get("rule").(*schema.Set)
 	if !ok {
 		return nil, errors.New("no field defined for rule")
@@ -44,6 +45,10 @@ func DecodeTerraform(rd *schema.ResourceData) ([]*detector.Rule, error) {
 }
 
 func EncodeTerraform(rules []*detector.Rule, rd *schema.ResourceData) error {
+	if len(rules) == 0 {
+		return nil
+	}
+
 	items := make([]map[string]any, 0, len(rules))
 	for _, r := range rules {
 		notifys, err := common.NewNotificationStringList(r.Notifications)
@@ -62,5 +67,6 @@ func EncodeTerraform(rules []*detector.Rule, rd *schema.ResourceData) error {
 			"tip":                   r.Tip,
 		})
 	}
+
 	return rd.Set("rule", items)
 }

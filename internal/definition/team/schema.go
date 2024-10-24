@@ -10,6 +10,7 @@ import (
 
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/check"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/common"
+	tfext "github.com/splunk-terraform/terraform-provider-signalfx/internal/tfextension"
 )
 
 func newSchema() map[string]*schema.Schema {
@@ -92,7 +93,7 @@ func newSchema() map[string]*schema.Schema {
 	}
 }
 
-func decodeTerraform(rd *schema.ResourceData) (*team.Team, error) {
+func decodeTerraform(rd tfext.Values) (*team.Team, error) {
 	t := &team.Team{
 		Id:          rd.Id(),
 		Name:        rd.Get("name").(string),

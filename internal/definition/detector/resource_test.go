@@ -97,8 +97,8 @@ func TestResourceCreate(t *testing.T) {
 				Description:       "An example detector response",
 				AuthorizedWriters: &detector.AuthorizedWriters{},
 				TimeZone:          "Australia/Sydney",
-				MaxDelay:          common.AsPointer[int32](100),
-				MinDelay:          common.AsPointer[int32](100),
+				MaxDelay:          common.AsPointer[int32](1300),
+				MinDelay:          common.AsPointer[int32](1400),
 				ProgramText:       `detect(when(data('*').count() < 1)).publish('no data')`,
 				OverMTSLimit:      false,
 				Rules: []*detector.Rule{
@@ -120,8 +120,8 @@ func TestResourceCreate(t *testing.T) {
 				Description:       "An example detector response",
 				AuthorizedWriters: &detector.AuthorizedWriters{},
 				TimeZone:          "Australia/Sydney",
-				MaxDelay:          common.AsPointer[int32](100000000),
-				MinDelay:          common.AsPointer[int32](100000000),
+				MaxDelay:          common.AsPointer[int32](1000),
+				MinDelay:          common.AsPointer[int32](1000),
 				ProgramText:       `detect(when(data('*').count() < 1)).publish('no data')`,
 				OverMTSLimit:      false,
 				Rules: []*detector.Rule{
@@ -195,8 +195,8 @@ func TestResourceRead(t *testing.T) {
 						Name:        "test detector",
 						Description: "An example detector response",
 						TimeZone:    "Australia/Sydney",
-						MaxDelay:    common.AsPointer[int32](100),
-						MinDelay:    common.AsPointer[int32](100),
+						MaxDelay:    common.AsPointer[int32](1000),
+						MinDelay:    common.AsPointer[int32](1000),
 						ProgramText: `detect(when(data('*').count() < 1)).publish('no data')`,
 						Rules: []*detector.Rule{
 							{
@@ -221,8 +221,8 @@ func TestResourceRead(t *testing.T) {
 				Description:       "An example detector response",
 				AuthorizedWriters: &detector.AuthorizedWriters{},
 				TimeZone:          "Australia/Sydney",
-				MaxDelay:          common.AsPointer[int32](100000),
-				MinDelay:          common.AsPointer[int32](100000),
+				MaxDelay:          common.AsPointer[int32](1000),
+				MinDelay:          common.AsPointer[int32](1000),
 				ProgramText:       `detect(when(data('*').count() < 1)).publish('no data')`,
 				Rules: []*detector.Rule{
 					{
@@ -280,8 +280,8 @@ func TestResourceRead(t *testing.T) {
 				Description:       "An example detector response",
 				AuthorizedWriters: &detector.AuthorizedWriters{},
 				TimeZone:          "Australia/Sydney",
-				MaxDelay:          common.AsPointer[int32](100000000),
-				MinDelay:          common.AsPointer[int32](100000000),
+				MaxDelay:          common.AsPointer[int32](100),
+				MinDelay:          common.AsPointer[int32](100),
 				ProgramText:       `detect(when(data('*').count() < 1)).publish('no data')`,
 				OverMTSLimit:      true,
 				Rules: []*detector.Rule{

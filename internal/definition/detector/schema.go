@@ -194,7 +194,7 @@ func newSchema() map[string]*schema.Schema {
 	}
 }
 
-func decodeTerraform(rd *schema.ResourceData) (*detector.Detector, error) {
+func decodeTerraform(rd tfext.Values) (*detector.Detector, error) {
 	d := &detector.Detector{
 		Id:                rd.Id(),
 		Name:              rd.Get("name").(string),
@@ -207,7 +207,7 @@ func decodeTerraform(rd *schema.ResourceData) (*detector.Detector, error) {
 		//nolint:gosec // Overflow is not possible from config
 		MinDelay: common.AsPointer(int32(rd.Get("min_delay").(int)) * 1000),
 		//nolint:gosec // Overflow is not possible from config
-		MaxDelay: common.AsPointer(int32(rd.Get("min_delay").(int)) * 1000),
+		MaxDelay: common.AsPointer(int32(rd.Get("max_delay").(int)) * 1000),
 		VisualizationOptions: &detector.Visualization{
 			DisableSampling: rd.Get("disable_sampling").(bool),
 			ShowDataMarkers: rd.Get("show_data_markers").(bool),
@@ -285,11 +285,13 @@ func encodeTerraform(dt *detector.Detector, rd *schema.ResourceData) error {
 		rd.Set("tags", dt.Tags),
 		rd.Set("label_resolutions", dt.LabelResolutions),
 	)
+	// We divide by 1000 because the API uses millis, but this provider uses
+	// seconds
 	if dt.MinDelay != nil {
-		errs = multierr.Append(errs, rd.Set("min_delay", *dt.MinDelay))
+		errs = multierr.Append(errs, rd.Set("min_delay", *dt.MinDelay/1000))
 	}
 	if dt.MaxDelay != nil {
-		errs = multierr.Append(errs, rd.Set("max_delay", *dt.MaxDelay))
+		errs = multierr.Append(errs, rd.Set("max_delay", *dt.MaxDelay/1000))
 	}
 	if auth := dt.AuthorizedWriters; auth != nil {
 		errs = multierr.Append(errs, rd.Set("authorized_writer_teams", tfext.NewSchemaSet(schema.HashString, auth.Teams)))
