@@ -45,13 +45,6 @@ func newSchema() map[string]*schema.Schema {
 			Sensitive:   true,
 			Description: "The value of the token used for API actions.",
 		},
-		"duration": {
-			Type:     schema.TypeInt,
-			Optional: true,
-			Default:  4 * 7 * 24 * 60 * 60, // 4 weeks converted into seconds
-			Description: "Defines how long (relative to the create time) how long the token should be viable," +
-				"note this can not extend an expiry of a token once created.",
-		},
 		"notifications": {
 			Type:     schema.TypeList,
 			Optional: true,
@@ -143,7 +136,7 @@ func newSchema() map[string]*schema.Schema {
 		"expires_at": {
 			Type:        schema.TypeInt,
 			Computed:    true,
-			Description: "The calculated time in Unix Millis of when the token will be deactivated.",
+			Description: "The calculated time in Unix milliseconds of when the token will be deactivated.",
 		},
 	}
 }
@@ -153,7 +146,6 @@ func encodeTerraform(data *schema.ResourceData) (*orgtoken.Token, error) {
 		Name:        data.Get("name").(string),
 		Description: data.Get("description").(string),
 		Disabled:    data.Get("disabled").(bool),
-		Expiry:      int64(data.Get("expires_at").(int)),
 		Limits:      &orgtoken.Limit{},
 		Secret:      data.Get("secret").(string),
 	}
