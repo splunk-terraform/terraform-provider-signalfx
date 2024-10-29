@@ -27,6 +27,7 @@ func TestProviderHasResource(t *testing.T) {
 
 	expected := []string{
 		"signalfx_team",
+		"signalfx_detector",
 	}
 
 	for name := range p.ResourcesMap {
