@@ -19,7 +19,7 @@ jobs:
   terraform-provider-release:
     permissions: write-all
     name: 'Terraform Provider Release'
-    uses: hashicorp/ghaction-terraform-provider-release/.github/workflows/community.yml@v4
+    uses: hashicorp/ghaction-terraform-provider-release/.github/workflows/community.yml@v5
     secrets:
       gpg-private-key: '${{ secrets.GPG_PRIVATE_KEY }}'
       gpg-private-key-passphrase: ${{ secrets.PASSPHRASE }}
