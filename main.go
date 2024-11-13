@@ -5,6 +5,7 @@ package main
 
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
+
 	"github.com/splunk-terraform/terraform-provider-signalfx/signalfx"
 )
 

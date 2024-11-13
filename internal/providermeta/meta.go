@@ -99,11 +99,11 @@ func (m *Meta) LoadSessionToken(ctx context.Context) (string, error) {
 	return resp.AccessToken, nil
 }
 
-func (s *Meta) Validate() (errs error) {
-	if s.AuthToken == "" && (s.Email == "" && s.Password == "") {
+func (m *Meta) Validate() (errs error) {
+	if m.AuthToken == "" && (m.Email == "" && m.Password == "") {
 		errs = multierr.Append(errs, errors.New("missing auth token or email and password"))
 	}
-	if s.APIURL == "" {
+	if m.APIURL == "" {
 		errs = multierr.Append(errs, errors.New("api url is not set"))
 	}
 	return errs

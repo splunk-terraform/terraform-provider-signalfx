@@ -87,7 +87,7 @@ func New() *schema.Provider {
 				Type:          schema.TypeString,
 				Optional:      true,
 				ConflictsWith: []string{"auth_token"},
-				Description:   "Required if the user is configured to be part of multiple organisations",
+				Description:   "Required if the user is configured to be part of multiple organizations",
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{

@@ -96,7 +96,7 @@ func Provider() *schema.Provider {
 				Type:          schema.TypeString,
 				Optional:      true,
 				ConflictsWith: []string{"auth_token"},
-				Description:   "Required if the user is configured to be part of multiple organisations",
+				Description:   "Required if the user is configured to be part of multiple organizations",
 			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
@@ -186,7 +186,7 @@ func signalfxConfigure(data *schema.ResourceData) (interface{}, error) {
 		config.CustomAppURL = customAppURL.(string)
 	}
 
-	if err := config.Validate(); err != nil {
+	if err = config.Validate(); err != nil {
 		return nil, err
 	}
 
