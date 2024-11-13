@@ -117,6 +117,22 @@ func TestMetaValidation(t *testing.T) {
 				APIURL:    "http://api.signalfx.com",
 			},
 		},
+		{
+			name: "Email only provided",
+			meta: Meta{
+				Email:  "example@com",
+				APIURL: "http://api.signalfx.com",
+			},
+			errVal: "missing auth token or email and password",
+		},
+		{
+			name: "password only provided",
+			meta: Meta{
+				Password: "derp",
+				APIURL:   "http://api.signalfx.com",
+			},
+			errVal: "missing auth token or email and password",
+		},
 	} {
 
 		t.Run(tc.name, func(t *testing.T) {

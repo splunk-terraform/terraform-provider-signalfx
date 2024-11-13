@@ -100,7 +100,7 @@ func (m *Meta) LoadSessionToken(ctx context.Context) (string, error) {
 }
 
 func (m *Meta) Validate() (errs error) {
-	if m.AuthToken == "" && (m.Email == "" && m.Password == "") {
+	if m.AuthToken == "" && (m.Email == "" || m.Password == "") {
 		errs = multierr.Append(errs, errors.New("missing auth token or email and password"))
 	}
 	if m.APIURL == "" {
