@@ -4,6 +4,7 @@
 package signalfx
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -37,10 +38,11 @@ func Provider() *schema.Provider {
 	sfxProvider = &schema.Provider{
 		Schema: map[string]*schema.Schema{
 			"auth_token": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("SFX_AUTH_TOKEN", ""),
-				Description: "Splunk Observability Cloud auth token",
+				Type:          schema.TypeString,
+				Optional:      true,
+				ConflictsWith: []string{"email", "password", "organization_id"},
+				DefaultFunc:   schema.EnvDefaultFunc("SFX_AUTH_TOKEN", ""),
+				Description:   "Splunk Observability Cloud auth token",
 			},
 			"api_url": {
 				Type:        schema.TypeString,
@@ -77,6 +79,24 @@ func Provider() *schema.Provider {
 				Optional:    true,
 				Default:     30,
 				Description: "Maximum retry wait for a single HTTP call in seconds. Defaults to 30",
+			},
+			"email": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				ConflictsWith: []string{"auth_token"},
+				Description:   "Used to create a session token instead of an API token, it requires the account to be configured to login with Email and Password",
+			},
+			"password": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				ConflictsWith: []string{"auth_token"},
+				Description:   "Used to create a session token instead of an API token, it requires the account to be configured to login with Email and Password",
+			},
+			"organization_id": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				ConflictsWith: []string{"auth_token"},
+				Description:   "Required if the user is configured to be part of multiple organisations",
 			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
@@ -159,14 +179,15 @@ func signalfxConfigure(data *schema.ResourceData) (interface{}, error) {
 		config.AuthToken = token.(string)
 	}
 
-	if config.AuthToken == "" {
-		return &config, fmt.Errorf("auth_token: required field is not set")
-	}
 	if url, ok := data.GetOk("api_url"); ok {
 		config.APIURL = url.(string)
 	}
 	if customAppURL, ok := data.GetOk("custom_app_url"); ok {
 		config.CustomAppURL = customAppURL.(string)
+	}
+
+	if err := config.Validate(); err != nil {
+		return nil, err
 	}
 
 	netTransport := logging.NewTransport("SignalFx", &http.Transport{
@@ -199,10 +220,16 @@ func signalfxConfigure(data *schema.ResourceData) (interface{}, error) {
 	retryClient.HTTPClient.Transport = netTransport
 	standardClient := retryClient.StandardClient()
 
-	client, err := sfx.NewClient(config.AuthToken,
+	token, err := config.LoadSessionToken(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	client, err := sfx.NewClient(
+		token,
 		sfx.APIUrl(config.APIURL),
 		sfx.HTTPClient(standardClient),
-		sfx.UserAgent(fmt.Sprintf(providerUserAgent)),
+		sfx.UserAgent(providerUserAgent),
 	)
 	if err != nil {
 		return &config, err

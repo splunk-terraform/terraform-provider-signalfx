@@ -29,10 +29,11 @@ func New() *schema.Provider {
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
 			"auth_token": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("SFX_AUTH_TOKEN", ""),
-				Description: "Splunk Observability Cloud auth token",
+				Type:          schema.TypeString,
+				Optional:      true,
+				ConflictsWith: []string{"email", "password", "organization_id"},
+				DefaultFunc:   schema.EnvDefaultFunc("SFX_AUTH_TOKEN", ""),
+				Description:   "Splunk Observability Cloud auth token",
 			},
 			"api_url": {
 				Type:        schema.TypeString,
@@ -70,6 +71,24 @@ func New() *schema.Provider {
 				Default:     30,
 				Description: "Maximum retry wait for a single HTTP call in seconds. Defaults to 30",
 			},
+			"email": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				ConflictsWith: []string{"auth_token"},
+				Description:   "Used to create a session token instead of an API token, it requires the account to be configured to login with Email and Password",
+			},
+			"password": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				ConflictsWith: []string{"auth_token"},
+				Description:   "Used to create a session token instead of an API token, it requires the account to be configured to login with Email and Password",
+			},
+			"organization_id": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				ConflictsWith: []string{"auth_token"},
+				Description:   "Required if the user is configured to be part of multiple organisations",
+			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			team.ResourceName:     team.NewResource(),
@@ -83,9 +102,14 @@ func New() *schema.Provider {
 }
 
 func configureProvider(ctx context.Context, data *schema.ResourceData) (any, diag.Diagnostics) {
-	var meta pmeta.Meta
+	meta := &pmeta.Meta{
+		Email:          data.Get("email").(string),
+		Password:       data.Get("password").(string),
+		OrganizationID: data.Get("organization_id").(string),
+	}
+
 	for _, lookup := range pmeta.NewDefaultProviderLookups() {
-		if err := lookup.Do(ctx, &meta); err != nil {
+		if err := lookup.Do(ctx, meta); err != nil {
 			tflog.Debug(
 				ctx,
 				"Issue trying to load external provider configuration, skipping",
@@ -116,6 +140,11 @@ func configureProvider(ctx context.Context, data *schema.ResourceData) (any, dia
 		waitmax  = time.Duration(int64((data.Get("retry_wait_max_seconds").(int)))) * time.Second
 	)
 
+	token, err := meta.LoadSessionToken(ctx)
+	if err != nil {
+		return nil, tfext.AsErrorDiagnostics(err)
+	}
+
 	rc := retryablehttp.NewClient()
 	rc.RetryMax = attempts
 	rc.RetryWaitMin = waitmin
@@ -129,7 +158,8 @@ func configureProvider(ctx context.Context, data *schema.ResourceData) (any, dia
 		MaxIdleConnsPerHost: 100,
 	})
 
-	meta.Client, err = signalfx.NewClient(meta.AuthToken,
+	meta.Client, err = signalfx.NewClient(
+		token,
 		signalfx.APIUrl(meta.APIURL),
 		signalfx.HTTPClient(rc.StandardClient()),
 		signalfx.UserAgent(fmt.Sprintf("Terraform terraform-provider-signalfx/%s", version.ProviderVersion)),

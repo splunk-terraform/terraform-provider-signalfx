@@ -50,7 +50,7 @@ func TestProviderConfiguration(t *testing.T) {
 			name:    "no details provided",
 			details: make(map[string]any),
 			expect: diag.Diagnostics{
-				{Severity: diag.Error, Summary: "auth token not set"},
+				{Severity: diag.Error, Summary: "missing auth token or email and password"},
 			},
 		},
 		{
