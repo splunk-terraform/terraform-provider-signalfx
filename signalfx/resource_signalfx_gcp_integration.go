@@ -305,7 +305,7 @@ func integrationGCPCreate(d *schema.ResourceData, meta interface{}) error {
 	// Convert payload to JSON to see what will be sent
 	debugOutput, err := json.MarshalIndent(payload, "", "  ")
 	if err != nil {
-		return fmt.Errorf("error marshalling GCP integration payload to JSON for debug: %w", err)
+		return fmt.Errorf("error marshaling GCP integration payload to JSON for debug: %w", err)
 	}
 
 	// Print the JSON payload for debugging purposes
