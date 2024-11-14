@@ -140,7 +140,7 @@ func integrationGCPResource() *schema.Resource {
 	}
 }
 
-func integrationGCPExists(d *schema.ResourceData, meta interface{}) (bool, error) {
+func integrationGCPExists(d *schema.ResourceData, meta any) (bool, error) {
 	config := meta.(*signalfxConfig)
 	_, err := config.Client.GetGCPIntegration(context.TODO(), d.Id())
 	if err != nil {
@@ -152,7 +152,7 @@ func integrationGCPExists(d *schema.ResourceData, meta interface{}) (bool, error
 	return true, nil
 }
 
-func integrationGCPRead(d *schema.ResourceData, meta interface{}) error {
+func integrationGCPRead(d *schema.ResourceData, meta any) error {
 	config := meta.(*signalfxConfig)
 	int, err := config.Client.GetGCPIntegration(context.TODO(), d.Id())
 	if err != nil {
@@ -201,7 +201,7 @@ func getGCPPayloadIntegration(d *schema.ResourceData) *integration.GCPIntegratio
 		keys := val.(*schema.Set).List()
 		serviceKeys := make([]*integration.GCPProject, len(keys))
 		for i, v := range keys {
-			v := v.(map[string]interface{})
+			v := v.(map[string]any)
 			serviceKeys[i] = &integration.GCPProject{
 				ProjectId:  v["project_id"].(string),
 				ProjectKey: v["project_key"].(string),
@@ -213,7 +213,7 @@ func getGCPPayloadIntegration(d *schema.ResourceData) *integration.GCPIntegratio
 		keys := val.(*schema.Set).List()
 		wifConfigs := make([]*integration.GCPProjectWIFConfig, len(keys))
 		for i, v := range keys {
-			v := v.(map[string]interface{})
+			v := v.(map[string]any)
 			wifConfigs[i] = &integration.GCPProjectWIFConfig{
 				ProjectId: v["project_id"].(string),
 				WIFConfig: v["wif_config"].(string),
@@ -257,7 +257,7 @@ func gcpIntegrationAPIToTF(d *schema.ResourceData, gcp *integration.GCPIntegrati
 	}
 
 	if len(gcp.Services) > 0 {
-		services := make([]interface{}, len(gcp.Services))
+		services := make([]any, len(gcp.Services))
 		for i, v := range gcp.Services {
 			services[i] = string(v)
 		}
@@ -277,7 +277,7 @@ func gcpIntegrationAPIToTF(d *schema.ResourceData, gcp *integration.GCPIntegrati
 			return fmt.Errorf("error setting project_wif_configs: %w", err)
 		}
 	} else {
-		if err := d.Set("project_wif_configs", []interface{}{}); err != nil {
+		if err := d.Set("project_wif_configs", []any{}); err != nil {
 			return fmt.Errorf("error unsetting project_wif_configs: %w", err)
 		}
 	}
@@ -298,7 +298,7 @@ func gcpIntegrationAPIToTF(d *schema.ResourceData, gcp *integration.GCPIntegrati
 	return nil
 }
 
-func integrationGCPCreate(d *schema.ResourceData, meta interface{}) error {
+func integrationGCPCreate(d *schema.ResourceData, meta any) error {
 	config := meta.(*signalfxConfig)
 	payload := getGCPPayloadIntegration(d)
 
@@ -323,7 +323,7 @@ func integrationGCPCreate(d *schema.ResourceData, meta interface{}) error {
 
 	return gcpIntegrationAPIToTF(d, int)
 }
-func integrationGCPUpdate(d *schema.ResourceData, meta interface{}) error {
+func integrationGCPUpdate(d *schema.ResourceData, meta any) error {
 	config := meta.(*signalfxConfig)
 	payload := getGCPPayloadIntegration(d)
 
@@ -342,17 +342,17 @@ func integrationGCPUpdate(d *schema.ResourceData, meta interface{}) error {
 	return gcpIntegrationAPIToTF(d, int)
 }
 
-func integrationGCPDelete(d *schema.ResourceData, meta interface{}) error {
+func integrationGCPDelete(d *schema.ResourceData, meta any) error {
 	config := meta.(*signalfxConfig)
 
 	return config.Client.DeleteGCPIntegration(context.TODO(), d.Id())
 }
 
-func convertWifConfigsToMap(wifConfigs []*integration.GCPProjectWIFConfig) []map[string]interface{} {
+func convertWifConfigsToMap(wifConfigs []*integration.GCPProjectWIFConfig) []map[string]any {
 
-	result := make([]map[string]interface{}, len(wifConfigs))
+	result := make([]map[string]any, len(wifConfigs))
 	for i, v := range wifConfigs {
-		result[i] = map[string]interface{}{
+		result[i] = map[string]any{
 			"project_id": v.ProjectId,
 			"wif_config": v.WIFConfig,
 		}
