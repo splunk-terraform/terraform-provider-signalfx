@@ -51,6 +51,12 @@ func integrationGCPResource() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
+			"auth_method": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validation.StringInSlice([]string{string(integration.SERVICE_ACCOUNT_KEY), string(integration.WORKLOAD_IDENTITY_FEDERATION)}, true),
+				Description:  "Authentication method to use in this integration. If empty, Splunk Observability backend defaults to SERVICE_ACCOUNT_KEY",
+			},
 			"project_service_keys": &schema.Schema{
 				Type:        schema.TypeSet,
 				Optional:    true,
@@ -69,6 +75,31 @@ func integrationGCPResource() *schema.Resource {
 						},
 					},
 				},
+			},
+			"project_wif_configs": &schema.Schema{
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Description: "GCP WIF configs",
+				Sensitive:   true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"project_id": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"wif_config": {
+							Type:      schema.TypeString,
+							Required:  true,
+							Sensitive: true,
+						},
+					},
+				},
+			},
+			"wif_splunk_identity": &schema.Schema{
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Optional:    true,
+				Description: "The Splunk Observability GCP identity to include in GCP WIF provider definition.",
 			},
 			"use_metric_source_project_for_quota": &schema.Schema{
 				Type:        schema.TypeBool,
@@ -162,6 +193,10 @@ func getGCPPayloadIntegration(d *schema.ResourceData) *integration.GCPIntegratio
 		gcp.Services = services
 	}
 
+	if val, ok := d.GetOk("auth_method"); ok {
+		gcp.AuthMethod = integration.GCPAuthMethod(strings.ToUpper(val.(string)))
+	}
+
 	if val, ok := d.GetOk("project_service_keys"); ok {
 		keys := val.(*schema.Set).List()
 		serviceKeys := make([]*integration.GCPProject, len(keys))
@@ -173,6 +208,18 @@ func getGCPPayloadIntegration(d *schema.ResourceData) *integration.GCPIntegratio
 			}
 		}
 		gcp.ProjectServiceKeys = serviceKeys
+	}
+	if val, ok := d.GetOk("project_wif_configs"); ok {
+		keys := val.(*schema.Set).List()
+		wifConfigs := make([]*integration.GCPProjectWIFConfig, len(keys))
+		for i, v := range keys {
+			v := v.(map[string]interface{})
+			wifConfigs[i] = &integration.GCPProjectWIFConfig{
+				ProjectId: v["project_id"].(string),
+				WIFConfig: v["wif_config"].(string),
+			}
+		}
+		gcp.WifConfigs = wifConfigs
 	}
 
 	if val, ok := d.GetOk("include_list"); ok {
@@ -219,6 +266,24 @@ func gcpIntegrationAPIToTF(d *schema.ResourceData, gcp *integration.GCPIntegrati
 		}
 	}
 
+	if err := d.Set("auth_method", gcp.AuthMethod); err != nil {
+		return err
+	}
+	log.Printf("[DEBUG] SignalFx: Got GCP Integration wifConfig assign")
+
+	if gcp.WifConfigs != nil {
+		wifConfigs := convertWifConfigsToMap(gcp.WifConfigs)
+		if err := d.Set("project_wif_configs", wifConfigs); err != nil {
+			return fmt.Errorf("error setting project_wif_configs: %w", err)
+		}
+	} else {
+		if err := d.Set("project_wif_configs", []interface{}{}); err != nil {
+			return fmt.Errorf("error unsetting project_wif_configs: %w", err)
+		}
+	}
+	if err := d.Set("wif_splunk_identity", gcp.WifSplunkIdentity); err != nil {
+		return err
+	}
 	// Note that the API doesn't return the project keys so we ignore them,
 	// because there's not much reason to poke at just the project id.
 
@@ -237,9 +302,16 @@ func integrationGCPCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 	payload := getGCPPayloadIntegration(d)
 
-	debugOutput, _ := json.Marshal(payload)
+	// Convert payload to JSON to see what will be sent
+	debugOutput, err := json.MarshalIndent(payload, "", "  ")
+	if err != nil {
+		return fmt.Errorf("error marshalling GCP integration payload to JSON for debug: %w", err)
+	}
+
+	// Print the JSON payload for debugging purposes
 	log.Printf("[DEBUG] SignalFx: Create GCP Integration Payload: %s", string(debugOutput))
 
+	// Make the actual API request to create the GCP Integration
 	int, err := config.Client.CreateGCPIntegration(context.TODO(), payload)
 	if err != nil {
 		if strings.Contains(err.Error(), "40") {
@@ -251,7 +323,6 @@ func integrationGCPCreate(d *schema.ResourceData, meta interface{}) error {
 
 	return gcpIntegrationAPIToTF(d, int)
 }
-
 func integrationGCPUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 	payload := getGCPPayloadIntegration(d)
@@ -275,4 +346,16 @@ func integrationGCPDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 
 	return config.Client.DeleteGCPIntegration(context.TODO(), d.Id())
+}
+
+func convertWifConfigsToMap(wifConfigs []*integration.GCPProjectWIFConfig) []map[string]interface{} {
+
+	result := make([]map[string]interface{}, len(wifConfigs))
+	for i, v := range wifConfigs {
+		result[i] = map[string]interface{}{
+			"project_id": v.ProjectId,
+			"wif_config": v.WIFConfig,
+		}
+	}
+	return result
 }

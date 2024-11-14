@@ -40,14 +40,16 @@ resource "signalfx_gcp_integration" "gcp_myteamXX" {
     services = ["compute"]
     include_list = ["labels"]
 
-    project_service_keys {
+	auth_method = "WORKLOAD_IDENTITY_FEDERATION"
+
+    project_wif_configs {
 		    project_id = "gcp_project_id_1"
-		    project_key = "secret_key_project_1"
+		    wif_config = "{\"sample\":\"config1\"}"
     }
 
-    project_service_keys {
-        project_id = "gcp_project_id_2"
-        project_key = "secret_key_project_2"
+    project_wif_configs {
+		    project_id = "gcp_project_id_1"
+		    wif_config = "{\"sample\":\"config1\"}"
     }
 
     use_metric_source_project_for_quota = true
@@ -100,6 +102,8 @@ func TestAccCreateUpdateIntegrationGCP(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "use_metric_source_project_for_quota", "true"),
 					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "import_gcp_metrics", "false"),
 					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "custom_metric_type_domains.#", "1"),
+					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "auth_method", "WORKLOAD_IDENTITY_FEDERATION"),
+					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "project_wif_configs.#", "2"),
 				),
 			},
 		},
