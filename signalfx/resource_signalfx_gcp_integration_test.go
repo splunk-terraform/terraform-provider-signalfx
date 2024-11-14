@@ -48,8 +48,8 @@ resource "signalfx_gcp_integration" "gcp_myteamXX" {
     }
 
     project_wif_configs {
-		    project_id = "gcp_project_id_1"
-		    wif_config = "{\"sample\":\"config1\"}"
+		    project_id = "gcp_project_id_2"
+		    wif_config = "{\"sample\":\"config2\"}"
     }
 
     use_metric_source_project_for_quota = true

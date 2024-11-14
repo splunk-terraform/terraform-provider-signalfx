@@ -18,24 +18,24 @@ import (
 func integrationGCPResource() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Name of the integration",
 			},
-			"enabled": &schema.Schema{
+			"enabled": {
 				Type:        schema.TypeBool,
 				Required:    true,
 				Description: "Whether the integration is enabled or not",
 			},
-			"poll_rate": &schema.Schema{
+			"poll_rate": {
 				Type:         schema.TypeInt,
 				Optional:     true,
 				Default:      300,
 				Description:  "GCP poll rate (in seconds). Between `60` and `600`.",
 				ValidateFunc: validation.IntBetween(60, 600),
 			},
-			"services": &schema.Schema{
+			"services": {
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "GCP enabled services",
@@ -43,7 +43,7 @@ func integrationGCPResource() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
-			"custom_metric_type_domains": &schema.Schema{
+			"custom_metric_type_domains": {
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "List of additional GCP service domain names that you want to monitor",
@@ -51,13 +51,13 @@ func integrationGCPResource() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
-			"auth_method": &schema.Schema{
+			"auth_method": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ValidateFunc: validation.StringInSlice([]string{string(integration.SERVICE_ACCOUNT_KEY), string(integration.WORKLOAD_IDENTITY_FEDERATION)}, true),
 				Description:  "Authentication method to use in this integration. If empty, Splunk Observability backend defaults to SERVICE_ACCOUNT_KEY",
 			},
-			"project_service_keys": &schema.Schema{
+			"project_service_keys": {
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "GCP project service keys",
@@ -76,7 +76,7 @@ func integrationGCPResource() *schema.Resource {
 					},
 				},
 			},
-			"project_wif_configs": &schema.Schema{
+			"project_wif_configs": {
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "GCP WIF configs",
@@ -95,19 +95,19 @@ func integrationGCPResource() *schema.Resource {
 					},
 				},
 			},
-			"wif_splunk_identity": &schema.Schema{
+			"wif_splunk_identity": {
 				Type:        schema.TypeMap,
 				Computed:    true,
 				Optional:    true,
 				Description: "The Splunk Observability GCP identity to include in GCP WIF provider definition.",
 			},
-			"use_metric_source_project_for_quota": &schema.Schema{
+			"use_metric_source_project_for_quota": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
 				Description: "When this value is set to true Observability Cloud will force usage of a quota from the project where metrics are stored. For this to work the service account provided for the project needs to be provided with serviceusage.services.use permission or Service Usage Consumer role in this project. When set to false default quota settings are used.",
 			},
-			"include_list": &schema.Schema{
+			"include_list": {
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "List of custom metadata keys that you want Observability Cloud to collect for Compute Engine instances.",
@@ -115,13 +115,13 @@ func integrationGCPResource() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
-			"named_token": &schema.Schema{
+			"named_token": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "A named token to use for ingest",
 				ForceNew:    true,
 			},
-			"import_gcp_metrics": &schema.Schema{
+			"import_gcp_metrics": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     true,
