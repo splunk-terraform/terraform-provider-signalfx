@@ -1,5 +1,11 @@
 ## Unreleased
 
+## 9.3.0
+
+IMPROVEMENTS:
+
+* Added support for Workload Identity Federation auth method in GCP integration https://github.com/splunk-terraform/terraform-provider-signalfx/pull/546.
+
 ## 9.2.1
 
 BUGFIXES:

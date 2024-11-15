@@ -18,24 +18,24 @@ import (
 func integrationGCPResource() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Name of the integration",
 			},
-			"enabled": &schema.Schema{
+			"enabled": {
 				Type:        schema.TypeBool,
 				Required:    true,
 				Description: "Whether the integration is enabled or not",
 			},
-			"poll_rate": &schema.Schema{
+			"poll_rate": {
 				Type:         schema.TypeInt,
 				Optional:     true,
 				Default:      300,
 				Description:  "GCP poll rate (in seconds). Between `60` and `600`.",
 				ValidateFunc: validation.IntBetween(60, 600),
 			},
-			"services": &schema.Schema{
+			"services": {
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "GCP enabled services",
@@ -43,7 +43,7 @@ func integrationGCPResource() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
-			"custom_metric_type_domains": &schema.Schema{
+			"custom_metric_type_domains": {
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "List of additional GCP service domain names that you want to monitor",
@@ -51,7 +51,13 @@ func integrationGCPResource() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
-			"project_service_keys": &schema.Schema{
+			"auth_method": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validation.StringInSlice([]string{string(integration.SERVICE_ACCOUNT_KEY), string(integration.WORKLOAD_IDENTITY_FEDERATION)}, true),
+				Description:  "Authentication method to use in this integration. If empty, Splunk Observability backend defaults to SERVICE_ACCOUNT_KEY",
+			},
+			"project_service_keys": {
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "GCP project service keys",
@@ -70,13 +76,38 @@ func integrationGCPResource() *schema.Resource {
 					},
 				},
 			},
-			"use_metric_source_project_for_quota": &schema.Schema{
+			"project_wif_configs": {
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Description: "GCP WIF configs",
+				Sensitive:   true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"project_id": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"wif_config": {
+							Type:      schema.TypeString,
+							Required:  true,
+							Sensitive: true,
+						},
+					},
+				},
+			},
+			"wif_splunk_identity": {
+				Type:        schema.TypeMap,
+				Computed:    true,
+				Optional:    true,
+				Description: "The Splunk Observability GCP identity to include in GCP WIF provider definition.",
+			},
+			"use_metric_source_project_for_quota": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
 				Description: "When this value is set to true Observability Cloud will force usage of a quota from the project where metrics are stored. For this to work the service account provided for the project needs to be provided with serviceusage.services.use permission or Service Usage Consumer role in this project. When set to false default quota settings are used.",
 			},
-			"include_list": &schema.Schema{
+			"include_list": {
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "List of custom metadata keys that you want Observability Cloud to collect for Compute Engine instances.",
@@ -84,13 +115,13 @@ func integrationGCPResource() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
-			"named_token": &schema.Schema{
+			"named_token": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "A named token to use for ingest",
 				ForceNew:    true,
 			},
-			"import_gcp_metrics": &schema.Schema{
+			"import_gcp_metrics": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     true,
@@ -109,7 +140,7 @@ func integrationGCPResource() *schema.Resource {
 	}
 }
 
-func integrationGCPExists(d *schema.ResourceData, meta interface{}) (bool, error) {
+func integrationGCPExists(d *schema.ResourceData, meta any) (bool, error) {
 	config := meta.(*signalfxConfig)
 	_, err := config.Client.GetGCPIntegration(context.TODO(), d.Id())
 	if err != nil {
@@ -121,7 +152,7 @@ func integrationGCPExists(d *schema.ResourceData, meta interface{}) (bool, error
 	return true, nil
 }
 
-func integrationGCPRead(d *schema.ResourceData, meta interface{}) error {
+func integrationGCPRead(d *schema.ResourceData, meta any) error {
 	config := meta.(*signalfxConfig)
 	int, err := config.Client.GetGCPIntegration(context.TODO(), d.Id())
 	if err != nil {
@@ -162,17 +193,33 @@ func getGCPPayloadIntegration(d *schema.ResourceData) *integration.GCPIntegratio
 		gcp.Services = services
 	}
 
+	if val, ok := d.GetOk("auth_method"); ok {
+		gcp.AuthMethod = integration.GCPAuthMethod(strings.ToUpper(val.(string)))
+	}
+
 	if val, ok := d.GetOk("project_service_keys"); ok {
 		keys := val.(*schema.Set).List()
 		serviceKeys := make([]*integration.GCPProject, len(keys))
 		for i, v := range keys {
-			v := v.(map[string]interface{})
+			v := v.(map[string]any)
 			serviceKeys[i] = &integration.GCPProject{
 				ProjectId:  v["project_id"].(string),
 				ProjectKey: v["project_key"].(string),
 			}
 		}
 		gcp.ProjectServiceKeys = serviceKeys
+	}
+	if val, ok := d.GetOk("project_wif_configs"); ok {
+		keys := val.(*schema.Set).List()
+		wifConfigs := make([]*integration.GCPProjectWIFConfig, len(keys))
+		for i, v := range keys {
+			v := v.(map[string]any)
+			wifConfigs[i] = &integration.GCPProjectWIFConfig{
+				ProjectId: v["project_id"].(string),
+				WIFConfig: v["wif_config"].(string),
+			}
+		}
+		gcp.WifConfigs = wifConfigs
 	}
 
 	if val, ok := d.GetOk("include_list"); ok {
@@ -210,7 +257,7 @@ func gcpIntegrationAPIToTF(d *schema.ResourceData, gcp *integration.GCPIntegrati
 	}
 
 	if len(gcp.Services) > 0 {
-		services := make([]interface{}, len(gcp.Services))
+		services := make([]any, len(gcp.Services))
 		for i, v := range gcp.Services {
 			services[i] = string(v)
 		}
@@ -219,6 +266,24 @@ func gcpIntegrationAPIToTF(d *schema.ResourceData, gcp *integration.GCPIntegrati
 		}
 	}
 
+	if err := d.Set("auth_method", gcp.AuthMethod); err != nil {
+		return err
+	}
+	log.Printf("[DEBUG] SignalFx: Got GCP Integration wifConfig assign")
+
+	if gcp.WifConfigs != nil {
+		wifConfigs := convertWifConfigsToMap(gcp.WifConfigs)
+		if err := d.Set("project_wif_configs", wifConfigs); err != nil {
+			return fmt.Errorf("error setting project_wif_configs: %w", err)
+		}
+	} else {
+		if err := d.Set("project_wif_configs", []any{}); err != nil {
+			return fmt.Errorf("error unsetting project_wif_configs: %w", err)
+		}
+	}
+	if err := d.Set("wif_splunk_identity", gcp.WifSplunkIdentity); err != nil {
+		return err
+	}
 	// Note that the API doesn't return the project keys so we ignore them,
 	// because there's not much reason to poke at just the project id.
 
@@ -233,13 +298,20 @@ func gcpIntegrationAPIToTF(d *schema.ResourceData, gcp *integration.GCPIntegrati
 	return nil
 }
 
-func integrationGCPCreate(d *schema.ResourceData, meta interface{}) error {
+func integrationGCPCreate(d *schema.ResourceData, meta any) error {
 	config := meta.(*signalfxConfig)
 	payload := getGCPPayloadIntegration(d)
 
-	debugOutput, _ := json.Marshal(payload)
+	// Convert payload to JSON to see what will be sent
+	debugOutput, err := json.MarshalIndent(payload, "", "  ")
+	if err != nil {
+		return fmt.Errorf("error marshaling GCP integration payload to JSON for debug: %w", err)
+	}
+
+	// Print the JSON payload for debugging purposes
 	log.Printf("[DEBUG] SignalFx: Create GCP Integration Payload: %s", string(debugOutput))
 
+	// Make the actual API request to create the GCP Integration
 	int, err := config.Client.CreateGCPIntegration(context.TODO(), payload)
 	if err != nil {
 		if strings.Contains(err.Error(), "40") {
@@ -251,8 +323,7 @@ func integrationGCPCreate(d *schema.ResourceData, meta interface{}) error {
 
 	return gcpIntegrationAPIToTF(d, int)
 }
-
-func integrationGCPUpdate(d *schema.ResourceData, meta interface{}) error {
+func integrationGCPUpdate(d *schema.ResourceData, meta any) error {
 	config := meta.(*signalfxConfig)
 	payload := getGCPPayloadIntegration(d)
 
@@ -271,8 +342,20 @@ func integrationGCPUpdate(d *schema.ResourceData, meta interface{}) error {
 	return gcpIntegrationAPIToTF(d, int)
 }
 
-func integrationGCPDelete(d *schema.ResourceData, meta interface{}) error {
+func integrationGCPDelete(d *schema.ResourceData, meta any) error {
 	config := meta.(*signalfxConfig)
 
 	return config.Client.DeleteGCPIntegration(context.TODO(), d.Id())
+}
+
+func convertWifConfigsToMap(wifConfigs []*integration.GCPProjectWIFConfig) []map[string]any {
+
+	result := make([]map[string]any, len(wifConfigs))
+	for i, v := range wifConfigs {
+		result[i] = map[string]any{
+			"project_id": v.ProjectId,
+			"wif_config": v.WIFConfig,
+		}
+	}
+	return result
 }
