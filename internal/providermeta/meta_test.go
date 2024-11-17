@@ -5,8 +5,14 @@ package pmeta
 
 import (
 	"context"
+	"encoding/json"
+	"io"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
+	"github.com/signalfx/signalfx-go/sessiontoken"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -102,7 +108,7 @@ func TestMetaValidation(t *testing.T) {
 		{
 			name:   "meta not set",
 			meta:   Meta{},
-			errVal: "auth token not set; api url is not set",
+			errVal: "missing auth token or email and password; api url is not set",
 		},
 		{
 			name: "state valid",
@@ -110,6 +116,22 @@ func TestMetaValidation(t *testing.T) {
 				AuthToken: "aaa",
 				APIURL:    "http://api.signalfx.com",
 			},
+		},
+		{
+			name: "Email only provided",
+			meta: Meta{
+				Email:  "example@com",
+				APIURL: "http://api.signalfx.com",
+			},
+			errVal: "missing auth token or email and password",
+		},
+		{
+			name: "password only provided",
+			meta: Meta{
+				Password: "derp",
+				APIURL:   "http://api.signalfx.com",
+			},
+			errVal: "missing auth token or email and password",
 		},
 	} {
 
@@ -120,6 +142,84 @@ func TestMetaValidation(t *testing.T) {
 				require.EqualError(t, err, tc.errVal, "Must match the expected error")
 			} else {
 				require.NoError(t, err, "Must not error when validation")
+			}
+		})
+	}
+}
+
+func TestMetaToken(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name     string
+		token    string
+		handler  http.HandlerFunc
+		email    string
+		password string
+		expect   string
+		errVal   string
+	}{
+		{
+			name:  "missing values",
+			token: "",
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				_, _ = io.Copy(io.Discard, r.Body)
+				_ = r.Body.Close()
+
+				http.Error(w, "failed auth", http.StatusBadRequest)
+			},
+			email:    "",
+			password: "",
+			expect:   "",
+			errVal:   "route \"/v2/session\" had issues with status code 400",
+		},
+		{
+			name:  "token already provided",
+			token: "aaccbbb",
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				_, _ = io.Copy(io.Discard, r.Body)
+				_ = r.Body.Close()
+
+				http.Error(w, "should not be called", http.StatusBadRequest)
+			},
+			email:    "",
+			password: "",
+			expect:   "aaccbbb",
+			errVal:   "",
+		},
+		{
+			name:  "username password provided",
+			token: "",
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				_, _ = io.Copy(io.Discard, r.Body)
+				_ = r.Body.Close()
+
+				_ = json.NewEncoder(w).Encode(&sessiontoken.Token{AccessToken: "secret"})
+			},
+			email:    "user@example",
+			password: "notsosecret",
+			expect:   "secret",
+			errVal:   "",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			s := httptest.NewServer(tc.handler)
+			t.Cleanup(s.Close)
+
+			m := &Meta{
+				APIURL:    s.URL,
+				AuthToken: tc.token,
+				Email:     tc.email,
+				Password:  tc.password,
+			}
+
+			if token, err := m.LoadSessionToken(context.Background()); tc.errVal != "" {
+				assert.Equal(t, tc.expect, token, "Must match the expected value")
+				assert.EqualError(t, err, tc.errVal, "Must match the expected value")
+			} else {
+				assert.Equal(t, tc.expect, token, "Must match the expected value")
+				assert.NoError(t, err, "Must not error")
 			}
 		})
 	}

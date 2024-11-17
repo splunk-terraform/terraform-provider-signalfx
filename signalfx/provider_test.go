@@ -86,7 +86,7 @@ func TestProviderConfigureFromNothing(t *testing.T) {
 	rp := Provider()
 	diag := rp.Configure(context.Background(), terraform.NewResourceConfigRaw(raw))
 	assert.NotNil(t, diag)
-	assert.Contains(t, diag[0].Summary, "auth_token: required field is not set")
+	assert.Contains(t, diag[0].Summary, "missing auth token or email and password")
 }
 
 func TestProviderConfigureFromTerraform(t *testing.T) {
