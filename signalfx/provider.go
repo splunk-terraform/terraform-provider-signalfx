@@ -124,6 +124,7 @@ func Provider() *schema.Provider {
 			"signalfx_service_now_integration":  integrationServiceNowResource(),
 			"signalfx_slack_integration":        integrationSlackResource(),
 			"signalfx_single_value_chart":       singleValueChartResource(),
+			"signalfx_slo_chart":                sloChartResource(),
 			"signalfx_team":                     teamResource(),
 			"signalfx_time_chart":               timeChartResource(),
 			"signalfx_text_chart":               textChartResource(),
