@@ -38,11 +38,10 @@ func Provider() *schema.Provider {
 	sfxProvider = &schema.Provider{
 		Schema: map[string]*schema.Schema{
 			"auth_token": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				ConflictsWith: []string{"email", "password", "organization_id"},
-				DefaultFunc:   schema.EnvDefaultFunc("SFX_AUTH_TOKEN", ""),
-				Description:   "Splunk Observability Cloud auth token",
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("SFX_AUTH_TOKEN", ""),
+				Description: "Splunk Observability Cloud auth token",
 			},
 			"api_url": {
 				Type:        schema.TypeString,
@@ -81,22 +80,20 @@ func Provider() *schema.Provider {
 				Description: "Maximum retry wait for a single HTTP call in seconds. Defaults to 30",
 			},
 			"email": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				ConflictsWith: []string{"auth_token"},
-				Description:   "Used to create a session token instead of an API token, it requires the account to be configured to login with Email and Password",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Used to create a session token instead of an API token, it requires the account to be configured to login with Email and Password",
 			},
 			"password": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				ConflictsWith: []string{"auth_token"},
-				Description:   "Used to create a session token instead of an API token, it requires the account to be configured to login with Email and Password",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Sensitive:   true,
+				Description: "Used to create a session token instead of an API token, it requires the account to be configured to login with Email and Password",
 			},
 			"organization_id": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				ConflictsWith: []string{"auth_token"},
-				Description:   "Required if the user is configured to be part of multiple organizations",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Required if the user is configured to be part of multiple organizations",
 			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
@@ -142,7 +139,11 @@ func Provider() *schema.Provider {
 }
 
 func signalfxConfigure(data *schema.ResourceData) (interface{}, error) {
-	config := signalfxConfig{}
+	config := signalfxConfig{
+		Email:          data.Get("email").(string),
+		Password:       data.Get("password").(string),
+		OrganizationID: data.Get("organization_id").(string),
+	}
 
 	// /etc/signalfx.conf has the lowest priority
 	if _, err := os.Stat(SystemConfigPath); err == nil {
