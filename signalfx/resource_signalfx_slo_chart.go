@@ -32,7 +32,7 @@ func sloChartResource() *schema.Resource {
 		Delete: slochartDelete,
 		Exists: chartExists,
 		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 	}
 }

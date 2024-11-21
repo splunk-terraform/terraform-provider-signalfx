@@ -147,7 +147,7 @@ func testAccCheckSloChartResourceExists(s *terraform.State) error {
 		case "signalfx_slo_chart":
 			chart, err := client.GetChart(context.TODO(), rs.Primary.ID)
 			if chart.Id != rs.Primary.ID || err != nil {
-				return fmt.Errorf("Error finding chart %s: %s", rs.Primary.ID, err)
+				return fmt.Errorf("Error finding chart %s: %w", rs.Primary.ID, err)
 			}
 		case "signalfx_slo":
 			// ignore SLO resource for this test (SLO is required to create SLO chart but is not an object under test)
