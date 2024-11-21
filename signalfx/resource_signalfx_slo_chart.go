@@ -14,12 +14,12 @@ import (
 func sloChartResource() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
-			"slo_id": &schema.Schema{
+			"slo_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "ID of the attached SLO",
 			},
-			"url": &schema.Schema{
+			"url": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "URL of the chart",
@@ -46,7 +46,7 @@ func getPayloadSloChart(d *schema.ResourceData) *chart.CreateUpdateSloChartReque
 	}
 }
 
-func slochartCreate(d *schema.ResourceData, meta interface{}) error {
+func slochartCreate(d *schema.ResourceData, meta any) error {
 	config := meta.(*signalfxConfig)
 	payload := getPayloadSloChart(d)
 
@@ -80,7 +80,7 @@ func slochartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 	return nil
 }
 
-func slochartRead(d *schema.ResourceData, meta interface{}) error {
+func slochartRead(d *schema.ResourceData, meta any) error {
 	config := meta.(*signalfxConfig)
 	c, err := config.Client.GetChart(context.TODO(), d.Id())
 	if err != nil {
@@ -98,7 +98,7 @@ func slochartRead(d *schema.ResourceData, meta interface{}) error {
 	return slochartAPIToTF(d, c)
 }
 
-func slochartUpdate(d *schema.ResourceData, meta interface{}) error {
+func slochartUpdate(d *schema.ResourceData, meta any) error {
 	config := meta.(*signalfxConfig)
 	payload := getPayloadSloChart(d)
 	debugOutput, _ := json.Marshal(payload)
@@ -114,7 +114,7 @@ func slochartUpdate(d *schema.ResourceData, meta interface{}) error {
 	return slochartAPIToTF(d, c)
 }
 
-func slochartDelete(d *schema.ResourceData, meta interface{}) error {
+func slochartDelete(d *schema.ResourceData, meta any) error {
 	config := meta.(*signalfxConfig)
 
 	return config.Client.DeleteChart(context.TODO(), d.Id())
