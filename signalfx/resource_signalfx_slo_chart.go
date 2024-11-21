@@ -6,9 +6,10 @@ package signalfx
 import (
 	"context"
 	"encoding/json"
+	"log"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	chart "github.com/signalfx/signalfx-go/chart"
-	"log"
 )
 
 func sloChartResource() *schema.Resource {
