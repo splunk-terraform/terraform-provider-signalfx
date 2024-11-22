@@ -5,11 +5,12 @@ package signalfx
 
 import (
 	"context"
-	"encoding/json"
-	"log"
-
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	chart "github.com/signalfx/signalfx-go/chart"
+	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
+	tfext "github.com/splunk-terraform/terraform-provider-signalfx/internal/tfextension"
 )
 
 func sloChartResource() *schema.Resource {
@@ -27,11 +28,10 @@ func sloChartResource() *schema.Resource {
 			},
 		},
 
-		Create: slochartCreate,
-		Read:   slochartRead,
-		Update: slochartUpdate,
-		Delete: slochartDelete,
-		Exists: chartExists,
+		CreateContext: slochartCreate,
+		ReadContext:   slochartRead,
+		UpdateContext: slochartUpdate,
+		DeleteContext: slochartDelete,
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
 		},
@@ -47,76 +47,63 @@ func getPayloadSloChart(d *schema.ResourceData) *chart.CreateUpdateSloChartReque
 	}
 }
 
-func slochartCreate(d *schema.ResourceData, meta any) error {
+func slochartCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	config := meta.(*signalfxConfig)
 	payload := getPayloadSloChart(d)
 
-	debugOutput, _ := json.Marshal(payload)
-	log.Printf("[DEBUG] SignalFx: Create SLO Chart Payload: %s", string(debugOutput))
+	tflog.Debug(ctx, "Creating SLO chart", tfext.NewLogFields().JSON("payload", payload))
 
-	sloChart, err := config.Client.CreateSloChart(context.TODO(), payload)
+	sloChart, err := config.Client.CreateSloChart(ctx, payload)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	// Since things worked, set the URL and move on
-	appURL, err := buildAppURL(config.CustomAppURL, CHART_APP_PATH+sloChart.Id)
-	if err != nil {
-		return err
-	}
+	appURL := pmeta.LoadApplicationURL(ctx, meta, CHART_APP_PATH, sloChart.Id)
+
 	if err := d.Set("url", appURL); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	d.SetId(sloChart.Id)
 	return slochartAPIToTF(d, sloChart)
 }
 
-func slochartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
-	debugOutput, _ := json.Marshal(c)
-	log.Printf("[DEBUG] SignalFx: Got SLO Chart to enState: %s", string(debugOutput))
-
-	if err := d.Set("slo_id", c.SloId); err != nil {
-		return err
-	}
-
-	return nil
+func slochartAPIToTF(d *schema.ResourceData, c *chart.Chart) diag.Diagnostics {
+	return diag.FromErr(d.Set("slo_id", c.SloId))
 }
 
-func slochartRead(d *schema.ResourceData, meta any) error {
+func slochartRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	config := meta.(*signalfxConfig)
-	c, err := config.Client.GetChart(context.TODO(), d.Id())
+	sloChart, err := config.Client.GetChart(ctx, d.Id())
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
-	appURL, err := buildAppURL(config.CustomAppURL, CHART_APP_PATH+c.Id)
-	if err != nil {
-		return err
-	}
+	appURL := pmeta.LoadApplicationURL(ctx, meta, CHART_APP_PATH, sloChart.Id)
+
 	if err := d.Set("url", appURL); err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
-	return slochartAPIToTF(d, c)
+	return slochartAPIToTF(d, sloChart)
 }
 
-func slochartUpdate(d *schema.ResourceData, meta any) error {
+func slochartUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	config := meta.(*signalfxConfig)
 	payload := getPayloadSloChart(d)
-	debugOutput, _ := json.Marshal(payload)
-	log.Printf("[DEBUG] SignalFx: Update SLO Chart Payload: %s", string(debugOutput))
+	tflog.Debug(ctx, "Updating SLO chart", tfext.NewLogFields().JSON("payload", payload))
 
-	c, err := config.Client.UpdateSloChart(context.TODO(), d.Id(), payload)
+	c, err := config.Client.UpdateSloChart(ctx, d.Id(), payload)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
-	log.Printf("[DEBUG] SignalFx: Update SLO Chart Response: %v", c)
+	tflog.Debug(ctx, "SLO chart update response", tfext.NewLogFields().JSON("response", c))
 
 	d.SetId(c.Id)
 	return slochartAPIToTF(d, c)
 }
 
-func slochartDelete(d *schema.ResourceData, meta any) error {
+func slochartDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	config := meta.(*signalfxConfig)
 
-	return config.Client.DeleteChart(context.TODO(), d.Id())
+	return diag.FromErr(config.Client.DeleteChart(ctx, d.Id()))
 }
