@@ -72,6 +72,30 @@ resource "signalfx_data_link" "big_test_data_link" {
 }
 `
 
+const newDataLinkAppdConfig = `
+  resource "signalfx_data_link" "big_test_data_link" {
+    property_name = "pname"
+    property_value = "pvalue"
+
+    target_appd_url {
+      name = "appd_url"
+      url = "https://example.saas.appdynamics.com/controller/#/application=3039831&component=3677819"
+    }
+  }
+`
+
+const newDataLinkAppdConfigBadUrlErr = `
+  resource "signalfx_data_link" "big_test_data_link" {
+    property_name = "pname"
+    property_value = "pvalue"
+
+    target_appd_url {
+      name = "appd_url"
+      url = "https://example.saas.appdynamics.com/controller/#/application=3039831"
+    }
+  }
+`
+
 func TestAccCreateDashboardDataLinkFails(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		Providers:    testAccProviders,
@@ -134,6 +158,38 @@ func TestAccCreateUpdateDataLinkWithoutPropertyValue(t *testing.T) {
 					testAccCheckDataLinkResourceExists,
 					resource.TestCheckResourceAttr("signalfx_data_link.big_test_data_link", "property_name", "pname"),
 					resource.TestCheckResourceAttr("signalfx_data_link.big_test_data_link", "property_value", ""),
+				),
+			},
+		},
+	})
+}
+
+// AppD DataLink acceptance tests
+func testAccCreateAppdDataLinkFails(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		Providers:    testAccProviders,
+		CheckDestroy: testAccDataLinkDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config:      newDataLinkAppdConfigBadUrlErr,
+				ExpectError: regexp.MustCompile("URL must include a valid component and application ID"),
+			},
+		},
+	})
+}
+func testAccCreateAppdDataLink(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccDataLinkDestroy,
+		Steps: []resource.TestStep{
+			// Create
+			{
+				Config: newDataLinkAppdConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckDataLinkResourceExists,
+					resource.TestCheckResourceAttr("signalfx_data_link.big_test_data_link", "property_name", "pname"),
+					resource.TestCheckResourceAttr("signalfx_data_link.big_test_data_link", "property_value", "pvalue"),
 				),
 			},
 		},
