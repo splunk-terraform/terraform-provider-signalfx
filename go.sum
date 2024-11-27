@@ -140,6 +140,8 @@ github.com/signalfx/signalfx-go v1.41.0 h1:+lWPBe/FNEWiDdYtgu7t4xf7h3ogPQmjDlb0s
 github.com/signalfx/signalfx-go v1.41.0/go.mod h1:I30umyhRTu8mPpEtMzEbG0z9wOYjkUKTp9U0gFxFsmk=
 github.com/signalfx/signalfx-go v1.43.0 h1:Wp/XkyETzRyFvtuCGTN039hYwVgwIPfkBciqs19hqv4=
 github.com/signalfx/signalfx-go v1.43.0/go.mod h1:I30umyhRTu8mPpEtMzEbG0z9wOYjkUKTp9U0gFxFsmk=
+github.com/signalfx/signalfx-go v1.44.0 h1:BkLtohTJkq3mr1Yl1OzCWK+e2DZRqZ0M0zD9Gs+c41Q=
+github.com/signalfx/signalfx-go v1.44.0/go.mod h1:I30umyhRTu8mPpEtMzEbG0z9wOYjkUKTp9U0gFxFsmk=
 github.com/skeema/knownhosts v1.2.2 h1:Iug2P4fLmDw9f41PB6thxUkNUkJzB5i+1/exaj40L3A=
 github.com/skeema/knownhosts v1.2.2/go.mod h1:xYbVRSPxqBZFrdmDyMmsOs+uX1UZC3nTN3ThzgDxUwo=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
