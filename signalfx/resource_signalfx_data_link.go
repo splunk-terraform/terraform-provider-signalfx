@@ -263,7 +263,7 @@ func getPayloadDataLink(d *schema.ResourceData) (*datalink.CreateUpdateDataLinkR
 				URL:  tfLink["url"].(string),
 				// Need to add APPD_LINK type to signalfx-go library
 				// Type: datalink.APPD_LINK,
-				Type: datalink.EXTERNAL_LINK,
+				Type: datalink.APPD_LINK,
 			}
 
 			dataLink.Targets = append(dataLink.Targets, dl)
