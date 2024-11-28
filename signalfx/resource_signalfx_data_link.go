@@ -227,17 +227,12 @@ func getPayloadDataLink(d *schema.ResourceData) (*datalink.CreateUpdateDataLinkR
 		}
 	}
 
-	// New AppD datalink check
-	// REQ: url validation
-	// REQ: url follows appd pattern
-	// REQ: appd applicatin id and content id are of type integer
 	if val, ok := d.GetOk("target_appd_url"); ok {
 		appdURLs := val.(*schema.Set).List()
 
 		for _, tfLink := range appdURLs {
 			tfLink := tfLink.(map[string]interface{})
 
-			// AppD URL validation
 			appdUrl, err := url.ParseRequestURI(tfLink["url"].(string))
 			if err != nil {
 				return dataLink, fmt.Errorf("Invalid URL")
@@ -255,14 +250,12 @@ func getPayloadDataLink(d *schema.ResourceData) (*datalink.CreateUpdateDataLinkR
 			_, componentIdErr := strconv.Atoi(componentId[0])
 			_, applicationIdErr := strconv.Atoi(applicationId[0])
 			if componentIdErr != nil || applicationIdErr != nil {
-				return dataLink, fmt.Errorf("URL must include a valid component and application ID")
+				return dataLink, fmt.Errorf("URL must include a valid component and application IDs")
 			}
 
 			dl := &datalink.Target{
 				Name: tfLink["name"].(string),
 				URL:  tfLink["url"].(string),
-				// Need to add APPD_LINK type to signalfx-go library
-				// Type: datalink.APPD_LINK,
 				Type: datalink.APPD_LINK,
 			}
 
