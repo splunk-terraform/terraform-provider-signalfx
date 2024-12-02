@@ -164,26 +164,24 @@ func TestAccCreateUpdateDataLinkWithoutPropertyValue(t *testing.T) {
 	})
 }
 
-// AppD DataLink acceptance tests
-func testAccCreateAppdDataLinkFails(t *testing.T) {
+func TestAccCreateAppdDataLinkFails(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		Providers:    testAccProviders,
 		CheckDestroy: testAccDataLinkDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config:      newDataLinkAppdConfigBadUrlErr,
-				ExpectError: regexp.MustCompile("URL must include a valid component and application ID"),
+				ExpectError: regexp.MustCompile("URL must include component and application IDs"),
 			},
 		},
 	})
 }
-func testAccCreateAppdDataLink(t *testing.T) {
+func TestAccCreateAppdDataLink(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccDataLinkDestroy,
 		Steps: []resource.TestStep{
-			// Create
 			{
 				Config: newDataLinkAppdConfig,
 				Check: resource.ComposeTestCheckFunc(
