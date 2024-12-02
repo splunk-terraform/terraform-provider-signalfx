@@ -233,7 +233,13 @@ func getPayloadDataLink(d *schema.ResourceData) (*datalink.CreateUpdateDataLinkR
 		for _, tfLink := range appdURLs {
 			tfLink := tfLink.(map[string]interface{})
 
-			appdUrl, err := url.ParseRequestURI(tfLink["url"].(string))
+			dl := &datalink.Target{
+				Name: tfLink["name"].(string),
+				URL:  tfLink["url"].(string),
+				Type: datalink.APPD_LINK,
+			}
+
+			appdUrl, err := url.ParseRequestURI(dl.URL)
 			if err != nil {
 				return dataLink, fmt.Errorf("Invalid URL")
 			}
@@ -241,22 +247,17 @@ func getPayloadDataLink(d *schema.ResourceData) (*datalink.CreateUpdateDataLinkR
 				return dataLink, fmt.Errorf("Invalid AppDynamics URL")
 			}
 
-			queryParams := appdUrl.Query()
+			queryStr := strings.TrimPrefix(appdUrl.Path, "/controller/#/")
+			queryParams, err := url.ParseQuery(queryStr)
 			componentId, applicationId := queryParams["component"], queryParams["application"]
-			if len(componentId) != 1 || len(applicationId) != 1 {
-				return dataLink, fmt.Errorf("URL must include a valid component and application ID")
+			if len(componentId) != 1 || len(applicationId) != 1 || err != nil {
+				return dataLink, fmt.Errorf("URL must include component and application IDs")
 			}
 
 			_, componentIdErr := strconv.Atoi(componentId[0])
 			_, applicationIdErr := strconv.Atoi(applicationId[0])
 			if componentIdErr != nil || applicationIdErr != nil {
-				return dataLink, fmt.Errorf("URL must include a valid component and application IDs")
-			}
-
-			dl := &datalink.Target{
-				Name: tfLink["name"].(string),
-				URL:  tfLink["url"].(string),
-				Type: datalink.APPD_LINK,
+				return dataLink, fmt.Errorf("URL must include valid component and application IDs")
 			}
 
 			dataLink.Targets = append(dataLink.Targets, dl)
@@ -347,6 +348,7 @@ func dataLinkAPIToTF(d *schema.ResourceData, dl *datalink.DataLink) error {
 	var internalLinks []map[string]interface{}
 	var externalLinks []map[string]interface{}
 	var splunkLinks []map[string]interface{}
+	var appdLinks []map[string]interface{}
 
 	for _, t := range dl.Targets {
 		switch t.Type {
@@ -373,6 +375,12 @@ func dataLinkAPIToTF(d *schema.ResourceData, dl *datalink.DataLink) error {
 				"property_key_mapping": t.PropertyKeyMapping,
 			}
 			splunkLinks = append(splunkLinks, tfTarget)
+		case datalink.APPD_LINK:
+			tfTarget := map[string]interface{}{
+				"name": t.Name,
+				"url":  t.URL,
+			}
+			appdLinks = append(appdLinks, tfTarget)
 		default:
 			return fmt.Errorf("Unknown link type: %s", t.Type)
 		}
@@ -389,6 +397,11 @@ func dataLinkAPIToTF(d *schema.ResourceData, dl *datalink.DataLink) error {
 	}
 	if splunkLinks != nil && len(splunkLinks) > 0 {
 		if err := d.Set("target_splunk", splunkLinks); err != nil {
+			return err
+		}
+	}
+	if appdLinks != nil && len(appdLinks) > 0 {
+		if err := d.Set("target_appd_url", appdLinks); err != nil {
 			return err
 		}
 	}
