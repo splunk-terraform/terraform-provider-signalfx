@@ -50,6 +50,12 @@ var ChartColorsSlice = []chartColor{
 	{"lime_green", "#6bd37e"},
 }
 
+// getPayload for viz objects is called withs: *schema.ResourceDiff or *schema.ResourceData - that's why we need this interface
+type ResourceDataAccess interface {
+	Get(key string) interface{}
+	GetOk(key string) (interface{}, bool)
+}
+
 func buildAppURL(appURL string, fragment string) (string, error) {
 	// Include a trailing slash, as without this Go doesn't add one for the fragment and that seems to be a required part of the url
 	u, err := url.Parse(appURL + "/")
