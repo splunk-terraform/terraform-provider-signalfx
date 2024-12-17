@@ -199,11 +199,12 @@ func dashboardGroupResource() *schema.Resource {
 			},
 		},
 
-		Create: dashboardgroupCreate,
-		Read:   dashboardgroupRead,
-		Update: dashboardgroupUpdate,
-		Delete: dashboardgroupDelete,
-		Exists: dashboardgroupExists,
+		CustomizeDiff: dashboardgroupValidate,
+		Create:        dashboardgroupCreate,
+		Read:          dashboardgroupRead,
+		Update:        dashboardgroupUpdate,
+		Delete:        dashboardgroupDelete,
+		Exists:        dashboardgroupExists,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -225,7 +226,7 @@ func dashboardgroupExists(d *schema.ResourceData, meta interface{}) (bool, error
 /*
 Use Resource object to construct json payload in order to create a dasboard group
 */
-func getPayloadDashboardGroup(d *schema.ResourceData) *dashboard_group.CreateUpdateDashboardGroupRequest {
+func getPayloadDashboardGroup(d ResourceDataAccess) *dashboard_group.CreateUpdateDashboardGroupRequest {
 	cudgr := &dashboard_group.CreateUpdateDashboardGroupRequest{
 		Name:              d.Get("name").(string),
 		Description:       d.Get("description").(string),
@@ -393,7 +394,7 @@ func getPayloadDashboardGroup(d *schema.ResourceData) *dashboard_group.CreateUpd
 	return cudgr
 }
 
-func getPermissions(d *schema.ResourceData) *dashboard_group.ObjectPermissions {
+func getPermissions(d ResourceDataAccess) *dashboard_group.ObjectPermissions {
 	permissions := &dashboard_group.ObjectPermissions{}
 	if val := getPermissionsAcl(d); len(val) > 0 {
 		permissions.Acl = val
@@ -401,7 +402,7 @@ func getPermissions(d *schema.ResourceData) *dashboard_group.ObjectPermissions {
 	return permissions
 }
 
-func getPermissionsAcl(d *schema.ResourceData) []*dashboard_group.AclEntry {
+func getPermissionsAcl(d ResourceDataAccess) []*dashboard_group.AclEntry {
 	acl := d.Get("permissions").(*schema.Set).List()
 	aclList := make([]*dashboard_group.AclEntry, len(acl))
 	for i, entry := range acl {
@@ -415,6 +416,10 @@ func getPermissionsAcl(d *schema.ResourceData) []*dashboard_group.AclEntry {
 		aclList[i] = item
 	}
 	return aclList
+}
+
+func dashboardgroupValidate(ctx context.Context, d *schema.ResourceDiff, config interface{}) error {
+	return config.(*signalfxConfig).Client.ValidateDashboardGroup(ctx, getPayloadDashboardGroup(d))
 }
 
 func dashboardgroupCreate(d *schema.ResourceData, meta interface{}) error {
