@@ -8,8 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"net/url"
-	"strconv"
+	"regexp"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -230,6 +229,9 @@ func getPayloadDataLink(d *schema.ResourceData) (*datalink.CreateUpdateDataLinkR
 	if val, ok := d.GetOk("target_appd_url"); ok {
 		appdURLs := val.(*schema.Set).List()
 
+		appdUrlPatternRegex := "^https?:\\/\\/[a-zA-Z0-9-]+\\.saas\\.appdynamics\\.com\\/.*application=\\d+.*component=\\d+.*"
+		re := regexp.MustCompile(appdUrlPatternRegex)
+
 		for _, tfLink := range appdURLs {
 			tfLink := tfLink.(map[string]interface{})
 
@@ -238,26 +240,9 @@ func getPayloadDataLink(d *schema.ResourceData) (*datalink.CreateUpdateDataLinkR
 				URL:  tfLink["url"].(string),
 				Type: datalink.APPD_LINK,
 			}
-
-			appdUrl, err := url.ParseRequestURI(dl.URL)
-			if err != nil {
-				return dataLink, fmt.Errorf("Invalid URL")
-			}
-			if !strings.HasSuffix(appdUrl.Host, ".saas.appdynamics.com") || !strings.HasPrefix(appdUrl.Path, "/controller") {
-				return dataLink, fmt.Errorf("Invalid AppDynamics URL")
-			}
-
-			queryStr := strings.TrimPrefix(appdUrl.Path, "/controller/#/")
-			queryParams, err := url.ParseQuery(queryStr)
-			componentId, applicationId := queryParams["component"], queryParams["application"]
-			if len(componentId) != 1 || len(applicationId) != 1 || err != nil {
-				return dataLink, fmt.Errorf("URL must include component and application IDs")
-			}
-
-			_, componentIdErr := strconv.Atoi(componentId[0])
-			_, applicationIdErr := strconv.Atoi(applicationId[0])
-			if componentIdErr != nil || applicationIdErr != nil {
-				return dataLink, fmt.Errorf("URL must include valid component and application IDs")
+			match := re.MatchString(dl.URL)
+			if !match {
+				return dataLink, fmt.Errorf("Enter a valid AppD Link. The link needs to include the contoller URL, application ID, and Application component.")
 			}
 
 			dataLink.Targets = append(dataLink.Targets, dl)
