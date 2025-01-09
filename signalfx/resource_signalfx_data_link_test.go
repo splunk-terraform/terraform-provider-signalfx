@@ -171,7 +171,7 @@ func TestAccCreateAppdDataLinkFails(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      newDataLinkAppdConfigBadUrlErr,
-				ExpectError: regexp.MustCompile("URL must include component and application IDs"),
+				ExpectError: regexp.MustCompile("Enter a valid AppD Link. The link needs to include the contoller URL, application ID, and Application component."),
 			},
 		},
 	})
