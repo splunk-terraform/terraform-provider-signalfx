@@ -233,11 +233,12 @@ func listChartResource() *schema.Resource {
 			},
 		},
 
-		Create: listchartCreate,
-		Read:   listchartRead,
-		Update: listchartUpdate,
-		Delete: listchartDelete,
-		Exists: chartExists,
+		CustomizeDiff: listchartValidate,
+		Create:        listchartCreate,
+		Read:          listchartRead,
+		Update:        listchartUpdate,
+		Delete:        listchartDelete,
+		Exists:        chartExists,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -247,7 +248,7 @@ func listChartResource() *schema.Resource {
 /*
 Use Resource object to construct json payload in order to create a list chart
 */
-func getPayloadListChart(d *schema.ResourceData) (*chart.CreateUpdateChartRequest, error) {
+func getPayloadListChart(d ResourceDataAccess) (*chart.CreateUpdateChartRequest, error) {
 	payload := &chart.CreateUpdateChartRequest{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
@@ -278,7 +279,7 @@ func getPayloadListChart(d *schema.ResourceData) (*chart.CreateUpdateChartReques
 	return payload, nil
 }
 
-func getListChartOptions(d *schema.ResourceData) (*chart.Options, error) {
+func getListChartOptions(d ResourceDataAccess) (*chart.Options, error) {
 	options := &chart.Options{
 		Type: "List",
 	}
@@ -363,6 +364,10 @@ func getListChartOptions(d *schema.ResourceData) (*chart.Options, error) {
 	}
 
 	return options, nil
+}
+
+func listchartValidate(ctx context.Context, d *schema.ResourceDiff, config interface{}) error {
+	return chartValidate(ctx, d, config, getPayloadListChart)
 }
 
 func listchartCreate(d *schema.ResourceData, meta interface{}) error {

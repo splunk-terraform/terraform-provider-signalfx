@@ -56,6 +56,16 @@ type ResourceDataAccess interface {
 	GetOk(key string) (interface{}, bool)
 }
 
+func chartValidate(ctx context.Context, chartResource *schema.ResourceDiff, config interface{}, getPayload func(ResourceDataAccess) (*chart.CreateUpdateChartRequest, error)) error {
+	payload, err := getPayload(chartResource)
+
+	if err != nil {
+		return err
+	}
+
+	return config.(*signalfxConfig).Client.ValidateChart(ctx, payload)
+}
+
 func buildAppURL(appURL string, fragment string) (string, error) {
 	// Include a trailing slash, as without this Go doesn't add one for the fragment and that seems to be a required part of the url
 	u, err := url.Parse(appURL + "/")
@@ -141,7 +151,7 @@ func getNameFromChartColorsByIndex(index int) (string, error) {
 /*
 Get Color Scale Options
 */
-func getColorScaleOptions(d *schema.ResourceData) []*chart.SecondaryVisualization {
+func getColorScaleOptions(d ResourceDataAccess) []*chart.SecondaryVisualization {
 	colorScale := d.Get("color_scale").(*schema.Set).List()
 	return getColorScaleOptionsFromSlice(colorScale)
 }
@@ -186,7 +196,7 @@ func getColorScaleOptionsFromSlice(colorScale []interface{}) []*chart.SecondaryV
 /*
 Util method to get Legend Chart Options.
 */
-func getLegendOptions(d *schema.ResourceData) *chart.DataTableOptions {
+func getLegendOptions(d ResourceDataAccess) *chart.DataTableOptions {
 	var options *chart.DataTableOptions
 	if properties, ok := d.GetOk("legend_fields_to_hide"); ok {
 		properties := properties.(*schema.Set).List()
@@ -217,7 +227,7 @@ func getLegendOptions(d *schema.ResourceData) *chart.DataTableOptions {
 /*
 Util method to get Legend Chart Options for fields
 */
-func getLegendFieldOptions(d *schema.ResourceData) *chart.DataTableOptions {
+func getLegendFieldOptions(d ResourceDataAccess) *chart.DataTableOptions {
 	if fields, ok := d.GetOk("legend_options_fields"); ok {
 		fields := fields.([]interface{})
 		if len(fields) > 0 {
