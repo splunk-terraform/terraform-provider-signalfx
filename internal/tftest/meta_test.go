@@ -49,7 +49,7 @@ func TestNewAcceptanceConfigure(t *testing.T) {
 			name: "no values set",
 			envs: map[string]string{},
 			issues: diag.Diagnostics{
-				{Severity: diag.Error, Summary: "auth token not set"},
+				{Severity: diag.Error, Summary: "missing auth token or email and password"},
 				{Severity: diag.Error, Summary: "api url is not set"},
 			},
 		},

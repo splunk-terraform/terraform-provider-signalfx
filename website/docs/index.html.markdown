@@ -20,10 +20,20 @@ You can use the SignalFlow programming language to create charts and detectors u
 
 # Authentication
 
-When authenticating to the Splunk Observability Cloud API you can use either an Org token or a 
-Session token. See [Authenticate API Requests](https://dev.splunk.com/observability/docs/apibasics/authentication_basics/) in the Splunk developer documentation.
+When authenticating to the Splunk Observability Cloud API you can use:
 
-Session tokens are short-lived and provide administrative permissions to edit integrations. They expire relatively quickly, but let you manipulate some sensitive resources. Resources that require session tokens are flagged in their documentation.
+1. An Org token.
+1. A Session token.
+1. A Service account.
+
+See [Authenticate API Requests](https://dev.splunk.com/observability/docs/apibasics/authentication_basics/) in the Splunk developer documentation.
+
+Session tokens are short-lived and provide administrative permissions to edit integrations. 
+They expire relatively quickly, but let you manipulate some sensitive resources. 
+Resources that require session tokens are flagged in their documentation.
+
+A Service account is term used when a user is created within organization that can login via Username and Password, 
+this allows for a _Session Token_ to be created by the terraform provider and then used throughout the application.
 
 ~> **NOTE** Separate the less sensitive resources, such as dashboards, from the 
 more sensitive ones, such as integrations, to avoid having to change tokens.
@@ -53,6 +63,19 @@ resource "signalfx_dashboard" "default" {
 }
 ```
 
+```hcl
+# An example configuration with a service account.
+provider "signalfx" {
+  email           = "service.account@example"
+  password        = "${var.service_account_password}"
+  organization_id = "${var.service_account_org_id}"
+  # If your organization uses a different realm
+  # api_url = "https://api.<realm>.signalfx.com"
+  # If your organization uses a custom URL
+  # custom_app_url = "https://myorg.signalfx.com"
+}
+```
+
 ## Arguments
 
 The provider supports the following arguments:
@@ -64,3 +87,6 @@ The provider supports the following arguments:
 * `retry_max_attempts` - (Optional) The number of retry attempts when making HTTP API calls to Splunk Observability Cloud. Defaults to `4`.
 * `retry_wait_min_seconds` - (Optional) The minimum wait time between retry attempts when making HTTP API calls to Splunk Observability Cloud, in seconds. Defaults to `1`.
 * `retry_wait_max_seconds` - (Optional) The maximum wait time between retry attempts when making HTTP API calls to Splunk Observability Cloud, in seconds. Defaults to `30`.
+* `email` - (Optional) The provided email address is used to generate a _Session Token_ that is then used for all API interactions. Requires email address to be configured with a password, and not via SSO.
+* `password` - (Optional) The password is used to authenticate the email provided to generate a _Session Token_. Requires email address to be configured with a password, and not via SSO.
+* `organization_id` - (Optional) The organisation id is used to select which organization if the user provided belongs to multiple.

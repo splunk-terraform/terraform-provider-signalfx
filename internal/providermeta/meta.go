@@ -12,6 +12,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/signalfx/signalfx-go"
+	"github.com/signalfx/signalfx-go/sessiontoken"
 	"go.uber.org/multierr"
 
 	tfext "github.com/splunk-terraform/terraform-provider-signalfx/internal/tfextension"
@@ -27,10 +28,13 @@ var (
 // It is abstracted out from the provider definition to make it easier
 // to test CRUD operations within unit tests.
 type Meta struct {
-	AuthToken    string           `json:"auth_token"`
-	APIURL       string           `json:"api_url"`
-	CustomAppURL string           `json:"custom_app_url"`
-	Client       *signalfx.Client `json:"-"`
+	AuthToken      string           `json:"auth_token"`
+	APIURL         string           `json:"api_url"`
+	CustomAppURL   string           `json:"custom_app_url"`
+	Client         *signalfx.Client `json:"-"`
+	Email          string           `json:"email"`
+	Password       string           `json:"password"`
+	OrganizationID string           `json:"org_id"`
 }
 
 // LoadClient returns the configured [signalfx.Client] ready to use.
@@ -68,11 +72,38 @@ func LoadApplicationURL(ctx context.Context, meta any, fragments ...string) stri
 	return u.String()
 }
 
-func (s *Meta) Validate() (errs error) {
-	if s.AuthToken == "" {
-		errs = multierr.Append(errs, errors.New("auth token not set"))
+// LoadSessionToken will use the provider username and password
+// so that it can be used as the token through the interaction.
+func (m *Meta) LoadSessionToken(ctx context.Context) (string, error) {
+	if m.AuthToken != "" {
+		return m.AuthToken, nil
 	}
-	if s.APIURL == "" {
+
+	client, err := signalfx.NewClient("", signalfx.APIUrl(m.APIURL))
+	if err != nil {
+		return "", err
+	}
+
+	resp, err := client.CreateSessionToken(ctx, &sessiontoken.CreateTokenRequest{
+		Email:          m.Email,
+		Password:       m.Password,
+		OrganizationId: m.OrganizationID,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	// TODO: determine if any additional fields would be useful for debugging.
+	tflog.Info(ctx, "Created new session token")
+
+	return resp.AccessToken, nil
+}
+
+func (m *Meta) Validate() (errs error) {
+	if m.AuthToken == "" && (m.Email == "" || m.Password == "") {
+		errs = multierr.Append(errs, errors.New("missing auth token or email and password"))
+	}
+	if m.APIURL == "" {
 		errs = multierr.Append(errs, errors.New("api url is not set"))
 	}
 	return errs

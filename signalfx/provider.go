@@ -4,6 +4,7 @@
 package signalfx
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -78,6 +79,22 @@ func Provider() *schema.Provider {
 				Default:     30,
 				Description: "Maximum retry wait for a single HTTP call in seconds. Defaults to 30",
 			},
+			"email": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Used to create a session token instead of an API token, it requires the account to be configured to login with Email and Password",
+			},
+			"password": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Sensitive:   true,
+				Description: "Used to create a session token instead of an API token, it requires the account to be configured to login with Email and Password",
+			},
+			"organization_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Required if the user is configured to be part of multiple organizations",
+			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"signalfx_dimension_values":      dataSourceDimensionValues(),
@@ -104,6 +121,7 @@ func Provider() *schema.Provider {
 			"signalfx_service_now_integration":  integrationServiceNowResource(),
 			"signalfx_slack_integration":        integrationSlackResource(),
 			"signalfx_single_value_chart":       singleValueChartResource(),
+			"signalfx_slo_chart":                sloChartResource(),
 			"signalfx_team":                     teamResource(),
 			"signalfx_time_chart":               timeChartResource(),
 			"signalfx_text_chart":               textChartResource(),
@@ -122,7 +140,11 @@ func Provider() *schema.Provider {
 }
 
 func signalfxConfigure(data *schema.ResourceData) (interface{}, error) {
-	config := signalfxConfig{}
+	config := signalfxConfig{
+		Email:          data.Get("email").(string),
+		Password:       data.Get("password").(string),
+		OrganizationID: data.Get("organization_id").(string),
+	}
 
 	// /etc/signalfx.conf has the lowest priority
 	if _, err := os.Stat(SystemConfigPath); err == nil {
@@ -159,14 +181,15 @@ func signalfxConfigure(data *schema.ResourceData) (interface{}, error) {
 		config.AuthToken = token.(string)
 	}
 
-	if config.AuthToken == "" {
-		return &config, fmt.Errorf("auth_token: required field is not set")
-	}
 	if url, ok := data.GetOk("api_url"); ok {
 		config.APIURL = url.(string)
 	}
 	if customAppURL, ok := data.GetOk("custom_app_url"); ok {
 		config.CustomAppURL = customAppURL.(string)
+	}
+
+	if err = config.Validate(); err != nil {
+		return nil, err
 	}
 
 	netTransport := logging.NewTransport("SignalFx", &http.Transport{
@@ -199,10 +222,16 @@ func signalfxConfigure(data *schema.ResourceData) (interface{}, error) {
 	retryClient.HTTPClient.Transport = netTransport
 	standardClient := retryClient.StandardClient()
 
-	client, err := sfx.NewClient(config.AuthToken,
+	token, err := config.LoadSessionToken(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	client, err := sfx.NewClient(
+		token,
 		sfx.APIUrl(config.APIURL),
 		sfx.HTTPClient(standardClient),
-		sfx.UserAgent(fmt.Sprintf(providerUserAgent)),
+		sfx.UserAgent(providerUserAgent),
 	)
 	if err != nil {
 		return &config, err
