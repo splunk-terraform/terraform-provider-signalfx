@@ -229,8 +229,12 @@ func getPayloadDataLink(d *schema.ResourceData) (*datalink.CreateUpdateDataLinkR
 	if val, ok := d.GetOk("target_appd_url"); ok {
 		appdURLs := val.(*schema.Set).List()
 
-		appdUrlPatternRegex := "^https?:\\/\\/[a-zA-Z0-9-]+\\.saas\\.appdynamics\\.com\\/.*application=\\d+.*component=\\d+.*"
-		re := regexp.MustCompile(appdUrlPatternRegex)
+		appdURLPatternRegex := "^https?:\\/\\/[a-zA-Z0-9-]+\\.saas\\.appdynamics\\.com\\/.*application=\\d+.*component=\\d+.*"
+		re, err := regexp.Compile(appdURLPatternRegex)
+
+		if err != nil {
+			return dataLink, err
+		}
 
 		for _, tfLink := range appdURLs {
 			tfLink := tfLink.(map[string]interface{})
