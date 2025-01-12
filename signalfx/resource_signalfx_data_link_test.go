@@ -84,7 +84,7 @@ const newDataLinkAppdConfig = `
   }
 `
 
-const newDataLinkAppdConfigBadUrlErr = `
+const newDataLinkAppdConfigBadURLErr = `
   resource "signalfx_data_link" "big_test_data_link" {
     property_name = "pname"
     property_value = "pvalue"

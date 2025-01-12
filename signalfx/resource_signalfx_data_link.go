@@ -246,7 +246,7 @@ func getPayloadDataLink(d *schema.ResourceData) (*datalink.CreateUpdateDataLinkR
 			}
 			match := re.MatchString(dl.URL)
 			if !match {
-				return dataLink, fmt.Errorf("Enter a valid AppD Link. The link needs to include the contoller URL, application ID, and Application component.")
+				return dataLink, fmt.Errorf("enter a valid AppD Link. The link needs to include the contoller URL, application ID, and Application component")
 			}
 
 			dataLink.Targets = append(dataLink.Targets, dl)
@@ -389,7 +389,7 @@ func dataLinkAPIToTF(d *schema.ResourceData, dl *datalink.DataLink) error {
 			return err
 		}
 	}
-	if appdLinks != nil && len(appdLinks) > 0 {
+	if len(appdLinks) > 0 {
 		if err := d.Set("target_appd_url", appdLinks); err != nil {
 			return err
 		}
