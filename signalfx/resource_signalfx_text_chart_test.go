@@ -6,6 +6,7 @@ package signalfx
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -27,6 +28,26 @@ resource "signalfx_text_chart" "mychartTX" {
   markdown = "**chart markdown**"
 }
 `
+
+const invalidTextChartChart = `
+resource "signalfx_text_chart" "mychartTX"{
+  name = ""
+  markdown = "**chart markdown**"
+}
+`
+
+func TestAccValidateTextChartChart(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		Providers:    testAccProviders,
+		CheckDestroy: testAccTextChartDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config:      invalidTextChartChart,
+				ExpectError: regexp.MustCompile("status code 400"),
+			},
+		},
+	})
+}
 
 func TestAccCreateUpdateTextChart(t *testing.T) {
 	resource.Test(t, resource.TestCase{

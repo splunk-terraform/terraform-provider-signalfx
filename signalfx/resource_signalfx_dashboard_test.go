@@ -5,6 +5,7 @@ package signalfx
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -40,6 +41,26 @@ resource "signalfx_dashboard" "mydashboardX0" {
 	}
 }
 `
+
+const invalidDashboard = `
+resource "signalfx_dashboard" "invalid_dashboard" {
+  name = ""
+  dashboard_group = ""
+}
+`
+
+func TestAccValidateDashboard(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		Providers:    testAccProviders,
+		CheckDestroy: testAccDashboardGroupDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config:      invalidDashboard,
+				ExpectError: regexp.MustCompile("status code 400"),
+			},
+		},
+	})
+}
 
 func TestValidateChartsResolutionAllowed(t *testing.T) {
 	for _, value := range []string{"default", "low", "high", "highest"} {

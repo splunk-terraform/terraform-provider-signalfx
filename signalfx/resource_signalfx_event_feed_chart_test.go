@@ -6,6 +6,7 @@ package signalfx
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -31,6 +32,26 @@ resource "signalfx_event_feed_chart" "mychartEVX" {
   time_range = 900
 }
 `
+
+const invalidEventFeedChart = `
+resource "signalfx_event_feed_chart" "mychartEVX"{
+  name = ""
+  program_text = "A = events(eventType='Fart Testing').publish(label='A')"
+}
+`
+
+func TestAccValidateEventFeedChart(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		Providers:    testAccProviders,
+		CheckDestroy: testAccEventFeedChartDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config:      invalidEventFeedChart,
+				ExpectError: regexp.MustCompile("status code 400"),
+			},
+		},
+	})
+}
 
 func TestAccCreateUpdateEventFeedChart(t *testing.T) {
 	resource.Test(t, resource.TestCase{

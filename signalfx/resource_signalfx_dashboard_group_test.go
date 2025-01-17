@@ -4,6 +4,7 @@
 package signalfx
 
 import (
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -97,6 +98,28 @@ resource "signalfx_dashboard_group" "new_dashboard_group_2" {
 	}
 }
 `
+
+const invalidDashboardGroup = `
+resource "signalfx_dashboard_group" "invalid_dashboard_group" {
+    name = "Invalid dashboard"
+	dashboard {
+		dashboard_id = ""
+	}
+}
+`
+
+func TestAccValidateDashboardGroup(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		Providers:    testAccProviders,
+		CheckDestroy: testAccDashboardGroupDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config:      invalidDashboardGroup,
+				ExpectError: regexp.MustCompile("status code 400"),
+			},
+		},
+	})
+}
 
 func TestAccCreateDashboardGroup(t *testing.T) {
 	resource.Test(t, resource.TestCase{

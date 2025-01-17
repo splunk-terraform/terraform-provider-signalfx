@@ -6,6 +6,7 @@ package signalfx
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -53,6 +54,26 @@ resource "signalfx_heatmap_chart" "mychartHX" {
 	}
 }
 `
+
+const invalidHeatmapChart = `
+resource "signalfx_heatmap_chart" "mychartHX"{
+  name = ""
+  program_text = "A = data('cpu.total.idle').publish(label='CPU Idle')"
+}
+`
+
+func TestAccValidateHeatmapChart(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		Providers:    testAccProviders,
+		CheckDestroy: testAccHeatmapChartDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config:      invalidHeatmapChart,
+				ExpectError: regexp.MustCompile("status code 400"),
+			},
+		},
+	})
+}
 
 func TestAccCreateUpdateHeatmapChart(t *testing.T) {
 	resource.Test(t, resource.TestCase{

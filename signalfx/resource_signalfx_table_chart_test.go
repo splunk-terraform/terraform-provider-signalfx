@@ -6,6 +6,7 @@ package signalfx
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -53,6 +54,26 @@ resource "signalfx_table_chart" "mychartTB" {
 	}
 }
 `
+
+const invalidTableChartChart = `
+resource "signalfx_table_chart" "mychartTB"{
+  name = ""
+  program_text = "A = data('cpu.usage.total').publish(label='Updated CPU Total')"
+}
+`
+
+func TestAccValidateTableChartChart(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		Providers:    testAccProviders,
+		CheckDestroy: testAccTableChartDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config:      invalidTableChartChart,
+				ExpectError: regexp.MustCompile("status code 400"),
+			},
+		},
+	})
+}
 
 func TestAccCreateUpdateTableChart(t *testing.T) {
 	resource.Test(t, resource.TestCase{

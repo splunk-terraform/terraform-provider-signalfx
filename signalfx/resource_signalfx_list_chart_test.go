@@ -6,6 +6,7 @@ package signalfx
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -103,6 +104,26 @@ resource "signalfx_list_chart" "mychartLX" {
 	}
 }
 `
+
+const invalidListChart = `
+resource "signalfx_list_chart" "mychartLX"{
+  name = ""
+  program_text = "A = data('demo.lb.hosts').publish(label='A')"
+}
+`
+
+func TestAccValidateListChart(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		Providers:    testAccProviders,
+		CheckDestroy: testAccListChartDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config:      invalidListChart,
+				ExpectError: regexp.MustCompile("status code 400"),
+			},
+		},
+	})
+}
 
 func TestAccCreateUpdateListChart(t *testing.T) {
 	resource.Test(t, resource.TestCase{
