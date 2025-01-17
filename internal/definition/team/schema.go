@@ -103,11 +103,12 @@ func decodeTerraform(rd *schema.ResourceData) (*team.Team, error) {
 		t.Members = append(t.Members, m.(string))
 	}
 	for name, field := range map[string]*[]*notification.Notification{
-		"notifications_default": &t.NotificationLists.Default,
-		"notifications_info":    &t.NotificationLists.Info,
-		"notifications_minor":   &t.NotificationLists.Minor,
-		"notifications_warning": &t.NotificationLists.Warning,
-		"notifications_major":   &t.NotificationLists.Major,
+		"notifications_default":  &t.NotificationLists.Default,
+		"notifications_info":     &t.NotificationLists.Info,
+		"notifications_minor":    &t.NotificationLists.Minor,
+		"notifications_warning":  &t.NotificationLists.Warning,
+		"notifications_major":    &t.NotificationLists.Major,
+		"notifications_critical": &t.NotificationLists.Critical,
 	} {
 		if val, ok := rd.Get(name).([]any); ok && len(val) > 0 {
 			var err error
@@ -140,11 +141,12 @@ func encodeTerraform(tm *team.Team, rd *schema.ResourceData) error {
 	}
 
 	for name, values := range map[string][]*notification.Notification{
-		"notifications_default": tm.NotificationLists.Default,
-		"notifications_info":    tm.NotificationLists.Info,
-		"notifications_minor":   tm.NotificationLists.Minor,
-		"notifications_warning": tm.NotificationLists.Warning,
-		"notifications_major":   tm.NotificationLists.Major,
+		"notifications_default":  tm.NotificationLists.Default,
+		"notifications_info":     tm.NotificationLists.Info,
+		"notifications_minor":    tm.NotificationLists.Minor,
+		"notifications_warning":  tm.NotificationLists.Warning,
+		"notifications_major":    tm.NotificationLists.Major,
+		"notifications_critical": tm.NotificationLists.Critical,
 	} {
 		if len(values) == 0 {
 			continue
