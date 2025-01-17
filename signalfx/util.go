@@ -5,6 +5,7 @@ package signalfx
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"net/url"
@@ -50,20 +51,24 @@ var ChartColorsSlice = []chartColor{
 	{"lime_green", "#6bd37e"},
 }
 
-// getPayload for viz objects is called withs: *schema.ResourceDiff or *schema.ResourceData - that's why we need this interface
-type ResourceDataAccess interface {
-	Get(key string) interface{}
-	GetOk(key string) (interface{}, bool)
-}
+type ChartValidatorFunc func(ResourceDataAccess) (*chart.CreateUpdateChartRequest, error)
 
-func chartValidate(ctx context.Context, chartResource *schema.ResourceDiff, config interface{}, getPayload func(ResourceDataAccess) (*chart.CreateUpdateChartRequest, error)) error {
-	payload, err := getPayload(chartResource)
+func (fn ChartValidatorFunc) Validate(ctx context.Context, chartResource *schema.ResourceDiff, meta any) error {
+	if fn == nil {
+		return errors.New("no data parser provided")
+	}
+
+	payload, err := fn(chartResource)
 
 	if err != nil {
 		return err
 	}
 
-	return config.(*signalfxConfig).Client.ValidateChart(ctx, payload)
+	if config, ok := meta.(*signalfxConfig); ok {
+		return config.Client.ValidateChart(ctx, payload)
+	} else {
+		return fmt.Errorf("invalid type assertion: expected *signalfxConfig, got %T", meta)
+	}
 }
 
 func buildAppURL(appURL string, fragment string) (string, error) {

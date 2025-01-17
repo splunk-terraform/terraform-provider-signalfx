@@ -418,8 +418,12 @@ func getPermissionsAcl(d ResourceDataAccess) []*dashboard_group.AclEntry {
 	return aclList
 }
 
-func dashboardgroupValidate(ctx context.Context, d *schema.ResourceDiff, config interface{}) error {
-	return config.(*signalfxConfig).Client.ValidateDashboardGroup(ctx, getPayloadDashboardGroup(d))
+func dashboardgroupValidate(ctx context.Context, d *schema.ResourceDiff, meta any) error {
+	if config, ok := meta.(*signalfxConfig); ok {
+		return config.Client.ValidateDashboardGroup(ctx, getPayloadDashboardGroup(d))
+	} else {
+		return fmt.Errorf("invalid type assertion: expected *signalfxConfig, got %T", meta)
+	}
 }
 
 func dashboardgroupCreate(d *schema.ResourceData, meta interface{}) error {

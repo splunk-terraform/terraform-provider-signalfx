@@ -307,8 +307,8 @@ func getHeatmapOptionsChart(d ResourceDataAccess) (*chart.Options, error) {
 	return options, nil
 }
 
-func heatmapchartValidate(ctx context.Context, d *schema.ResourceDiff, config interface{}) error {
-	return chartValidate(ctx, d, config, getPayloadHeatmapChart)
+func heatmapchartValidate(ctx context.Context, d *schema.ResourceDiff, meta any) error {
+	return ChartValidatorFunc(getPayloadHeatmapChart).Validate(ctx, d, meta)
 }
 
 func heatmapchartCreate(d *schema.ResourceData, meta interface{}) error {

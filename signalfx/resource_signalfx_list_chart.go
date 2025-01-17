@@ -366,8 +366,8 @@ func getListChartOptions(d ResourceDataAccess) (*chart.Options, error) {
 	return options, nil
 }
 
-func listchartValidate(ctx context.Context, d *schema.ResourceDiff, config interface{}) error {
-	return chartValidate(ctx, d, config, getPayloadListChart)
+func listchartValidate(ctx context.Context, d *schema.ResourceDiff, meta any) error {
+	return ChartValidatorFunc(getPayloadListChart).Validate(ctx, d, meta)
 }
 
 func listchartCreate(d *schema.ResourceData, meta interface{}) error {

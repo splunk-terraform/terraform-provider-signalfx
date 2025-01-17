@@ -63,8 +63,8 @@ func getPayloadTextChart(d ResourceDataAccess) (*chart.CreateUpdateChartRequest,
 	}, nil
 }
 
-func textchartValidate(ctx context.Context, d *schema.ResourceDiff, config interface{}) error {
-	return chartValidate(ctx, d, config, getPayloadTextChart)
+func textchartValidate(ctx context.Context, d *schema.ResourceDiff, meta any) error {
+	return ChartValidatorFunc(getPayloadTextChart).Validate(ctx, d, meta)
 }
 
 func textchartCreate(d *schema.ResourceData, meta interface{}) error {

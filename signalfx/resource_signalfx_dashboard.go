@@ -813,14 +813,18 @@ func getDashboardFilters(d ResourceDataAccess) []*dashboard.ChartsSingleFilter {
 	return filterList
 }
 
-func dashboardValidate(ctx context.Context, dashboardObject *schema.ResourceDiff, config interface{}) error {
+func dashboardValidate(ctx context.Context, dashboardObject *schema.ResourceDiff, meta any) error {
 	payloadDashboard, err := getPayloadDashboard(dashboardObject)
 
 	if err != nil {
 		return err
 	}
 
-	return config.(*signalfxConfig).Client.ValidateDashboard(ctx, payloadDashboard)
+	if config, ok := meta.(*signalfxConfig); ok {
+		return config.Client.ValidateDashboard(ctx, payloadDashboard)
+	} else {
+		return fmt.Errorf("invalid type assertion: expected *signalfxConfig, got %T", meta)
+	}
 }
 
 func dashboardCreate(d *schema.ResourceData, meta interface{}) error {

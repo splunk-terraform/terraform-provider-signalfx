@@ -269,8 +269,8 @@ func getSingleValueChartOptions(d ResourceDataAccess) *chart.Options {
 	return options
 }
 
-func singlevaluechartValidate(ctx context.Context, d *schema.ResourceDiff, config interface{}) error {
-	return chartValidate(ctx, d, config, getPayloadSingleValueChart)
+func singlevaluechartValidate(ctx context.Context, d *schema.ResourceDiff, meta any) error {
+	return ChartValidatorFunc(getPayloadSingleValueChart).Validate(ctx, d, meta)
 }
 
 func singlevaluechartCreate(d *schema.ResourceData, meta interface{}) error {

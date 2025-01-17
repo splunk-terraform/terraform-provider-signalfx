@@ -104,8 +104,8 @@ func getPayloadEventFeedChart(d ResourceDataAccess) (*chart.CreateUpdateChartReq
 	}, nil
 }
 
-func eventfeedchartValidate(ctx context.Context, d *schema.ResourceDiff, config interface{}) error {
-	return chartValidate(ctx, d, config, getPayloadEventFeedChart)
+func eventfeedchartValidate(ctx context.Context, d *schema.ResourceDiff, meta any) error {
+	return ChartValidatorFunc(getPayloadEventFeedChart).Validate(ctx, d, meta)
 }
 
 func eventFeedChartCreate(d *schema.ResourceData, meta interface{}) error {
