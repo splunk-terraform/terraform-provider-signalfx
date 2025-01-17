@@ -41,6 +41,17 @@ resource "signalfx_data_link" "my_data_link_dash" {
     }
   }
 }
+
+# A link to an AppDynamics Service
+resource "signalfx_data_link" "my_data_link_appd" {
+  property_name        = "pname3"
+  property_value       = "pvalue"
+
+  target_appd_url {
+    name        = "appd_url"
+    url         = "https://www.example.saas.appdynamics.com/#/application=1234&component=5678"
+  }
+}
 ```
 
 ## Arguments
@@ -64,6 +75,9 @@ The following arguments are supported in the resource block:
 * `target_splunk` - (Optional) Link to an external URL
   * `name` (Required) User-assigned target name. Use this value to differentiate between the link targets for a data link object.
   * `property_key_mapping` - Describes the relationship between Splunk Observability Cloud metadata keys and external system properties when the key names are different.
+* `target_appd_url` - (Optional) Link to an AppDynamics URL
+  * `name` (Required) User-assigned target name. Use this value to differentiate between the link targets for a data link object.
+  * `url`- (Required) URL string for an AppDynamics instance.
 
 ## Attributes
 
