@@ -1,5 +1,11 @@
 ## Unreleased
 
+## 9.3.1
+
+BUGFIXES:
+
+* Fix creation and update of Team notification policies. [#560](https://github.com/splunk-terraform/terraform-provider-signalfx/pull/560)
+
 ## 9.3.0
 
 IMPROVEMENTS:
