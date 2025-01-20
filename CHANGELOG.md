@@ -1,6 +1,6 @@
 ## Unreleased
 
-## 9.3.1
+## 9.6.1
 
 BUGFIXES:
 
