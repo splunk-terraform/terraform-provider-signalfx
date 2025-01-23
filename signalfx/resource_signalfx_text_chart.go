@@ -37,11 +37,12 @@ func textChartResource() *schema.Resource {
 			},
 		},
 
-		Create: textchartCreate,
-		Read:   textchartRead,
-		Update: textchartUpdate,
-		Delete: textchartDelete,
-		Exists: chartExists,
+		CustomizeDiff: textchartValidate,
+		Create:        textchartCreate,
+		Read:          textchartRead,
+		Update:        textchartUpdate,
+		Delete:        textchartDelete,
+		Exists:        chartExists,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -51,7 +52,7 @@ func textChartResource() *schema.Resource {
 /*
 Use Resource object to construct json payload in order to create a text chart
 */
-func getPayloadTextChart(d *schema.ResourceData) *chart.CreateUpdateChartRequest {
+func getPayloadTextChart(d ResourceDataAccess) (*chart.CreateUpdateChartRequest, error) {
 	return &chart.CreateUpdateChartRequest{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
@@ -59,12 +60,19 @@ func getPayloadTextChart(d *schema.ResourceData) *chart.CreateUpdateChartRequest
 			Type:     "Text",
 			Markdown: d.Get("markdown").(string),
 		},
-	}
+	}, nil
+}
+
+func textchartValidate(ctx context.Context, d *schema.ResourceDiff, meta any) error {
+	return ChartValidatorFunc(getPayloadTextChart).Validate(ctx, d, meta)
 }
 
 func textchartCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	payload := getPayloadTextChart(d)
+	payload, err := getPayloadTextChart(d)
+	if err != nil {
+		return err
+	}
 
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Create Text Chart Payload: %s", string(debugOutput))
@@ -122,7 +130,10 @@ func textchartRead(d *schema.ResourceData, meta interface{}) error {
 
 func textchartUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	payload := getPayloadTextChart(d)
+	payload, err := getPayloadTextChart(d)
+	if err != nil {
+		return err
+	}
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Update Text Chart Payload: %s", string(debugOutput))
 

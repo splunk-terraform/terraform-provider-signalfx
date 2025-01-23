@@ -57,11 +57,12 @@ func eventFeedChartResource() *schema.Resource {
 			},
 		},
 
-		Create: eventFeedChartCreate,
-		Read:   eventFeedChartRead,
-		Update: eventFeedChartUpdate,
-		Delete: eventFeedChartDelete,
-		Exists: chartExists,
+		CustomizeDiff: eventfeedchartValidate,
+		Create:        eventFeedChartCreate,
+		Read:          eventFeedChartRead,
+		Update:        eventFeedChartUpdate,
+		Delete:        eventFeedChartDelete,
+		Exists:        chartExists,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -71,7 +72,7 @@ func eventFeedChartResource() *schema.Resource {
 /*
 Use Resource object to construct json payload in order to create an event feed chart
 */
-func getPayloadEventFeedChart(d *schema.ResourceData) *chart.CreateUpdateChartRequest {
+func getPayloadEventFeedChart(d ResourceDataAccess) (*chart.CreateUpdateChartRequest, error) {
 	var timeOptions *chart.TimeDisplayOptions
 	if val, ok := d.GetOk("time_range"); ok {
 		r := int64(val.(int) * 1000)
@@ -100,12 +101,19 @@ func getPayloadEventFeedChart(d *schema.ResourceData) *chart.CreateUpdateChartRe
 			Time: timeOptions,
 			Type: "Event",
 		},
-	}
+	}, nil
+}
+
+func eventfeedchartValidate(ctx context.Context, d *schema.ResourceDiff, meta any) error {
+	return ChartValidatorFunc(getPayloadEventFeedChart).Validate(ctx, d, meta)
 }
 
 func eventFeedChartCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	payload := getPayloadEventFeedChart(d)
+	payload, err := getPayloadEventFeedChart(d)
+	if err != nil {
+		return err
+	}
 
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Create Event Feed Chart Payload: %s", string(debugOutput))
@@ -186,7 +194,10 @@ func eventFeedChartRead(d *schema.ResourceData, meta interface{}) error {
 
 func eventFeedChartUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	payload := getPayloadEventFeedChart(d)
+	payload, err := getPayloadEventFeedChart(d)
+	if err != nil {
+		return err
+	}
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Update Event Feed Chart Payload: %s", string(debugOutput))
 

@@ -6,6 +6,7 @@ package signalfx
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -215,6 +216,26 @@ resource "signalfx_time_chart" "mychartXY" {
 		}
 }
 `
+
+const invalidTimeChartChart = `
+resource "signalfx_time_chart" "mychartXY"{
+  name = ""
+  program_text = "A = data('cpu.total.idle').publish(label='CPU Idle')"
+}
+`
+
+func TestAccValidateTimeChartChart(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		Providers:    testAccProviders,
+		CheckDestroy: testAccTimeChartDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config:      invalidTimeChartChart,
+				ExpectError: regexp.MustCompile("status code 400"),
+			},
+		},
+	})
+}
 
 func TestAccCreateUpdateTimeChart(t *testing.T) {
 	resource.Test(t, resource.TestCase{

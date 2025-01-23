@@ -6,6 +6,7 @@ package signalfx
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -91,6 +92,26 @@ resource "signalfx_single_value_chart" "mychartSVX" {
 	show_spark_line = false
 }
 `
+
+const invalidSingleValueChart = `
+resource "signalfx_single_value_chart" "mychartSVX"{
+  name = ""
+  program_text = "A = data('cpu.total.idle').publish(label='CPU Idle')"
+}
+`
+
+func TestAccValidateSingleValueChart(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		Providers:    testAccProviders,
+		CheckDestroy: testAccSingleValueChartDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config:      invalidSingleValueChart,
+				ExpectError: regexp.MustCompile("status code 400"),
+			},
+		},
+	})
+}
 
 func TestAccCreateUpdateSingleValueChart(t *testing.T) {
 	resource.Test(t, resource.TestCase{
