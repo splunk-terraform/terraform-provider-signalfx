@@ -239,6 +239,12 @@ func integrationAWSResource() *schema.Resource {
 				Default:     false,
 				Description: "Indicates that Splunk Observability should sync metrics and metadata from custom AWS namespaces only (see the `custom_namespace_sync_rule` field for details). Defaults to `false`.",
 			},
+			"collect_only_recommended_stats": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Indicates that Splunk Observability should only sync recommended statistics",
+			},
 		},
 
 		Create: integrationAWSCreate,
@@ -324,6 +330,10 @@ func awsIntegrationAPIToTF(d *schema.ResourceData, aws *integration.AwsCloudWatc
 		return err
 	}
 	if err := d.Set("named_token", aws.NamedToken); err != nil {
+		return err
+	}
+
+	if err := d.Set("collect_only_recommended_stats", aws.CollectOnlyRecommendedStats); err != nil {
 		return err
 	}
 
@@ -434,13 +444,14 @@ func awsIntegrationAPIToTF(d *schema.ResourceData, aws *integration.AwsCloudWatc
 func getPayloadAWSIntegration(d *schema.ResourceData) (*integration.AwsCloudWatchIntegration, error) {
 
 	aws := &integration.AwsCloudWatchIntegration{
-		Name:                     d.Get("name").(string),
-		Type:                     "AWSCloudWatch",
-		Enabled:                  d.Get("enabled").(bool),
-		EnableAwsUsage:           d.Get("enable_aws_usage").(bool),
-		ImportCloudWatch:         d.Get("import_cloud_watch").(bool),
-		EnableCheckLargeVolume:   d.Get("enable_check_large_volume").(bool),
-		SyncCustomNamespacesOnly: d.Get("sync_custom_namespaces_only").(bool),
+		Name:                        d.Get("name").(string),
+		Type:                        "AWSCloudWatch",
+		Enabled:                     d.Get("enabled").(bool),
+		EnableAwsUsage:              d.Get("enable_aws_usage").(bool),
+		ImportCloudWatch:            d.Get("import_cloud_watch").(bool),
+		EnableCheckLargeVolume:      d.Get("enable_check_large_volume").(bool),
+		SyncCustomNamespacesOnly:    d.Get("sync_custom_namespaces_only").(bool),
+		CollectOnlyRecommendedStats: d.Get("collect_only_recommended_stats").(bool),
 	}
 
 	if d.Get("use_metric_streams_sync").(bool) {
