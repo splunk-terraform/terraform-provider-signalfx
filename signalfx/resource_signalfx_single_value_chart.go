@@ -179,12 +179,11 @@ func singleValueChartResource() *schema.Resource {
 			},
 		},
 
-		CustomizeDiff: singlevaluechartValidate,
-		Create:        singlevaluechartCreate,
-		Read:          singlevaluechartRead,
-		Update:        singlevaluechartUpdate,
-		Delete:        singlevaluechartDelete,
-		Exists:        chartExists,
+		Create: singlevaluechartCreate,
+		Read:   singlevaluechartRead,
+		Update: singlevaluechartUpdate,
+		Delete: singlevaluechartDelete,
+		Exists: chartExists,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -194,7 +193,7 @@ func singleValueChartResource() *schema.Resource {
 /*
 Use Resource object to construct json payload in order to create a single value chart
 */
-func getPayloadSingleValueChart(d ResourceDataAccess) (*chart.CreateUpdateChartRequest, error) {
+func getPayloadSingleValueChart(d *schema.ResourceData) *chart.CreateUpdateChartRequest {
 	payload := &chart.CreateUpdateChartRequest{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
@@ -207,10 +206,10 @@ func getPayloadSingleValueChart(d ResourceDataAccess) (*chart.CreateUpdateChartR
 	}
 	payload.Options = viz
 
-	return payload, nil
+	return payload
 }
 
-func getSingleValueChartOptions(d ResourceDataAccess) *chart.Options {
+func getSingleValueChartOptions(d *schema.ResourceData) *chart.Options {
 	options := &chart.Options{
 		Type: "SingleValue",
 	}
@@ -269,16 +268,9 @@ func getSingleValueChartOptions(d ResourceDataAccess) *chart.Options {
 	return options
 }
 
-func singlevaluechartValidate(ctx context.Context, d *schema.ResourceDiff, meta any) error {
-	return ChartValidatorFunc(getPayloadSingleValueChart).Validate(ctx, d, meta)
-}
-
 func singlevaluechartCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	payload, err := getPayloadSingleValueChart(d)
-	if err != nil {
-		return err
-	}
+	payload := getPayloadSingleValueChart(d)
 
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Create Single Value Chart Payload: %s", string(debugOutput))
@@ -431,10 +423,7 @@ func singlevaluechartRead(d *schema.ResourceData, meta interface{}) error {
 
 func singlevaluechartUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	payload, err := getPayloadSingleValueChart(d)
-	if err != nil {
-		return err
-	}
+	payload := getPayloadSingleValueChart(d)
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Update Single Value Chart Payload: %s", string(debugOutput))
 

@@ -131,12 +131,11 @@ func tableChartResource() *schema.Resource {
 			},
 		},
 
-		CustomizeDiff: tablechartValidate,
-		Create:        tablechartCreate,
-		Read:          tablechartRead,
-		Update:        tablechartUpdate,
-		Delete:        tablechartDelete,
-		Exists:        chartExists,
+		Create: tablechartCreate,
+		Read:   tablechartRead,
+		Update: tablechartUpdate,
+		Delete: tablechartDelete,
+		Exists: chartExists,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -146,7 +145,7 @@ func tableChartResource() *schema.Resource {
 /*
 Use Resource object to construct json payload in order to create an Table chart
 */
-func getPayloadTableChart(d ResourceDataAccess) (*chart.CreateUpdateChartRequest, error) {
+func getPayloadTableChart(d *schema.ResourceData) (*chart.CreateUpdateChartRequest, error) {
 	payload := &chart.CreateUpdateChartRequest{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
@@ -167,7 +166,7 @@ func getPayloadTableChart(d ResourceDataAccess) (*chart.CreateUpdateChartRequest
 	return payload, nil
 }
 
-func getTableOptionsChart(d ResourceDataAccess) (*chart.Options, error) {
+func getTableOptionsChart(d *schema.ResourceData) (*chart.Options, error) {
 	options := &chart.Options{
 		Type: "TableChart",
 	}
@@ -221,10 +220,6 @@ func getTableOptionsChart(d ResourceDataAccess) (*chart.Options, error) {
 	options.ProgramOptions = programOptions
 
 	return options, nil
-}
-
-func tablechartValidate(ctx context.Context, d *schema.ResourceDiff, meta any) error {
-	return ChartValidatorFunc(getPayloadTableChart).Validate(ctx, d, meta)
 }
 
 func tablechartCreate(d *schema.ResourceData, meta interface{}) error {
