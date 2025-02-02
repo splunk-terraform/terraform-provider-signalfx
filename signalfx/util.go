@@ -5,7 +5,6 @@ package signalfx
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"math"
 	"net/url"
@@ -49,26 +48,6 @@ var ChartColorsSlice = []chartColor{
 	{"vivid_yellow", "#ea1849"},
 	{"light_green", "#acef7f"},
 	{"lime_green", "#6bd37e"},
-}
-
-type ChartValidatorFunc func(ResourceDataAccess) (*chart.CreateUpdateChartRequest, error)
-
-func (fn ChartValidatorFunc) Validate(ctx context.Context, chartResource *schema.ResourceDiff, meta any) error {
-	if fn == nil {
-		return errors.New("no data parser provided")
-	}
-
-	payload, err := fn(chartResource)
-
-	if err != nil {
-		return err
-	}
-
-	if config, ok := meta.(*signalfxConfig); ok {
-		return config.Client.ValidateChart(ctx, payload)
-	} else {
-		return fmt.Errorf("invalid type assertion: expected *signalfxConfig, got %T", meta)
-	}
 }
 
 func buildAppURL(appURL string, fragment string) (string, error) {
@@ -156,7 +135,7 @@ func getNameFromChartColorsByIndex(index int) (string, error) {
 /*
 Get Color Scale Options
 */
-func getColorScaleOptions(d ResourceDataAccess) []*chart.SecondaryVisualization {
+func getColorScaleOptions(d *schema.ResourceData) []*chart.SecondaryVisualization {
 	colorScale := d.Get("color_scale").(*schema.Set).List()
 	return getColorScaleOptionsFromSlice(colorScale)
 }
@@ -201,7 +180,7 @@ func getColorScaleOptionsFromSlice(colorScale []interface{}) []*chart.SecondaryV
 /*
 Util method to get Legend Chart Options.
 */
-func getLegendOptions(d ResourceDataAccess) *chart.DataTableOptions {
+func getLegendOptions(d *schema.ResourceData) *chart.DataTableOptions {
 	var options *chart.DataTableOptions
 	if properties, ok := d.GetOk("legend_fields_to_hide"); ok {
 		properties := properties.(*schema.Set).List()
@@ -232,7 +211,7 @@ func getLegendOptions(d ResourceDataAccess) *chart.DataTableOptions {
 /*
 Util method to get Legend Chart Options for fields
 */
-func getLegendFieldOptions(d ResourceDataAccess) *chart.DataTableOptions {
+func getLegendFieldOptions(d *schema.ResourceData) *chart.DataTableOptions {
 	if fields, ok := d.GetOk("legend_options_fields"); ok {
 		fields := fields.([]interface{})
 		if len(fields) > 0 {

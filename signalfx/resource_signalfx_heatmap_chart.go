@@ -171,12 +171,11 @@ func heatmapChartResource() *schema.Resource {
 			},
 		},
 
-		CustomizeDiff: heatmapchartValidate,
-		Create:        heatmapchartCreate,
-		Read:          heatmapchartRead,
-		Update:        heatmapchartUpdate,
-		Delete:        heatmapchartDelete,
-		Exists:        chartExists,
+		Create: heatmapchartCreate,
+		Read:   heatmapchartRead,
+		Update: heatmapchartUpdate,
+		Delete: heatmapchartDelete,
+		Exists: chartExists,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -186,7 +185,7 @@ func heatmapChartResource() *schema.Resource {
 /*
 Use Resource object to construct json payload in order to create an Heatmap chart
 */
-func getPayloadHeatmapChart(d ResourceDataAccess) (*chart.CreateUpdateChartRequest, error) {
+func getPayloadHeatmapChart(d *schema.ResourceData) (*chart.CreateUpdateChartRequest, error) {
 	payload := &chart.CreateUpdateChartRequest{
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
@@ -202,7 +201,7 @@ func getPayloadHeatmapChart(d ResourceDataAccess) (*chart.CreateUpdateChartReque
 	return payload, nil
 }
 
-func getHeatmapColorRangeOptions(d ResourceDataAccess) *chart.HeatmapColorRangeOptions {
+func getHeatmapColorRangeOptions(d *schema.ResourceData) *chart.HeatmapColorRangeOptions {
 	colorRange := d.Get("color_range").(*schema.Set).List()
 
 	var item *chart.HeatmapColorRangeOptions
@@ -231,7 +230,7 @@ func getHeatmapColorRangeOptions(d ResourceDataAccess) *chart.HeatmapColorRangeO
 	return item
 }
 
-func getHeatmapOptionsChart(d ResourceDataAccess) (*chart.Options, error) {
+func getHeatmapOptionsChart(d *schema.ResourceData) (*chart.Options, error) {
 	options := &chart.Options{
 		Type: "Heatmap",
 	}
@@ -305,10 +304,6 @@ func getHeatmapOptionsChart(d ResourceDataAccess) (*chart.Options, error) {
 	}
 
 	return options, nil
-}
-
-func heatmapchartValidate(ctx context.Context, d *schema.ResourceDiff, meta any) error {
-	return ChartValidatorFunc(getPayloadHeatmapChart).Validate(ctx, d, meta)
 }
 
 func heatmapchartCreate(d *schema.ResourceData, meta interface{}) error {
