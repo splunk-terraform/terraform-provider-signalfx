@@ -35,7 +35,7 @@ func integrationAWSTokenResource() *schema.Resource {
 			return IntegrationAWSCreate(d, meta, integration.SECURITY_TOKEN)
 		},
 		Read:   IntegrationAWSRead,
-		Delete: IntegrationAWSDelete,
+		Delete: noop, // delete is handled in the resource_signalfx_aws_integration.go
 		Exists: IntegrationAWSExists,
 	}
 }

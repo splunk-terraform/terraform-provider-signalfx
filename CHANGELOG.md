@@ -1,5 +1,11 @@
 ## Unreleased
 
+## 9.6.2
+
+BUGFIXES:
+
+* Delete AWS integration when the resource_signalfx_aws_integration is destroyed https://github.com/splunk-terraform/terraform-provider-signalfx/pull/566.
+
 ## 9.6.1
 
 BUGFIXES:

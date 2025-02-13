@@ -35,7 +35,7 @@ func integrationAWSExternalResource() *schema.Resource {
 			return IntegrationAWSCreate(d, meta, integration.EXTERNAL_ID)
 		},
 		Read:   IntegrationAWSRead,
-		Delete: IntegrationAWSDelete,
+		Delete: noop, // delete is handled in the resource_signalfx_aws_integration.go
 		Exists: IntegrationAWSExists,
 	}
 }

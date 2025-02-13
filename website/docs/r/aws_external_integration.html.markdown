@@ -14,6 +14,8 @@ Splunk Observability AWS CloudWatch integrations using Role ARNs. For help with 
 
 ~> **WARNING** This resource implements part of a workflow. Use it with `signalfx_aws_integration`. Check with Splunk support for your realm's AWS account id.
 
+~> **NOTE** When AWS IAM role is also created by Terraform to enforce a proper cleanup sequence add role related resources as dependencies for the `signalfx_aws_integration` resource. See the `depends_on` section in the example script below.
+
 ## Example
 
 ```tf
@@ -54,14 +56,16 @@ resource "aws_iam_policy" "aws_splunk_policy" {
     {
       "Effect": "Allow",
       "Action": [
+        "airflow:GetEnvironment",
+        "airflow:ListEnvironments
         "apigateway:GET",
         "autoscaling:DescribeAutoScalingGroups",
+        "cloudformation:ListResources",
+        "cloudformation:GetResource",
         "cloudfront:GetDistributionConfig",
         "cloudfront:ListDistributions",
         "cloudfront:ListTagsForResource",
-        "cloudwatch:DescribeAlarms",
         "cloudwatch:GetMetricData",
-        "cloudwatch:GetMetricStatistics",
         "cloudwatch:ListMetrics",
         "directconnect:DescribeConnections",
         "dynamodb:DescribeTable",
@@ -69,6 +73,7 @@ resource "aws_iam_policy" "aws_splunk_policy" {
         "dynamodb:ListTagsOfResource",
         "ec2:DescribeInstances",
         "ec2:DescribeInstanceStatus",
+        "ec2:DescribeNatGateways",
         "ec2:DescribeRegions",
         "ec2:DescribeReservedInstances",
         "ec2:DescribeReservedInstancesModifications",
@@ -82,6 +87,8 @@ resource "aws_iam_policy" "aws_splunk_policy" {
         "ecs:ListTagsForResource",
         "ecs:ListTaskDefinitions",
         "ecs:ListTasks",
+        "eks:DescribeCluster",
+        "eks:ListClusters",
         "elasticache:DescribeCacheClusters",
         "elasticloadbalancing:DescribeLoadBalancerAttributes",
         "elasticloadbalancing:DescribeLoadBalancers",
@@ -91,10 +98,18 @@ resource "aws_iam_policy" "aws_splunk_policy" {
         "elasticmapreduce:ListClusters",
         "es:DescribeElasticsearchDomain",
         "es:ListDomainNames",
+        "iam:listAccountAliases",
+        "kafka:DescribeCluster",
+        "kafka:DescribeClusterV2",
+        "kafka:ListClusters",
+        "kafka:ListClustersV2",
         "kinesis:DescribeStream",
         "kinesis:ListShards",
         "kinesis:ListStreams",
         "kinesis:ListTagsForStream",
+        "kinesisanalytics:DescribeApplication",
+        "kinesisanalytics:ListApplications",
+        "kinesisanalytics:ListTagsForResource",
         "lambda:GetAlias",
         "lambda:ListFunctions",
         "lambda:ListTags",
@@ -102,9 +117,11 @@ resource "aws_iam_policy" "aws_splunk_policy" {
         "logs:DescribeLogGroups",
         "logs:DescribeSubscriptionFilters",
         "logs:PutSubscriptionFilter",
+        "network-firewall:DescribeFirewall",
+        "network-firewall:ListFirewalls",
         "organizations:DescribeOrganization",
-        "rds:DescribeDBClusters",
         "rds:DescribeDBInstances",
+        "rds:DescribeDBClusters",
         "rds:ListTagsForResource",
         "redshift:DescribeClusters",
         "redshift:DescribeLoggingStatus",
@@ -118,11 +135,26 @@ resource "aws_iam_policy" "aws_splunk_policy" {
         "sqs:GetQueueAttributes",
         "sqs:ListQueues",
         "sqs:ListQueueTags",
+        "states:ListActivities",
         "states:ListStateMachines",
         "tag:GetResources",
         "workspaces:DescribeWorkspaces"
       ],
       "Resource": "*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "cassandra:Select"
+      ],
+      "Resource": [
+        "arn:aws:cassandra:*:*:/keyspace/system/table/local",
+        "arn:aws:cassandra:*:*:/keyspace/system/table/peers",
+        "arn:aws:cassandra:*:*:/keyspace/system_schema/*",
+        "arn:aws:cassandra:*:*:/keyspace/system_schema_mcs/table/tags",
+        "arn:aws:cassandra:*:*:/keyspace/system_schema_mcs/table/tables",
+        "arn:aws:cassandra:*:*:/keyspace/system_schema_mcs/table/columns"
+      ]
     }
   ]
 }
@@ -133,7 +165,6 @@ resource "aws_iam_role_policy_attachment" "splunk_role_policy_attach" {
   role       = aws_iam_role.aws_splunk_role.name
   policy_arn = aws_iam_policy.aws_splunk_policy.arn
 }
-
 
 resource "signalfx_aws_integration" "aws_myteam" {
   enabled = true
@@ -147,8 +178,11 @@ resource "signalfx_aws_integration" "aws_myteam" {
   poll_rate          = 300
   import_cloud_watch = true
   enable_aws_usage   = true
+  depends_on = [
+    aws_iam_role.aws_splunk_role,
+    aws_iam_role_policy_attachment.splunk_role_policy_attach
+  ]
 }
-
 ```
 
 ## Arguments
