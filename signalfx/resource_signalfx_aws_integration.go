@@ -7,7 +7,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/signalfx/signalfx-go"
 	"log"
+	"net/http"
 	"strings"
 	"time"
 
@@ -673,6 +675,10 @@ func DoIntegrationAWSDelete(d *schema.ResourceData, meta interface{}) error {
 	// Retrieve current integration state
 	int, err := config.Client.GetAWSCloudWatchIntegration(context.TODO(), d.Id())
 	if err != nil {
+		if re, ok := err.(*signalfx.ResponseError); ok && re.Code() == http.StatusNotFound {
+			// integration already deleted, bail out
+			return nil
+		}
 		return fmt.Errorf("Error fetching existing integration %s, %s", d.Id(), err.Error())
 	}
 
@@ -750,7 +756,10 @@ func waitForIntegrationSpecificSyncStateToSettle(d *schema.ResourceData, syncSta
 }
 
 func integrationAWSDelete(d *schema.ResourceData, meta interface{}) error {
-	// Do nothing, let the aws_(external|token)_integration do the deletion
+	return DoIntegrationAWSDelete(d, meta)
+}
+
+func noop(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
