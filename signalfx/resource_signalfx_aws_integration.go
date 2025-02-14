@@ -678,7 +678,7 @@ func DoIntegrationAWSDelete(d *schema.ResourceData, meta any) error {
 	if err != nil {
 		var re *signalfx.ResponseError
 		if errors.As(err, &re) && re.Code() == http.StatusNotFound {
-			// integration already deleted, bail out
+			log.Printf("[DEBUG] SignalFx: integration %s not found (already deleted?), skipping cleanup procedure", d.Id())
 			return nil
 		}
 		return fmt.Errorf("error fetching existing integration %s, %s", d.Id(), err.Error())
