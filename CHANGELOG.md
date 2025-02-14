@@ -1,10 +1,23 @@
 ## Unreleased
 
-## 9.6.2
+## 9.7.2
 
 BUGFIXES:
 
 * Delete AWS integration when the resource_signalfx_aws_integration is destroyed https://github.com/splunk-terraform/terraform-provider-signalfx/pull/566.
+
+## 9.7.1
+
+BUGFIXES:
+
+* Revert "Add validation of viz objects (#554)" https://github.com/splunk-terraform/terraform-provider-signalfx/pull/564
+  
+## 9.7.0
+
+IMPROVEMENTS:
+
+* Adding support for collecting only recommended stats https://github.com/splunk-terraform/terraform-provider-signalfx/pull/563
+* Add validation of viz objects https://github.com/splunk-terraform/terraform-provider-signalfx/pull/554
 
 ## 9.6.1
 
