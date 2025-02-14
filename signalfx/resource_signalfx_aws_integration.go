@@ -6,14 +6,17 @@ package signalfx
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
+	"net/http"
 	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/signalfx/signalfx-go"
 	"github.com/signalfx/signalfx-go/integration"
 )
 
@@ -30,28 +33,28 @@ func logsSyncStateSupplier(int *integration.AwsCloudWatchIntegration) string {
 func integrationAWSResource() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
-			"integration_id": &schema.Schema{
+			"integration_id": {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "The ID of this integration",
 				ForceNew:    true,
 			},
-			"name": &schema.Schema{
+			"name": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Name of the integration. Please specify the name in `signalfx_aws_external_integration` or `signalfx_aws_integration_token`",
 			},
-			"enabled": &schema.Schema{
+			"enabled": {
 				Type:        schema.TypeBool,
 				Required:    true,
 				Description: "Whether the integration is enabled or not",
 			},
-			"auth_method": &schema.Schema{
+			"auth_method": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The mechanism used to authenticate with AWS. Use one of `signalfx_aws_external_integration` or `signalfx_aws_token_integration` to define this",
 			},
-			"custom_cloudwatch_namespaces": &schema.Schema{
+			"custom_cloudwatch_namespaces": {
 				Type: schema.TypeSet,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
@@ -60,7 +63,7 @@ func integrationAWSResource() *schema.Resource {
 				Description:   "List of custom AWS CloudWatch namespaces to monitor. Custom namespaces contain custom metrics that you define in AWS; Splunk Observability imports the metrics so you can monitor them.",
 				ConflictsWith: []string{"custom_namespace_sync_rule"},
 			},
-			"custom_namespace_sync_rule": &schema.Schema{
+			"custom_namespace_sync_rule": {
 				Type:          schema.TypeSet,
 				Optional:      true,
 				ConflictsWith: []string{"custom_cloudwatch_namespaces"},
@@ -92,7 +95,7 @@ func integrationAWSResource() *schema.Resource {
 					},
 				},
 			},
-			"namespace_sync_rule": &schema.Schema{
+			"namespace_sync_rule": {
 				Type:          schema.TypeSet,
 				Optional:      true,
 				ConflictsWith: []string{"services"},
@@ -124,12 +127,12 @@ func integrationAWSResource() *schema.Resource {
 					},
 				},
 			},
-			"enable_aws_usage": &schema.Schema{
+			"enable_aws_usage": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Description: "Flag that controls how Splunk Observability imports usage metrics from AWS to use with AWS Cost Optimizer. If `true`, Splunk Observability imports the metrics.",
 			},
-			"import_cloud_watch": &schema.Schema{
+			"import_cloud_watch": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Description: "Flag that controls how Splunk Observability imports Cloud Watch metrics. If true, Splunk Observability imports Cloud Watch metrics from AWS.",
@@ -169,60 +172,60 @@ func integrationAWSResource() *schema.Resource {
 				ConflictsWith: []string{"role_arn", "external_id"},
 				Description:   "Used with `signalfx_aws_token_integration`. Use this property to specify the token.",
 			},
-			"poll_rate": &schema.Schema{
+			"poll_rate": {
 				Type:         schema.TypeInt,
 				Optional:     true,
 				Default:      300,
 				Description:  "AWS poll rate (in seconds). Between `60` and `600`.",
 				ValidateFunc: validation.IntBetween(60, 600),
 			},
-			"external_id": &schema.Schema{
+			"external_id": {
 				Type:          schema.TypeString,
 				Optional:      true,
 				Sensitive:     true,
 				ConflictsWith: []string{"token", "key"},
 				Description:   "Used with `signalfx_aws_external_integration`. Use this property to specify the external id.",
 			},
-			"use_metric_streams_sync": &schema.Schema{
+			"use_metric_streams_sync": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Computed:    true,
 				Description: "Enables the use of Cloudwatch Metric Streams for metrics synchronization.",
 			},
-			"enable_logs_sync": &schema.Schema{
+			"enable_logs_sync": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Computed:    true,
 				Description: "Enables AWS logs synchronization.",
 			},
-			"named_token": &schema.Schema{
+			"named_token": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "A named token to use for ingest",
 			},
-			"enable_check_large_volume": &schema.Schema{
+			"enable_check_large_volume": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
 				Description: "Controls how Splunk Observability checks for large amounts of data for this AWS integration. If true, Splunk Observability monitors the amount of data coming in from the integration.",
 			},
-			"metric_stats_to_sync": &schema.Schema{
+			"metric_stats_to_sync": {
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "Each element in the array is an object that contains an AWS namespace name, AWS metric name and a list of statistics that Splunk Observability collects for this metric. If you specify this property, Splunk Observability retrieves only specified AWS statistics. If you don't specify this property, Splunk Observability retrieves the AWS standard set of statistics.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"namespace": &schema.Schema{
+						"namespace": {
 							Type:        schema.TypeString,
 							Required:    true,
 							Description: "An AWS namespace having AWS metric that you want to pick statistics for",
 						},
-						"metric": &schema.Schema{
+						"metric": {
 							Type:        schema.TypeString,
 							Required:    true,
 							Description: "AWS metric that you want to pick statistics for",
 						},
-						"stats": &schema.Schema{
+						"stats": {
 							Type:        schema.TypeSet,
 							Required:    true,
 							Description: "AWS statistics you want to collect",
@@ -233,7 +236,7 @@ func integrationAWSResource() *schema.Resource {
 					},
 				},
 			},
-			"sync_custom_namespaces_only": &schema.Schema{
+			"sync_custom_namespaces_only": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
@@ -255,7 +258,7 @@ func integrationAWSResource() *schema.Resource {
 	}
 }
 
-func integrationAWSExists(d *schema.ResourceData, meta interface{}) (bool, error) {
+func integrationAWSExists(d *schema.ResourceData, meta any) (bool, error) {
 	config := meta.(*signalfxConfig)
 	_, err := config.Client.GetAWSCloudWatchIntegration(context.TODO(), d.Get("integration_id").(string))
 	if err != nil {
@@ -267,7 +270,7 @@ func integrationAWSExists(d *schema.ResourceData, meta interface{}) (bool, error
 	return true, nil
 }
 
-func integrationAWSRead(d *schema.ResourceData, meta interface{}) error {
+func integrationAWSRead(d *schema.ResourceData, meta any) error {
 	config := meta.(*signalfxConfig)
 
 	int, err := config.Client.GetAWSCloudWatchIntegration(context.TODO(), d.Get("integration_id").(string))
@@ -353,9 +356,9 @@ func awsIntegrationAPIToTF(d *schema.ResourceData, aws *integration.AwsCloudWatc
 		}
 	}
 	if len(aws.CustomNamespaceSyncRules) > 0 {
-		var rules []map[string]interface{}
+		var rules []map[string]any
 		for _, v := range aws.CustomNamespaceSyncRules {
-			rule := map[string]interface{}{
+			rule := map[string]any{
 				"default_action": string(v.DefaultAction),
 				"namespace":      v.Namespace,
 			}
@@ -384,7 +387,7 @@ func awsIntegrationAPIToTF(d *schema.ResourceData, aws *integration.AwsCloudWatc
 		// `namespace_sync_rule`s with a bunch of null fields. As such we'll ignore
 		// `NamespaceSyncRules` if we have services
 		if len(aws.Services) > 0 {
-			services := make([]interface{}, len(aws.Services))
+			services := make([]any, len(aws.Services))
 			for i, v := range aws.Services {
 				services[i] = string(v)
 			}
@@ -394,10 +397,10 @@ func awsIntegrationAPIToTF(d *schema.ResourceData, aws *integration.AwsCloudWatc
 		}
 	} else {
 		if len(aws.NamespaceSyncRules) > 0 {
-			var rules []map[string]interface{}
+			var rules []map[string]any
 			for _, v := range aws.NamespaceSyncRules {
 				if v.Filter != nil {
-					rules = append(rules, map[string]interface{}{
+					rules = append(rules, map[string]any{
 						"default_action": string(v.DefaultAction),
 						"filter_action":  v.Filter.Action,
 						"filter_source":  v.Filter.Source,
@@ -406,7 +409,7 @@ func awsIntegrationAPIToTF(d *schema.ResourceData, aws *integration.AwsCloudWatc
 				} else {
 					// Sometimes the rules come back with just a namespace and no
 					// filters.
-					rules = append(rules, map[string]interface{}{
+					rules = append(rules, map[string]any{
 						"default_action": string(v.DefaultAction),
 						"namespace":      string(v.Namespace),
 					})
@@ -421,10 +424,10 @@ func awsIntegrationAPIToTF(d *schema.ResourceData, aws *integration.AwsCloudWatc
 	}
 
 	if len(aws.MetricStatsToSync) > 0 {
-		var metricStatsToSync []map[string]interface{}
+		var metricStatsToSync []map[string]any
 		for namespace, v := range aws.MetricStatsToSync {
 			for metric, stats := range v {
-				metricStatsToSync = append(metricStatsToSync, map[string]interface{}{
+				metricStatsToSync = append(metricStatsToSync, map[string]any{
 					"namespace": namespace,
 					"metric":    metric,
 					"stats":     stats,
@@ -535,7 +538,7 @@ func getPayloadAWSIntegration(d *schema.ResourceData) (*integration.AwsCloudWatc
 		if len(val) > 0 {
 			metricStatsToSync := map[string]map[string][]string{}
 			for _, v := range val {
-				v := v.(map[string]interface{})
+				v := v.(map[string]any)
 				namespace := v["namespace"].(string)
 				metric := v["metric"].(string)
 				stats := expandStringSetToSlice(v["stats"].(*schema.Set))
@@ -552,10 +555,10 @@ func getPayloadAWSIntegration(d *schema.ResourceData) (*integration.AwsCloudWatc
 	return aws, nil
 }
 
-func getCustomNamespaceRules(tfRules []interface{}) []*integration.AwsCustomNameSpaceSyncRule {
+func getCustomNamespaceRules(tfRules []any) []*integration.AwsCustomNameSpaceSyncRule {
 	rules := make([]*integration.AwsCustomNameSpaceSyncRule, len(tfRules))
 	for i, r := range tfRules {
-		r := r.(map[string]interface{})
+		r := r.(map[string]any)
 		defaultAction := integration.AwsSyncRuleFilterAction("")
 		if da, ok := r["default_action"]; ok {
 			da := da.(string)
@@ -583,10 +586,10 @@ func getCustomNamespaceRules(tfRules []interface{}) []*integration.AwsCustomName
 	return rules
 }
 
-func getNamespaceRules(tfRules []interface{}) []*integration.AwsNameSpaceSyncRule {
+func getNamespaceRules(tfRules []any) []*integration.AwsNameSpaceSyncRule {
 	rules := make([]*integration.AwsNameSpaceSyncRule, len(tfRules))
 	for i, r := range tfRules {
-		r := r.(map[string]interface{})
+		r := r.(map[string]any)
 		defaultAction := integration.AwsSyncRuleFilterAction("")
 		if da, ok := r["default_action"]; ok {
 			da := da.(string)
@@ -614,7 +617,7 @@ func getNamespaceRules(tfRules []interface{}) []*integration.AwsNameSpaceSyncRul
 	return rules
 }
 
-func integrationAWSCreate(d *schema.ResourceData, meta interface{}) error {
+func integrationAWSCreate(d *schema.ResourceData, meta any) error {
 	config := meta.(*signalfxConfig)
 
 	preInt, err := config.Client.GetAWSCloudWatchIntegration(context.TODO(), d.Get("integration_id").(string))
@@ -634,7 +637,7 @@ func integrationAWSCreate(d *schema.ResourceData, meta interface{}) error {
 	return integrationAWSUpdate(d, meta)
 }
 
-func integrationAWSUpdate(d *schema.ResourceData, meta interface{}) error {
+func integrationAWSUpdate(d *schema.ResourceData, meta any) error {
 	config := meta.(*signalfxConfig)
 
 	payload, err := getPayloadAWSIntegration(d)
@@ -667,13 +670,18 @@ func integrationAWSUpdate(d *schema.ResourceData, meta interface{}) error {
 	return awsIntegrationAPIToTF(d, int)
 }
 
-func DoIntegrationAWSDelete(d *schema.ResourceData, meta interface{}) error {
+func DoIntegrationAWSDelete(d *schema.ResourceData, meta any) error {
 	config := meta.(*signalfxConfig)
 
 	// Retrieve current integration state
 	int, err := config.Client.GetAWSCloudWatchIntegration(context.TODO(), d.Id())
 	if err != nil {
-		return fmt.Errorf("Error fetching existing integration %s, %s", d.Id(), err.Error())
+		var re *signalfx.ResponseError
+		if errors.As(err, &re) && re.Code() == http.StatusNotFound {
+			log.Printf("[DEBUG] SignalFx: integration %s not found (already deleted?), skipping cleanup procedure", d.Id())
+			return nil
+		}
+		return fmt.Errorf("error fetching existing integration %s, %s", d.Id(), err.Error())
 	}
 
 	// Disable the AWS logs sync and/or CloudWatch metric streams sync if needed
@@ -730,7 +738,7 @@ func waitForIntegrationSpecificSyncStateToSettle(d *schema.ResourceData, syncSta
 	stateConf := &resource.StateChangeConf{
 		Pending: pending,
 		Target:  target,
-		Refresh: func() (interface{}, string, error) {
+		Refresh: func() (any, string, error) {
 			int, err := config.Client.GetAWSCloudWatchIntegration(context.TODO(), intId)
 			if err != nil {
 				return 0, "", err
@@ -749,12 +757,15 @@ func waitForIntegrationSpecificSyncStateToSettle(d *schema.ResourceData, syncSta
 	return int.(*integration.AwsCloudWatchIntegration), nil
 }
 
-func integrationAWSDelete(d *schema.ResourceData, meta interface{}) error {
-	// Do nothing, let the aws_(external|token)_integration do the deletion
+func integrationAWSDelete(d *schema.ResourceData, meta any) error {
+	return DoIntegrationAWSDelete(d, meta)
+}
+
+func noop(_ *schema.ResourceData, _ any) error {
 	return nil
 }
 
-func validateFilterAction(v interface{}, k string) (we []string, errors []error) {
+func validateFilterAction(v any, _ string) (we []string, errors []error) {
 	value := v.(string)
 	if value != string(integration.EXCLUDE) && value != string(integration.INCLUDE) {
 		errors = append(errors, fmt.Errorf("%s not allowed; filter action must be one of %s or %s", value, integration.EXCLUDE, integration.INCLUDE))
