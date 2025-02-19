@@ -38,7 +38,7 @@ func HandleError(ctx context.Context, err error, data *schema.ResourceData) erro
 			Field("details", re.Details()),
 		)
 	default:
-		tflog.Debug(ctx, "Issue trying to work with the API", tfext.NewLogFields().
+		tflog.Error(ctx, "Issue trying to work with the API", tfext.NewLogFields().
 			Field("route", re.Route()).
 			Field("code", re.Code()).
 			Field("details", re.Details()),
