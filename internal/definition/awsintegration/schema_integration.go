@@ -279,7 +279,7 @@ func decodeTerraform(rd *schema.ResourceData) (*integration.AwsCloudWatchIntegra
 		return nil, fmt.Errorf("requires either `external_id` or `token` and `key`")
 	}
 
-	if len(cwi.Regions) == 0 {
+	if cwi.Regions == nil {
 		return nil, fmt.Errorf("regions should be defined explicitly, see https://docs.splunk.com/Observability/gdi/get-data-in/connect/aws/aws-prereqs.html#supported-aws-regions")
 	}
 

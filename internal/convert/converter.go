@@ -26,9 +26,5 @@ func SchemaListAll[Out any](in any, converter Func[any, Out]) []Out {
 	if !ok || set == nil {
 		return nil
 	}
-	if set.Len() == 0 {
-		return nil
-	}
-
 	return SliceAll(set.List(), converter)
 }
