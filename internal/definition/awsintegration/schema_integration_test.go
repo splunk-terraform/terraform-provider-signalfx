@@ -30,11 +30,12 @@ func TestIntegrationDecode(t *testing.T) {
 			name:   "empty data",
 			data:   make(map[string]any),
 			expect: nil,
-			errVal: "requires either `external_id` or `token` and `key`",
+			errVal: "unknown auth method set \"\"",
 		},
 		{
 			name: "external auth set",
 			data: map[string]any{
+				"auth_method": "ExternalId",
 				"external_id": "my-id",
 				"role_arn":    "....",
 			},
@@ -54,8 +55,9 @@ func TestIntegrationDecode(t *testing.T) {
 		{
 			name: "token auth set",
 			data: map[string]any{
-				"token": "my-token",
-				"key":   "my-key",
+				"auth_method": "SecurityToken",
+				"token":       "my-token",
+				"key":         "my-key",
 			},
 			expect: &integration.AwsCloudWatchIntegration{
 				Type:                     "AWSCloudWatch",
@@ -73,9 +75,10 @@ func TestIntegrationDecode(t *testing.T) {
 		{
 			name: "min required values",
 			data: map[string]any{
-				"token":   "my-token",
-				"key":     "my-key",
-				"regions": []any{"us-east-1"},
+				"auth_method": "SecurityToken",
+				"token":       "my-token",
+				"key":         "my-key",
+				"regions":     []any{"us-east-1"},
 			},
 			expect: &integration.AwsCloudWatchIntegration{
 				Type:                     "AWSCloudWatch",
@@ -93,9 +96,10 @@ func TestIntegrationDecode(t *testing.T) {
 		{
 			name: "syncing specific metrics",
 			data: map[string]any{
-				"token":   "my-token",
-				"key":     "my-key",
-				"regions": []any{"us-east-1"},
+				"auth_method": "SecurityToken",
+				"token":       "my-token",
+				"key":         "my-key",
+				"regions":     []any{"us-east-1"},
 				"metric_stats_to_sync": []any{
 					map[string]any{
 						"namespace": "aws/kinesis",
@@ -125,6 +129,7 @@ func TestIntegrationDecode(t *testing.T) {
 		{
 			name: "all fields",
 			data: map[string]any{
+				"auth_method":             "SecurityToken",
 				"token":                   "my-token",
 				"key":                     "my-key",
 				"regions":                 []any{"us-east-1"},

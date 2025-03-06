@@ -34,9 +34,16 @@ func newIntegrationSchema() map[string]*schema.Schema {
 			Description: "Whether the integration is enabled or not",
 		},
 		"auth_method": {
-			Type:        schema.TypeString,
-			Computed:    true,
-			Description: "The mechanism used to authenticate with AWS. Use one of `signalfx_aws_external_integration` or `signalfx_aws_token_integration` to define this",
+			Type:     schema.TypeString,
+			Required: true,
+			ValidateFunc: validation.StringInSlice(
+				[]string{
+					string(integration.EXTERNAL_ID),
+					string(integration.SECURITY_TOKEN),
+				},
+				false,
+			),
+			Description: "The mechanism used to authenticate with AWS. Must be either `ExternalId` or `SecurityToken`.",
 		},
 		"custom_cloudwatch_namespaces": {
 			Type: schema.TypeSet,
@@ -267,16 +274,20 @@ func decodeTerraform(rd *schema.ResourceData) (*integration.AwsCloudWatchIntegra
 		cwi.LogsSyncState = "CANCELING"
 	}
 
-	if v, ok := rd.GetOk("external_id"); ok && v != "" {
-		cwi.AuthMethod = integration.EXTERNAL_ID
-		cwi.ExternalId = v.(string)
-		cwi.RoleArn = rd.Get("role_arn").(string)
-	} else if v, ok := rd.GetOk("token"); ok && v != "" {
-		cwi.AuthMethod = integration.SECURITY_TOKEN
-		cwi.Token = v.(string)
-		cwi.Key = rd.Get("key").(string)
+	if v, ok := rd.Get("auth_method").(string); ok {
+		cwi.AuthMethod = integration.AwsAuthMethod(v)
+		switch cwi.AuthMethod {
+		case integration.EXTERNAL_ID:
+			cwi.ExternalId = rd.Get("external_id").(string)
+			cwi.RoleArn = rd.Get("role_arn").(string)
+		case integration.SECURITY_TOKEN:
+			cwi.Token = rd.Get("token").(string)
+			cwi.Key = rd.Get("key").(string)
+		default:
+			return nil, fmt.Errorf("unknown auth method set %q", v)
+		}
 	} else {
-		return nil, fmt.Errorf("requires either `external_id` or `token` and `key`")
+		return nil, fmt.Errorf("requires auth method to be configured")
 	}
 
 	if cwi.Regions == nil {
