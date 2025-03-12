@@ -95,6 +95,14 @@ func Provider() *schema.Provider {
 				Optional:    true,
 				Description: "Required if the user is configured to be part of multiple organizations",
 			},
+			"feature_preview": {
+				Type: schema.TypeMap,
+				Elem: &schema.Schema{
+					Type: schema.TypeBool,
+				},
+				Optional:    true,
+				Description: "Allows for users to opt-in to new features that are considered experimental or not ready for general availabilty yet.",
+			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"signalfx_dimension_values":      dataSourceDimensionValues(),
@@ -238,6 +246,17 @@ func signalfxConfigure(data *schema.ResourceData) (interface{}, error) {
 	}
 
 	config.Client = client
+
+	for feat, val := range data.Get("feature_preview").(map[string]any) {
+		err = pmeta.LoadPreviewRegistry(
+			context.TODO(),
+			config,
+		).Configure(context.TODO(), feat, val.(bool))
+
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	return &config, nil
 }

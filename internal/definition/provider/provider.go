@@ -89,6 +89,14 @@ func New() *schema.Provider {
 				ConflictsWith: []string{"auth_token"},
 				Description:   "Required if the user is configured to be part of multiple organizations",
 			},
+			"feature_preview": {
+				Type: schema.TypeMap,
+				Elem: &schema.Schema{
+					Type: schema.TypeBool,
+				},
+				Optional:    true,
+				Description: "Allows for users to opt-in to new features that are considered experimental or not ready for general availability yet.",
+			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			team.ResourceName:     team.NewResource(),
@@ -175,6 +183,12 @@ func configureProvider(ctx context.Context, data *schema.ResourceData) (any, dia
 		Duration("wait_min", waitmin).
 		Duration("wait_max", waitmax),
 	)
+
+	for feat, val := range data.Get("feature_preview").(map[string]any) {
+		if err := pmeta.LoadPreviewRegistry(ctx, meta).Configure(ctx, feat, val.(bool)); err != nil {
+			return nil, tfext.AsWarnDiagnostics(err)
+		}
+	}
 
 	return &meta, nil
 }

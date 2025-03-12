@@ -15,6 +15,7 @@ import (
 	"github.com/signalfx/signalfx-go/sessiontoken"
 	"go.uber.org/multierr"
 
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/feature"
 	tfext "github.com/splunk-terraform/terraform-provider-signalfx/internal/tfextension"
 )
 
@@ -28,13 +29,15 @@ var (
 // It is abstracted out from the provider definition to make it easier
 // to test CRUD operations within unit tests.
 type Meta struct {
-	AuthToken      string           `json:"auth_token"`
-	APIURL         string           `json:"api_url"`
-	CustomAppURL   string           `json:"custom_app_url"`
-	Client         *signalfx.Client `json:"-"`
-	Email          string           `json:"email"`
-	Password       string           `json:"password"`
-	OrganizationID string           `json:"org_id"`
+	reg    *feature.Registry `json:"-"`
+	Client *signalfx.Client  `json:"-"`
+
+	AuthToken      string `json:"auth_token"`
+	APIURL         string `json:"api_url"`
+	CustomAppURL   string `json:"custom_app_url"`
+	Email          string `json:"email"`
+	Password       string `json:"password"`
+	OrganizationID string `json:"org_id"`
 }
 
 // LoadClient returns the configured [signalfx.Client] ready to use.
@@ -70,6 +73,15 @@ func LoadApplicationURL(ctx context.Context, meta any, fragments ...string) stri
 	}
 	u.Fragment = path.Join(fragments...)
 	return u.String()
+}
+
+// LoadPreviewRegistry provides an abstraction around loading from either
+// the cached meta provider object or return the global registry.
+func LoadPreviewRegistry(ctx context.Context, meta any) *feature.Registry {
+	if m, ok := meta.(*Meta); ok && m.reg != nil {
+		return m.reg
+	}
+	return feature.GetGlobalRegistry()
 }
 
 // LoadSessionToken will use the provider username and password

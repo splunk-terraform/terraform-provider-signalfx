@@ -76,6 +76,27 @@ provider "signalfx" {
 }
 ```
 
+# Feature Previews
+
+To allow for more experimental features to be added into the provider, 
+a feature can be added behind a preview gate that defaults to being off and requires a user to opt into the change.
+Once a feature has been added into the provider, in can be set to globally available which will default to the feature being on by default.
+
+There is an opportunity for the user to opt out of a globally available feature if an issue is experienced.
+If that is the case, please raise a support case with the provider configuration and any error messages.
+
+The feature preview can be enabled by the following example:
+
+```hcl
+provider "signalfx" {
+  # Other configured values
+  feature_preview = {
+    "feature-01": true,  // True means that the feature is enabled
+    "feature-02": false, // False means that the feature is explicitly disabled
+  }
+}
+```
+
 ## Arguments
 
 The provider supports the following arguments:
@@ -90,3 +111,4 @@ The provider supports the following arguments:
 * `email` - (Optional) The provided email address is used to generate a _Session Token_ that is then used for all API interactions. Requires email address to be configured with a password, and not via SSO.
 * `password` - (Optional) The password is used to authenticate the email provided to generate a _Session Token_. Requires email address to be configured with a password, and not via SSO.
 * `organization_id` - (Optional) The organisation id is used to select which organization if the user provided belongs to multiple.
+* `feature_preview` - (Optional) A map structure that allows users to enable experimental features before they are ready to be globally available.

@@ -61,6 +61,19 @@ func TestProviderConfiguration(t *testing.T) {
 			},
 			expect: nil,
 		},
+		{
+			name: "Adding feature previews",
+			details: map[string]any{
+				"auth_token": "hunter2",
+				"api_url":    "api.us.signalfx.com",
+				"feature_preview": map[string]any{
+					"feature-01": true,
+				},
+			},
+			expect: diag.Diagnostics{
+				{Severity: diag.Warning, Summary: "no preview with id \"feature-01\" found"},
+			},
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			tftest.CleanEnvVars(t)
