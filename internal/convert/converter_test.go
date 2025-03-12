@@ -29,7 +29,7 @@ func TestSchemaListAll(t *testing.T) {
 			name:   "no values set",
 			schema: schema.NewSet(schema.HashInt, nil),
 			F:      func(s any) any { return s },
-			expect: nil,
+			expect: []any{},
 		},
 		{
 			name:   "int set",
