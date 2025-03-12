@@ -24,11 +24,6 @@ func TestPreviewOption(t *testing.T) {
 			errVal: "function is nil",
 		},
 		{
-			name:   "enable preview",
-			fn:     WithPreviewEnabled(),
-			errVal: "",
-		},
-		{
 			name:   "Global Available",
 			fn:     WithPreviewGlobalAvailable(),
 			errVal: "",

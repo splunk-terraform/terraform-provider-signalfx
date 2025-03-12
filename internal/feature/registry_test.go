@@ -155,7 +155,6 @@ func TestRegistryConfigure(t *testing.T) {
 		{
 			name: "globally available",
 			opts: []PreviewOption{
-				WithPreviewEnabled(),
 				WithPreviewGlobalAvailable(),
 			},
 			feature: "feature-01",

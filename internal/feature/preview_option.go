@@ -18,13 +18,6 @@ func (fn PreviewOption) apply(g *Preview) error {
 	return fn(g)
 }
 
-func WithPreviewEnabled() PreviewOption {
-	return func(p *Preview) error {
-		p.enabled.Store(true)
-		return nil
-	}
-}
-
 func WithPreviewGlobalAvailable() PreviewOption {
 	return func(g *Preview) error {
 		g.available = true
