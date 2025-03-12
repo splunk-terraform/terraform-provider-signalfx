@@ -14,6 +14,8 @@ import (
 	"github.com/signalfx/signalfx-go/sessiontoken"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/feature"
 )
 
 func TestLoadClient(t *testing.T) {
@@ -93,6 +95,41 @@ func TestLoadApplicationURL(t *testing.T) {
 
 			u := LoadApplicationURL(context.Background(), tc.meta, tc.fragments...)
 			require.Equal(t, tc.url, u, "Must match the expected url")
+		})
+	}
+}
+
+func TestLoadPreviewRegistry(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name   string
+		meta   any
+		expect *feature.Registry
+	}{
+		{
+			name:   "no meta set",
+			meta:   nil,
+			expect: feature.GetGlobalRegistry(),
+		},
+		{
+			name:   "no local registry set",
+			meta:   &Meta{},
+			expect: feature.GetGlobalRegistry(),
+		},
+		{
+			name: "empty local registry",
+			meta: &Meta{
+				reg: &feature.Registry{},
+			},
+			expect: &feature.Registry{},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			r := LoadPreviewRegistry(context.Background(), tc.meta)
+			assert.Equal(t, tc.expect, r, "Must match the expected registry")
 		})
 	}
 }
