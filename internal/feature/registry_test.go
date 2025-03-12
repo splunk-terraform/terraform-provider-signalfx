@@ -173,7 +173,7 @@ func TestRegistryConfigure(t *testing.T) {
 			if tc.errVal != "" {
 				assert.EqualError(t, err, tc.errVal, "Must match the expected value")
 			} else {
-				assert.NoError(t, err, "Must not ")
+				assert.NoError(t, err, "Must not return an error")
 			}
 		})
 	}
