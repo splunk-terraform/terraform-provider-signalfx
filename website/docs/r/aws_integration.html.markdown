@@ -96,3 +96,5 @@ resource "signalfx_aws_integration" "aws_myteam" {
 * `use_metric_streams_sync` - (Optional) Enable the use of Amazon Cloudwatch Metric Streams for ingesting metrics.<br>
   Note that this requires the inclusion of `"cloudwatch:ListMetricStreams"`,`"cloudwatch:GetMetricStream"`, `"cloudwatch:PutMetricStream"`, `"cloudwatch:DeleteMetricStream"`, `"cloudwatch:StartMetricStreams"`, `"cloudwatch:StopMetricStreams"` and `"iam:PassRole"` permissions.<br>
   Note you need to deploy additional resources on your AWS account to enable CloudWatch metrics streaming. Select one of the [CloudFormation templates](https://docs.splunk.com/Observability/gdi/get-data-in/connect/aws/aws-cloudformation.html) to deploy all the required resources.
+* `collect_only_recommended_stats` - (Optional) The integration will only ingest the recommended statistics published by AWS
+* `metric_streams_managed_externally` - (Optional) If set to true, Splunk Observability Cloud accepts data from Metric Streams managed from the AWS console. The AWS account sending the Metric Streams and the AWS account in the Splunk Observability Cloud integration have to match.
