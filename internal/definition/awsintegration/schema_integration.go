@@ -232,25 +232,34 @@ func newIntegrationSchema() map[string]*schema.Schema {
 			Default:     false,
 			Description: "Indicates that Splunk Observability should only sync recommended statistics",
 		},
+		"metric_streams_managed_externally": {
+			Type:     schema.TypeBool,
+			Optional: true,
+			Default:  false,
+			Description: "If set to true, Splunk Observability Cloud accepts data from Metric Streams managed from the AWS console. " +
+				"The AWS account sending the Metric Streams and the AWS account in the Splunk Observability Cloud integration have to match." +
+				"Requires `use_metric_streams_sync` set to true to work.",
+		},
 	}
 }
 
 func decodeTerraform(rd *schema.ResourceData) (*integration.AwsCloudWatchIntegration, error) {
 	cwi := &integration.AwsCloudWatchIntegration{
-		Type:                        "AWSCloudWatch",
-		Id:                          rd.Get("integration_id").(string),
-		Name:                        rd.Get("name").(string),
-		Enabled:                     rd.Get("enabled").(bool),
-		EnableAwsUsage:              rd.Get("enable_aws_usage").(bool),
-		ImportCloudWatch:            rd.Get("import_cloud_watch").(bool),
-		EnableCheckLargeVolume:      rd.Get("enable_check_large_volume").(bool),
-		SyncCustomNamespacesOnly:    rd.Get("sync_custom_namespaces_only").(bool),
-		CollectOnlyRecommendedStats: rd.Get("collect_only_recommended_stats").(bool),
-		Regions:                     convert.SchemaListAll(rd.Get("regions"), convert.ToString),
-		Services:                    convert.SchemaListAll(rd.Get("services"), convert.ToStringLike[integration.AwsService]),
-		NamespaceSyncRules:          convert.SchemaListAll(rd.Get("namespace_sync_rule"), convert.ToAWSNamespaceRule),
-		CustomNamespaceSyncRules:    convert.SchemaListAll(rd.Get("custom_namespace_sync_rule"), convert.ToAWSCustomNamespaceRule),
-		CustomCloudWatchNamespaces:  strings.Join(convert.SchemaListAll(rd.Get("custom_cloudwatch_namespaces"), convert.ToString), ","),
+		Type:                           "AWSCloudWatch",
+		Id:                             rd.Get("integration_id").(string),
+		Name:                           rd.Get("name").(string),
+		Enabled:                        rd.Get("enabled").(bool),
+		EnableAwsUsage:                 rd.Get("enable_aws_usage").(bool),
+		ImportCloudWatch:               rd.Get("import_cloud_watch").(bool),
+		EnableCheckLargeVolume:         rd.Get("enable_check_large_volume").(bool),
+		SyncCustomNamespacesOnly:       rd.Get("sync_custom_namespaces_only").(bool),
+		CollectOnlyRecommendedStats:    rd.Get("collect_only_recommended_stats").(bool),
+		MetricStreamsManagedExternally: rd.Get("metric_streams_managed_externally").(bool),
+		Regions:                        convert.SchemaListAll(rd.Get("regions"), convert.ToString),
+		Services:                       convert.SchemaListAll(rd.Get("services"), convert.ToStringLike[integration.AwsService]),
+		NamespaceSyncRules:             convert.SchemaListAll(rd.Get("namespace_sync_rule"), convert.ToAWSNamespaceRule),
+		CustomNamespaceSyncRules:       convert.SchemaListAll(rd.Get("custom_namespace_sync_rule"), convert.ToAWSCustomNamespaceRule),
+		CustomCloudWatchNamespaces:     strings.Join(convert.SchemaListAll(rd.Get("custom_cloudwatch_namespaces"), convert.ToString), ","),
 	}
 
 	if v, ok := rd.GetOk("use_metric_streams_sync"); ok && v.(bool) {

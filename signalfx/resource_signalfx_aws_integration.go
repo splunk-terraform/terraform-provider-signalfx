@@ -250,11 +250,12 @@ func integrationAWSResource() *schema.Resource {
 				Description: "Indicates that Splunk Observability should only sync recommended statistics",
 			},
 			"metric_streams_managed_externally": {
-				Type:     schema.TypeString,
+				Type:     schema.TypeBool,
 				Optional: true,
 				Default:  false,
 				Description: "If set to true, Splunk Observability Cloud accepts data from Metric Streams managed from the AWS console. " +
-					"The AWS account sending the Metric Streams and the AWS account in the Splunk Observability Cloud integration have to match.",
+					"The AWS account sending the Metric Streams and the AWS account in the Splunk Observability Cloud integration have to match." +
+					"Requires `use_metric_streams_sync` set to true to work.",
 			},
 		},
 
