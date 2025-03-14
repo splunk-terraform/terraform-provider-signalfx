@@ -1,3 +1,6 @@
+// Copyright Splunk, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package orgtoken
 
 import (
@@ -10,6 +13,10 @@ import (
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/common"
 	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
 	tfext "github.com/splunk-terraform/terraform-provider-signalfx/internal/tfextension"
+)
+
+const (
+	ResourceName = "signalfx_org_token"
 )
 
 func NewResource() *schema.Resource {
@@ -31,12 +38,20 @@ func resourceRead(ctx context.Context, data *schema.ResourceData, meta any) diag
 		return tfext.AsErrorDiagnostics(err)
 	}
 
+	if data.Id() == "" {
+		details, err := decodeTerraform(data)
+		if err != nil {
+			return tfext.AsErrorDiagnostics(err)
+		}
+		data.SetId(details.Name)
+	}
+
 	token, err := sfx.GetOrgToken(ctx, data.Id())
 	if err != nil {
 		return tfext.AsErrorDiagnostics(common.HandleError(ctx, err, data))
 	}
 
-	return tfext.AsErrorDiagnostics(decodeTerraform(token, data))
+	return tfext.AsErrorDiagnostics(encodeTerraform(token, data))
 }
 
 func resourceCreate(ctx context.Context, data *schema.ResourceData, meta any) diag.Diagnostics {
@@ -45,7 +60,7 @@ func resourceCreate(ctx context.Context, data *schema.ResourceData, meta any) di
 		return tfext.AsErrorDiagnostics(err)
 	}
 
-	details, err := encodeTerraform(data)
+	details, err := decodeTerraform(data)
 	if err != nil {
 		return tfext.AsErrorDiagnostics(err)
 	}
@@ -72,9 +87,14 @@ func resourceUpdate(ctx context.Context, data *schema.ResourceData, meta any) di
 	if err != nil {
 		return tfext.AsErrorDiagnostics(err)
 	}
-	details, err := encodeTerraform(data)
+
+	details, err := decodeTerraform(data)
 	if err != nil {
 		return tfext.AsErrorDiagnostics(err)
+	}
+
+	if data.Id() == "" {
+		data.SetId(details.Name)
 	}
 
 	token, err := sfx.UpdateOrgToken(ctx, data.Id(), &orgtoken.CreateUpdateTokenRequest{
@@ -89,13 +109,21 @@ func resourceUpdate(ctx context.Context, data *schema.ResourceData, meta any) di
 		return tfext.AsErrorDiagnostics(common.HandleError(ctx, err, data))
 	}
 
-	return tfext.AsErrorDiagnostics(decodeTerraform(token, data))
+	return tfext.AsErrorDiagnostics(encodeTerraform(token, data))
 }
 
 func resourceDelete(ctx context.Context, data *schema.ResourceData, meta any) diag.Diagnostics {
 	sfx, err := pmeta.LoadClient(ctx, meta)
 	if err != nil {
 		return tfext.AsErrorDiagnostics(err)
+	}
+
+	if data.Id() == "" {
+		details, err := decodeTerraform(data)
+		if err != nil {
+			return tfext.AsErrorDiagnostics(err)
+		}
+		data.SetId(details.Name)
 	}
 
 	err = sfx.DeleteOrgToken(ctx, data.Id())
