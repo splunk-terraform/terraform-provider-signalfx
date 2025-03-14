@@ -141,7 +141,7 @@ func newSchema() map[string]*schema.Schema {
 	}
 }
 
-func encodeTerraform(data *schema.ResourceData) (*orgtoken.Token, error) {
+func decodeTerraform(data *schema.ResourceData) (*orgtoken.Token, error) {
 	token := &orgtoken.Token{
 		Name:        data.Get("name").(string),
 		Description: data.Get("description").(string),
@@ -193,13 +193,11 @@ func encodeTerraform(data *schema.ResourceData) (*orgtoken.Token, error) {
 	return token, nil
 }
 
-func decodeTerraform(token *orgtoken.Token, data *schema.ResourceData) error {
+func encodeTerraform(token *orgtoken.Token, data *schema.ResourceData) error {
 	notifys, err := common.NewNotificationStringList(token.Notifications)
 	if err != nil {
 		return fmt.Errorf("notifications: %w", err)
 	}
-
-	data.SetId(token.Name)
 
 	errs := multierr.Combine(
 		data.Set("name", token.Name),

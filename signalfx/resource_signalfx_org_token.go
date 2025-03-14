@@ -16,9 +16,20 @@ import (
 
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/check"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/common"
+	vnext "github.com/splunk-terraform/terraform-provider-signalfx/internal/definition/orgtoken"
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/feature"
+)
+
+var previewVNextOrgToken = feature.GetGlobalRegistry().MustRegister(
+	"vnext.org-token",
+	feature.WithPreviewDescription("When enabled, org token will be managed with the updated behaviour."),
+	feature.WithPreviewAddInVersion("v9.8.0"),
 )
 
 func orgTokenResource() *schema.Resource {
+	if previewVNextOrgToken.Enabled() {
+		return vnext.NewResource()
+	}
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
 			"name": &schema.Schema{

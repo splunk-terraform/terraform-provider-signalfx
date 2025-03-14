@@ -15,7 +15,7 @@ import (
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/common"
 )
 
-func TestSchemaEncode(t *testing.T) {
+func TestSchemaDecode(t *testing.T) {
 	t.Parallel()
 
 	for _, tc := range []struct {
@@ -120,7 +120,7 @@ func TestSchemaEncode(t *testing.T) {
 
 			data := schema.TestResourceDataRaw(t, newSchema(), tc.values)
 
-			token, err := encodeTerraform(data)
+			token, err := decodeTerraform(data)
 			assert.Equal(t, tc.expect, token, "Must match the expected token")
 			if tc.errVal != "" {
 				assert.EqualError(t, err, tc.errVal, "Must match the expected value")
@@ -131,7 +131,7 @@ func TestSchemaEncode(t *testing.T) {
 	}
 }
 
-func TestSchemaDecode(t *testing.T) {
+func TestSchemaEncode(t *testing.T) {
 	t.Parallel()
 
 	for _, tc := range []struct {
@@ -180,7 +180,7 @@ func TestSchemaDecode(t *testing.T) {
 
 			data := schema.TestResourceDataRaw(t, newSchema(), map[string]any{})
 
-			err := decodeTerraform(tc.token, data)
+			err := encodeTerraform(tc.token, data)
 			if tc.errVal != "" {
 				assert.EqualError(t, err, tc.errVal, "Must match the expected error")
 			} else {
