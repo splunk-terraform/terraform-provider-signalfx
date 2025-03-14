@@ -122,6 +122,7 @@ func TestResourceRead(t *testing.T) {
 			Resource: NewResource(),
 			Encoder:  encodeTerraform,
 			Decoder:  decodeTerraform,
+			ID:       "my-token",
 			Input: &orgtoken.Token{
 				Name: "my-token",
 			},
@@ -152,6 +153,7 @@ func TestResourceRead(t *testing.T) {
 			Resource: NewResource(),
 			Encoder:  encodeTerraform,
 			Decoder:  decodeTerraform,
+			ID:       "my-token",
 			Input: &orgtoken.Token{
 				Name: "my-token",
 			},
@@ -199,6 +201,7 @@ func TestResourceUpdate(t *testing.T) {
 			Resource: NewResource(),
 			Encoder:  encodeTerraform,
 			Decoder:  decodeTerraform,
+			ID:       "my-token",
 			Input: &orgtoken.Token{
 				Name: "my-token",
 			},
@@ -226,6 +229,7 @@ func TestResourceUpdate(t *testing.T) {
 			Resource: NewResource(),
 			Encoder:  encodeTerraform,
 			Decoder:  decodeTerraform,
+			ID:       "my-token",
 			Input: &orgtoken.Token{
 				Name:        "my-token",
 				Description: "My token...",
@@ -273,6 +277,7 @@ func TestResourceDelete(t *testing.T) {
 			Resource: NewResource(),
 			Encoder:  encodeTerraform,
 			Decoder:  decodeTerraform,
+			ID:       "my-token",
 			Input: &orgtoken.Token{
 				Name: "my-token",
 			},
@@ -282,7 +287,7 @@ func TestResourceDelete(t *testing.T) {
 			},
 		},
 		{
-			Name: "Failed delete",
+			Name: "Succesful delete",
 			Meta: tftest.NewTestHTTPMockMeta(map[string]http.HandlerFunc{
 				"DELETE /v2/token/my-token": func(w http.ResponseWriter, r *http.Request) {
 					_, _ = io.Copy(io.Discard, r.Body)
@@ -294,6 +299,7 @@ func TestResourceDelete(t *testing.T) {
 			Resource: NewResource(),
 			Encoder:  encodeTerraform,
 			Decoder:  decodeTerraform,
+			ID:       "my-token",
 			Input: &orgtoken.Token{
 				Name: "my-token",
 			},

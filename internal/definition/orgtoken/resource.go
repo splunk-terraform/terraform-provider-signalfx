@@ -38,14 +38,6 @@ func resourceRead(ctx context.Context, data *schema.ResourceData, meta any) diag
 		return tfext.AsErrorDiagnostics(err)
 	}
 
-	if data.Id() == "" {
-		details, err := decodeTerraform(data)
-		if err != nil {
-			return tfext.AsErrorDiagnostics(err)
-		}
-		data.SetId(details.Name)
-	}
-
 	token, err := sfx.GetOrgToken(ctx, data.Id())
 	if err != nil {
 		return tfext.AsErrorDiagnostics(common.HandleError(ctx, err, data))

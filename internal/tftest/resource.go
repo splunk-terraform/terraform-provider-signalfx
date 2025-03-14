@@ -32,6 +32,9 @@ type ResourceOperationTestCase[T any] struct {
 	Encoder tfext.EncodeTerraformFunc[T]
 	// Decoder is used to parse the final result of the operation
 	Decoder tfext.DecodeTerraformFunc[T]
+	// ID is an optional value that can be set before the method is
+	// called since the terraform provider will externally handle the state.
+	ID string
 	// Input is the initial "state" value that would
 	// either be provided by the configuration or state file.
 	Input *T
@@ -155,6 +158,10 @@ func (tc ResourceOperationTestCase[T]) testOperation(
 
 	rd := resource.TestResourceData()
 	require.NoError(t, tc.Encoder(tc.Input, rd), "Must not error encoding input value into resource data")
+
+	if tc.ID != "" {
+		rd.SetId(tc.ID)
+	}
 
 	actual := op(context.Background(), rd, tc.Meta(t))
 	assert.Equal(t, tc.Issues, actual, "Must match the expected issues defined")
