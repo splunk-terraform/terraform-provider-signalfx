@@ -287,7 +287,7 @@ func TestResourceDelete(t *testing.T) {
 			},
 		},
 		{
-			Name: "Succesful delete",
+			Name: "Successful delete",
 			Meta: tftest.NewTestHTTPMockMeta(map[string]http.HandlerFunc{
 				"DELETE /v2/token/my-token": func(w http.ResponseWriter, r *http.Request) {
 					_, _ = io.Copy(io.Discard, r.Body)

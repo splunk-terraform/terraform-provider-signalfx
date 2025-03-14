@@ -85,10 +85,6 @@ func resourceUpdate(ctx context.Context, data *schema.ResourceData, meta any) di
 		return tfext.AsErrorDiagnostics(err)
 	}
 
-	if data.Id() == "" {
-		data.SetId(details.Name)
-	}
-
 	token, err := sfx.UpdateOrgToken(ctx, data.Id(), &orgtoken.CreateUpdateTokenRequest{
 		Name:          details.Name,
 		AuthScopes:    details.AuthScopes,
@@ -108,14 +104,6 @@ func resourceDelete(ctx context.Context, data *schema.ResourceData, meta any) di
 	sfx, err := pmeta.LoadClient(ctx, meta)
 	if err != nil {
 		return tfext.AsErrorDiagnostics(err)
-	}
-
-	if data.Id() == "" {
-		details, err := decodeTerraform(data)
-		if err != nil {
-			return tfext.AsErrorDiagnostics(err)
-		}
-		data.SetId(details.Name)
 	}
 
 	err = sfx.DeleteOrgToken(ctx, data.Id())
