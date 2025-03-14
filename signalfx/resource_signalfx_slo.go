@@ -7,17 +7,18 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"github.com/signalfx/signalfx-go/detector"
-	"github.com/signalfx/signalfx-go/slo"
 	"log"
 	"net/http"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/signalfx/signalfx-go/detector"
+	"github.com/signalfx/signalfx-go/slo"
 )
 
 const (
@@ -621,7 +622,7 @@ func getTfSloInput(sloApiObject *slo.SloObject) (map[string]interface{}, error) 
 		tfInput := getRequestBasedTerraformInput(sloApiObject.RequestBasedSlo.Inputs)
 		return tfInput, nil
 	default:
-		return nil, fmt.Errorf("Unsupported SLO type: " + sloApiObject.Type)
+		return nil, fmt.Errorf("Unsupported SLO type: %q", sloApiObject.Type)
 	}
 }
 
