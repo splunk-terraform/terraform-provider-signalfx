@@ -35,7 +35,7 @@ Resources that require session tokens are flagged in their documentation.
 A Service account is term used when a user is created within organization that can login via Username and Password, 
 this allows for a _Session Token_ to be created by the terraform provider and then used throughout the application.
 
-~> **NOTE** Separate the less sensitive resources, such as dashboards, from the 
+ℹ️ **NOTE** Separate the less sensitive resources, such as dashboards, from the 
 more sensitive ones, such as integrations, to avoid having to change tokens.
 
 ## Example
@@ -96,6 +96,8 @@ provider "signalfx" {
   }
 }
 ```
+
+ℹ️ **NOTE** Preview features are a subject to change and/or removal in a future version of the provider.
 
 ## Arguments
 

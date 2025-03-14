@@ -57,7 +57,7 @@ resource "aws_iam_policy" "aws_splunk_policy" {
       "Effect": "Allow",
       "Action": [
         "airflow:GetEnvironment",
-        "airflow:ListEnvironments
+        "airflow:ListEnvironments",
         "apigateway:GET",
         "autoscaling:DescribeAutoScalingGroups",
         "cloudformation:ListResources",
