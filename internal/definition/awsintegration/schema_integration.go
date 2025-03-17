@@ -321,8 +321,8 @@ func decodeTerraform(rd *schema.ResourceData) (*integration.AwsCloudWatchIntegra
 	return cwi, nil
 }
 
-func encodeTerraform(aws *integration.AwsCloudWatchIntegration, d *schema.ResourceData) (errs error) {
-	err := multierr.Combine(
+func encodeTerraform(aws *integration.AwsCloudWatchIntegration, d *schema.ResourceData) error {
+	errs := multierr.Combine(
 		d.Set("integration_id", aws.Id),
 		d.Set("name", aws.Name),
 		d.Set("enabled", aws.Enabled),
@@ -337,7 +337,6 @@ func encodeTerraform(aws *integration.AwsCloudWatchIntegration, d *schema.Resour
 		d.Set("collect_only_recommended_stats", aws.CollectOnlyRecommendedStats),
 		d.Set("metric_streams_managed_externally", aws.MetricStreamsManagedExternally),
 	)
-	errs = multierr.Append(errs, err)
 
 	if aws.Token != "" {
 		errs = multierr.Append(errs, d.Set("token", aws.Token))
