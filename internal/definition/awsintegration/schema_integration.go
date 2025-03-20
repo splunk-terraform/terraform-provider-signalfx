@@ -279,11 +279,15 @@ func decodeTerraform(rd *schema.ResourceData) (*integration.AwsCloudWatchIntegra
 	if v, ok := rd.GetOk("external_id"); ok && v != "" {
 		cwi.AuthMethod = integration.EXTERNAL_ID
 		cwi.ExternalId = v.(string)
-		cwi.RoleArn = rd.Get("role_arn").(string)
+		if r, ok := rd.GetOk("role_arn"); ok {
+			cwi.RoleArn = r.(string)
+		}
 	} else if v, ok := rd.GetOk("token"); ok && v != "" {
 		cwi.AuthMethod = integration.SECURITY_TOKEN
 		cwi.Token = v.(string)
-		cwi.Key = rd.Get("key").(string)
+		if k, ok := rd.GetOk("key"); ok {
+			cwi.Key = k.(string)
+		}
 	} else {
 		return nil, fmt.Errorf("requires either `external_id` or `token` and `key`")
 	}
