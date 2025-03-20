@@ -342,6 +342,10 @@ func encodeTerraform(aws *integration.AwsCloudWatchIntegration, d *schema.Resour
 		errs = multierr.Append(errs, d.Set("token", aws.Token))
 	}
 
+	if aws.Key != "" {
+		errs = multierr.Append(errs, d.Set("key", aws.Key))
+	}
+
 	if len(aws.Regions) > 0 {
 		errs = multierr.Append(errs, d.Set("regions", schema.NewSet(
 			schema.HashString,
