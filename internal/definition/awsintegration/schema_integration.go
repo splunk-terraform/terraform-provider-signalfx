@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/signalfx/signalfx-go/integration"
+	"go.uber.org/multierr"
 
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/check"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/convert"
@@ -318,4 +319,95 @@ func decodeTerraform(rd *schema.ResourceData) (*integration.AwsCloudWatchIntegra
 	}
 
 	return cwi, nil
+}
+
+func encodeTerraform(aws *integration.AwsCloudWatchIntegration, d *schema.ResourceData) error {
+	errs := multierr.Combine(
+		d.Set("integration_id", aws.Id),
+		d.Set("name", aws.Name),
+		d.Set("enabled", aws.Enabled),
+		d.Set("enable_aws_usage", aws.EnableAwsUsage),
+		d.Set("import_cloud_watch", aws.ImportCloudWatch),
+		d.Set("poll_rate", aws.PollRate/1000),
+		d.Set("use_metric_streams_sync", aws.MetricStreamsSyncState == "ENABLED"),
+		d.Set("enable_logs_sync", aws.LogsSyncState == "ENABLED"),
+		d.Set("enable_check_large_volume", aws.EnableCheckLargeVolume),
+		d.Set("sync_custom_namespaces_only", aws.SyncCustomNamespacesOnly),
+		d.Set("named_token", aws.NamedToken),
+		d.Set("collect_only_recommended_stats", aws.CollectOnlyRecommendedStats),
+		d.Set("metric_streams_managed_externally", aws.MetricStreamsManagedExternally),
+	)
+
+	if aws.Token != "" {
+		errs = multierr.Append(errs, d.Set("token", aws.Token))
+	}
+
+	if aws.Key != "" {
+		errs = multierr.Append(errs, d.Set("key", aws.Key))
+	}
+
+	if len(aws.Regions) > 0 {
+		errs = multierr.Append(errs, d.Set("regions", schema.NewSet(
+			schema.HashString,
+			convert.SliceAll(aws.Regions, convert.ToAny),
+		)))
+	}
+
+	if len(aws.CustomNamespaceSyncRules) > 0 {
+		errs = multierr.Append(errs, d.Set(
+			"custom_namespace_sync_rule",
+			convert.SliceAll(aws.CustomNamespaceSyncRules, func(ns *integration.AwsCustomNameSpaceSyncRule) map[string]any {
+				rule := map[string]any{
+					"default_action": string(ns.DefaultAction),
+					"namespace":      ns.Namespace,
+				}
+				if ns.Filter != nil {
+					rule["filter_action"] = ns.Filter.Action
+					rule["filter_source"] = ns.Filter.Source
+				}
+				return rule
+			})))
+	} else if aws.CustomCloudWatchNamespaces != "" {
+		errs = multierr.Append(errs, d.Set("custom_cloudwatch_namespaces", schema.NewSet(schema.HashString, convert.SliceAll(
+			strings.Split(aws.CustomCloudWatchNamespaces, ","),
+			convert.ToAny,
+		))))
+	}
+
+	if _, ok := d.GetOk("services"); ok {
+		errs = multierr.Append(errs, d.Set("services", convert.SliceAll(
+			aws.Services,
+			func(in integration.AwsService) any {
+				return string(in)
+			},
+		)))
+	} else if len(aws.NamespaceSyncRules) > 0 {
+		errs = multierr.Append(errs, d.Set("namespace_sync_rule", convert.SliceAll(aws.NamespaceSyncRules, func(in *integration.AwsNameSpaceSyncRule) map[string]any {
+			rule := map[string]any{
+				"default_action": string(in.DefaultAction),
+				"namespace":      in.Namespace,
+			}
+			if in.Filter != nil {
+				rule["filter_action"] = in.Filter.Action
+				rule["filter_source"] = in.Filter.Source
+			}
+			return rule
+		})))
+	}
+
+	if len(aws.MetricStatsToSync) > 0 {
+		sync := []map[string]any{}
+		for namespace, v := range aws.MetricStatsToSync {
+			for metric, stats := range v {
+				sync = append(sync, map[string]any{
+					"namespace": namespace,
+					"metric":    metric,
+					"stats":     stats,
+				})
+			}
+		}
+		errs = multierr.Append(errs, d.Set("metric_stats_to_sync", sync))
+	}
+
+	return errs
 }
