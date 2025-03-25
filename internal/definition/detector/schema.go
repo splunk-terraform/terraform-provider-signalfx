@@ -11,7 +11,6 @@ import (
 
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/check"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/common"
-	"github.com/splunk-terraform/terraform-provider-signalfx/internal/convert"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/definition/rule"
 	tfext "github.com/splunk-terraform/terraform-provider-signalfx/internal/tfextension"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/visual"
@@ -214,7 +213,6 @@ func decodeTerraform(rd *schema.ResourceData) (*detector.Detector, error) {
 			ShowDataMarkers: rd.Get("show_data_markers").(bool),
 			ShowEventLines:  rd.Get("show_event_lines").(bool),
 		},
-		Tags: convert.SchemaListAll(rd.Get("tags"), convert.ToString),
 	}
 
 	if tr, ok := rd.GetOk("time_range"); ok {
