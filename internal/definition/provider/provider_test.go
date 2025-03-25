@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/stretchr/testify/assert"
 
+	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/tftest"
 )
 
@@ -44,11 +45,13 @@ func TestProviderConfiguration(t *testing.T) {
 	for _, tc := range []struct {
 		name    string
 		details map[string]any
+		meta    any
 		expect  diag.Diagnostics
 	}{
 		{
 			name:    "no details provided",
 			details: make(map[string]any),
+			meta:    nil,
 			expect: diag.Diagnostics{
 				{Severity: diag.Error, Summary: "missing auth token or email and password"},
 			},
@@ -58,6 +61,12 @@ func TestProviderConfiguration(t *testing.T) {
 			details: map[string]any{
 				"auth_token": "hunter2",
 				"api_url":    "api.us.signalfx.com",
+			},
+			meta: &pmeta.Meta{
+				AuthToken:    "hunter2",
+				APIURL:       "api.us.signalfx.com",
+				CustomAppURL: "https://app.signalfx.com",
+				Tags:         []string{},
 			},
 			expect: nil,
 		},
@@ -70,19 +79,54 @@ func TestProviderConfiguration(t *testing.T) {
 					"feature-01": true,
 				},
 			},
+			meta: nil,
 			expect: diag.Diagnostics{
 				{Severity: diag.Warning, Summary: "no preview with id \"feature-01\" found"},
 			},
+		},
+		{
+			name: "Adding Provider tags",
+			details: map[string]any{
+				"auth_token": "hunter2",
+				"api_url":    "api.signalfx.com",
+				"tags": []any{
+					"brown",
+					"bear",
+					"battery",
+					"staple",
+				},
+			},
+			meta: &pmeta.Meta{
+				AuthToken:    "hunter2",
+				APIURL:       "api.signalfx.com",
+				CustomAppURL: "https://app.signalfx.com",
+				Tags: []string{
+					"brown",
+					"bear",
+					"battery",
+					"staple",
+				},
+			},
+			expect: nil,
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			tftest.CleanEnvVars(t)
 
-			actual := New().Configure(
+			provider := New()
+			actual := provider.Configure(
 				context.Background(),
 				terraform.NewResourceConfigRaw(tc.details),
 			)
 
+			meta := provider.Meta()
+			if m, ok := meta.(*pmeta.Meta); ok {
+				assert.NotNil(t, m.Client, "Must have a valid client")
+				// Removing the client from the returned provider since it is hard to compare
+				m.Client = nil
+			}
+
+			assert.Equal(t, tc.meta, meta, "Must match the expected value")
 			assert.Equal(t, tc.expect, actual, "Must match the expected details")
 		})
 	}
