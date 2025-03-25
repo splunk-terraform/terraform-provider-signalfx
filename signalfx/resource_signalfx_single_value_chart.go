@@ -192,7 +192,6 @@ func singleValueChartResource() *schema.Resource {
 		Read:   singlevaluechartRead,
 		Update: singlevaluechartUpdate,
 		Delete: singlevaluechartDelete,
-		Exists: chartExists,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},

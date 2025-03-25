@@ -133,23 +133,10 @@ func integrationGCPResource() *schema.Resource {
 		Read:   integrationGCPRead,
 		Update: integrationGCPUpdate,
 		Delete: integrationGCPDelete,
-		Exists: integrationGCPExists,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
 	}
-}
-
-func integrationGCPExists(d *schema.ResourceData, meta any) (bool, error) {
-	config := meta.(*signalfxConfig)
-	_, err := config.Client.GetGCPIntegration(context.TODO(), d.Id())
-	if err != nil {
-		if strings.Contains(err.Error(), "404") {
-			return false, nil
-		}
-		return false, err
-	}
-	return true, nil
 }
 
 func integrationGCPRead(d *schema.ResourceData, meta any) error {

@@ -39,23 +39,10 @@ func integrationPagerDutyResource() *schema.Resource {
 		Read:   integrationPagerDutyRead,
 		Update: integrationPagerDutyUpdate,
 		Delete: integrationPagerDutyDelete,
-		Exists: integrationPagerDutyExists,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
 	}
-}
-
-func integrationPagerDutyExists(d *schema.ResourceData, meta interface{}) (bool, error) {
-	config := meta.(*signalfxConfig)
-	_, err := config.Client.GetPagerDutyIntegration(context.TODO(), d.Id())
-	if err != nil {
-		if strings.Contains(err.Error(), "404") {
-			return false, nil
-		}
-		return false, err
-	}
-	return true, nil
 }
 
 func integrationPagerDutyRead(d *schema.ResourceData, meta interface{}) error {

@@ -94,23 +94,10 @@ func integrationJiraResource() *schema.Resource {
 		Read:   integrationJiraRead,
 		Update: integrationJiraUpdate,
 		Delete: integrationJiraDelete,
-		Exists: integrationJiraExists,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
 	}
-}
-
-func integrationJiraExists(d *schema.ResourceData, meta interface{}) (bool, error) {
-	config := meta.(*signalfxConfig)
-	_, err := config.Client.GetJiraIntegration(context.TODO(), d.Id())
-	if err != nil {
-		if strings.Contains(err.Error(), "404") {
-			return false, nil
-		}
-		return false, err
-	}
-	return true, nil
 }
 
 func integrationJiraRead(d *schema.ResourceData, meta interface{}) error {

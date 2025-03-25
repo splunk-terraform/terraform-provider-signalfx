@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"log"
 	"regexp"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -154,7 +153,6 @@ func dataLinkResource() *schema.Resource {
 		Read:   dataLinkRead,
 		Update: dataLinkUpdate,
 		Delete: dataLinkDelete,
-		Exists: dataLinkExists,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -431,16 +429,4 @@ func dataLinkDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 
 	return config.Client.DeleteDataLink(context.TODO(), d.Id())
-}
-
-func dataLinkExists(d *schema.ResourceData, meta interface{}) (bool, error) {
-	config := meta.(*signalfxConfig)
-	_, err := config.Client.GetDataLink(context.TODO(), d.Id())
-	if err != nil {
-		if strings.Contains(err.Error(), "404") {
-			return false, nil
-		}
-		return false, err
-	}
-	return true, nil
 }

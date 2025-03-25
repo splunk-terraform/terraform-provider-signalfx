@@ -73,23 +73,10 @@ func integrationWebhookResource() *schema.Resource {
 		Read:   integrationWebhookRead,
 		Update: integrationWebhookUpdate,
 		Delete: integrationWebhookDelete,
-		Exists: integrationWebhookExists,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
 	}
-}
-
-func integrationWebhookExists(d *schema.ResourceData, meta interface{}) (bool, error) {
-	config := meta.(*signalfxConfig)
-	_, err := config.Client.GetWebhookIntegration(context.TODO(), d.Id())
-	if err != nil {
-		if strings.Contains(err.Error(), "404") {
-			return false, nil
-		}
-		return false, err
-	}
-	return true, nil
 }
 
 func getWebhookPayloadIntegration(d *schema.ResourceData) *integration.WebhookIntegration {

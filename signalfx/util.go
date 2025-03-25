@@ -4,7 +4,6 @@
 package signalfx
 
 import (
-	"context"
 	"fmt"
 	"math"
 	"net/url"
@@ -59,18 +58,6 @@ func buildAppURL(appURL string, fragment string) (string, error) {
 	// The URL is actually a fragment, so use that instead of Path
 	u.Fragment = fragment
 	return u.String(), nil
-}
-
-func chartExists(d *schema.ResourceData, meta interface{}) (bool, error) {
-	config := meta.(*signalfxConfig)
-	_, err := config.Client.GetChart(context.TODO(), d.Id())
-	if err != nil {
-		if strings.Contains(err.Error(), "404") {
-			return false, nil
-		}
-		return false, err
-	}
-	return true, nil
 }
 
 func expandStringSetToSlice(set *schema.Set) []string {

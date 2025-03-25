@@ -144,23 +144,10 @@ func integrationAzureResource() *schema.Resource {
 		Read:   integrationAzureRead,
 		Update: integrationAzureUpdate,
 		Delete: integrationAzureDelete,
-		Exists: integrationAzureExists,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
 	}
-}
-
-func integrationAzureExists(d *schema.ResourceData, meta interface{}) (bool, error) {
-	config := meta.(*signalfxConfig)
-	_, err := config.Client.GetAzureIntegration(context.TODO(), d.Id())
-	if err != nil {
-		if strings.Contains(err.Error(), "404") {
-			return false, nil
-		}
-		return false, err
-	}
-	return true, nil
 }
 
 func integrationAzureRead(d *schema.ResourceData, meta interface{}) error {

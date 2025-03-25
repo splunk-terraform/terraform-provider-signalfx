@@ -8,10 +8,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"log"
 	"strings"
 	"time"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/signalfx/signalfx-go/alertmuting"
@@ -106,7 +107,6 @@ func alertMutingRuleResource() *schema.Resource {
 		Read:   alertMutingRuleRead,
 		Update: alertMutingRuleUpdate,
 		Delete: alertMutingRuleDelete,
-		Exists: alertMutingRuleExists,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -181,18 +181,6 @@ func alertMutingRuleCreate(d *schema.ResourceData, meta interface{}) error {
 	d.SetId(amr.Id)
 
 	return alertMutingRuleAPIToTF(d, amr)
-}
-
-func alertMutingRuleExists(d *schema.ResourceData, meta interface{}) (bool, error) {
-	config := meta.(*signalfxConfig)
-	_, err := config.Client.GetAlertMutingRule(context.TODO(), d.Id())
-	if err != nil {
-		if strings.Contains(err.Error(), "404") {
-			return false, nil
-		}
-		return false, err
-	}
-	return true, nil
 }
 
 func alertMutingRuleRead(d *schema.ResourceData, meta interface{}) error {

@@ -6,21 +6,12 @@ package signalfx
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"log"
 	"reflect"
 	"strings"
-)
 
-func handleIntegrationExists(err error) (bool, error) {
-	if err != nil {
-		if strings.Contains(err.Error(), "404") {
-			return false, nil
-		}
-		return false, err
-	}
-	return true, nil
-}
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+)
 
 func handleIntegrationRead(err error, d *schema.ResourceData) bool {
 	if err != nil {

@@ -39,23 +39,10 @@ func integrationSlackResource() *schema.Resource {
 		Read:   integrationSlackRead,
 		Update: integrationSlackUpdate,
 		Delete: integrationSlackDelete,
-		Exists: integrationSlackExists,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
 	}
-}
-
-func integrationSlackExists(d *schema.ResourceData, meta interface{}) (bool, error) {
-	config := meta.(*signalfxConfig)
-	_, err := config.Client.GetSlackIntegration(context.TODO(), d.Id())
-	if err != nil {
-		if strings.Contains(err.Error(), "404") {
-			return false, nil
-		}
-		return false, err
-	}
-	return true, nil
 }
 
 func getSlackPayloadIntegration(d *schema.ResourceData) *integration.SlackIntegration {
