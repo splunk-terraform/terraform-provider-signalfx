@@ -15,6 +15,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	chart "github.com/signalfx/signalfx-go/chart"
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/common"
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/convert"
+	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
 )
 
 var validHexColor = regexp.MustCompile("^#[A-Fa-f0-9]{6}")
@@ -169,6 +172,12 @@ func heatmapChartResource() *schema.Resource {
 				Computed:    true,
 				Description: "URL of the chart",
 			},
+			"tags": {
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "Tags associated with the resource",
+			},
 		},
 
 		Create: heatmapchartCreate,
@@ -190,6 +199,7 @@ func getPayloadHeatmapChart(d *schema.ResourceData) (*chart.CreateUpdateChartReq
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
 		ProgramText: d.Get("program_text").(string),
+		Tags:        convert.SchemaListAll(d.Get("tags"), convert.ToString),
 	}
 
 	options, err := getHeatmapOptionsChart(d)
@@ -312,6 +322,11 @@ func heatmapchartCreate(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return err
 	}
+
+	payload.Tags = common.Unique(
+		pmeta.LoadProviderTags(context.Background(), meta),
+		payload.Tags,
+	)
 
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Create Heatmap Chart Payload: %s", string(debugOutput))
@@ -438,6 +453,11 @@ func heatmapchartUpdate(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return err
 	}
+
+	payload.Tags = common.Unique(
+		pmeta.LoadProviderTags(context.Background(), meta),
+		payload.Tags,
+	)
 
 	c, err := config.Client.UpdateChart(context.TODO(), d.Id(), payload)
 	if err != nil {

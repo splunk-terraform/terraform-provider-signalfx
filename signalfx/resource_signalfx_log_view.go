@@ -6,8 +6,12 @@ package signalfx
 import (
 	"context"
 	"encoding/json"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"log"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/common"
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/convert"
+	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	chart "github.com/signalfx/signalfx-go/chart"
@@ -93,6 +97,12 @@ func logViewResource() *schema.Resource {
 				Computed:    true,
 				Description: "URL of the chart",
 			},
+			"tags": {
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "Tags associated with the resource",
+			},
 		},
 
 		Create: logViewCreate,
@@ -170,6 +180,7 @@ func getPayloadLogView(d *schema.ResourceData) *chart.CreateUpdateChartRequest {
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
 		ProgramText: d.Get("program_text").(string),
+		Tags:        convert.SchemaListAll(d.Get("tags"), convert.ToString),
 		Options: &chart.Options{
 			Time:              timeOptions,
 			Type:              "LogsChart",
@@ -183,6 +194,11 @@ func getPayloadLogView(d *schema.ResourceData) *chart.CreateUpdateChartRequest {
 func logViewCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 	payload := getPayloadLogView(d)
+
+	payload.Tags = common.Unique(
+		pmeta.LoadProviderTags(context.Background(), meta),
+		payload.Tags,
+	)
 
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Create Log View Payload: %s", string(debugOutput))
@@ -303,6 +319,12 @@ func logViewRead(d *schema.ResourceData, meta interface{}) error {
 func logViewUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 	payload := getPayloadLogView(d)
+
+	payload.Tags = common.Unique(
+		pmeta.LoadProviderTags(context.Background(), meta),
+		payload.Tags,
+	)
+
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Update Log ViewPayload: %s", string(debugOutput))
 

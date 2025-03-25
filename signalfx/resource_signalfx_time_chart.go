@@ -14,6 +14,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/common"
+	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
 
 	chart "github.com/signalfx/signalfx-go/chart"
 )
@@ -786,6 +788,11 @@ func timechartCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 	payload := getPayloadTimeChart(d)
 
+	payload.Tags = common.Unique(
+		pmeta.LoadProviderTags(context.Background(), meta),
+		payload.Tags,
+	)
+
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Create Time Chart Payload: %s", string(debugOutput))
 
@@ -1112,6 +1119,11 @@ func publishLabelOptionsToMap(options *chart.PublishLabelOptions) (map[string]in
 func timechartUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 	payload := getPayloadTimeChart(d)
+
+	payload.Tags = common.Unique(
+		pmeta.LoadProviderTags(context.Background(), meta),
+		payload.Tags,
+	)
 
 	c, err := config.Client.UpdateChart(context.TODO(), d.Id(), payload)
 	if err != nil {
