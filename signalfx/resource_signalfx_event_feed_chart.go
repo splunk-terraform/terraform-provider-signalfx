@@ -55,6 +55,14 @@ func eventFeedChartResource() *schema.Resource {
 				Computed:    true,
 				Description: "URL of the chart",
 			},
+			"tags": {
+				Type:     schema.TypeSet,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+				Description: "Tags associated with the resource",
+			},
 		},
 
 		Create: eventFeedChartCreate,

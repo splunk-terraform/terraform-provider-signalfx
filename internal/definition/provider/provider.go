@@ -15,8 +15,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/logging"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/signalfx/signalfx-go"
 
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/convert"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/definition/detector"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/definition/dimension"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/definition/team"
@@ -97,6 +99,15 @@ func New() *schema.Provider {
 				Optional:    true,
 				Description: "Allows for users to opt-in to new features that are considered experimental or not ready for general availability yet.",
 			},
+			"tags": {
+				Type: schema.TypeList,
+				Elem: &schema.Schema{
+					Type:         schema.TypeString,
+					ValidateFunc: validation.StringIsNotEmpty,
+				},
+				Optional:    true,
+				Description: "Allows for Tags to be added by default to resources that allow for tags to be included. If there is already tags configured, the global tags are added in prefix.",
+			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			team.ResourceName:     team.NewResource(),
@@ -114,6 +125,7 @@ func configureProvider(ctx context.Context, data *schema.ResourceData) (any, dia
 		Email:          data.Get("email").(string),
 		Password:       data.Get("password").(string),
 		OrganizationID: data.Get("organization_id").(string),
+		Tags:           convert.SliceAll(data.Get("tags").([]any), convert.ToString),
 	}
 
 	for _, lookup := range pmeta.NewDefaultProviderLookups() {
@@ -190,5 +202,5 @@ func configureProvider(ctx context.Context, data *schema.ResourceData) (any, dia
 		}
 	}
 
-	return &meta, nil
+	return meta, nil
 }

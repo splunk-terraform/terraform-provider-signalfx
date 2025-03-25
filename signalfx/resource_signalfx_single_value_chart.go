@@ -12,6 +12,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	chart "github.com/signalfx/signalfx-go/chart"
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/common"
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/convert"
+	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
 )
 
 func singleValueChartResource() *schema.Resource {
@@ -177,6 +180,12 @@ func singleValueChartResource() *schema.Resource {
 				Computed:    true,
 				Description: "URL of the chart",
 			},
+			"tags": {
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "Tags associated with the resource",
+			},
 		},
 
 		Create: singlevaluechartCreate,
@@ -198,6 +207,7 @@ func getPayloadSingleValueChart(d *schema.ResourceData) *chart.CreateUpdateChart
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
 		ProgramText: d.Get("program_text").(string),
+		Tags:        convert.SchemaListAll(d.Get("tags"), convert.ToString),
 	}
 
 	viz := getSingleValueChartOptions(d)
@@ -271,6 +281,11 @@ func getSingleValueChartOptions(d *schema.ResourceData) *chart.Options {
 func singlevaluechartCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 	payload := getPayloadSingleValueChart(d)
+
+	payload.Tags = common.Unique(
+		pmeta.LoadProviderTags(context.Background(), meta),
+		payload.Tags,
+	)
 
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Create Single Value Chart Payload: %s", string(debugOutput))
@@ -424,6 +439,12 @@ func singlevaluechartRead(d *schema.ResourceData, meta interface{}) error {
 func singlevaluechartUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 	payload := getPayloadSingleValueChart(d)
+
+	payload.Tags = common.Unique(
+		pmeta.LoadProviderTags(context.Background(), meta),
+		payload.Tags,
+	)
+
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Update Single Value Chart Payload: %s", string(debugOutput))
 

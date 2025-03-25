@@ -19,8 +19,14 @@ import (
 	tfext "github.com/splunk-terraform/terraform-provider-signalfx/internal/tfextension"
 )
 
+const (
+	previewGlobalTagsKey = "provider.tags"
+)
+
 var (
 	ErrMetaNotProvided = errors.New("expected to implement type Meta")
+
+	_ = feature.GetGlobalRegistry().MustRegister(previewGlobalTagsKey)
 )
 
 // Meta is the result of `resource.Provider` being correctly configured
@@ -32,12 +38,13 @@ type Meta struct {
 	reg    *feature.Registry `json:"-"`
 	Client *signalfx.Client  `json:"-"`
 
-	AuthToken      string `json:"auth_token"`
-	APIURL         string `json:"api_url"`
-	CustomAppURL   string `json:"custom_app_url"`
-	Email          string `json:"email"`
-	Password       string `json:"password"`
-	OrganizationID string `json:"org_id"`
+	AuthToken      string   `json:"auth_token"`
+	APIURL         string   `json:"api_url"`
+	CustomAppURL   string   `json:"custom_app_url"`
+	Email          string   `json:"email"`
+	Password       string   `json:"password"`
+	OrganizationID string   `json:"org_id"`
+	Tags           []string `json:"tags"`
 }
 
 // LoadClient returns the configured [signalfx.Client] ready to use.
@@ -82,6 +89,22 @@ func LoadPreviewRegistry(ctx context.Context, meta any) *feature.Registry {
 		return m.reg
 	}
 	return feature.GetGlobalRegistry()
+}
+
+// LoadProviderTags fetches all the configured tags set by the provider.
+//
+// Requires preview to be enabled in order to return values.
+func LoadProviderTags(ctx context.Context, meta any) []string {
+	if g, ok := LoadPreviewRegistry(ctx, meta).Get(previewGlobalTagsKey); ok && !g.Enabled() {
+		return nil
+	}
+
+	if m, ok := meta.(*Meta); ok {
+		return m.Tags
+	}
+
+	// Technically dead code until the preview is removed
+	return nil
 }
 
 // LoadSessionToken will use the provider username and password

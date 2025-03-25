@@ -261,3 +261,67 @@ func TestMetaToken(t *testing.T) {
 		})
 	}
 }
+
+func TestLoadProviderTags(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name   string
+		meta   any
+		expect []string
+	}{
+		{
+			name:   "no provider set",
+			meta:   nil,
+			expect: nil,
+		},
+		{
+			name:   "incorrect provider type set",
+			meta:   "provider",
+			expect: nil,
+		},
+		{
+			name: "disabled provider",
+			meta: &Meta{
+				reg: func() *feature.Registry {
+					r := feature.NewRegistry()
+					r.MustRegister(previewGlobalTagsKey)
+					return r
+				}(),
+				Tags: []string{
+					"example",
+					"test",
+				},
+			},
+			expect: nil,
+		},
+		{
+			name: "disabled provider",
+			meta: &Meta{
+				reg: func() *feature.Registry {
+					r := feature.NewRegistry()
+					r.MustRegister(previewGlobalTagsKey, feature.WithPreviewGlobalAvailable())
+					return r
+				}(),
+				Tags: []string{
+					"example",
+					"test",
+				},
+			},
+			expect: []string{
+				"example",
+				"test",
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(
+				t,
+				tc.expect,
+				LoadProviderTags(t.Context(), tc.meta),
+			)
+		})
+	}
+}

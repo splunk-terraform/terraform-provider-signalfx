@@ -14,6 +14,7 @@ import (
 	"github.com/signalfx/signalfx-go/detector"
 
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/common"
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/convert"
 	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
 	tfext "github.com/splunk-terraform/terraform-provider-signalfx/internal/tfextension"
 )
@@ -46,22 +47,27 @@ func resourceCreate(ctx context.Context, data *schema.ResourceData, meta any) (i
 	if err != nil {
 		return tfext.AsErrorDiagnostics(err)
 	}
+
 	dt, err := decodeTerraform(data)
 	if err != nil {
 		return tfext.AsErrorDiagnostics(err)
 	}
+
 	tflog.Debug(ctx, "Creating new detector", tfext.NewLogFields().JSON("detector", dt))
 
 	resp, err := client.CreateDetector(ctx, &detector.CreateUpdateDetectorRequest{
-		Name:                 dt.Name,
-		AuthorizedWriters:    dt.AuthorizedWriters,
-		Description:          dt.Description,
-		TimeZone:             dt.TimeZone,
-		MaxDelay:             dt.MaxDelay,
-		MinDelay:             dt.MinDelay,
-		ProgramText:          dt.ProgramText,
-		Rules:                dt.Rules,
-		Tags:                 dt.Tags,
+		Name:              dt.Name,
+		AuthorizedWriters: dt.AuthorizedWriters,
+		Description:       dt.Description,
+		TimeZone:          dt.TimeZone,
+		MaxDelay:          dt.MaxDelay,
+		MinDelay:          dt.MinDelay,
+		ProgramText:       dt.ProgramText,
+		Rules:             dt.Rules,
+		Tags: common.Unique(
+			pmeta.LoadProviderTags(ctx, meta),
+			dt.Tags,
+		),
 		Teams:                dt.Teams,
 		VisualizationOptions: dt.VisualizationOptions,
 		ParentDetectorId:     dt.ParentDetectorId,
@@ -134,15 +140,18 @@ func resourceUpdate(ctx context.Context, data *schema.ResourceData, meta any) (i
 	)
 
 	resp, err := client.UpdateDetector(ctx, data.Id(), &detector.CreateUpdateDetectorRequest{
-		Name:                 dt.Name,
-		AuthorizedWriters:    dt.AuthorizedWriters,
-		Description:          dt.Description,
-		TimeZone:             dt.TimeZone,
-		MaxDelay:             dt.MaxDelay,
-		MinDelay:             dt.MinDelay,
-		ProgramText:          dt.ProgramText,
-		Rules:                dt.Rules,
-		Tags:                 dt.Tags,
+		Name:              dt.Name,
+		AuthorizedWriters: dt.AuthorizedWriters,
+		Description:       dt.Description,
+		TimeZone:          dt.TimeZone,
+		MaxDelay:          dt.MaxDelay,
+		MinDelay:          dt.MinDelay,
+		ProgramText:       dt.ProgramText,
+		Rules:             dt.Rules,
+		Tags: common.Unique(
+			pmeta.LoadProviderTags(ctx, meta),
+			dt.Tags,
+		),
 		Teams:                dt.Teams,
 		VisualizationOptions: dt.VisualizationOptions,
 		ParentDetectorId:     dt.ParentDetectorId,
@@ -207,9 +216,13 @@ func resourceValidateFunc(ctx context.Context, diff *schema.ResourceDiff, meta a
 
 	tflog.Debug(ctx, "Sending detector payload for validation", tfext.NewLogFields().JSON("content", rules))
 	return client.ValidateDetector(ctx, &detector.ValidateDetectorRequestModel{
-		Name:             diff.Get("name").(string),
-		ProgramText:      diff.Get("program_text").(string),
-		Rules:            rules,
+		Name:        diff.Get("name").(string),
+		ProgramText: diff.Get("program_text").(string),
+		Rules:       rules,
+		Tags: common.Unique(
+			pmeta.LoadProviderTags(ctx, meta),
+			convert.SchemaListAll(diff.Get("tags"), convert.ToString),
+		),
 		DetectorOrigin:   diff.Get("detector_origin").(string),
 		ParentDetectorId: diff.Get("parent_detector_id").(string),
 	})

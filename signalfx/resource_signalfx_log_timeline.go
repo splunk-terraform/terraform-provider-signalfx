@@ -6,10 +6,14 @@ package signalfx
 import (
 	"context"
 	"encoding/json"
+	"log"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/signalfx/signalfx-go/chart"
-	"log"
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/common"
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/convert"
+	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
 )
 
 func logTimelineResource() *schema.Resource {
@@ -59,6 +63,12 @@ func logTimelineResource() *schema.Resource {
 				Computed:    true,
 				Description: "URL of the chart",
 			},
+			"tags": {
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "Tags associated with the resource",
+			},
 		},
 
 		Create: logTimelineCreate,
@@ -98,6 +108,7 @@ func getPayloadLogTimeline(d *schema.ResourceData) *chart.CreateUpdateChartReque
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
 		ProgramText: d.Get("program_text").(string),
+		Tags:        convert.SchemaListAll(d.Get("tags"), convert.ToString),
 		Options: &chart.Options{
 			Time:              timeOptions,
 			Type:              "LogsTimeSeriesChart",
@@ -157,6 +168,11 @@ func logTimelineCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 	payload := getPayloadLogTimeline(d)
 
+	payload.Tags = common.Unique(
+		pmeta.LoadProviderTags(context.Background(), meta),
+		payload.Tags,
+	)
+
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Create Log Timeline Payload: %s", string(debugOutput))
 
@@ -200,6 +216,12 @@ func logTimelineRead(d *schema.ResourceData, meta interface{}) error {
 func logTimelineUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 	payload := getPayloadLogTimeline(d)
+
+	payload.Tags = common.Unique(
+		pmeta.LoadProviderTags(context.Background(), meta),
+		payload.Tags,
+	)
+
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Update Log Tiemline Payload: %s", string(debugOutput))
 

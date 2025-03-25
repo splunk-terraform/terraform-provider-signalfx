@@ -10,6 +10,9 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	chart "github.com/signalfx/signalfx-go/chart"
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/common"
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/convert"
+	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
 )
 
 func textChartResource() *schema.Resource {
@@ -35,6 +38,12 @@ func textChartResource() *schema.Resource {
 				Computed:    true,
 				Description: "URL of the chart",
 			},
+			"tags": {
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "Tags associated with the resource",
+			},
 		},
 
 		Create: textchartCreate,
@@ -59,12 +68,18 @@ func getPayloadTextChart(d *schema.ResourceData) *chart.CreateUpdateChartRequest
 			Type:     "Text",
 			Markdown: d.Get("markdown").(string),
 		},
+		Tags: convert.SchemaListAll(d.Get("tags"), convert.ToString),
 	}
 }
 
 func textchartCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 	payload := getPayloadTextChart(d)
+
+	payload.Tags = common.Unique(
+		pmeta.LoadProviderTags(context.Background(), meta),
+		payload.Tags,
+	)
 
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Create Text Chart Payload: %s", string(debugOutput))
@@ -123,6 +138,12 @@ func textchartRead(d *schema.ResourceData, meta interface{}) error {
 func textchartUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 	payload := getPayloadTextChart(d)
+
+	payload.Tags = common.Unique(
+		pmeta.LoadProviderTags(context.Background(), meta),
+		payload.Tags,
+	)
+
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Update Text Chart Payload: %s", string(debugOutput))
 

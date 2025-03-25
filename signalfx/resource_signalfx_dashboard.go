@@ -16,6 +16,8 @@ import (
 	"github.com/signalfx/signalfx-go/dashboard"
 	"github.com/signalfx/signalfx-go/util"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/check"
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/common"
+	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
 )
 
 const (
@@ -819,6 +821,11 @@ func dashboardCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Failed creating json payload: %s", err.Error())
 	}
 
+	payload.Tags = common.Unique(
+		pmeta.LoadProviderTags(context.Background(), meta),
+		payload.Tags,
+	)
+
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Dashboard Create Payload: %s", debugOutput)
 
@@ -1117,6 +1124,11 @@ func dashboardUpdate(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return fmt.Errorf("Failed creating json payload: %s", err.Error())
 	}
+
+	payload.Tags = common.Unique(
+		pmeta.LoadProviderTags(context.Background(), meta),
+		payload.Tags,
+	)
 
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Update Dashboard Payload: %s", string(debugOutput))

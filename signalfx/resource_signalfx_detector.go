@@ -19,6 +19,7 @@ import (
 	"github.com/signalfx/signalfx-go/detector"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/check"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/common"
+	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
 )
 
 const (
@@ -497,6 +498,11 @@ func detectorCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Failed creating json payload: %s", err.Error())
 	}
 
+	payload.Tags = common.Unique(
+		pmeta.LoadProviderTags(context.Background(), meta),
+		payload.Tags,
+	)
+
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Create Detector Payload: %s", string(debugOutput))
 
@@ -706,6 +712,11 @@ func detectorUpdate(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return fmt.Errorf("Failed creating json payload: %s", err.Error())
 	}
+
+	payload.Tags = common.Unique(
+		pmeta.LoadProviderTags(context.Background(), meta),
+		payload.Tags,
+	)
 
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Update Detector Payload: %s", string(debugOutput))
