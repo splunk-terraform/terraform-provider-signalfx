@@ -38,23 +38,10 @@ func integrationVictorOpsResource() *schema.Resource {
 		Read:   integrationVictorOpsRead,
 		Update: integrationVictorOpsUpdate,
 		Delete: integrationVictorOpsDelete,
-		Exists: integrationVictorOpsExists,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
 	}
-}
-
-func integrationVictorOpsExists(d *schema.ResourceData, meta interface{}) (bool, error) {
-	config := meta.(*signalfxConfig)
-	_, err := config.Client.GetVictorOpsIntegration(context.TODO(), d.Id())
-	if err != nil {
-		if strings.Contains(err.Error(), "404") {
-			return false, nil
-		}
-		return false, err
-	}
-	return true, nil
 }
 
 func getVictorOpsPayloadIntegration(d *schema.ResourceData) *integration.VictorOpsIntegration {

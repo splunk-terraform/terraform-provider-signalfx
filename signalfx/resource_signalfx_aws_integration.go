@@ -263,20 +263,7 @@ func integrationAWSResource() *schema.Resource {
 		Read:   integrationAWSRead,
 		Update: integrationAWSUpdate,
 		Delete: integrationAWSDelete,
-		Exists: integrationAWSExists,
 	}
-}
-
-func integrationAWSExists(d *schema.ResourceData, meta any) (bool, error) {
-	config := meta.(*signalfxConfig)
-	_, err := config.Client.GetAWSCloudWatchIntegration(context.TODO(), d.Get("integration_id").(string))
-	if err != nil {
-		if strings.Contains(err.Error(), "404") {
-			return false, nil
-		}
-		return false, err
-	}
-	return true, nil
 }
 
 func integrationAWSRead(d *schema.ResourceData, meta any) error {

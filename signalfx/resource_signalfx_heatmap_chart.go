@@ -184,7 +184,6 @@ func heatmapChartResource() *schema.Resource {
 		Read:   heatmapchartRead,
 		Update: heatmapchartUpdate,
 		Delete: heatmapchartDelete,
-		Exists: chartExists,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},

@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"log"
 	"sort"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/signalfx/signalfx-go/orgtoken"
@@ -154,7 +153,6 @@ func orgTokenResource() *schema.Resource {
 		Read:   orgTokenRead,
 		Update: orgTokenUpdate,
 		Delete: orgTokenDelete,
-		Exists: orgTokenExists,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -390,16 +388,4 @@ func orgTokenDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 
 	return config.Client.DeleteOrgToken(context.TODO(), d.Id())
-}
-
-func orgTokenExists(d *schema.ResourceData, meta interface{}) (bool, error) {
-	config := meta.(*signalfxConfig)
-	_, err := config.Client.GetOrgToken(context.TODO(), d.Id())
-	if err != nil {
-		if strings.Contains(err.Error(), "404") {
-			return false, nil
-		}
-		return false, err
-	}
-	return true, nil
 }

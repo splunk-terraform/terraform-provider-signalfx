@@ -75,7 +75,6 @@ func logTimelineResource() *schema.Resource {
 		Read:   logTimelineRead,
 		Update: logTimelineUpdate,
 		Delete: logTimelineDelete,
-		Exists: chartExists,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},

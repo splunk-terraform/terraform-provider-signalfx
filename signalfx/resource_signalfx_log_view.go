@@ -109,7 +109,6 @@ func logViewResource() *schema.Resource {
 		Read:   logViewRead,
 		Update: logViewUpdate,
 		Delete: logViewDelete,
-		Exists: chartExists,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},

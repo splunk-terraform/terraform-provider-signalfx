@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"log"
 	"strconv"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -263,7 +262,6 @@ func metricRulesetResource() *schema.Resource {
 		Read:   metricRulesetRead,
 		Update: metricRulesetUpdate,
 		Delete: metricRulesetDelete,
-		Exists: metricRulesetExists,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -387,18 +385,6 @@ func metricRulesetDelete(d *schema.ResourceData, meta interface{}) error {
 
 	err := config.Client.DeleteMetricRuleset(context.TODO(), d.Id())
 	return err
-}
-
-func metricRulesetExists(d *schema.ResourceData, meta interface{}) (bool, error) {
-	config := meta.(*signalfxConfig)
-	_, err := config.Client.GetMetricRuleset(context.TODO(), d.Id())
-	if err != nil {
-		if strings.Contains(err.Error(), "404") {
-			return false, nil
-		}
-		return false, err
-	}
-	return true, nil
 }
 
 func metricRulesetAPIToTF(d *schema.ResourceData, metricRuleset *metric_ruleset.MetricRuleset) error {

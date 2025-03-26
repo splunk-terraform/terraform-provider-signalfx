@@ -144,7 +144,6 @@ func tableChartResource() *schema.Resource {
 		Read:   tablechartRead,
 		Update: tablechartUpdate,
 		Delete: tablechartDelete,
-		Exists: chartExists,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},

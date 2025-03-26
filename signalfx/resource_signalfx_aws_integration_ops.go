@@ -7,23 +7,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/signalfx/signalfx-go/integration"
 	"log"
 	"strings"
-)
 
-func IntegrationAWSExists(d *schema.ResourceData, meta interface{}) (bool, error) {
-	config := meta.(*signalfxConfig)
-	_, err := config.Client.GetAWSCloudWatchIntegration(context.TODO(), d.Id())
-	if err != nil {
-		if strings.Contains(err.Error(), "404") {
-			return false, nil
-		}
-		return false, err
-	}
-	return true, nil
-}
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/signalfx/signalfx-go/integration"
+)
 
 func IntegrationAWSRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)

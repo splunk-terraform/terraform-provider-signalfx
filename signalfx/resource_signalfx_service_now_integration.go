@@ -76,7 +76,6 @@ func integrationServiceNowResource() *schema.Resource {
 		Read:   integrationServiceNowRead,
 		Update: integrationServiceNowUpdate,
 		Delete: integrationServiceNowDelete,
-		Exists: integrationServiceNowExists,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -127,13 +126,6 @@ func setServiceNowIntegration(d *schema.ResourceData, snow *integration.ServiceN
 		}
 	}
 	return nil
-}
-
-func integrationServiceNowExists(d *schema.ResourceData, meta interface{}) (bool, error) {
-	config := meta.(*signalfxConfig)
-
-	_, err := config.Client.GetServiceNowIntegration(context.TODO(), d.Id())
-	return handleIntegrationExists(err)
 }
 
 func integrationServiceNowRead(d *schema.ResourceData, meta interface{}) error {
