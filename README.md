@@ -1,4 +1,4 @@
-# Splunk Observability Cloud Terraform Provider (`signalfx`)
+# Splunk Observability Cloud Terraform Provider (`signalfx`)
 
 Splunk Observability Cloud is a Software as a Service (SaaS) solution for infrastructure monitoring (Splunk IM), application performance monitoring (Splunk APM), real user monitoring (Splunk RUM), and synthetic monitoring (Splunk Synthetic Monitoring). For more information, see [the official documentation](https://docs.splunk.com/observability/en/).
 
@@ -9,12 +9,12 @@ Use this Terraform provider to automate the configuration of Splunk Observabilit
 - [![Gitter chat](https://badges.gitter.im/hashicorp-terraform/Lobby.png)](https://gitter.im/hashicorp-terraform/Lobby)
 - Mailing list: [Google Groups](http://groups.google.com/group/terraform-tool)
 
-## Requirements
+## Requirements
 
 -	[Terraform](https://www.terraform.io/downloads.html) 0.12.x or higher
 -	[Go](https://golang.org/doc/install) 1.19 or higher to build the provider plugin
 
-## Build the provider
+## Build the provider
 
 To build the provider, follow these steps:
 
@@ -71,7 +71,7 @@ $ make testacc
 > [!IMPORTANT]
 > Acceptance tests create real resources, and often cost money to run.
 
-### Run AWS integration tests
+### Run AWS integration tests
 
 To run the AWS integration tests for CloudWatch Metric Streams and AWS logs synchronization, create an AWS IAM user with an access key and secret that Splunk Observability Cloud can use to manage AWS resources, and define the `SFX_TEST_AWS_ACCESS_KEY_ID` and `SFX_TEST_AWS_SECRET_ACCESS_KEY` environment variables. For example:
 
