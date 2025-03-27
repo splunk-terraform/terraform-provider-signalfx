@@ -1,0 +1,62 @@
+---
+page_title: "Splunk Observability Cloud: signalfx_dashboard_group"
+description: |-
+  Allows Terraform to create and manage dashboard groups in Splunk Observability Cloud
+---
+
+{{/* This template serves as a starting point for documentation generation, and can be customized with hardcoded values and/or doc gen templates.
+
+For example, the {{ .SchemaMarkdown }} template can be used to replace manual schema documentation if descriptions of schema attributes are added in the provider source code. */ -}}
+
+# Resource: signalfx_dashboard_group
+
+In the Splunk Observability Cloud web UI, a [dashboard group](https://developers.signalfx.com/dashboard_groups_reference.html) is a collection of dashboards.
+
+Dashboard groups cannot be accessed directly. You can access them through a dashboard within a group.
+
+~> **NOTE** When you want to change or remove write permissions for a user other than yourself regarding dashboard groups, use a session token of an administrator to authenticate the Splunk Observability Cloud provider. See [Operations that require a session token for an administrator](https://dev.splunk.com/observability/docs/administration/authtokens#Operations-that-require-a-session-token-for-an-administrator).
+
+## Example
+
+{{tffile "examples/resources/dashboard_group/example_1.tf"}}
+
+## Example with permissions
+
+{{tffile "examples/resources/dashboard_group/example_2.tf"}}
+
+## Example With mirrored dashboards
+
+{{tffile "examples/resources/dashboard_group/example_3.tf"}}
+
+## Arguments
+
+The following arguments are supported in the resource block:
+
+* `name` - (Required) Name of the dashboard group.
+* `description` - (Required) Description of the dashboard group.
+* `teams` - (Optional) Team IDs to associate the dashboard group to.
+* `authorized_writer_teams` - (Optional) Team IDs that have write access to this dashboard group. Remember to use an admin's token if using this feature and to include that admin's team (or user id in `authorized_writer_teams`). **Note:** Deprecated use `permissions` instead.
+* `authorized_writer_users` - (Optional) User IDs that have write access to this dashboard group. Remember to use an admin's token if using this feature and to include that admin's user id (or team id in `authorized_writer_teams`). **Note:** Deprecated use `permissions` instead.
+* `permissions` - (Optional) [Permissions](https://docs.splunk.com/Observability/infrastructure/terms-concepts/permissions.html) List of read and write permission configuration to specify which user, team, and organization can view and/or edit your dashboard group. **Note:** This feature is not present in all accounts. Please contact support if you are unsure.
+  * `principal_id` - (Required) ID of the user, team, or organization for which you're granting permissions.
+  * `principal_type` - (Required) Clarify whether this permission configuration is for a user, a team, or an organization. Value can be one of "USER", "TEAM", or "ORG".
+  * `actions` - (Required) Action the user, team, or organization can take with the dashboard group. List of values (value can be "READ" or "WRITE").
+* `dashboard` - (Optional) [Mirrored dashboards](https://docs.splunk.com/observability/en/data-visualization/dashboards/dashboard-share-clone-mirror.html#mirror-dashboard) in this dashboard group. **Note:** This feature is not present in all accounts. Please contact support if you are unsure.
+  * `dashboard_id` - (Required) The dashboard id to mirror
+  * `name_override` - (Optional) The name that will override the original dashboards's name.
+  * `description_override` - (Optional) The description that will override the original dashboards's description.
+  * `filter_override` - (Optional) The description that will override the original dashboards's description.
+    * `property` - (Required) The name of a dimension to filter against.
+    * `values` - (Required) A list of values to be used with the `property`, they will be combined via `OR`.
+    * `negated` - (Optional) If true, only data that does not match the specified value of the specified property appear in the event overlay. Defaults to `false`.
+  * `filter_override` - (Optional) The description that will override the original dashboards's description.
+    * `property` - (Required) A metric time series dimension or property name.
+    * `values` - (Optional) (Optional) List of of strings (which will be treated as an OR filter on the property).
+    * `values_suggested` - (Optional) A list of strings of suggested values for this variable; these suggestions will receive priority when values are autosuggested for this variable.
+
+## Attributes
+
+In a addition to all arguments above, the following attributes are exported:
+
+* `id` - The ID of the integration.
+* `dashboard.config_id` - The ID of the association between the dashboard group and the dashboard

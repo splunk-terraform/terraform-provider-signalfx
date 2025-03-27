@@ -1,0 +1,168 @@
+---
+page_title: "Splunk Observability Cloud: signalfx_detector"
+description: |-
+  Allows Terraform to create and manage dashboards in Splunk Observability Cloud
+---
+
+{{/* This template serves as a starting point for documentation generation, and can be customized with hardcoded values and/or doc gen templates.
+
+For example, the {{ .SchemaMarkdown }} template can be used to replace manual schema documentation if descriptions of schema attributes are added in the provider source code. */ -}}
+
+# Resource: signalfx_detector
+
+Provides a Splunk Observability Cloud detector resource. This can be used to create and manage detectors.
+
+If you're interested in using Splunk Observability Cloud detector features such as Historical Anomaly, Resource Running Out, or others, consider building them in the UI first and then use the "Show SignalFlow" feature to extract the value for `program_text`. You can also see the [documentation for detector functions in signalflow-library](https://github.com/signalfx/signalflow-library/tree/master/library/signalfx/detectors).
+
+~> **NOTE** When you want to change or remove write permissions for a user other than yourself regarding detectors, use a session token of an administrator to authenticate the Splunk Observability Cloud provider. See [Operations that require a session token for an administrator](https://dev.splunk.com/observability/docs/administration/authtokens#Operations-that-require-a-session-token-for-an-administrator).
+
+## Example
+
+{{tffile "examples/resources/detector/example_1.tf"}}
+
+## Notification format
+
+As Splunk Observability Cloud supports different notification mechanisms, use a comma-delimited string to provide inputs. If you want to specify multiple notifications, each must be a member in the list, like so:
+
+```
+notifications = ["Email,foo-alerts@example.com", "Slack,credentialId,channel"]
+```
+
+See [Splunk Observability Cloud Docs](https://dev.splunk.com/observability/reference/api/detectors/latest) for more information.
+
+Here are some example of how to configure each notification type:
+
+### Email
+
+```
+notifications = ["Email,foo-alerts@bar.com"]
+```
+
+### Jira
+
+Note that the `credentialId` is the Splunk-provided ID shown after setting up your Jira integration. See also `signalfx_jira_integration`.
+
+```
+notifications = ["Jira,credentialId"]
+```
+
+### OpsGenie
+
+Note that the `credentialId` is the Splunk-provided ID shown after setting up your Opsgenie integration. `Team` here is hardcoded as the `responderType` as that is the only acceptable type as per the API docs.
+
+```
+notifications = ["Opsgenie,credentialId,responderName,responderId,Team"]
+```
+
+### PagerDuty
+
+```
+notifications = ["PagerDuty,credentialId"]
+```
+
+### Slack
+
+Exclude the `#` on the channel name:
+
+```
+notifications = ["Slack,credentialId,channel"]
+```
+
+### Team
+
+Sends [notifications to a team](https://docs.signalfx.com/en/latest/managing/teams/team-notifications.html).
+
+```
+notifications = ["Team,teamId"]
+```
+
+### TeamEmail
+
+Sends an email to every member of a team.
+
+```
+notifications = ["TeamEmail,teamId"]
+```
+
+### Splunk On-Call (formerly VictorOps)
+
+```
+notifications = ["VictorOps,credentialId,routingKey"]
+```
+
+### Webhooks
+
+You need to include all the commas even if you only use a credential id.
+
+You can either configure a Webhook to use an existing integration's credential id:
+
+```
+notifications = ["Webhook,credentialId,,"]
+```
+
+Or configure one inline:
+
+```
+notifications = ["Webhook,,secret,url"]
+```
+
+## Arguments
+
+* `name` - (Required) Name of the detector.
+* `program_text` - (Required) Signalflow program text for the detector. More info [in the Splunk Observability Cloud docs](https://dev.splunk.com/observability/docs/signalflow/).
+* `description` - (Optional) Description of the detector.
+* `authorized_writer_teams` - (Optional) Team IDs that have write access to this detector. Remember to use an admin's token if using this feature and to include that admin's team id (or user id in `authorized_writer_users`).
+* `authorized_writer_users` - (Optional) User IDs that have write access to this detector. Remember to use an admin's token if using this feature and to include that admin's user id (or team id in `authorized_writer_teams`).
+* `max_delay` - (Optional) How long (in seconds) to wait for late datapoints. See [Delayed Datapoints](https://docs.splunk.com/observability/en/data-visualization/charts/chart-builder.html#delayed-datapoints) for more info. Max value is `900` seconds (15 minutes). `Auto` (as little as possible) by default.
+* `min_delay` - (Optional) How long (in seconds) to wait even if the datapoints are arriving in a timely fashion. Max value is 900 (15m).
+* `show_data_markers` - (Optional) When `true`, markers will be drawn for each datapoint within the visualization. `true` by default.
+* `show_event_lines` - (Optional) When `true`, the visualization will display a vertical line for each event trigger. `false` by default.
+* `disable_sampling` - (Optional) When `false`, the visualization may sample the output timeseries rather than displaying them all. `false` by default.
+* `time_range` - (Optional) Seconds to display in the visualization. This is a rolling range from the current time. Example: `3600` corresponds to `-1h` in web UI. `3600` by default.
+* `start_time` - (Optional) Seconds since epoch. Used for visualization. Conflicts with `time_range`.
+* `end_time` - (Optional) Seconds since epoch. Used for visualization. Conflicts with `time_range`.
+* `tags` - (Optional) Tags associated with the detector.
+* `teams` - (Optional) Team IDs to associate the detector to.
+* `detector_origin` - (Optional) Indicates how a detector was created. The possible values are: Standard and AutoDetectCustomization. The value can only be set when creating the detector and cannot be modified later.
+* `parent_detector_id` - (Optional) ID of the AutoDetect parent detector from which this detector is customized and created. This property is required for detectors with detectorOrigin of type AutoDetectCustomization. The value can only be set when creating the detector and cannot be modified later.
+* `rule` - (Required) Set of rules used for alerting.
+  * `detect_label` - (Required) A detect label which matches a detect label within `program_text`.
+  * `severity` - (Required) The severity of the rule, must be one of: `"Critical"`, `"Major"`, `"Minor"`, `"Warning"`, `"Info"`.
+  * `description` - (Optional) Description for the rule. Displays as the alert condition in the Alert Rules tab of the detector editor in the web UI.
+  * `disabled` - (Optional) When true, notifications and events will not be generated for the detect label. `false` by default.
+  * `notifications` - (Optional) List of strings specifying where notifications will be sent when an incident occurs. See [Create A Single Detector](https://dev.splunk.com/observability/reference/api/detectors/latest) for more info.
+  * `parameterized_body` - (Optional) Custom notification message body when an alert is triggered. See [Set Up Detectors to Trigger Alerts](https://docs.splunk.com/observability/en/alerts-detectors-notifications/create-detectors-for-alerts.html) for more info.
+  * `parameterized_subject` - (Optional) Custom notification message subject when an alert is triggered. See [Set Up Detectors to Trigger Alerts](https://docs.splunk.com/observability/en/alerts-detectors-notifications/create-detectors-for-alerts.html) for more info.
+  * `runbook_url` - (Optional) URL of page to consult when an alert is triggered. This can be used with custom notification messages.
+  * `tip` - (Optional) Plain text suggested first course of action, such as a command line to execute. This can be used with custom notification messages.
+* `viz_options` - (Optional) Plot-level customization options, associated with a publish statement.
+  * `label` - (Required) Label used in the publish statement that displays the plot (metric time series data) you want to customize.
+  * `display_name` - (Optional) Specifies an alternate value for the Plot Name column of the Data Table associated with the chart.
+  * `color` - (Optional) Color to use : gray, blue, azure, navy, brown, orange, yellow, iris, magenta, pink, purple, violet, lilac, emerald, green, aquamarine.
+  * `value_unit` - (Optional) A unit to attach to this plot. Units support automatic scaling (eg thousands of bytes will be displayed as kilobytes). Values values are `Bit, Kilobit, Megabit, Gigabit, Terabit, Petabit, Exabit, Zettabit, Yottabit, Byte, Kibibyte, Mebibyte, Gibibyte (note: this was previously typoed as Gigibyte), Tebibyte, Pebibyte, Exbibyte, Zebibyte, Yobibyte, Nanosecond, Microsecond, Millisecond, Second, Minute, Hour, Day, Week`.
+  * `value_prefix`, `value_suffix` - (Optional) Arbitrary prefix/suffix to display with the value of this plot.
+
+**Notes**
+
+Use both `max_delay` in your detector configuration and an `extrapolation` policy in your program text to reduce false positives and false negatives.
+
+- `max_delay` allows Splunk Observability Cloud to continue with computation if there is a lag in receiving data points.
+- `extrapolation` allows you to specify how to handle missing data. An extrapolation policy can be added to individual signals by updating the data block in your `program_text`.
+
+See [Delayed Datapoints](https://docs.splunk.com/observability/en/data-visualization/charts/chart-builder.html#delayed-datapoints) for more info.
+
+## Attributes
+
+In a addition to all arguments above, the following attributes are exported:
+
+* `id` - The ID of the detector.
+* `label_resolutions` - The resolutions of the detector alerts in milliseconds that indicate how often data is analyzed to determine if an alert should be triggered.
+* `url` - The URL of the detector.
+
+## Import
+
+Detectors can be imported using their string ID (recoverable from URL: `/#/detector/v2/abc123/edit`, e.g.
+
+```
+$ terraform import signalfx_detector.application_delay abc123
+```
