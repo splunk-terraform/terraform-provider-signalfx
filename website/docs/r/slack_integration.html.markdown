@@ -14,7 +14,7 @@ Slack integration.
 
 ## Example
 
-```tf
+```hcl
 resource "signalfx_slack_integration" "slack_myteam" {
   name        = "Slack - My Team"
   enabled     = true

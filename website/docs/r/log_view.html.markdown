@@ -14,7 +14,7 @@ A log view displays log lines in a table form in a dashboard and shows you in de
 
 ## Example
 
-```tf
+```hcl
 resource "signalfx_log_view" "my_log_view" {
   name        = "Sample Log View"
   description = "Lorem ipsum dolor sit amet, laudem tibique iracundia at mea. Nam posse dolores ex, nec cu adhuc putent honestatis"

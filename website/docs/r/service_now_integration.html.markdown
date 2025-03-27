@@ -14,7 +14,7 @@ ServiceNow integrations. For help with this integration see [Integration with Se
 
 ## Example
 
-```tf
+```hcl
 resource "signalfx_service_now_integration" "service_now_myteam" {
   name    = "ServiceNow - My Team"
   enabled = false

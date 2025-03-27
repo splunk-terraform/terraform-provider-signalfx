@@ -12,7 +12,7 @@ This special type of chart displays a data table. This table can be grouped by a
 
 ## Example
 
-```tf
+```hcl
 # signalfx_list_chart.Logs-Exec_0:
 resource "signalfx_table_chart" "table_0" {
     description             = "beep"

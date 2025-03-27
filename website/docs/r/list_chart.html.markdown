@@ -14,7 +14,7 @@ The name of each value in the chart reflects the name of the plot and any associ
 
 ## Example
 
-```tf
+```hcl
 resource "signalfx_list_chart" "mylistchart0" {
   name = "CPU Total Idle - List"
 

@@ -12,7 +12,7 @@ Displays a listing of events as a widget in a dashboard.
 
 ## Example
 
-```tf
+```hcl
 resource "signalfx_event_feed_chart" "mynote0" {
   name         = "Important Dashboard Note"
   description  = "Lorem ipsum dolor sit amet"

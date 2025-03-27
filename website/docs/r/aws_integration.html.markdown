@@ -16,7 +16,7 @@ This resource implements a part of a workflow. Use it with one of either `signal
 
 ## Example
 
-```tf
+```hcl
 // This resource returns an account id in `external_id`…
 resource "signalfx_aws_external_integration" "aws_myteam_external" {
   name = "My AWS integration"

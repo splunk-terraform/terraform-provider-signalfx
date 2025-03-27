@@ -14,7 +14,7 @@ Splunk Observability Cloud Jira integrations. For help with this integration see
 
 ## Example
 
-```tf
+```hcl
 resource "signalfx_jira_integration" "jira_myteamXX" {
   name    = "JiraFoo"
   enabled = false

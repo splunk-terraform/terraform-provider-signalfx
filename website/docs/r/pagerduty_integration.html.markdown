@@ -14,7 +14,7 @@ Splunk Observability Cloud PagerDuty integrations.
 
 ## Example
 
-```tf
+```hcl
 resource "signalfx_pagerduty_integration" "pagerduty_myteam" {
   name    = "PD - My Team"
   enabled = true

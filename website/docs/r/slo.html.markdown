@@ -14,7 +14,7 @@ To learn more about this feature take a look on [documentation for SLO](https://
 
 ## Example
 
-```tf
+```hcl
 resource "signalfx_slo" "foo_service_slo" {
   name        = "foo service SLO"
   type        = "RequestBased"

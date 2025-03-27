@@ -14,7 +14,7 @@ Manage Splunk Observability Cloud org tokens.
 
 ## Example
 
-```tf
+```hcl
 resource "signalfx_org_token" "myteamkey0" {
   name          = "TeamIDKey"
   description   = "My team's rad key"

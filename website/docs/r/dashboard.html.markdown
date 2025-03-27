@@ -16,7 +16,7 @@ Since every dashboard is included in a [dashboard group](dashboard_group.html), 
 
 ## Example
 
-```tf
+```hcl
 resource "signalfx_dashboard" "mydashboard0" {
   name            = "My Dashboard"
   dashboard_group = signalfx_dashboard_group.mydashboardgroup0.id
@@ -47,7 +47,7 @@ resource "signalfx_dashboard" "mydashboard0" {
 
 ## Example with inheriting permissions
 
-```tf
+```hcl
 resource "signalfx_dashboard" "mydashboard_inheritingpermissions" {
   name            = "My Dashboard"
   dashboard_group = signalfx_dashboard_group.mydashboardgroup0.id
@@ -62,7 +62,7 @@ resource "signalfx_dashboard" "mydashboard_inheritingpermissions" {
 
 ## Example with custom permissions
 
-```tf
+```hcl
 resource "signalfx_dashboard" "mydashboard_custompermissions" {
   name            = "My Dashboard"
   dashboard_group = signalfx_dashboard_group.mydashboardgroup0.id
@@ -176,7 +176,7 @@ The are several use cases where this layout makes things too verbose and hard to
 
 The dashboard is split into equal-sized charts, defined by `width` and `height`. If a chart doesn't fit in the same row because the total width is greater than the maximum allowed by the dashboard, this chart and the next ones are placed in the next rows.
 
-```tf
+```hcl
 resource "signalfx_dashboard" "grid_example" {
   name            = "Grid"
   dashboard_group = signalfx_dashboard_group.example.id
@@ -202,7 +202,7 @@ resource "signalfx_dashboard" "grid_example" {
 
 The dashboard is split into equal-sized charts, defined by `width` and `height`. The charts are placed in the grid by column. The column number is called `column`.
 
-```tf
+```hcl
 resource "signalfx_dashboard" "load" {
   name            = "Load"
   dashboard_group = signalfx_dashboard_group.example.id

@@ -14,7 +14,7 @@ Splunk On-Call integrations.
 
 ## Example
 
-```tf
+```hcl
 resource "signalfx_victor_ops_integration" "vioctor_ops_myteam" {
   name     = "Splunk On-Call - My Team"
   enabled  = true

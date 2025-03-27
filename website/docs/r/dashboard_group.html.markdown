@@ -16,7 +16,7 @@ Dashboard groups cannot be accessed directly. You can access them through a dash
 
 ## Example
 
-```tf
+```hcl
 resource "signalfx_dashboard_group" "mydashboardgroup0" {
   name        = "My team dashboard group"
   description = "Cool dashboard group"
@@ -31,7 +31,7 @@ resource "signalfx_dashboard_group" "mydashboardgroup0" {
 
 ## Example with permissions
 
-```tf
+```hcl
 resource "signalfx_dashboard_group" "mydashboardgroup_withpermissions" {
   name        = "My team dashboard group"
   description = "Cool dashboard group"
@@ -53,7 +53,7 @@ resource "signalfx_dashboard_group" "mydashboardgroup_withpermissions" {
 
 ## Example With mirrored dashboards
 
-```tf
+```hcl
 resource "signalfx_dashboard_group" "mydashboardgroup_withmirrors" {
   name        = "My team dashboard group"
   description = "Cool dashboard group"

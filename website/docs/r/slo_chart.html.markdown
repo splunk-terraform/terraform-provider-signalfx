@@ -12,7 +12,7 @@ This chart type displays an overview of your SLO and can give more specific insi
 
 ## Example
 
-```tf
+```hcl
 resource "signalfx_slo_chart" "myslochart0" {
   slo_id = "GbOHXbSAEAA"
 }

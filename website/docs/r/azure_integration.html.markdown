@@ -14,7 +14,7 @@ Splunk Observability Cloud Azure integrations. For help with this integration se
 
 ## Example
 
-```tf
+```hcl
 resource "signalfx_azure_integration" "azure_myteam" {
   name    = "Azure Foo"
   enabled = true

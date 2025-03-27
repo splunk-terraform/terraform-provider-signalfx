@@ -14,7 +14,7 @@ Splunk Observability Cloud GCP Integration.
 
 ## Example
 
-```tf
+```hcl
 resource "signalfx_gcp_integration" "gcp_myteam" {
   name                       = "GCP - My Team"
   enabled                    = true

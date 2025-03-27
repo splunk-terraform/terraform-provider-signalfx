@@ -14,7 +14,7 @@ Time charts display data points over a period of time.
 
 ## Example
 
-```tf
+```hcl
 resource "signalfx_time_chart" "mychart0" {
   name = "CPU Total Idle"
 

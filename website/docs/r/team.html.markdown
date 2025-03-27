@@ -16,7 +16,7 @@ You can configure [team notification policies](https://docs.splunk.com/observabi
 
 ## Example
 
-```tf
+```hcl
 resource "signalfx_team" "myteam0" {
   name        = "Best Team Ever"
   description = "Super great team no jerks definitely"

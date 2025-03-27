@@ -14,7 +14,7 @@ If the time period is in the past, the number represents the value of the metric
 
 ## Example
 
-```tf
+```hcl
 resource "signalfx_single_value_chart" "mysvchart0" {
   name = "CPU Total Idle - Single Value"
 

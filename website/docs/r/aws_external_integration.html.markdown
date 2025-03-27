@@ -18,7 +18,7 @@ Splunk Observability AWS CloudWatch integrations using Role ARNs. For help with 
 
 ## Example
 
-```tf
+```hcl
 resource "signalfx_aws_external_integration" "aws_myteam_extern" {
   name = "My AWS integration"
 }

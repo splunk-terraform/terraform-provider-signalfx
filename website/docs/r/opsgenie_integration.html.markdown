@@ -14,7 +14,7 @@ Splunk Observability Cloud Opsgenie integration.
 
 ## Example
 
-```tf
+```hcl
 resource "signalfx_opsgenie_integration" "opgenie_myteam" {
   name    = "Opsgenie - My Team"
   enabled = true

@@ -12,7 +12,7 @@ This special type of chart doesn’t display any metric data. Rather, it lets yo
 
 ## Example
 
-```tf
+```hcl
 resource "signalfx_text_chart" "mynote0" {
   name        = "Important Dashboard Note"
   description = "Lorem ipsum dolor sit amet, laudem tibique iracundia at mea. Nam posse dolores ex, nec cu adhuc putent honestatis"

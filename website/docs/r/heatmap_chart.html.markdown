@@ -12,7 +12,7 @@ This chart type shows the specified plot in a heat map fashion. This format is s
 
 ## Example
 
-```tf
+```hcl
 resource "signalfx_heatmap_chart" "myheatmapchart0" {
   name = "CPU Total Idle - Heatmap"
 

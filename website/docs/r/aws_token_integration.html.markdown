@@ -16,7 +16,7 @@ Splunk Observability AWS CloudWatch integrations using security tokens. For help
 
 ## Example
 
-```tf
+```hcl
 resource "signalfx_aws_token_integration" "aws_myteam_token" {
   name = "My AWS integration"
 }

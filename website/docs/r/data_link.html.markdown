@@ -12,7 +12,7 @@ Manage Splunk Observability Cloud [Data Links](https://docs.signalfx.com/en/late
 
 ## Example
 
-```tf
+```hcl
 # A global link to Splunk Observability Cloud dashboard.
 resource "signalfx_data_link" "my_data_link" {
   property_name  = "pname"

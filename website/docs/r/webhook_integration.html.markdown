@@ -14,7 +14,7 @@ Splunk Observability Cloud webhook integration.
 
 ## Example
 
-```tf
+```hcl
 resource "signalfx_webhook_integration" "webhook_myteam" {
   name             = "Webhook - My Team"
   enabled          = true

@@ -14,7 +14,7 @@ Provides an Observability Cloud resource for managing metric rulesets.
 
 ## Example
 
-```tf
+```hcl
 resource "signalfx_metric_ruleset" "cpu_utilization_metric_ruleset" {
     metric_name = "cpu.utilization"
     description = "Routing ruleset for cpu.utilization"

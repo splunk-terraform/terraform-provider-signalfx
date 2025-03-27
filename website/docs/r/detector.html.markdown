@@ -16,7 +16,7 @@ If you're interested in using Splunk Observability Cloud detector features such 
 
 ## Example
 
-```tf
+```hcl
 resource "signalfx_detector" "application_delay" {
   count = length(var.clusters)
 

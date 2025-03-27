@@ -16,7 +16,7 @@ Splunk Observability Cloud currently allows linking an alert muting rule with on
 
 ## Example
 
-```tf
+```hcl
 resource "signalfx_alert_muting_rule" "rool_mooter_one" {
   description = "mooted it NEW"
 
