@@ -91,10 +91,19 @@ test-compile:
 	fi
 	go test -c $(TEST) $(TESTARGS)
 
-generate-docs: $(WEBSITE_PLUGIN)
+check-docs: gen-docs
+	@if [ "`git status --porcelain docs/`" ];then \
+		git diff;\
+		echo "Changes to documentation are not committed. Please run 'make gen-docs' and commit the changes" && \
+		echo `git status --porcelain docs/` &&\
+		exit 1;\
+	fi
+
+
+gen-docs: $(WEBSITE_PLUGIN)
 	$(WEBSITE_PLUGIN)
 
 test-docs: $(WEBSITE_PLUGIN)
 	$(WEBSITE_PLUGIN) validate 
 
-.PHONY: build test testacc vet fmt fmtcheck errcheck generate-docs
+.PHONY: build test testacc vet fmt fmtcheck errcheck gen-docs check-docs
