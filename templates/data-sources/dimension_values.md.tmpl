@@ -1,0 +1,27 @@
+---
+page_title: "Splunk Observability Cloud: signalfx_dimension_values"
+description: |-
+  Provides a list of dimension values given a query
+---
+
+{{/* This template serves as a starting point for documentation generation, and can be customized with hardcoded values and/or doc gen templates.
+
+For example, the {{ .SchemaMarkdown }} template can be used to replace manual schema documentation if descriptions of schema attributes are added in the provider source code. */ -}}
+
+# Data source: signalfx_dimension_values
+
+Use this data source to get a list of dimension values matching the provided query.
+
+~> **NOTE** The maximum number of values for this data source is 1,000. If you need more, reach out to Splunk support.
+
+## Example
+
+{{tffile "examples/data-sources/dimension_values/example_1.tf"}}
+
+## Arguments
+
+* `query`
+
+## Attributes
+
+`values` is set to the list of dimension values.

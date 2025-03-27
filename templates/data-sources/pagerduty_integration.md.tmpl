@@ -1,0 +1,27 @@
+---
+page_title: "Splunk Observability Cloud: signalfx_pagerduty_integration"
+description: |-
+  Provides information on an existing PagerDuty integration.
+---
+
+{{/* This template serves as a starting point for documentation generation, and can be customized with hardcoded values and/or doc gen templates.
+
+For example, the {{ .SchemaMarkdown }} template can be used to replace manual schema documentation if descriptions of schema attributes are added in the provider source code. */ -}}
+
+# Data source: signalfx_pagerduty_integration
+
+Use this data source to get information on an existing PagerDuty integration.
+
+## Example
+
+{{tffile "examples/data-sources/pagerduty_integration/example_1.tf"}}
+
+## Arguments
+
+* `name` - Specify the exact name of the desired PagerDuty integration
+
+## Attributes
+
+* `id` - The ID of the integration.
+* `name` - The name of the integration.
+* `enabled` - Whether the integration is enabled.

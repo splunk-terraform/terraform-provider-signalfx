@@ -1,0 +1,32 @@
+---
+page_title: "Splunk Observability Cloud: signalfx_opsgenie_integration"
+description: |-
+  Allows Terraform to create and manage OpsGenie Integrations for Splunk Observability Cloud
+---
+
+{{/* This template serves as a starting point for documentation generation, and can be customized with hardcoded values and/or doc gen templates.
+
+For example, the {{ .SchemaMarkdown }} template can be used to replace manual schema documentation if descriptions of schema attributes are added in the provider source code. */ -}}
+
+# Resource: signalfx_opsgenie_integration
+
+Splunk Observability Cloud Opsgenie integration.
+
+~> **NOTE** When managing integrations, use a session token of an administrator to authenticate the Splunk Observability Cloud provider. See [Operations that require a session token for an administrator](https://dev.splunk.com/observability/docs/administration/authtokens#Operations-that-require-a-session-token-for-an-administrator). Otherwise you'll receive a 4xx error.
+
+## Example
+
+{{tffile "examples/resources/opsgenie_integration/example_1.tf"}}
+
+## Arguments
+
+* `name` - (Required) Name of the integration.
+* `enabled` - (Required) Whether the integration is enabled.
+* `api_key` - (Required) The API key
+* `api_url` - (Optional) Opsgenie API URL. Will default to `https://api.opsgenie.com`. You might also want `https://api.eu.opsgenie.com`.
+
+## Attributes
+
+In a addition to all arguments above, the following attributes are exported:
+
+* `id` - The ID of the integration.

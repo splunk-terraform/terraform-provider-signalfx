@@ -1,0 +1,48 @@
+---
+page_title: "Splunk Observability Cloud: signalfx_org_token"
+description: |-
+  Allows Terraform to create and manage text notes in Splunk Observability Cloud
+---
+
+{{/* This template serves as a starting point for documentation generation, and can be customized with hardcoded values and/or doc gen templates.
+
+For example, the {{ .SchemaMarkdown }} template can be used to replace manual schema documentation if descriptions of schema attributes are added in the provider source code. */ -}}
+
+# Resource: signalfx_org_token
+
+Manage Splunk Observability Cloud org tokens.
+
+~> **NOTE** When managing Org tokens, use a session token of an administrator to authenticate the Splunk Observability Cloud provider. See [Operations that require a session token for an administrator](https://dev.splunk.com/observability/docs/administration/authtokens#Operations-that-require-a-session-token-for-an-administrator).
+
+## Example
+
+{{tffile "examples/resources/org_token/example_1.tf"}}
+
+## Arguments
+
+The following arguments are supported in the resource block:
+
+* `name` - (Required) Name of the token.
+* `description` - (Optional) Description of the token.
+* `disabled` - (Optional) Flag that controls enabling the token. If set to `true`, the token is disabled, and you can't use it for authentication. Defaults to `false`.
+* `secret` - The secret token created by the API. You cannot set this value.
+* `notifications` - (Optional) Where to send notifications about this token's limits. See the [Notification Format](https://www.terraform.io/docs/providers/signalfx/r/detector.html#notification-format) laid out in detectors.
+* `host_or_usage_limits` - (Optional) Specify Usage-based limits for this token.
+  * `host_limit` - (Optional) Max number of hosts that can use this token
+  * `host_notification_threshold` - (Optional) Notification threshold for hosts
+  * `container_limit` - (Optional) Max number of Docker containers that can use this token
+  * `container_notification_threshold` - (Optional) Notification threshold for Docker containers
+  * `custom_metrics_limit` - (Optional) Max number of custom metrics that can be sent with this token
+  * `custom_metrics_notification_threshold` - (Optional) Notification threshold for custom metrics
+  * `high_res_metrics_limit` - (Optional) Max number of hi-res metrics that can be sent with this toke
+  * `high_res_metrics_notification_threshold` - (Optional) Notification threshold for hi-res metrics
+* `dpm_limits` (Optional) Specify DPM-based limits for this token.
+  * `dpm_notification_threshold` - (Optional) DPM level at which Splunk Observability Cloud sends the notification for this token. If you don't specify a notification, Splunk Observability Cloud sends the generic notification.
+  * `dpm_limit` - (Required) The datapoints per minute (dpm) limit for this token. If you exceed this limit, Splunk Observability Cloud sends out an alert.
+
+## Attributes
+
+In a addition to all arguments above, the following attributes are exported:
+
+* `id` - The ID of the token.
+* `secret` - The assigned token.

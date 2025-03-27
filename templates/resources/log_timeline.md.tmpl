@@ -1,0 +1,38 @@
+---
+page_title: "Splunk Observability Cloud: signalfx_log_timeline"
+description: |-
+  Allows Terraform to create and manage log timelines in Splunk Observability Cloud
+---
+
+{{/* This template serves as a starting point for documentation generation, and can be customized with hardcoded values and/or doc gen templates.
+
+For example, the {{ .SchemaMarkdown }} template can be used to replace manual schema documentation if descriptions of schema attributes are added in the provider source code. */ -}}
+
+# Resource: signalfx_log_timeline
+
+You can add logs data to your Observability Cloud dashboards without turning your logs into metrics first.
+
+A log timeline chart displays timeline visualization in a dashboard and shows you in detail what is happening and why.
+
+## Example
+
+{{tffile "examples/resources/log_timeline/example_1.tf"}}
+
+## Arguments
+
+The following arguments are supported in the resource block:
+
+* `name` - (Required) Name of the log timeline.
+* `program_text` - (Required) Signalflow program text for the log timeline. More info at https://dev.splunk.com/observability/docs/.
+* `description` - (Optional) Description of the log timeline.
+* `time_range` - (Optional) From when to display data. Splunk Observability Cloud time syntax (e.g. `"-5m"`, `"-1h"`). Conflicts with `start_time` and `end_time`.
+* `start_time` - (Optional) Seconds since epoch. Used for visualization. Conflicts with `time_range`.
+* `end_time` - (Optional) Seconds since epoch. Used for visualization. Conflicts with `time_range`.
+* `default_connection` - (Optional) The connection that the log timeline uses to fetch data. This could be Splunk Enterprise, Splunk Enterprise Cloud or Observability Cloud.
+
+## Attributes
+
+In a addition to all arguments above, the following attributes are exported:
+
+* `id` - The ID of the log timeline.
+* `url` - The URL of the log timeline.
