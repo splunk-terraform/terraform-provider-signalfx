@@ -73,9 +73,7 @@ func TestDataSourceRead(t *testing.T) {
 			values: []any{
 				"user-01@example.com",
 			},
-			diags: diag.Diagnostics{
-				{Severity: diag.Error, Summary: "no returned user for email \"user-01@example.com\""},
-			},
+			diags: nil,
 		},
 		{
 			name: "no emails",

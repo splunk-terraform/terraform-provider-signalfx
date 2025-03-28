@@ -45,7 +45,7 @@ func datasourceRead(ctx context.Context, rd *schema.ResourceData, meta any) diag
 			}
 
 			for _, u := range results.Results {
-				tflog.Debug(ctx, "Retrived user details", tfext.NewLogFields().JSON("user", u))
+				tflog.Debug(ctx, "Retrieved user details", tfext.NewLogFields().JSON("user", u))
 				users = append(users, u.UserId)
 			}
 
