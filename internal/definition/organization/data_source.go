@@ -36,6 +36,7 @@ func datasourceRead(ctx context.Context, rd *schema.ResourceData, meta any) diag
 		users []any
 		limit = 1000
 	)
+
 	for _, email := range convert.SliceAll(rd.Get("emails").([]any), convert.ToString) {
 		for offset := 0; ; offset += limit {
 			results, err := sfx.GetOrganizationMembers(ctx, limit, fmt.Sprintf("email:%s", email), offset, "")
@@ -52,7 +53,6 @@ func datasourceRead(ctx context.Context, rd *schema.ResourceData, meta any) diag
 				break
 			}
 		}
-
 	}
 
 	return tfext.AsErrorDiagnostics(rd.Set("users", users))
