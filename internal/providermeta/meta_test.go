@@ -325,3 +325,58 @@ func TestLoadProviderTags(t *testing.T) {
 		})
 	}
 }
+
+func TestMergeProviderTeams(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name   string
+		meta   any
+		teams  []string
+		expect []string
+	}{
+		{
+			name:   "no details provided",
+			meta:   nil,
+			teams:  nil,
+			expect: nil,
+		},
+		{
+			name: "provide has details, preview not enabled",
+			meta: &Meta{
+				reg: func() *feature.Registry {
+					r := feature.NewRegistry()
+					_ = r.MustRegister(feature.PreviewProviderTeams)
+					return r
+				}(),
+				Teams: []string{"team-00", "team-02", "team-03"},
+			},
+			teams:  []string{"team-01", "team-02"},
+			expect: []string{"team-01", "team-02"},
+		},
+		{
+			name: "provider has details, preview enabled",
+			meta: &Meta{
+				reg: func() *feature.Registry {
+					r := feature.NewRegistry()
+					_ = r.MustRegister(feature.PreviewProviderTeams, feature.WithPreviewGlobalAvailable())
+					return r
+				}(),
+				Teams: []string{"team-00", "team-02", "team-03"},
+			},
+			teams:  []string{"team-01", "team-02"},
+			expect: []string{"team-00", "team-02", "team-03", "team-01"},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(
+				t,
+				tc.expect,
+				MergeProviderTeams(t.Context(), tc.meta, tc.teams),
+				"Must match the expected details",
+			)
+		})
+	}
+}

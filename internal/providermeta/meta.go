@@ -8,6 +8,7 @@ import (
 	"errors"
 	"net/url"
 	"path"
+	"slices"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -15,6 +16,7 @@ import (
 	"github.com/signalfx/signalfx-go/sessiontoken"
 	"go.uber.org/multierr"
 
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/common"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/feature"
 	tfext "github.com/splunk-terraform/terraform-provider-signalfx/internal/tfextension"
 )
@@ -45,6 +47,7 @@ type Meta struct {
 	Password       string   `json:"password"`
 	OrganizationID string   `json:"org_id"`
 	Tags           []string `json:"tags"`
+	Teams          []string `json:"teams"`
 }
 
 // LoadClient returns the configured [signalfx.Client] ready to use.
@@ -95,7 +98,12 @@ func LoadPreviewRegistry(ctx context.Context, meta any) *feature.Registry {
 //
 // Requires preview to be enabled in order to return values.
 func LoadProviderTags(ctx context.Context, meta any) []string {
-	if g, ok := LoadPreviewRegistry(ctx, meta).Get(previewGlobalTagsKey); ok && !g.Enabled() {
+	if g, ok := LoadPreviewRegistry(ctx, meta).Get(previewGlobalTagsKey); !ok || !g.Enabled() {
+		tflog.Debug(
+			ctx,
+			"Feature Preview is not enabled, using default value",
+			feature.NewPreviewLogFields(feature.PreviewProviderTeams, g),
+		)
 		return nil
 	}
 
@@ -132,6 +140,28 @@ func (m *Meta) LoadSessionToken(ctx context.Context) (string, error) {
 	tflog.Info(ctx, "Created new session token")
 
 	return resp.AccessToken, nil
+}
+
+// MergeProviderTeams will prepend the provider set teams to the resource level teams.
+//
+// Note: This currently requires the feature preview `feature.PreviewProviderTeam` to be enabled.
+func MergeProviderTeams(ctx context.Context, meta any, teams []string) []string {
+	if g, ok := LoadPreviewRegistry(ctx, meta).Get(feature.PreviewProviderTeams); !ok || !g.Enabled() {
+		tflog.Debug(
+			ctx,
+			"Feature Preview is not enabled, using default value",
+			feature.NewPreviewLogFields(feature.PreviewProviderTeams, g),
+		)
+		return teams
+	}
+
+	os := common.NewOrderedSet[string]()
+	if m, ok := meta.(*Meta); ok {
+		os.Append(m.Teams...)
+	}
+
+	os.Append(teams...)
+	return slices.Collect(os.All())
 }
 
 func (m *Meta) Validate() (errs error) {
