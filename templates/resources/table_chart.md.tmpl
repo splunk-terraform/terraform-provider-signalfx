@@ -1,0 +1,33 @@
+---
+page_title: "Splunk Observability Cloud: signalfx_table_chart"
+description: |-
+  Allows Terraform to create and manage data table charts in Splunk Observability Cloud
+---
+
+{{/* This template serves as a starting point for documentation generation, and can be customized with hardcoded values and/or doc gen templates.
+
+For example, the {{ .SchemaMarkdown }} template can be used to replace manual schema documentation if descriptions of schema attributes are added in the provider source code. */ -}}
+
+# Resource: signalfx_table_chart
+
+This special type of chart displays a data table. This table can be grouped by a dimension.
+
+## Example
+
+{{tffile "examples/resources/table_chart/example_1.tf"}}
+
+## Arguments
+
+The following arguments are supported in the resource block:
+
+* `name` - (Required) Name of the table chart.
+* `program_text` - (Required) The SignalFlow for your Data Table Chart
+* `description` - (Optional) Description of the table chart.
+* `group_by` - (Optional) Dimension to group by
+
+## Attributes
+
+In a addition to all arguments above, the following attributes are exported:
+
+* `id` - The ID of the chart.
+* `url` - The URL of the chart.

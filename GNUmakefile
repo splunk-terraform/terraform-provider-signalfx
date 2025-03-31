@@ -11,9 +11,10 @@ TOOLS_MOD_REGEX := "\s+_\s+\".*\""
 TOOLS_PKG_NAMES := $(shell grep -E $(TOOLS_MOD_REGEX) < $(TOOLS_MOD_DIR)/tools.go | tr -d " _\"" | grep -vE '/v[0-9]+$$')
 TOOLS_BIN_NAMES := $(addprefix $(TOOLS_BIN_DIR)/, $(notdir $(shell echo $(TOOLS_PKG_NAMES))))
 
-ADDLICENCESE  := $(TOOLS_BIN_DIR)/addlicense
-GOVULNCHECK   := $(TOOLS_BIN_DIR)/govulncheck
-GOLANGCI_LINT := $(TOOLS_BIN_DIR)/golangci-lint
+ADDLICENCESE   := $(TOOLS_BIN_DIR)/addlicense
+GOVULNCHECK    := $(TOOLS_BIN_DIR)/govulncheck
+GOLANGCI_LINT  := $(TOOLS_BIN_DIR)/golangci-lint
+WEBSITE_PLUGIN := $(TOOLS_BIN_DIR)/tfplugindocs
 
 default: build
 
@@ -90,18 +91,19 @@ test-compile:
 	fi
 	go test -c $(TEST) $(TESTARGS)
 
-website:
-ifeq (,$(wildcard $(GOPATH)/src/$(WEBSITE_REPO)))
-	echo "$(WEBSITE_REPO) not found in your GOPATH (necessary for layouts and assets), get-ting..."
-	git clone https://$(WEBSITE_REPO) $(GOPATH)/src/$(WEBSITE_REPO)
-endif
-	@$(MAKE) -C $(GOPATH)/src/$(WEBSITE_REPO) website-provider PROVIDER_PATH=$(shell pwd) PROVIDER_NAME=$(PKG_NAME)
+check-docs: gen-docs
+	@if [ "`git status --porcelain docs/`" ];then \
+		git diff;\
+		echo "Changes to documentation are not committed. Please run 'make gen-docs' and commit the changes" && \
+		echo `git status --porcelain docs/` &&\
+		exit 1;\
+	fi
 
-website-test:
-ifeq (,$(wildcard $(GOPATH)/src/$(WEBSITE_REPO)))
-	echo "$(WEBSITE_REPO) not found in your GOPATH (necessary for layouts and assets), get-ting..."
-	git clone https://$(WEBSITE_REPO) $(GOPATH)/src/$(WEBSITE_REPO)
-endif
-	@$(MAKE) -C $(GOPATH)/src/$(WEBSITE_REPO) website-provider-test PROVIDER_PATH=$(shell pwd) PROVIDER_NAME=$(PKG_NAME)
 
-.PHONY: build test testacc vet fmt fmtcheck errcheck  test-compile website website-test
+gen-docs: $(WEBSITE_PLUGIN)
+	$(WEBSITE_PLUGIN)
+
+test-docs: $(WEBSITE_PLUGIN)
+	$(WEBSITE_PLUGIN) validate 
+
+.PHONY: build test testacc vet fmt fmtcheck errcheck gen-docs check-docs

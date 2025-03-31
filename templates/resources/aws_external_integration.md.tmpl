@@ -1,0 +1,35 @@
+---
+page_title: "Splunk Observability Cloud: signalfx_aws_external_integration"
+description: |-
+  Allows Terraform to create and manage Splunk Observability AWS External ID Integrations
+---
+
+{{/* This template serves as a starting point for documentation generation, and can be customized with hardcoded values and/or doc gen templates.
+
+For example, the {{ .SchemaMarkdown }} template can be used to replace manual schema documentation if descriptions of schema attributes are added in the provider source code. */ -}}
+
+# Resource: signalfx_aws_external_integration
+
+Splunk Observability AWS CloudWatch integrations using Role ARNs. For help with this integration see [Connect to AWS CloudWatch](https://docs.splunk.com/observability/en/gdi/get-data-in/connect/aws/aws-apiconfig.html).
+
+~> **NOTE** When managing integrations, use a session token of an administrator to authenticate the Splunk Observability provider. See [Operations that require a session token for an administrator](https://dev.splunk.com/observability/docs/administration/authtokens#Operations-that-require-a-session-token-for-an-administrator).
+
+~> **WARNING** This resource implements part of a workflow. Use it with `signalfx_aws_integration`. Check with Splunk support for your realm's AWS account id.
+
+~> **NOTE** When AWS IAM role is also created by Terraform to enforce a proper cleanup sequence add role related resources as dependencies for the `signalfx_aws_integration` resource. See the `depends_on` section in the example script below.
+
+## Example
+
+{{tffile "examples/resources/aws_external_integration/example_1.tf"}}
+
+## Arguments
+
+* `name` - (Required) The name of this integration
+
+## Attributes
+
+In addition to all arguments above, the following attributes are exported:
+
+* `id` - The ID of this integration, used with `signalfx_aws_integration`
+* `external_id` - The external ID to use with your IAM role and with `signalfx_aws_integration`.
+* `signalfx_aws_account` - The AWS Account ARN to use with your policies/roles, provided by Splunk Observability Cloud.

@@ -1,0 +1,32 @@
+---
+page_title: "Splunk Observability Cloud: signalfx_aws_token_integration"
+description: |-
+  Allows Terraform to create and manage AWS Security Token Integrations for Splunk Observability Cloud
+---
+
+{{/* This template serves as a starting point for documentation generation, and can be customized with hardcoded values and/or doc gen templates.
+
+For example, the {{ .SchemaMarkdown }} template can be used to replace manual schema documentation if descriptions of schema attributes are added in the provider source code. */ -}}
+
+# Resource: signalfx_aws_token_integration
+
+Splunk Observability AWS CloudWatch integrations using security tokens. For help with this integration see [Connect to AWS CloudWatch](https://docs.signalfx.com/en/latest/integrations/amazon-web-services.html#connect-to-aws).
+
+~> **NOTE** When managing integrations, use a session token of an administrator to authenticate the Splunk Observabilit Cloud provider. See [Operations that require a session token for an administrator](https://dev.splunk.com/observability/docs/administration/authtokens#Operations-that-require-a-session-token-for-an-administrator).
+
+~> **WARNING** This resource implements a part of a workflow. You must use it with `signalfx_aws_integration`.
+
+## Example
+
+{{tffile "examples/resources/aws_token_integration/example_1.tf"}}
+
+## Arguments
+
+* `name` - (Required) The name of this integration
+
+## Attributes
+
+In addition to all arguments above, the following attributes are exported:
+
+* `id` - The ID of the integration to use with `signalfx_aws_integration`
+* `signalfx_aws_account` - The AWS Account ARN to use with your policies/roles, provided by Splunk Observability Cloud.
