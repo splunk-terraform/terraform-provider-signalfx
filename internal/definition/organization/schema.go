@@ -17,7 +17,8 @@ func newSchema() map[string]*schema.Schema {
 				Type:             schema.TypeString,
 				ValidateDiagFunc: check.Email,
 			},
-			Required: true,
+			Required:    true,
+			Description: "A list of email address that can be matched against existing users of the organization.",
 		},
 		"users": {
 			Type:     schema.TypeList,
@@ -25,6 +26,7 @@ func newSchema() map[string]*schema.Schema {
 			Elem: &schema.Schema{
 				Type: schema.TypeString,
 			},
+			Description: "Provides a list of user ids that match the emails provided returned in order of emails provided.",
 		},
 	}
 }
