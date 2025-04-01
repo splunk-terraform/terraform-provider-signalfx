@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	dashboard_group "github.com/signalfx/signalfx-go/dashboard_group"
+	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
 )
 
 func dashboardGroupResource() *schema.Resource {
@@ -407,6 +408,7 @@ func dashboardgroupCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 	payload := getPayloadDashboardGroup(d)
 
+	payload.Teams = pmeta.MergeProviderTeams(context.TODO(), meta, payload.Teams)
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Dashboard Group Create Payload: %s", debugOutput)
 
@@ -573,6 +575,7 @@ func dashboardgroupUpdate(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return fmt.Errorf("failed to get current dashboard list for %s: %v", d.Id(), err)
 	}
+	payload.Teams = pmeta.MergeProviderTeams(context.TODO(), meta, payload.Teams)
 
 	payload.DashboardConfigs = append(payload.DashboardConfigs, nonMirroredDashes...)
 	debugOutput, _ := json.Marshal(payload)
