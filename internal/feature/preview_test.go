@@ -6,9 +6,10 @@ package feature
 import (
 	"testing"
 
-	tfext "github.com/splunk-terraform/terraform-provider-signalfx/internal/tfextension"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	tfext "github.com/splunk-terraform/terraform-provider-signalfx/internal/tfextension"
 )
 
 func TestNewDefaultPreview(t *testing.T) {
@@ -46,7 +47,7 @@ func TestPreviewLogFields(t *testing.T) {
 			name: "preview set",
 			preview: func(tb testing.TB) *Preview {
 				p, err := NewPreview()
-				assert.NoError(t, err, "Must not error creating preview")
+				assert.NoError(tb, err, "Must not error creating preview")
 				return p
 			}(t),
 			expect: tfext.LogFields{
