@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	dashboard_group "github.com/signalfx/signalfx-go/dashboard_group"
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/convert"
 )
 
 func dashboardGroupResource() *schema.Resource {
@@ -396,7 +397,7 @@ func getPermissionsAcl(d *schema.ResourceData) []*dashboard_group.AclEntry {
 		item := &dashboard_group.AclEntry{
 			PrincipalId:   entry["principal_id"].(string),
 			PrincipalType: entry["principal_type"].(string),
-			Actions:       expandStringSetToSlice(entry["actions"].(*schema.Set)),
+			Actions:       convert.SchemaListAll(entry["actions"], convert.ToString),
 		}
 		aclList[i] = item
 	}
