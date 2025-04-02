@@ -32,6 +32,7 @@ func integrationPagerDutyResource() *schema.Resource {
 				Optional:    true,
 				Description: "PagerDuty API key",
 				Sensitive:   true,
+				WriteOnly:   true,
 			},
 		},
 
