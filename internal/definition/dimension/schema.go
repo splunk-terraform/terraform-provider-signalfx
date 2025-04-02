@@ -11,9 +11,10 @@ import (
 func newSchema() map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"query": {
-			Type:        schema.TypeString,
-			Required:    true,
-			Description: "",
+			Type:     schema.TypeString,
+			Required: true,
+			Description: "Acepts a query string that allows for defining a key value deintion, wild card matching on values, or where the dimension value exists. " +
+				"Refer to https://dev.splunk.com/observability/reference/api/metrics_metadata/latest#endpoint-retrieve-dimensions-query for more details",
 		},
 		"order_by": {
 			Type:     schema.TypeString,

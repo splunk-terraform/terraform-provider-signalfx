@@ -14,14 +14,17 @@ func dataSourcePagerDutyIntegration() *schema.Resource {
 		Read: dataSourcePagerDutyIntegrationRead,
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "This is the configured name of the PagerDuty integration.",
 			},
 			"enabled": {
-				Type:     schema.TypeBool,
-				Computed: true,
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Whether the integration is currently enabled.",
 			},
 		},
+		Description: "Use this data source to fetch the PagerDuty integration details.",
 	}
 }
 

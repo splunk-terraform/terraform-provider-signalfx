@@ -26,6 +26,7 @@ func NewDataSource() *schema.Resource {
 	return &schema.Resource{
 		SchemaFunc:  newSchema,
 		ReadContext: readDimensions,
+		Description: "This data sources allows for obtaining a list of dimension values by on query provided.",
 	}
 }
 
