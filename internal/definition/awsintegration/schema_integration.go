@@ -131,7 +131,7 @@ func newIntegrationSchema() map[string]*schema.Schema {
 		},
 		"regions": {
 			Type:     schema.TypeSet,
-			Required: true,
+			Optional: true,
 			Elem: &schema.Schema{
 				Type: schema.TypeString,
 			},
@@ -287,10 +287,6 @@ func decodeTerraform(rd *schema.ResourceData) (*integration.AwsCloudWatchIntegra
 		cwi.Key = rd.Get("key").(string)
 	} else {
 		return nil, fmt.Errorf("requires either `external_id` or `token` and `key`")
-	}
-
-	if cwi.Regions == nil {
-		return nil, fmt.Errorf("regions should be defined explicitly, see https://docs.splunk.com/Observability/gdi/get-data-in/connect/aws/aws-prereqs.html#supported-aws-regions")
 	}
 
 	if val, ok := rd.GetOk("poll_rate"); ok {

@@ -147,7 +147,7 @@ func integrationAWSResource() *schema.Resource {
 			},
 			"regions": {
 				Type:     schema.TypeSet,
-				Required: true,
+				Optional: true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -492,8 +492,6 @@ func getPayloadAWSIntegration(d *schema.ResourceData) (*integration.AwsCloudWatc
 			}
 			aws.Regions = regions
 		}
-	} else {
-		return nil, fmt.Errorf("regions should be defined explicitly, see https://docs.splunk.com/Observability/gdi/get-data-in/connect/aws/aws-prereqs.html#supported-aws-regions")
 	}
 
 	if val, ok := d.GetOk("services"); ok {
