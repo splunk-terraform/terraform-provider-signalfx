@@ -24,6 +24,7 @@ import (
 	sfx "github.com/signalfx/signalfx-go"
 
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/convert"
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/definition/organization"
 	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
 	"github.com/splunk-terraform/terraform-provider-signalfx/version"
 )
@@ -118,6 +119,7 @@ func Provider() *schema.Provider {
 		DataSourcesMap: map[string]*schema.Resource{
 			"signalfx_dimension_values":      dataSourceDimensionValues(),
 			"signalfx_pagerduty_integration": dataSourcePagerDutyIntegration(),
+			organization.DataSourceName:      organization.NewDataSource(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"signalfx_alert_muting_rule":        alertMutingRuleResource(),
