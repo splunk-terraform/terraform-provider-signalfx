@@ -502,6 +502,12 @@ func detectorCreate(d *schema.ResourceData, meta interface{}) error {
 		payload.Tags,
 	)
 
+	payload.Teams = pmeta.MergeProviderTeams(
+		context.TODO(),
+		meta,
+		payload.Tags,
+	)
+
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Create Detector Payload: %s", string(debugOutput))
 
