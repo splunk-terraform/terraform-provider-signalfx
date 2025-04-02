@@ -26,7 +26,7 @@ func newSchema() map[string]*schema.Schema {
 			Elem: &schema.Schema{
 				Type: schema.TypeString,
 			},
-			Description: "Provides a list of user ids that match the emails provided returned in order of emails provided.",
+			Description: "Provides a list of user IDs that match the emails provided. The user IDs are returned in the order of the provided emails.",
 		},
 	}
 }

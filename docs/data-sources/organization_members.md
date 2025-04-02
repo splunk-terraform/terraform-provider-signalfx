@@ -18,6 +18,6 @@ Allows for members to be queried and used as part of other resources. Requires t
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-- `users` (List of String) Provides a list of user ids that match the emails provided returned in order of emails provided.
+- `users` (List of String) Provides a list of user IDs that match the emails provided. The user IDs are returned in the order of the provided emails.
 
 
