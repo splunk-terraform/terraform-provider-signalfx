@@ -1,7 +1,6 @@
 module github.com/splunk-terraform/terraform-provider-signalfx
 
 go 1.24.1
-
 require (
 	github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d
 	github.com/davecgh/go-spew v1.1.1
@@ -10,7 +9,7 @@ require (
 	github.com/hashicorp/terraform-plugin-log v0.9.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.36.1
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/signalfx/signalfx-go v1.46.0
+	github.com/signalfx/signalfx-go v1.47.0
 	github.com/stretchr/testify v1.10.0
 	go.uber.org/multierr v1.11.0
 )
