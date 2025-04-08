@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/signalfx/signalfx-go/integration"
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/convert"
 )
 
 func integrationGCPResource() *schema.Resource {
@@ -210,11 +211,11 @@ func getGCPPayloadIntegration(d *schema.ResourceData) *integration.GCPIntegratio
 	}
 
 	if val, ok := d.GetOk("include_list"); ok {
-		gcp.IncludeList = expandStringSetToSlice(val.(*schema.Set))
+		gcp.IncludeList = convert.SchemaListAll(val, convert.ToString)
 	}
 
 	if val, ok := d.GetOk("custom_metric_type_domains"); ok {
-		gcp.CustomMetricTypeDomains = expandStringSetToSlice(val.(*schema.Set))
+		gcp.CustomMetricTypeDomains = convert.SchemaListAll(val, convert.ToString)
 	}
 
 	return gcp
