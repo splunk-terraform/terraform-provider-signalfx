@@ -18,8 +18,8 @@ func TestNewDefaultPreview(t *testing.T) {
 
 	assert.False(t, p.Enabled(), "Must be disabled by default")
 	assert.False(t, p.GlobalAvailable(), "Must be disabled by default")
-	assert.Equal(t, "", p.Description(), "Must have no description by default")
-	assert.Equal(t, "", p.Introduced(), "Must have no value set for introduced")
+	assert.Empty(t, p.Description(), "Must have no description by default")
+	assert.Empty(t, p.Introduced(), "Must have no value set for introduced")
 
 	p.SetEnabled(true)
 	assert.True(t, p.Enabled(), "Must be enabled once set")
