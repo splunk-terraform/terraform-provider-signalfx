@@ -834,11 +834,13 @@ func resourceRuleHash(v interface{}) int {
 		return _buf.String()
 	}
 
-	// check optional complex rule attributes
-	for _, reminder := range m["reminder_notification"].([]interface{}) {
-		if reminder != nil {
-			serializedReminder := serializeReminderToString(reminder.(map[string]interface{}))
-			buf.WriteString(fmt.Sprintf("%s-", serializedReminder))
+	// check optional reminder notification
+	if reminders, ok := m["reminder_notification"]; ok && reminders != nil {
+		for _, reminder := range reminders.([]interface{}) {
+			if reminder != nil {
+				serializedReminder := serializeReminderToString(reminder.(map[string]interface{}))
+				buf.WriteString(fmt.Sprintf("%s", serializedReminder))
+			}
 		}
 	}
 

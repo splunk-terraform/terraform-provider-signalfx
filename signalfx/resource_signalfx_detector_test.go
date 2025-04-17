@@ -56,6 +56,57 @@ func TestResourceRuleHash(t *testing.T) {
 	assert.Equal(t, expected, resourceRuleHash(values))
 }
 
+func TestReminderNotificationInRuleHashing(t *testing.T) {
+	values := map[string]interface{}{
+		"description":  "Test Rule Name",
+		"detect_label": "Test Detect Label",
+		"severity":     "Critical",
+		"disabled":     "true",
+		"reminder_notification": []interface{}{
+			map[string]interface{}{
+				"interval": 5000,
+				"timeout":  10000,
+				"type":     "TIMEOUT",
+			},
+		},
+	}
+
+	expected := HashCodeString("Test Rule Name-Critical-Test Detect Label-true-interval-5000-timeout-10000-type-TIMEOUT-")
+	assert.Equal(t, expected, resourceRuleHash(values))
+}
+
+func TestChangesInReminderNotificationRuleHashing(t *testing.T) {
+	values := map[string]interface{}{
+		"description":  "Test Rule Name",
+		"detect_label": "Test Detect Label",
+		"severity":     "Critical",
+		"disabled":     "true",
+		"reminder_notification": []interface{}{
+			map[string]interface{}{
+				"interval": 5000,
+				"timeout":  10000,
+				"type":     "TIMEOUT",
+			},
+		},
+	}
+	hashWithReminder := resourceRuleHash(values)
+
+	// modify interval
+	values["reminder_notification"].([]interface{})[0].(map[string]interface{})["interval"] = 7000
+	hashWithChangedInterval := resourceRuleHash(values)
+	assert.NotEqual(t, hashWithReminder, hashWithChangedInterval)
+
+	// modify timeout
+	values["reminder_notification"].([]interface{})[0].(map[string]interface{})["timeout"] = 15000
+	hashWithChangedTimeout := resourceRuleHash(values)
+	assert.NotEqual(t, hashWithChangedInterval, hashWithChangedTimeout)
+
+	// remove reminder_notification altogether
+	delete(values, "reminder_notification")
+	hashWithoutReminder := resourceRuleHash(values)
+	assert.NotEqual(t, hashWithChangedTimeout, hashWithoutReminder)
+}
+
 func TestValidateSeverityAllowed(t *testing.T) {
 	_, errors := validateSeverity("Critical", "severity")
 	assert.Equal(t, len(errors), 0)
