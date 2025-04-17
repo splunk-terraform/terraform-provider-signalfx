@@ -3,7 +3,12 @@
 
 package feature
 
-import "sync/atomic"
+import (
+	"errors"
+	"sync/atomic"
+
+	tfext "github.com/splunk-terraform/terraform-provider-signalfx/internal/tfextension"
+)
 
 // Preview allows for features to be guarded
 // to allow users to opt in for the new functionality.
@@ -37,6 +42,18 @@ func NewPreview(opts ...PreviewOption) (*Preview, error) {
 	}
 
 	return p, nil
+}
+
+func NewPreviewLogFields(name string, p *Preview) tfext.LogFields {
+	lf := tfext.NewLogFields().Field("feature.name", name)
+	if p != nil {
+		lf = lf.
+			Field("feature.enabled", p.Enabled()).
+			Field("feature.ga", p.GlobalAvailable())
+	} else {
+		lf = lf.Error(errors.New("feature preview is unset"))
+	}
+	return lf
 }
 
 func (p Preview) Enabled() bool {
