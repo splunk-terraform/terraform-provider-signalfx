@@ -97,9 +97,10 @@ var (
 						Description: "Timeout in milliseconds.",
 					},
 					"type": {
-						Type:        schema.TypeString,
-						Required:    true,
-						Description: "Type of the reminder notification",
+						Type:         schema.TypeString,
+						Required:     true,
+						ValidateFunc: validateReminderType,
+						Description:  "Type of the reminder notification",
 					},
 				},
 			},
@@ -875,6 +876,18 @@ func validateSeverity(v interface{}, k string) (we []string, errors []error) {
 		}
 	}
 	errors = append(errors, fmt.Errorf("%s not allowed; must be one of: %s", value, strings.Join(allowedWords, ", ")))
+	return
+}
+
+func validateReminderType(v interface{}, k string) (we []string, errors []error) {
+	value := v.(string)
+	allowedTypes := []string{"TIMEOUT"}
+	for _, allowedType := range allowedTypes {
+		if value == allowedType {
+			return
+		}
+	}
+	errors = append(errors, fmt.Errorf("%s not allowed; must be one of: %s", value, strings.Join(allowedTypes, ", ")))
 	return
 }
 

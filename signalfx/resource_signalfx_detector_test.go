@@ -117,6 +117,16 @@ func TestValidateSeverityNotAllowed(t *testing.T) {
 	assert.Equal(t, len(errors), 1)
 }
 
+func TestValidateReminderTypeAllowed(t *testing.T) {
+	_, errors := validateReminderType("TIMEOUT", "reminder_type")
+	assert.Equal(t, len(errors), 0)
+}
+
+func TestValidateReminderTypeNotAllowed(t *testing.T) {
+	_, errors := validateReminderType("TIMEOUTT", "reminder_type")
+	assert.Equal(t, len(errors), 1)
+}
+
 const newDetectorConfig = `
 resource "signalfx_team" "detectorTeam" {
     name = "Splunk Team"
