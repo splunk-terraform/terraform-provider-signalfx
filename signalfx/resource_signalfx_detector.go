@@ -79,6 +79,31 @@ var (
 			Optional:    true,
 			Description: "Plain text suggested first course of action, such as a command to execute.",
 		},
+		"reminder_notification": {
+			Optional:    true,
+			Description: "Some description about reminder",
+			Type:        schema.TypeList,
+			MaxItems:    1,
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"interval": {
+						Type:        schema.TypeInt,
+						Required:    true,
+						Description: "Interval in milliseconds.",
+					},
+					"timeout": {
+						Type:        schema.TypeInt,
+						Optional:    true,
+						Description: "Timeout in milliseconds.",
+					},
+					"type": {
+						Type:        schema.TypeString,
+						Required:    true,
+						Description: "Type of the reminder notification",
+					},
+				},
+			},
+		},
 	}
 )
 
