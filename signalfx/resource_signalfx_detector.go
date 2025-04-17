@@ -452,6 +452,26 @@ func getDetectorRule(tfRule map[string]interface{}) (*detector.Rule, error) {
 		}
 		rule.Notifications = notify
 	}
+
+	if reminders, ok := tfRule["reminder_notification"]; ok && reminders != nil {
+		for _, reminder := range reminders.([]interface{}) {
+			if reminder != nil {
+				reminder := reminder.(map[string]interface{})
+				reminderNotification := &detector.ReminderNotification{}
+				if interval, ok := reminder["interval"]; ok {
+					reminderNotification.Interval = int64(interval.(int))
+				}
+				if timeout, ok := reminder["timeout"]; ok {
+					reminderNotification.Timeout = int64(timeout.(int))
+				}
+				if reminderType, ok := reminder["type"]; ok {
+					reminderNotification.Type = reminderType.(string)
+				}
+				rule.ReminderNotification = reminderNotification
+			}
+		}
+	}
+
 	return rule, nil
 }
 
