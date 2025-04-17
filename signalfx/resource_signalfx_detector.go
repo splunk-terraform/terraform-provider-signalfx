@@ -742,6 +742,15 @@ func getTfDetectorRule(r *detector.Rule) (map[string]interface{}, error) {
 	rule["parameterized_subject"] = r.ParameterizedSubject
 	rule["runbook_url"] = r.RunbookUrl
 	rule["tip"] = r.Tip
+
+	if r.ReminderNotification != nil {
+		reminder := make(map[string]interface{})
+		reminder["interval"] = r.ReminderNotification.Interval
+		reminder["timeout"] = r.ReminderNotification.Timeout
+		reminder["type"] = r.ReminderNotification.Type
+		rule["reminder_notification"] = []interface{}{reminder}
+	}
+
 	return rule, nil
 }
 
