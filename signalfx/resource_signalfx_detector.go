@@ -19,6 +19,7 @@ import (
 	"github.com/signalfx/signalfx-go/detector"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/check"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/common"
+	internaldetector "github.com/splunk-terraform/terraform-provider-signalfx/internal/definition/detector"
 	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
 )
 
@@ -453,23 +454,9 @@ func getDetectorRule(tfRule map[string]interface{}) (*detector.Rule, error) {
 		rule.Notifications = notify
 	}
 
-	if reminders, ok := tfRule["reminder_notification"]; ok && reminders != nil {
-		for _, reminder := range reminders.([]interface{}) {
-			if reminder != nil {
-				reminder := reminder.(map[string]interface{})
-				reminderNotification := &detector.ReminderNotification{}
-				if interval, ok := reminder["interval"]; ok {
-					reminderNotification.Interval = int64(interval.(int))
-				}
-				if timeout, ok := reminder["timeout"]; ok {
-					reminderNotification.Timeout = int64(timeout.(int))
-				}
-				if reminderType, ok := reminder["type"]; ok {
-					reminderNotification.Type = reminderType.(string)
-				}
-				rule.ReminderNotification = reminderNotification
-			}
-		}
+	reminder := internaldetector.GetReminderNotificationForRule(tfRule)
+	if reminder != nil {
+		rule.ReminderNotification = reminder
 	}
 
 	return rule, nil
@@ -981,6 +968,12 @@ func validateProgramText(ctx context.Context, d *schema.ResourceDiff, meta inter
 		if val, ok := tfRule["tip"]; ok {
 			rule.Tip = val.(string)
 		}
+
+		reminder := internaldetector.GetReminderNotificationForRule(tfRule)
+		if reminder != nil {
+			rule.ReminderNotification = reminder
+		}
+
 		rulesList[i] = rule
 	}
 
