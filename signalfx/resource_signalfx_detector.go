@@ -815,6 +815,33 @@ func resourceRuleHash(v interface{}) int {
 		}
 	}
 
+	serializeReminderToString := func(reminder map[string]interface{}) string {
+		var _buf bytes.Buffer
+
+		// Sort keys to ensure consistent hash generation
+		keys := make([]string, 0, len(reminder))
+		for key := range reminder {
+			keys = append(keys, key)
+		}
+		sort.Strings(keys)
+
+		// Serialize each key-value pair
+		for _, key := range keys {
+			value := reminder[key]
+			_buf.WriteString(fmt.Sprintf("%s-%v-", key, value))
+		}
+
+		return _buf.String()
+	}
+
+	// check optional complex rule attributes
+	for _, reminder := range m["reminder_notification"].([]interface{}) {
+		if reminder != nil {
+			serializedReminder := serializeReminderToString(reminder.(map[string]interface{}))
+			buf.WriteString(fmt.Sprintf("%s-", serializedReminder))
+		}
+	}
+
 	// Sort the notifications so that we generate a consistent hash
 	if v, ok := m["notifications"]; ok {
 		notifications := v.([]interface{})
