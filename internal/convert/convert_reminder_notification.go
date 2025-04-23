@@ -7,11 +7,11 @@ import (
 	"github.com/signalfx/signalfx-go/detector"
 )
 
-func ToReminderNotification(tfRule map[string]interface{}) *detector.ReminderNotification {
+func ToReminderNotification(tfRule map[string]any) *detector.ReminderNotification {
 	if reminders, ok := tfRule["reminder_notification"]; ok && reminders != nil {
-		for _, reminder := range reminders.([]interface{}) {
+		for _, reminder := range reminders.([]any) {
 			if reminder != nil {
-				reminder := reminder.(map[string]interface{})
+				reminder := reminder.(map[string]any)
 				reminderNotification := &detector.ReminderNotification{}
 				if interval, ok := reminder["interval"]; ok {
 					reminderNotification.Interval = int64(interval.(int))

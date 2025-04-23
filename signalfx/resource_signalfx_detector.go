@@ -318,7 +318,7 @@ func timeRangeV0() *schema.Resource {
 	}
 }
 
-func timeRangeStateUpgradeV0(ctx context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
+func timeRangeStateUpgradeV0(ctx context.Context, rawState map[string]any, meta any) (map[string]any, error) {
 
 	log.Printf("[DEBUG] SignalFx: Upgrading Detector State %v", rawState["time_range"])
 	if tr, ok := rawState["time_range"].(string); ok {
@@ -340,7 +340,7 @@ func getPayloadDetector(d *schema.ResourceData) (*detector.CreateUpdateDetectorR
 	tfRules := d.Get("rule").(*schema.Set).List()
 	rulesList := make([]*detector.Rule, len(tfRules))
 	for i, tfRule := range tfRules {
-		tfRule := tfRule.(map[string]interface{})
+		tfRule := tfRule.(map[string]any)
 		rule, err := getDetectorRule(tfRule)
 		if err != nil {
 			return nil, err
@@ -404,7 +404,7 @@ func getPayloadDetector(d *schema.ResourceData) (*detector.CreateUpdateDetectorR
 	return cudr, nil
 }
 
-func getDetectorRule(tfRule map[string]interface{}) (*detector.Rule, error) {
+func getDetectorRule(tfRule map[string]any) (*detector.Rule, error) {
 	rule := &detector.Rule{
 		Description: tfRule["description"].(string),
 		Disabled:    tfRule["disabled"].(bool),
@@ -501,19 +501,19 @@ func getVisualizationOptionsDetector(d *schema.ResourceData) *detector.Visualiza
 	return &viz
 }
 
-func detectorPublishLabelOptionsToMap(options *detector.PublishLabelOptions) (map[string]interface{}, error) {
+func detectorPublishLabelOptionsToMap(options *detector.PublishLabelOptions) (map[string]any, error) {
 	color := ""
 	if options.PaletteIndex != nil {
 		// We might not have a color, so tread lightly
 		c, err := getNameFromPaletteColorsByIndex(int(*options.PaletteIndex))
 		if err != nil {
-			return map[string]interface{}{}, err
+			return map[string]any{}, err
 		}
 		// Ok, we can set the color now
 		color = c
 	}
 
-	return map[string]interface{}{
+	return map[string]any{
 		"label":        options.Label,
 		"display_name": options.DisplayName,
 		"color":        color,
@@ -523,7 +523,7 @@ func detectorPublishLabelOptionsToMap(options *detector.PublishLabelOptions) (ma
 	}, nil
 }
 
-func detectorCreate(d *schema.ResourceData, meta interface{}) error {
+func detectorCreate(d *schema.ResourceData, meta any) error {
 	config := meta.(*signalfxConfig)
 	payload, err := getPayloadDetector(d)
 	if err != nil {
@@ -561,7 +561,7 @@ func detectorCreate(d *schema.ResourceData, meta interface{}) error {
 	return detectorRead(d, meta)
 }
 
-func detectorRead(d *schema.ResourceData, meta interface{}) error {
+func detectorRead(d *schema.ResourceData, meta any) error {
 	config := meta.(*signalfxConfig)
 	det, err := config.Client.GetDetector(context.TODO(), d.Id())
 	if err != nil {
@@ -629,7 +629,7 @@ func detectorAPIToTF(d *schema.ResourceData, det *detector.Detector) error {
 	if det.AuthorizedWriters != nil {
 		aw := det.AuthorizedWriters
 		if aw.Teams != nil && len(aw.Teams) > 0 {
-			teams := make([]interface{}, len(aw.Teams))
+			teams := make([]any, len(aw.Teams))
 			for i, v := range aw.Teams {
 				teams[i] = v
 			}
@@ -638,7 +638,7 @@ func detectorAPIToTF(d *schema.ResourceData, det *detector.Detector) error {
 			}
 		}
 		if aw.Users != nil && len(aw.Users) > 0 {
-			users := make([]interface{}, len(aw.Users))
+			users := make([]any, len(aw.Users))
 			for i, v := range aw.Users {
 				users[i] = v
 			}
@@ -680,7 +680,7 @@ func detectorAPIToTF(d *schema.ResourceData, det *detector.Detector) error {
 		}
 
 		if len(viz.PublishLabelOptions) > 0 {
-			plos := make([]map[string]interface{}, len(viz.PublishLabelOptions))
+			plos := make([]map[string]any, len(viz.PublishLabelOptions))
 			for i, plo := range viz.PublishLabelOptions {
 				no, err := detectorPublishLabelOptionsToMap(plo)
 				if err != nil {
@@ -694,7 +694,7 @@ func detectorAPIToTF(d *schema.ResourceData, det *detector.Detector) error {
 		}
 	}
 
-	rules := make([]map[string]interface{}, len(det.Rules))
+	rules := make([]map[string]any, len(det.Rules))
 	for i, r := range det.Rules {
 		rule, err := getTfDetectorRule(r)
 		if err != nil {
@@ -709,8 +709,8 @@ func detectorAPIToTF(d *schema.ResourceData, det *detector.Detector) error {
 	return nil
 }
 
-func getTfDetectorRule(r *detector.Rule) (map[string]interface{}, error) {
-	rule := make(map[string]interface{})
+func getTfDetectorRule(r *detector.Rule) (map[string]any, error) {
+	rule := make(map[string]any)
 	rule["severity"] = r.Severity
 	rule["detect_label"] = r.DetectLabel
 	rule["description"] = r.Description
@@ -731,17 +731,17 @@ func getTfDetectorRule(r *detector.Rule) (map[string]interface{}, error) {
 	rule["tip"] = r.Tip
 
 	if r.ReminderNotification != nil {
-		reminder := make(map[string]interface{})
+		reminder := make(map[string]any)
 		reminder["interval"] = r.ReminderNotification.Interval
 		reminder["timeout"] = r.ReminderNotification.Timeout
 		reminder["type"] = r.ReminderNotification.Type
-		rule["reminder_notification"] = []interface{}{reminder}
+		rule["reminder_notification"] = []any{reminder}
 	}
 
 	return rule, nil
 }
 
-func detectorUpdate(d *schema.ResourceData, meta interface{}) error {
+func detectorUpdate(d *schema.ResourceData, meta any) error {
 	config := meta.(*signalfxConfig)
 	payload, err := getPayloadDetector(d)
 	if err != nil {
@@ -774,7 +774,7 @@ func detectorUpdate(d *schema.ResourceData, meta interface{}) error {
 	return detectorAPIToTF(d, det)
 }
 
-func detectorDelete(d *schema.ResourceData, meta interface{}) error {
+func detectorDelete(d *schema.ResourceData, meta any) error {
 	config := meta.(*signalfxConfig)
 
 	return config.Client.DeleteDetector(context.TODO(), d.Id())
@@ -784,7 +784,7 @@ func getPerSignalDetectorVizOptions(d *schema.ResourceData) []*detector.PublishL
 	viz := d.Get("viz_options").(*schema.Set).List()
 	vizList := make([]*detector.PublishLabelOptions, len(viz))
 	for i, v := range viz {
-		v := v.(map[string]interface{})
+		v := v.(map[string]any)
 		item := &detector.PublishLabelOptions{
 			Label: v["label"].(string),
 		}
@@ -815,9 +815,9 @@ func getPerSignalDetectorVizOptions(d *schema.ResourceData) []*detector.PublishL
 /*
 Hashing function for rule substructure of the detector resource, used in determining state changes.
 */
-func resourceRuleHash(v interface{}) int {
+func resourceRuleHash(v any) int {
 	var buf bytes.Buffer
-	m := v.(map[string]interface{})
+	m := v.(map[string]any)
 	buf.WriteString(fmt.Sprintf("%s-", m["description"]))
 	buf.WriteString(fmt.Sprintf("%s-", m["severity"]))
 	buf.WriteString(fmt.Sprintf("%s-", m["detect_label"]))
@@ -832,7 +832,7 @@ func resourceRuleHash(v interface{}) int {
 		}
 	}
 
-	serializeReminderToString := func(reminder map[string]interface{}) string {
+	serializeReminderToString := func(reminder map[string]any) string {
 		var _buf bytes.Buffer
 
 		// Sort keys to ensure consistent hash generation
@@ -853,9 +853,9 @@ func resourceRuleHash(v interface{}) int {
 
 	// check optional reminder notification
 	if reminders, ok := m["reminder_notification"]; ok && reminders != nil {
-		for _, reminder := range reminders.([]interface{}) {
+		for _, reminder := range reminders.([]any) {
 			if reminder != nil {
-				serializedReminder := serializeReminderToString(reminder.(map[string]interface{}))
+				serializedReminder := serializeReminderToString(reminder.(map[string]any))
 				buf.WriteString(fmt.Sprintf("%s", serializedReminder))
 			}
 		}
@@ -863,7 +863,7 @@ func resourceRuleHash(v interface{}) int {
 
 	// Sort the notifications so that we generate a consistent hash
 	if v, ok := m["notifications"]; ok {
-		notifications := v.([]interface{})
+		notifications := v.([]any)
 		s_notifications := make([]string, len(notifications))
 		for i, raw := range notifications {
 			if raw != nil {
@@ -883,7 +883,7 @@ func resourceRuleHash(v interface{}) int {
 /*
 Validates the severity field against a list of allowed words.
 */
-func validateSeverity(v interface{}, k string) (we []string, errors []error) {
+func validateSeverity(v any, k string) (we []string, errors []error) {
 	value := v.(string)
 	allowedWords := []string{"Critical", "Major", "Minor", "Warning", "Info"}
 	for _, word := range allowedWords {
@@ -898,7 +898,7 @@ func validateSeverity(v interface{}, k string) (we []string, errors []error) {
 /*
 Validates the condition to be fulfilled for checking ProgramText.
 */
-func validateProgramTextCondition(ctx context.Context, d *schema.ResourceDiff, meta interface{}) bool {
+func validateProgramTextCondition(ctx context.Context, d *schema.ResourceDiff, meta any) bool {
 
 	if _, ok := d.GetOkExists("program_text"); !ok {
 		return false
@@ -913,12 +913,12 @@ func validateProgramTextCondition(ctx context.Context, d *schema.ResourceDiff, m
 /*
 Validates the ProgramText and the list of rules.
 */
-func validateProgramText(ctx context.Context, d *schema.ResourceDiff, meta interface{}) error {
+func validateProgramText(ctx context.Context, d *schema.ResourceDiff, meta any) error {
 
 	tfRules := d.Get("rule").(*schema.Set).List()
 	rulesList := make([]*detector.Rule, len(tfRules))
 	for i, tfRule := range tfRules {
-		tfRule := tfRule.(map[string]interface{})
+		tfRule := tfRule.(map[string]any)
 		rule := &detector.Rule{
 			Description: tfRule["description"].(string),
 			DetectLabel: tfRule["detect_label"].(string),

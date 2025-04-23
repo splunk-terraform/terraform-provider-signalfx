@@ -11,7 +11,7 @@ import (
 )
 
 func TestToReminderNotificationEmptyRules(t *testing.T) {
-	rule := map[string]interface{}{}
+	rule := map[string]any{}
 	result := ToReminderNotification(rule)
 	if result != nil {
 		t.Errorf("Expected nil, got %v", result)
@@ -19,9 +19,9 @@ func TestToReminderNotificationEmptyRules(t *testing.T) {
 }
 
 func TestToReminderNotificationValidRule(t *testing.T) {
-	rule := map[string]interface{}{
-		"reminder_notification": []interface{}{
-			map[string]interface{}{
+	rule := map[string]any{
+		"reminder_notification": []any{
+			map[string]any{
 				"interval": 10,
 				"timeout":  20,
 				"type":     "email",
@@ -40,8 +40,8 @@ func TestToReminderNotificationValidRule(t *testing.T) {
 }
 
 func TestToReminderNotificationNilReminder(t *testing.T) {
-	rule := map[string]interface{}{
-		"reminder_notification": []interface{}{nil},
+	rule := map[string]any{
+		"reminder_notification": []any{nil},
 	}
 	result := ToReminderNotification(rule)
 	if result != nil {
@@ -50,9 +50,9 @@ func TestToReminderNotificationNilReminder(t *testing.T) {
 }
 
 func TestToReminderNotificationMissingFields(t *testing.T) {
-	rule := map[string]interface{}{
-		"reminder_notification": []interface{}{
-			map[string]interface{}{},
+	rule := map[string]any{
+		"reminder_notification": []any{
+			map[string]any{},
 		},
 	}
 	expected := &detector.ReminderNotification{}

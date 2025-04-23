@@ -18,7 +18,7 @@ import (
 
 func TestResourceRuleHash(t *testing.T) {
 	// Tests basic and consistent hashing, keys in the maps are sorted
-	values := map[string]interface{}{
+	values := map[string]any{
 		"description":  "Test Rule Name",
 		"detect_label": "Test Detect Label",
 		"severity":     "Critical",
@@ -29,7 +29,7 @@ func TestResourceRuleHash(t *testing.T) {
 	assert.Equal(t, expected, resourceRuleHash(values))
 
 	// Test new params in rules
-	values = map[string]interface{}{
+	values = map[string]any{
 		"description":           "Test Rule Name",
 		"detect_label":          "Test Detect Label",
 		"severity":              "Critical",
@@ -41,7 +41,7 @@ func TestResourceRuleHash(t *testing.T) {
 	expected = HashCodeString("Test Rule Name-Critical-Test Detect Label-true-Test body-Test subject-")
 	assert.Equal(t, expected, resourceRuleHash(values))
 
-	values = map[string]interface{}{
+	values = map[string]any{
 		"description":           "Test Rule Name",
 		"detect_label":          "Test Detect Label",
 		"severity":              "Critical",
@@ -57,13 +57,13 @@ func TestResourceRuleHash(t *testing.T) {
 }
 
 func TestReminderNotificationInRuleHashing(t *testing.T) {
-	values := map[string]interface{}{
+	values := map[string]any{
 		"description":  "Test Rule Name",
 		"detect_label": "Test Detect Label",
 		"severity":     "Critical",
 		"disabled":     "true",
-		"reminder_notification": []interface{}{
-			map[string]interface{}{
+		"reminder_notification": []any{
+			map[string]any{
 				"interval": 5000,
 				"timeout":  10000,
 				"type":     "TIMEOUT",
@@ -76,13 +76,13 @@ func TestReminderNotificationInRuleHashing(t *testing.T) {
 }
 
 func TestChangesInReminderNotificationRuleHashing(t *testing.T) {
-	values := map[string]interface{}{
+	values := map[string]any{
 		"description":  "Test Rule Name",
 		"detect_label": "Test Detect Label",
 		"severity":     "Critical",
 		"disabled":     "true",
-		"reminder_notification": []interface{}{
-			map[string]interface{}{
+		"reminder_notification": []any{
+			map[string]any{
 				"interval": 5000,
 				"timeout":  10000,
 				"type":     "TIMEOUT",
@@ -92,12 +92,12 @@ func TestChangesInReminderNotificationRuleHashing(t *testing.T) {
 	hashWithReminder := resourceRuleHash(values)
 
 	// modify interval
-	values["reminder_notification"].([]interface{})[0].(map[string]interface{})["interval"] = 7000
+	values["reminder_notification"].([]any)[0].(map[string]any)["interval"] = 7000
 	hashWithChangedInterval := resourceRuleHash(values)
 	assert.NotEqual(t, hashWithReminder, hashWithChangedInterval)
 
 	// modify timeout
-	values["reminder_notification"].([]interface{})[0].(map[string]interface{})["timeout"] = 15000
+	values["reminder_notification"].([]any)[0].(map[string]any)["timeout"] = 15000
 	hashWithChangedTimeout := resourceRuleHash(values)
 	assert.NotEqual(t, hashWithChangedInterval, hashWithChangedTimeout)
 
@@ -114,16 +114,6 @@ func TestValidateSeverityAllowed(t *testing.T) {
 
 func TestValidateSeverityNotAllowed(t *testing.T) {
 	_, errors := validateSeverity("foo", "severity")
-	assert.Equal(t, len(errors), 1)
-}
-
-func TestValidateReminderTypeAllowed(t *testing.T) {
-	_, errors := validateReminderType("TIMEOUT", "reminder_type")
-	assert.Equal(t, len(errors), 0)
-}
-
-func TestValidateReminderTypeNotAllowed(t *testing.T) {
-	_, errors := validateReminderType("TIMEOUTT", "reminder_type")
 	assert.Equal(t, len(errors), 1)
 }
 
@@ -546,14 +536,14 @@ func testAccDetectorDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testTimeRangeStateDataV0() map[string]interface{} {
-	return map[string]interface{}{
+func testTimeRangeStateDataV0() map[string]any {
+	return map[string]any{
 		"time_range": "-1h",
 	}
 }
 
-func testTimeRangeStateDataV1() map[string]interface{} {
-	return map[string]interface{}{
+func testTimeRangeStateDataV1() map[string]any {
+	return map[string]any{
 		"time_range": 3600,
 	}
 }
