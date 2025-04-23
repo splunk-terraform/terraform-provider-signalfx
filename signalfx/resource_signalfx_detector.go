@@ -812,6 +812,25 @@ func getPerSignalDetectorVizOptions(d *schema.ResourceData) []*detector.PublishL
 	return vizList
 }
 
+func serializeReminderToString(reminder map[string]any) string {
+	var _buf bytes.Buffer
+
+	// Sort keys to ensure consistent hash generation
+	keys := make([]string, 0, len(reminder))
+	for key := range reminder {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+
+	// Serialize each key-value pair
+	for _, key := range keys {
+		value := reminder[key]
+		_buf.WriteString(fmt.Sprintf("%s-%v-", key, value))
+	}
+
+	return _buf.String()
+}
+
 /*
 Hashing function for rule substructure of the detector resource, used in determining state changes.
 */
@@ -830,25 +849,6 @@ func resourceRuleHash(v any) int {
 		if val, ok := m[key]; ok {
 			buf.WriteString(fmt.Sprintf("%s-", val))
 		}
-	}
-
-	serializeReminderToString := func(reminder map[string]any) string {
-		var _buf bytes.Buffer
-
-		// Sort keys to ensure consistent hash generation
-		keys := make([]string, 0, len(reminder))
-		for key := range reminder {
-			keys = append(keys, key)
-		}
-		sort.Strings(keys)
-
-		// Serialize each key-value pair
-		for _, key := range keys {
-			value := reminder[key]
-			_buf.WriteString(fmt.Sprintf("%s-%v-", key, value))
-		}
-
-		return _buf.String()
 	}
 
 	// check optional reminder notification

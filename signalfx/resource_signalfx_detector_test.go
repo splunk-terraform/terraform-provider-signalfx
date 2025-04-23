@@ -559,3 +559,50 @@ func TestTimeRangeStateUpgradeV0(t *testing.T) {
 		t.Fatalf("\n\nexpected:\n\n%#v\n\ngot:\n\n%#v\n\n", expected, actual)
 	}
 }
+
+func TestSerializeReminderToString(t *testing.T) {
+	t.Run("Serialize reminder with all fields", func(t *testing.T) {
+		reminder := map[string]any{
+			"interval": 5000,
+			"timeout":  10000,
+			"type":     "TIMEOUT",
+		}
+		expected := "interval-5000-timeout-10000-type-TIMEOUT-"
+		assert.Equal(t, expected, serializeReminderToString(reminder))
+	})
+
+	t.Run("Serialize reminder with missing optional fields", func(t *testing.T) {
+		reminder := map[string]any{
+			"interval": 5000,
+			"type":     "TIMEOUT",
+		}
+		expected := "interval-5000-type-TIMEOUT-"
+		assert.Equal(t, expected, serializeReminderToString(reminder))
+	})
+
+	t.Run("Serialize empty reminder map", func(t *testing.T) {
+		reminder := map[string]any{}
+		expected := ""
+		assert.Equal(t, expected, serializeReminderToString(reminder))
+	})
+
+	t.Run("Serialize reminder with unordered keys", func(t *testing.T) {
+		reminder := map[string]any{
+			"type":     "TIMEOUT",
+			"timeout":  10000,
+			"interval": 5000,
+		}
+		expected := "interval-5000-timeout-10000-type-TIMEOUT-"
+		assert.Equal(t, expected, serializeReminderToString(reminder))
+	})
+
+	t.Run("Serialize reminder with non-string values", func(t *testing.T) {
+		reminder := map[string]any{
+			"interval": 5000,
+			"timeout":  nil,
+			"type":     true,
+		}
+		expected := "interval-5000-timeout-<nil>-type-true-"
+		assert.Equal(t, expected, serializeReminderToString(reminder))
+	})
+}
