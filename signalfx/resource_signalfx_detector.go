@@ -20,7 +20,6 @@ import (
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/check"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/common"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/convert"
-	internalrule "github.com/splunk-terraform/terraform-provider-signalfx/internal/definition/rule"
 	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
 )
 
@@ -99,10 +98,10 @@ var (
 						Description: "Timeout in milliseconds.",
 					},
 					"type": {
-						Type:         schema.TypeString,
-						Required:     true,
-						ValidateFunc: internalrule.ValidateReminderType,
-						Description:  "Type of the reminder notification",
+						Type:             schema.TypeString,
+						Required:         true,
+						ValidateDiagFunc: check.NotificationReminderType(),
+						Description:      "Type of the reminder notification",
 					},
 				},
 			},

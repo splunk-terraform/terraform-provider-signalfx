@@ -86,27 +86,15 @@ func NewSchema() map[string]*schema.Schema {
 						Description: "Timeout in milliseconds.",
 					},
 					"type": {
-						Type:         schema.TypeString,
-						Required:     true,
-						ValidateFunc: ValidateReminderType,
-						Description:  "Type of the reminder notification",
+						Type:             schema.TypeString,
+						Required:         true,
+						ValidateDiagFunc: check.NotificationReminderType(),
+						Description:      "Type of the reminder notification",
 					},
 				},
 			},
 		},
 	}
-}
-
-func ValidateReminderType(v interface{}, k string) (we []string, errors []error) {
-	value := v.(string)
-	allowedTypes := []string{"TIMEOUT"}
-	for _, allowedType := range allowedTypes {
-		if value == allowedType {
-			return
-		}
-	}
-	errors = append(errors, fmt.Errorf("%s not allowed; must be one of: %s", value, strings.Join(allowedTypes, ", ")))
-	return
 }
 
 func Hash(v any) int {
