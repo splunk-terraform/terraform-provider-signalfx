@@ -19,7 +19,8 @@ import (
 	"github.com/signalfx/signalfx-go/detector"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/check"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/common"
-	internaldetector "github.com/splunk-terraform/terraform-provider-signalfx/internal/definition/detector"
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/convert"
+	internalrule "github.com/splunk-terraform/terraform-provider-signalfx/internal/definition/rule"
 	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
 )
 
@@ -100,7 +101,7 @@ var (
 					"type": {
 						Type:         schema.TypeString,
 						Required:     true,
-						ValidateFunc: validateReminderType,
+						ValidateFunc: internalrule.ValidateReminderType,
 						Description:  "Type of the reminder notification",
 					},
 				},
@@ -454,7 +455,7 @@ func getDetectorRule(tfRule map[string]interface{}) (*detector.Rule, error) {
 		rule.Notifications = notify
 	}
 
-	reminder := internaldetector.GetReminderNotificationForRule(tfRule)
+	reminder := convert.ToReminderNotification(tfRule)
 	if reminder != nil {
 		rule.ReminderNotification = reminder
 	}
@@ -895,18 +896,6 @@ func validateSeverity(v interface{}, k string) (we []string, errors []error) {
 	return
 }
 
-func validateReminderType(v interface{}, k string) (we []string, errors []error) {
-	value := v.(string)
-	allowedTypes := []string{"TIMEOUT"}
-	for _, allowedType := range allowedTypes {
-		if value == allowedType {
-			return
-		}
-	}
-	errors = append(errors, fmt.Errorf("%s not allowed; must be one of: %s", value, strings.Join(allowedTypes, ", ")))
-	return
-}
-
 /*
 Validates the condition to be fulfilled for checking ProgramText.
 */
@@ -969,7 +958,7 @@ func validateProgramText(ctx context.Context, d *schema.ResourceDiff, meta inter
 			rule.Tip = val.(string)
 		}
 
-		reminder := internaldetector.GetReminderNotificationForRule(tfRule)
+		reminder := convert.ToReminderNotification(tfRule)
 		if reminder != nil {
 			rule.ReminderNotification = reminder
 		}

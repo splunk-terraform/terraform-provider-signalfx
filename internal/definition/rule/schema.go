@@ -68,7 +68,45 @@ func NewSchema() map[string]*schema.Schema {
 			Optional:    true,
 			Description: "Plain text suggested first course of action, such as a command to execute.",
 		},
+		"reminder_notification": {
+			Optional:    true,
+			Description: "Some description about reminder",
+			Type:        schema.TypeList,
+			MaxItems:    1,
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"interval": {
+						Type:        schema.TypeInt,
+						Required:    true,
+						Description: "Interval in milliseconds.",
+					},
+					"timeout": {
+						Type:        schema.TypeInt,
+						Optional:    true,
+						Description: "Timeout in milliseconds.",
+					},
+					"type": {
+						Type:         schema.TypeString,
+						Required:     true,
+						ValidateFunc: ValidateReminderType,
+						Description:  "Type of the reminder notification",
+					},
+				},
+			},
+		},
 	}
+}
+
+func ValidateReminderType(v interface{}, k string) (we []string, errors []error) {
+	value := v.(string)
+	allowedTypes := []string{"TIMEOUT"}
+	for _, allowedType := range allowedTypes {
+		if value == allowedType {
+			return
+		}
+	}
+	errors = append(errors, fmt.Errorf("%s not allowed; must be one of: %s", value, strings.Join(allowedTypes, ", ")))
+	return
 }
 
 func Hash(v any) int {
