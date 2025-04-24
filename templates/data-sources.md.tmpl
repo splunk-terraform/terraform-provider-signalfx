@@ -1,0 +1,21 @@
+---
+page_tile: "Splunk Observability Cloud - {{.Name}}
+description: |-
+  {{ .Description | plainmarkdown | trimspace | prefixlines "  " }}
+---
+
+# {{ .Type }}: {{ .Name }}
+
+{{ .Description }}
+
+{{ if .HasExample -}}
+# Examples Usage
+
+{{ tffile .ExampleFile }}
+{{- end }}
+
+{{ .SchemaMarkdown | trimspace }}
+
+{{ if .HasImport -}}
+{{ codefile "shell" .ImportFile }}
+{{ end -}}
