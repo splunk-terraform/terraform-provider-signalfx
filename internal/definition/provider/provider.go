@@ -21,6 +21,7 @@ import (
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/convert"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/definition/detector"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/definition/dimension"
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/definition/organization"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/definition/team"
 	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
 	tfext "github.com/splunk-terraform/terraform-provider-signalfx/internal/tfextension"
@@ -123,7 +124,8 @@ func New() *schema.Provider {
 			detector.ResourceName: detector.NewResource(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
-			dimension.DataSourceName: dimension.NewDataSource(),
+			dimension.DataSourceName:    dimension.NewDataSource(),
+			organization.DataSourceName: organization.NewDataSource(),
 		},
 		ConfigureContextFunc: configureProvider,
 	}
