@@ -106,4 +106,5 @@ provider "signalfx" {
 - `retry_wait_max_seconds` (Number) Maximum retry wait for a single HTTP call in seconds. Defaults to 30
 - `retry_wait_min_seconds` (Number) Minimum retry wait for a single HTTP call in seconds. Defaults to 1
 - `tags` (List of String) Allows for Tags to be added by default to resources that allow for tags to be included. If there is already tags configured, the global tags are added in prefix.
+- `teams` (List of String) Allows for teams to be defined at a provider level, and apply to all applicable resources created.
 - `timeout_seconds` (Number) Timeout duration for a single HTTP call in seconds. Defaults to 120
