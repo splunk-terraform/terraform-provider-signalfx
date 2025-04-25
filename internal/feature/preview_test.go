@@ -8,6 +8,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	tfext "github.com/splunk-terraform/terraform-provider-signalfx/internal/tfextension"
 )
 
 func TestNewDefaultPreview(t *testing.T) {
@@ -23,4 +25,47 @@ func TestNewDefaultPreview(t *testing.T) {
 
 	p.SetEnabled(true)
 	assert.True(t, p.Enabled(), "Must be enabled once set")
+}
+
+func TestPreviewLogFields(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name    string
+		preview *Preview
+		expect  tfext.LogFields
+	}{
+		{
+			name:    "no preview set",
+			preview: nil,
+			expect: tfext.LogFields{
+				"feature.name": "feature.example-01",
+				"error":        "feature preview is unset",
+			},
+		},
+		{
+			name: "preview set",
+			preview: func(tb testing.TB) *Preview {
+				p, err := NewPreview()
+				assert.NoError(tb, err, "Must not error creating preview")
+				return p
+			}(t),
+			expect: tfext.LogFields{
+				"feature.name":    "feature.example-01",
+				"feature.ga":      false,
+				"feature.enabled": false,
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(
+				t,
+				tc.expect,
+				NewPreviewLogFields("feature.example-01", tc.preview),
+				"Must match the expected values",
+			)
+		})
+	}
 }

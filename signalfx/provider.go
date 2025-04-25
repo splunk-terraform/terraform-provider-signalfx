@@ -122,6 +122,15 @@ func Provider() *schema.Provider {
 				Optional:    true,
 				Description: "Allows for Tags to be added by default to resources that allow for tags to be included. If there is already tags configured, the global tags are added in prefix.",
 			},
+			"teams": {
+				Type: schema.TypeList,
+				Elem: &schema.Schema{
+					Type:         schema.TypeString,
+					ValidateFunc: validation.StringIsNotEmpty,
+				},
+				Optional:    true,
+				Description: "Allows for teams to be defined at a provider level, and apply to all applicable resources created.",
+			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"signalfx_dimension_values":      dataSourceDimensionValues(),
@@ -172,6 +181,7 @@ func signalfxConfigure(data *schema.ResourceData) (interface{}, error) {
 		Password:       data.Get("password").(string),
 		OrganizationID: data.Get("organization_id").(string),
 		Tags:           convert.SliceAll(data.Get("tags").([]any), convert.ToString),
+		Teams:          convert.SliceAll(data.Get("teams").([]any), convert.ToString),
 	}
 
 	// /etc/signalfx.conf has the lowest priority
