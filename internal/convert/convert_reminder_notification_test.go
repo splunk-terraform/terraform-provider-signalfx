@@ -22,16 +22,16 @@ func TestToReminderNotificationValidRule(t *testing.T) {
 	rule := map[string]any{
 		"reminder_notification": []any{
 			map[string]any{
-				"interval": 10,
-				"timeout":  20,
-				"type":     "email",
+				"interval_ms": 10,
+				"timeout_ms":  20,
+				"type":        "email",
 			},
 		},
 	}
 	expected := &detector.ReminderNotification{
-		Interval: 10,
-		Timeout:  20,
-		Type:     "email",
+		IntervalMs: 10,
+		TimeoutMs:  20,
+		Type:       "email",
 	}
 	result := ToReminderNotification(rule)
 	if !reflect.DeepEqual(result, expected) {

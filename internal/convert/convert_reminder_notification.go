@@ -13,11 +13,11 @@ func ToReminderNotification(tfRule map[string]any) *detector.ReminderNotificatio
 			if reminder != nil {
 				reminder := reminder.(map[string]any)
 				reminderNotification := &detector.ReminderNotification{}
-				if interval, ok := reminder["interval"]; ok {
-					reminderNotification.Interval = int64(interval.(int))
+				if interval, ok := reminder["interval_ms"]; ok {
+					reminderNotification.IntervalMs = int64(interval.(int))
 				}
-				if timeout, ok := reminder["timeout"]; ok {
-					reminderNotification.Timeout = int64(timeout.(int))
+				if timeout, ok := reminder["timeout_ms"]; ok {
+					reminderNotification.TimeoutMs = int64(timeout.(int))
 				}
 				if reminderType, ok := reminder["type"]; ok {
 					reminderNotification.Type = reminderType.(string)

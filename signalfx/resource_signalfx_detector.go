@@ -82,26 +82,26 @@ var (
 		},
 		"reminder_notification": {
 			Optional:    true,
-			Description: "Some description about reminder",
+			Description: "Reminder notification in a detector rule lets you send multiple notifications for active alerts over a defined period of time.",
 			Type:        schema.TypeList,
 			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
-					"interval": {
+					"interval_ms": {
 						Type:        schema.TypeInt,
 						Required:    true,
-						Description: "Interval in milliseconds.",
+						Description: "The interval at which you want to receive the notifications, in milliseconds.",
 					},
-					"timeout": {
+					"timeout_ms": {
 						Type:        schema.TypeInt,
 						Optional:    true,
-						Description: "Timeout in milliseconds.",
+						Description: "The duration during which repeat notifications are sent, in milliseconds.",
 					},
 					"type": {
 						Type:             schema.TypeString,
 						Required:         true,
 						ValidateDiagFunc: check.NotificationReminderType(),
-						Description:      "Type of the reminder notification",
+						Description:      "Type of reminder notification. Currently, the only supported value is TIMEOUT.",
 					},
 				},
 			},
@@ -732,8 +732,8 @@ func getTfDetectorRule(r *detector.Rule) (map[string]any, error) {
 
 	if r.ReminderNotification != nil {
 		reminder := make(map[string]any)
-		reminder["interval"] = r.ReminderNotification.Interval
-		reminder["timeout"] = r.ReminderNotification.Timeout
+		reminder["interval_ms"] = r.ReminderNotification.IntervalMs
+		reminder["timeout_ms"] = r.ReminderNotification.TimeoutMs
 		reminder["type"] = r.ReminderNotification.Type
 		rule["reminder_notification"] = []any{reminder}
 	}
