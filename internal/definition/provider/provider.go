@@ -120,12 +120,12 @@ func New() *schema.Provider {
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			team.ResourceName:           team.NewResource(),
-			detector.ResourceName:       detector.NewResource(),
-			organization.DataSourceName: organization.NewDataSource(),
+			team.ResourceName:     team.NewResource(),
+			detector.ResourceName: detector.NewResource(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
-			dimension.DataSourceName: dimension.NewDataSource(),
+			dimension.DataSourceName:    dimension.NewDataSource(),
+			organization.DataSourceName: organization.NewDataSource(),
 		},
 		ConfigureContextFunc: configureProvider,
 	}
