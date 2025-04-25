@@ -11,6 +11,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	chart "github.com/signalfx/signalfx-go/chart"
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/convert"
 )
 
 const (
@@ -58,14 +59,6 @@ func buildAppURL(appURL string, fragment string) (string, error) {
 	// The URL is actually a fragment, so use that instead of Path
 	u.Fragment = fragment
 	return u.String(), nil
-}
-
-func expandStringSetToSlice(set *schema.Set) []string {
-	result := make([]string, set.Len(), set.Len())
-	for i, s := range set.List() {
-		result[i] = s.(string)
-	}
-	return result
 }
 
 func flattenStringSliceToSet(slice []string) *schema.Set {
@@ -119,12 +112,9 @@ func getNameFromChartColorsByIndex(index int) (string, error) {
 	return "", fmt.Errorf("Unknown color index %d", index)
 }
 
-/*
-Get Color Scale Options
-*/
+// Deprecated: Use `convert.SchemaListAll(d.Get("color_scale"), convert.ToChartSecondaryVisualization)` instead
 func getColorScaleOptions(d *schema.ResourceData) []*chart.SecondaryVisualization {
-	colorScale := d.Get("color_scale").(*schema.Set).List()
-	return getColorScaleOptionsFromSlice(colorScale)
+	return convert.SchemaListAll(d.Get("color_scale"), convert.ToChartSecondaryVisualization)
 }
 
 func getValueUsingMaxFloatAsDefault(v float64) *float64 {
@@ -133,35 +123,6 @@ func getValueUsingMaxFloatAsDefault(v float64) *float64 {
 	}
 	vf := float64(v)
 	return &vf
-}
-
-func getColorScaleOptionsFromSlice(colorScale []interface{}) []*chart.SecondaryVisualization {
-	item := make([]*chart.SecondaryVisualization, len(colorScale))
-	if len(colorScale) == 0 {
-		return item
-	}
-	for i := range colorScale {
-		options := &chart.SecondaryVisualization{}
-		scale := colorScale[i].(map[string]interface{})
-		options.Gt = getValueUsingMaxFloatAsDefault(scale["gt"].(float64))
-		options.Gte = getValueUsingMaxFloatAsDefault(scale["gte"].(float64))
-		options.Lt = getValueUsingMaxFloatAsDefault(scale["lt"].(float64))
-		options.Lte = getValueUsingMaxFloatAsDefault(scale["lte"].(float64))
-
-		var paletteIndex *int32
-		for index, thing := range ChartColorsSlice {
-			if scale["color"] == thing.name {
-				i := int32(index)
-				paletteIndex = &i
-				break
-			}
-		}
-		if paletteIndex != nil {
-			options.PaletteIndex = paletteIndex
-		}
-		item[i] = options
-	}
-	return item
 }
 
 /*

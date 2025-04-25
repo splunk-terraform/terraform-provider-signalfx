@@ -56,18 +56,4 @@ The feature preview can be enabled by the following example:
 
 ℹ️ **NOTE** Preview features are a subject to change and/or removal in a future version of the provider.
 
-## Arguments
-
-The provider supports the following arguments:
-
-* `auth_token` - (Required) The auth token for [authentication](https://developers.signalfx.com/basics/authentication.html). You can also set it using the `SFX_AUTH_TOKEN` environment variable.
-* `api_url` - (Optional) The API URL to use for communicating with Splunk Observability Cloud. This is helpful for organizations that need to set their realm or use a proxy. You can also set it using the `SFX_API_URL` environment variable.
-* `custom_app_url` - (Optional) The application URL that users might use to interact with assets in the browser. Used by organizations on specific realms or with a custom [SSO domain](https://docs.splunk.com/observability/en/admin/authentication/SSO/sso-about.html). You can also set it using the `SFX_CUSTOM_APP_URL` environment variable.
-* `timeout_seconds` - (Optional) The total timeout duration to wait when making HTTP API calls to Splunk Observability Cloud, in seconds. Defaults to `120`.
-* `retry_max_attempts` - (Optional) The number of retry attempts when making HTTP API calls to Splunk Observability Cloud. Defaults to `4`.
-* `retry_wait_min_seconds` - (Optional) The minimum wait time between retry attempts when making HTTP API calls to Splunk Observability Cloud, in seconds. Defaults to `1`.
-* `retry_wait_max_seconds` - (Optional) The maximum wait time between retry attempts when making HTTP API calls to Splunk Observability Cloud, in seconds. Defaults to `30`.
-* `email` - (Optional) The provided email address is used to generate a *Session Token* that is then used for all API interactions. Requires email address to be configured with a password, and not via SSO.
-* `password` - (Optional) The password is used to authenticate the email provided to generate a *Session Token*. Requires email address to be configured with a password, and not via SSO.
-* `organization_id` - (Optional) The organisation id is used to select which organization if the user provided belongs to multiple.
-* `feature_preview` - (Optional) A map structure that allows users to enable experimental features before they are ready to be globally available.
+{{ .SchemaMarkdown | trimspace }}

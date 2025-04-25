@@ -86,12 +86,20 @@ func Provider() *schema.Provider {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Used to create a session token instead of an API token, it requires the account to be configured to login with Email and Password",
+				RequiredWith: []string{
+					"password",
+					"organization_id",
+				},
 			},
 			"password": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Sensitive:   true,
 				Description: "Used to create a session token instead of an API token, it requires the account to be configured to login with Email and Password",
+				RequiredWith: []string{
+					"email",
+					"organization_id",
+				},
 			},
 			"organization_id": {
 				Type:        schema.TypeString,
