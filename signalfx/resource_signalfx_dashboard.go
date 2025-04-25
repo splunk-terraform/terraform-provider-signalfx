@@ -17,6 +17,7 @@ import (
 	"github.com/signalfx/signalfx-go/util"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/check"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/common"
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/convert"
 	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
 )
 
@@ -590,7 +591,7 @@ func getDashPermissionsAcl(set *schema.Set) []*dashboard.AclEntry {
 			item := &dashboard.AclEntry{
 				PrincipalId:   entry["principal_id"].(string),
 				PrincipalType: entry["principal_type"].(string),
-				Actions:       expandStringSetToSlice(entry["actions"].(*schema.Set)),
+				Actions:       convert.SchemaListAll(entry["actions"], convert.ToString),
 			}
 			aclList[i] = item
 		}

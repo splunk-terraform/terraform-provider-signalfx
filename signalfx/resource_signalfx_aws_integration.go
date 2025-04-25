@@ -18,6 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/signalfx/signalfx-go"
 	"github.com/signalfx/signalfx-go/integration"
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/convert"
 	"go.uber.org/multierr"
 )
 
@@ -520,7 +521,7 @@ func getPayloadAWSIntegration(d *schema.ResourceData) (*integration.AwsCloudWatc
 				v := v.(map[string]any)
 				namespace := v["namespace"].(string)
 				metric := v["metric"].(string)
-				stats := expandStringSetToSlice(v["stats"].(*schema.Set))
+				stats := convert.SchemaListAll(v["stats"], convert.ToString)
 
 				if metricStatsToSync[namespace] == nil {
 					metricStatsToSync[namespace] = map[string][]string{}
