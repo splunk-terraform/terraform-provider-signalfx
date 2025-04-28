@@ -133,6 +133,15 @@ func Hash(v any) int {
 		}
 	}
 
+	if reminders, ok := rule["reminder_notification"].([]any); ok {
+		if len(reminders) > 0 {
+			reminder := reminders[0].(map[string]any)
+			_, _ = io.WriteString(hash, fmt.Sprintf("%s-", reminder["interval_ms"]))
+			_, _ = io.WriteString(hash, fmt.Sprintf("%s-", reminder["timeout_ms"]))
+			_, _ = io.WriteString(hash, fmt.Sprintf("%s-", reminder["type"]))
+		}
+	}
+
 	// crc32 returns a uint32, but for our use we need
 	// and non negative integer. Here we cast to an integer
 	// and invert it if the result is negative.
