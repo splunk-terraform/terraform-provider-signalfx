@@ -4,10 +4,10 @@
 package convert
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/signalfx/signalfx-go/detector"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestToReminderNotificationEmptyRules(t *testing.T) {
@@ -34,7 +34,7 @@ func TestToReminderNotificationValidRule(t *testing.T) {
 		Type:       "email",
 	}
 	result := ToReminderNotification(rule)
-	if !reflect.DeepEqual(result, expected) {
+	if !assert.Equal(t, result, expected) {
 		t.Errorf("Expected %v, got %v", expected, result)
 	}
 }
@@ -57,7 +57,7 @@ func TestToReminderNotificationMissingFields(t *testing.T) {
 	}
 	expected := &detector.ReminderNotification{}
 	result := ToReminderNotification(rule)
-	if !reflect.DeepEqual(result, expected) {
+	if !assert.Equal(t, result, expected) {
 		t.Errorf("Expected %v, got %v", expected, result)
 	}
 }
