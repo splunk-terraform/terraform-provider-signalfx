@@ -957,6 +957,10 @@ func validateProgramText(ctx context.Context, d *schema.ResourceDiff, meta any) 
 			rule.Tip = val.(string)
 		}
 
+		// due to the problems with sdkv2, nested complex
+		// types are not filled in CustomizeDiff, so it
+		// is ultimately not filled here (and not sent to
+		// the API)
 		reminder := convert.ToReminderNotification(tfRule)
 		if reminder != nil {
 			rule.ReminderNotification = reminder
