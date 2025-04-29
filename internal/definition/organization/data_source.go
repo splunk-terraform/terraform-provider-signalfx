@@ -39,7 +39,7 @@ func datasourceRead(ctx context.Context, rd *schema.ResourceData, meta any) diag
 
 	for _, email := range convert.SliceAll(rd.Get("emails").([]any), convert.ToString) {
 		for offset := 0; ; offset += limit {
-			results, err := sfx.GetOrganizationMembers(ctx, limit, fmt.Sprintf("email:%s", email), offset, "")
+			results, err := sfx.GetOrganizationMembers(ctx, limit, fmt.Sprintf("email:%s", email), offset, "-sf_timestamp")
 			if err != nil {
 				return tfext.AsErrorDiagnostics(err)
 			}
