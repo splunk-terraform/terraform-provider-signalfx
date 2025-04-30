@@ -6,10 +6,12 @@ package signalfx
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"strings"
 
+	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/signalfx/signalfx-go/integration"
 )
@@ -74,18 +76,31 @@ func pagerDutyIntegrationAPIToTF(d *schema.ResourceData, pd *integration.PagerDu
 	return nil
 }
 
-func getPayloadPagerDutyIntegration(d *schema.ResourceData) *integration.PagerDutyIntegration {
+func getPayloadPagerDutyIntegration(d *schema.ResourceData) (*integration.PagerDutyIntegration, error) {
+	key, diags := d.GetRawConfigAt(cty.GetAttrPath("api_key"))
+	if diags.HasError() {
+		return nil, errors.New("issue reading raw config")
+	}
+
+	if !key.Type().Equals(cty.String) {
+		return nil, errors.New("api key not stored as string")
+	}
+
 	return &integration.PagerDutyIntegration{
 		Type:    "PagerDuty",
 		Name:    d.Get("name").(string),
 		Enabled: d.Get("enabled").(bool),
-		ApiKey:  d.Get("api_key").(string),
-	}
+		ApiKey:  key.AsString(),
+	}, nil
 }
 
 func integrationPagerDutyCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	payload := getPayloadPagerDutyIntegration(d)
+
+	payload, err := getPayloadPagerDutyIntegration(d)
+	if err != nil {
+		return err
+	}
 
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Create PagerDuty Integration Payload: %s", string(debugOutput))
@@ -103,7 +118,11 @@ func integrationPagerDutyCreate(d *schema.ResourceData, meta interface{}) error 
 
 func integrationPagerDutyUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	payload := getPayloadPagerDutyIntegration(d)
+
+	payload, err := getPayloadPagerDutyIntegration(d)
+	if err != nil {
+		return err
+	}
 
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Update PagerDuty Integration Payload: %s", string(debugOutput))
