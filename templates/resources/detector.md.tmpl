@@ -135,6 +135,10 @@ notifications = ["Webhook,,secret,url"]
   * `parameterized_subject` - (Optional) Custom notification message subject when an alert is triggered. See [Set Up Detectors to Trigger Alerts](https://docs.splunk.com/observability/en/alerts-detectors-notifications/create-detectors-for-alerts.html) for more info.
   * `runbook_url` - (Optional) URL of page to consult when an alert is triggered. This can be used with custom notification messages.
   * `tip` - (Optional) Plain text suggested first course of action, such as a command line to execute. This can be used with custom notification messages.
+  * `reminder_notification` - (Optional) Reminder notification in a detector rule lets you send multiple notifications for active alerts over a defined period of time. **Note:** This feature is not present in all accounts. Please contact support if you are unsure.
+    * `interval_ms` - (Required) The interval at which you want to receive the notifications, in milliseconds.
+    * `timeout_ms` - (Optional) The duration during which repeat notifications are sent, in milliseconds.
+    * `type` - (Required) Type of reminder notification. Currently, the only supported value is TIMEOUT.
 * `viz_options` - (Optional) Plot-level customization options, associated with a publish statement.
   * `label` - (Required) Label used in the publish statement that displays the plot (metric time series data) you want to customize.
   * `display_name` - (Optional) Specifies an alternate value for the Plot Name column of the Data Table associated with the chart.

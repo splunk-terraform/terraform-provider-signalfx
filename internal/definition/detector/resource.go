@@ -197,7 +197,7 @@ func resourceValidateFunc(ctx context.Context, diff *schema.ResourceDiff, meta a
 	var rules []*detector.Rule
 	for _, v := range diff.Get("rule").(*schema.Set).List() {
 		data := v.(map[string]any)
-		rules = append(rules, &detector.Rule{
+		rule := &detector.Rule{
 			Description:          data["description"].(string),
 			DetectLabel:          data["detect_label"].(string),
 			Disabled:             data["disabled"].(bool),
@@ -206,7 +206,12 @@ func resourceValidateFunc(ctx context.Context, diff *schema.ResourceDiff, meta a
 			ParameterizedSubject: data["parameterized_subject"].(string),
 			RunbookUrl:           data["runbook_url"].(string),
 			Tip:                  data["tip"].(string),
-		})
+		}
+		if data["reminder_notification"] != nil {
+			reminderNotification := convert.ToReminderNotification(data)
+			rule.ReminderNotification = reminderNotification
+		}
+		rules = append(rules, rule)
 	}
 
 	client, err := pmeta.LoadClient(ctx, meta)

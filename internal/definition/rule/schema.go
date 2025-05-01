@@ -68,6 +68,32 @@ func NewSchema() map[string]*schema.Schema {
 			Optional:    true,
 			Description: "Plain text suggested first course of action, such as a command to execute.",
 		},
+		"reminder_notification": {
+			Optional:    true,
+			Description: "Reminder notification in a detector rule lets you send multiple notifications for active alerts over a defined period of time.",
+			Type:        schema.TypeList,
+			MaxItems:    1,
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"interval_ms": {
+						Type:        schema.TypeInt,
+						Required:    true,
+						Description: "The interval at which you want to receive the notifications, in milliseconds.",
+					},
+					"timeout_ms": {
+						Type:        schema.TypeInt,
+						Optional:    true,
+						Description: "The duration during which repeat notifications are sent, in milliseconds.",
+					},
+					"type": {
+						Type:             schema.TypeString,
+						Required:         true,
+						ValidateDiagFunc: check.NotificationReminderType(),
+						Description:      "Type of reminder notification. Currently, the only supported value is TIMEOUT.",
+					},
+				},
+			},
+		},
 	}
 }
 
@@ -104,6 +130,15 @@ func Hash(v any) int {
 
 		for _, n := range notifys {
 			_, _ = io.WriteString(hash, fmt.Sprintf("%s-", n))
+		}
+	}
+
+	if reminders, ok := rule["reminder_notification"].([]any); ok {
+		if len(reminders) > 0 {
+			reminder := reminders[0].(map[string]any)
+			_, _ = io.WriteString(hash, fmt.Sprintf("%s-", reminder["interval_ms"]))
+			_, _ = io.WriteString(hash, fmt.Sprintf("%s-", reminder["timeout_ms"]))
+			_, _ = io.WriteString(hash, fmt.Sprintf("%s-", reminder["type"]))
 		}
 	}
 

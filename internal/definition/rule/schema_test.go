@@ -51,8 +51,15 @@ func TestHashSchema(t *testing.T) {
 				"runbook_url":           "http://example.com",
 				"tip":                   "login to investigate the issue",
 				"notifications":         []any{"Email,example@com", "Email,foo@bar"},
+				"reminder_notification": []any{
+					map[string]any{
+						"interval_ms": 10,
+						"timeout_ms":  20,
+						"type":        "email",
+					},
+				},
 			},
-			code: 137896672,
+			code: 2915325511,
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
