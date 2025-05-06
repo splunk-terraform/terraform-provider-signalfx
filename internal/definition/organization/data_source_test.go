@@ -85,7 +85,7 @@ func TestDataSourceRead(t *testing.T) {
 					_ = json.NewEncoder(w).Encode(&organization.MemberSearchResults{
 						Count: 1,
 						Results: []*organization.Member{
-							{FullName: "user 01", UserId: "AAAAAAAA", Email: "user-01@example.com"},
+							{FullName: "user 01", Id: "AAAAAAAA", Email: "user-01@example.com"},
 						},
 					})
 				},
