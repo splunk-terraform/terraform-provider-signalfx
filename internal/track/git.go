@@ -23,7 +23,7 @@ func ReadGitDetails(ctx context.Context) (*Details, error) {
 	return (GitRepositoryFunc)(nil).ReadDetails(ctx)
 }
 
-// Open will read the git repo details, and if there is a mock set, then it will call that implimentation
+// Open will read the git repo details, and if there is a mock set, then it will call that implementation
 // otherwise, it will call the git implementation.
 func (fn GitRepositoryFunc) Open(path string, opts *git.PlainOpenOptions) (*git.Repository, error) {
 	if fn != nil {
