@@ -5,6 +5,7 @@ package track
 
 import (
 	"fmt"
+	"net/url"
 	"strings"
 
 	"github.com/go-git/go-git/v5"
@@ -51,10 +52,15 @@ func (d Details) Tags() []string {
 	}
 }
 
-func cleanGitURL(url string) string {
-	_, cleaned, found := strings.Cut(url, ":")
-	if found {
-		return strings.TrimSuffix(cleaned, ".git")
+func cleanGitURL(connection string) string {
+	switch {
+	case strings.HasPrefix(connection, "http"):
+		if u, err := url.Parse(connection); err == nil {
+			connection = u.Path
+		}
+	case strings.HasPrefix(connection, "git@"):
+		_, project, _ := strings.Cut(connection, ":")
+		connection = project
 	}
-	return strings.TrimSuffix(url, ".git")
+	return strings.TrimSuffix(connection, ".git")
 }
