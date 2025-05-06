@@ -6,6 +6,8 @@ package organization
 import (
 	"context"
 	"fmt"
+	"hash/fnv"
+	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -33,11 +35,13 @@ func datasourceRead(ctx context.Context, rd *schema.ResourceData, meta any) diag
 	}
 
 	var (
-		users []any
-		limit = 1000
+		hasher = fnv.New64()
+		users  []any
+		limit  = 1000
 	)
 
 	for _, email := range convert.SliceAll(rd.Get("emails").([]any), convert.ToString) {
+		_, _ = fmt.Fprint(hasher, email)
 		for offset := 0; ; offset += limit {
 			results, err := sfx.GetOrganizationMembers(ctx, limit, fmt.Sprintf("email:%s", email), offset, "-sf_timestamp")
 			if err != nil {
@@ -54,6 +58,7 @@ func datasourceRead(ctx context.Context, rd *schema.ResourceData, meta any) diag
 			}
 		}
 	}
+	rd.SetId(strconv.FormatUint(hasher.Sum64(), 36))
 
 	return tfext.AsErrorDiagnostics(rd.Set("users", users))
 }
