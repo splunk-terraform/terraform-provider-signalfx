@@ -21,14 +21,8 @@ import (
 	tfext "github.com/splunk-terraform/terraform-provider-signalfx/internal/tfextension"
 )
 
-const (
-	previewGlobalTagsKey = "provider.tags"
-)
-
 var (
 	ErrMetaNotProvided = errors.New("expected to implement type Meta")
-
-	_ = feature.GetGlobalRegistry().MustRegister(previewGlobalTagsKey)
 )
 
 // Meta is the result of `resource.Provider` being correctly configured
@@ -98,11 +92,11 @@ func LoadPreviewRegistry(ctx context.Context, meta any) *feature.Registry {
 //
 // Requires preview to be enabled in order to return values.
 func LoadProviderTags(ctx context.Context, meta any) []string {
-	if g, ok := LoadPreviewRegistry(ctx, meta).Get(previewGlobalTagsKey); !ok || !g.Enabled() {
+	if g, ok := LoadPreviewRegistry(ctx, meta).Get(feature.PreviewProviderTags); !ok || !g.Enabled() {
 		tflog.Debug(
 			ctx,
 			"Feature Preview is not enabled, using default value",
-			feature.NewPreviewLogFields(feature.PreviewProviderTeams, g),
+			feature.NewPreviewLogFields(feature.PreviewProviderTags, g),
 		)
 		return nil
 	}

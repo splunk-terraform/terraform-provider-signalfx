@@ -18,7 +18,9 @@ package feature
 // - Set the version added in (this helps sorting oldest previews to newest)
 
 const (
-	PreviewProviderTeams = "provider.teams"
+	PreviewProviderTeams    = "provider.teams"
+	PreviewProviderTags     = "provider.tags"
+	PreviewProviderTracking = "provider.track"
 )
 
 var (
@@ -26,5 +28,16 @@ var (
 		PreviewProviderTeams,
 		WithPreviewDescription("Allows for team(s) to set at a provider level, and apply to all applicable resources"),
 		WithPreviewAddInVersion("v9.9.1"),
+	)
+	_ = GetGlobalRegistry().MustRegister(
+		PreviewProviderTags,
+		WithPreviewDescription("Allows for tags to be set at the provider level, and apply to all applicable resources"),
+		WithPreviewAddInVersion("v9.10.0"),
+	)
+
+	_ = GetGlobalRegistry().MustRegister(
+		PreviewProviderTracking,
+		WithPreviewDescription("Allows for the project's VCS information to be added to the global tags to provide additional context for resources created"),
+		WithPreviewAddInVersion("v9.14.0"),
 	)
 )
