@@ -538,7 +538,7 @@ func detectorCreate(d *schema.ResourceData, meta any) error {
 	payload.Teams = pmeta.MergeProviderTeams(
 		context.TODO(),
 		meta,
-		payload.Tags,
+		payload.Teams,
 	)
 
 	debugOutput, _ := json.Marshal(payload)

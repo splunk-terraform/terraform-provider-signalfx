@@ -285,7 +285,7 @@ func TestLoadProviderTags(t *testing.T) {
 			meta: &Meta{
 				reg: func() *feature.Registry {
 					r := feature.NewRegistry()
-					r.MustRegister(previewGlobalTagsKey)
+					r.MustRegister(feature.PreviewProviderTags)
 					return r
 				}(),
 				Tags: []string{
@@ -300,7 +300,7 @@ func TestLoadProviderTags(t *testing.T) {
 			meta: &Meta{
 				reg: func() *feature.Registry {
 					r := feature.NewRegistry()
-					r.MustRegister(previewGlobalTagsKey, feature.WithPreviewGlobalAvailable())
+					r.MustRegister(feature.PreviewProviderTags, feature.WithPreviewGlobalAvailable())
 					return r
 				}(),
 				Tags: []string{

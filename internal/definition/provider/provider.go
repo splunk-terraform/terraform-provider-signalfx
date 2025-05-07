@@ -23,8 +23,10 @@ import (
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/definition/dimension"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/definition/organization"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/definition/team"
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/feature"
 	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
 	tfext "github.com/splunk-terraform/terraform-provider-signalfx/internal/tfextension"
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/track"
 	"github.com/splunk-terraform/terraform-provider-signalfx/version"
 )
 
@@ -211,6 +213,15 @@ func configureProvider(ctx context.Context, data *schema.ResourceData) (any, dia
 	for feat, val := range data.Get("feature_preview").(map[string]any) {
 		if err := pmeta.LoadPreviewRegistry(ctx, meta).Configure(ctx, feat, val.(bool)); err != nil {
 			return nil, tfext.AsWarnDiagnostics(err)
+		}
+	}
+
+	if gate, ok := pmeta.LoadPreviewRegistry(ctx, meta).Get(feature.PreviewProviderTracking); ok && gate.Enabled() {
+		tracking, err := track.ReadGitDetails(ctx)
+		if err != nil {
+			tflog.Info(ctx, "Unable to load git details, skipping", tfext.ErrorLogFields(err))
+		} else {
+			meta.Tags = append(meta.Tags, tracking.Tags()...)
 		}
 	}
 

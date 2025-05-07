@@ -17,6 +17,7 @@ import (
 
 	"github.com/bgentry/go-netrc/netrc"
 	"github.com/hashicorp/go-retryablehttp"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/logging"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -25,7 +26,10 @@ import (
 
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/convert"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/definition/organization"
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/feature"
 	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
+	tfext "github.com/splunk-terraform/terraform-provider-signalfx/internal/tfextension"
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/track"
 	"github.com/splunk-terraform/terraform-provider-signalfx/version"
 )
 
@@ -287,6 +291,16 @@ func signalfxConfigure(data *schema.ResourceData) (interface{}, error) {
 
 		if err != nil {
 			return nil, err
+		}
+	}
+
+	if gate, ok := pmeta.LoadPreviewRegistry(context.TODO(), config).Get(feature.PreviewProviderTracking); ok && gate.Enabled() {
+		tracking, err := track.ReadGitDetails(context.TODO())
+		if err != nil {
+			log.Printf("[INFO] Unable to load git details, skipping: %v", err)
+			tflog.Info(context.TODO(), "Unable to load git details, skipping", tfext.ErrorLogFields(err))
+		} else {
+			config.Tags = append(config.Tags, tracking.Tags()...)
 		}
 	}
 

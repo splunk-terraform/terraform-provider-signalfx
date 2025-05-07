@@ -5,12 +5,15 @@ package provider
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/feature"
 	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/tftest"
 )
@@ -131,5 +134,29 @@ func TestProviderConfiguration(t *testing.T) {
 			assert.Equal(t, tc.meta, meta, "Must match the expected value")
 			assert.Equal(t, tc.expect, actual, "Must match the expected details")
 		})
+	}
+}
+
+func TestProviderTracking(t *testing.T) {
+	t.Parallel()
+
+	// Moved to a separate unit test since the tracking results are branch dependant
+
+	rc := terraform.NewResourceConfigRaw(map[string]any{
+		"auth_token": "hunter2",
+		"api_url":    "api.us.signalfx.com",
+		"feature_preview": map[string]any{
+			feature.PreviewProviderTags:     true,
+			feature.PreviewProviderTracking: true,
+		},
+	})
+
+	provider := New()
+	require.Empty(t, provider.Configure(t.Context(), rc), "Must not return any issues trying to configure provider")
+
+	tags := pmeta.LoadProviderTags(t.Context(), provider.Meta())
+	require.Len(t, tags, 3, "Must only have the tags provided from tracking")
+	for i, prefix := range []string{"project:", "branch:", "experimental:"} {
+		assert.True(t, strings.HasPrefix(tags[i], prefix), "Must have the expected prefix %q with actual %q", prefix, tags[i])
 	}
 }
