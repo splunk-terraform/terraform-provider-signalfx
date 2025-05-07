@@ -56,7 +56,7 @@ func cleanGitURL(connection string) string {
 	switch {
 	case strings.HasPrefix(connection, "http"):
 		if u, err := url.Parse(connection); err == nil {
-			connection = u.Path
+			connection = strings.TrimPrefix(u.Path, "/")
 		}
 	case strings.HasPrefix(connection, "git@"):
 		_, project, _ := strings.Cut(connection, ":")

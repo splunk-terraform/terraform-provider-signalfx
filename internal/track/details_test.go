@@ -136,3 +136,36 @@ func TestDetailsTags(t *testing.T) {
 		})
 	}
 }
+
+func TestCleanGitURL(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name   string
+		url    string
+		expect string
+	}{
+		{
+			name:   "empty",
+			url:    "",
+			expect: "",
+		},
+		{
+			name:   "git connection",
+			url:    "git@git:my-awesome-project.git",
+			expect: "my-awesome-project",
+		},
+		{
+			name:   "http connection",
+			url:    "https://localhost/my-awesome-project.git",
+			expect: "my-awesome-project",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			actual := cleanGitURL(tc.url)
+			assert.Equal(t, tc.expect, actual, "Must match the expected value")
+		})
+	}
+}
