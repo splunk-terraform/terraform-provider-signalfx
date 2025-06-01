@@ -154,8 +154,8 @@ github.com/rogpeppe/go-internal v1.11.0 h1:cWPaGQEPrBb5/AsnsZesgZZ9yb1OQ+GOISoDN
 github.com/rogpeppe/go-internal v1.11.0/go.mod h1:ddIwULY96R17DhadqLgMfk9H9tvdUzkipdSkR5nkCZA=
 github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3 h1:n661drycOFuPLCN3Uc8sB6B/s6Z4t2xvBgU1htSHuq8=
 github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3/go.mod h1:A0bzQcvG0E7Rwjx0REVgAGH58e96+X0MeOfepqsbeW4=
-github.com/signalfx/signalfx-go v1.48.0 h1:3s5YHGGVkfIJ/xhsbrjUmgH27w6a4ijGjszMJOAt3Tw=
-github.com/signalfx/signalfx-go v1.48.0/go.mod h1:vGUt8DhpIJtzqP7hRD9ZGFPJBDTeCoO0OUsArKJriaY=
+github.com/signalfx/signalfx-go v1.49.0 h1:9//6+tt8Z61TJaQ7ENSEYB4/rsvLb13N6W5nT6eK4yA=
+github.com/signalfx/signalfx-go v1.49.0/go.mod h1:vGUt8DhpIJtzqP7hRD9ZGFPJBDTeCoO0OUsArKJriaY=
 github.com/sirupsen/logrus v1.7.0/go.mod h1:yWOB1SBYBC5VeMP7gHvWumXLIWorT60ONWic61uBYv0=
 github.com/skeema/knownhosts v1.3.0 h1:AM+y0rI04VksttfwjkSTNQorvGqmwATnvnAHpSgc0LY=
 github.com/skeema/knownhosts v1.3.0/go.mod h1:sPINvnADmT/qYH1kfv+ePMmOBTH6Tbl7b5LvTDjFK7M=
