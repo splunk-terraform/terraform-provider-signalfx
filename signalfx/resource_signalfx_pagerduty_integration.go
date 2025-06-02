@@ -6,12 +6,10 @@ package signalfx
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log"
 	"strings"
 
-	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/signalfx/signalfx-go/integration"
 )
@@ -34,7 +32,6 @@ func integrationPagerDutyResource() *schema.Resource {
 				Optional:    true,
 				Description: "PagerDuty API key",
 				Sensitive:   true,
-				WriteOnly:   true,
 			},
 		},
 
@@ -77,20 +74,11 @@ func pagerDutyIntegrationAPIToTF(d *schema.ResourceData, pd *integration.PagerDu
 }
 
 func getPayloadPagerDutyIntegration(d *schema.ResourceData) (*integration.PagerDutyIntegration, error) {
-	key, diags := d.GetRawConfigAt(cty.GetAttrPath("api_key"))
-	if diags.HasError() {
-		return nil, errors.New("issue reading raw config")
-	}
-
-	if !key.Type().Equals(cty.String) {
-		return nil, errors.New("api key not stored as string")
-	}
-
 	return &integration.PagerDutyIntegration{
 		Type:    "PagerDuty",
 		Name:    d.Get("name").(string),
 		Enabled: d.Get("enabled").(bool),
-		ApiKey:  key.AsString(),
+		ApiKey:  d.Get("api_key").(string),
 	}, nil
 }
 
