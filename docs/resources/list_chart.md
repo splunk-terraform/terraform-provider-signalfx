@@ -73,7 +73,7 @@ The following arguments are supported in the resource block:
 * `viz_options` - (Optional) Plot-level customization options, associated with a publish statement.
   * `label` - (Required) Label used in the publish statement that displays the plot (metric time series data) you want to customize.
   * `display_name` - (Optional) Specifies an alternate value for the Plot Name column of the Data Table associated with the chart.
-  * `color` - (Optional) The color to use. Must be one of gray, blue, light_blue, navy, dark_orange, orange, dark_yellow, magenta, cerise, pink, violet, purple, gray_blue, dark_green, green, aquamarine, red, yellow, vivid_yellow, light_green, or lime_green.
+  * `color` - (Optional) The color to use. Must be one of red, gold, iris, green, jade, gray, blue, azure, navy, brown, orange, yellow, magenta, cerise, pink, violet, purple, lilac, emerald, chartreuse, yellowgreen, aquamarine.
   * `value_unit` - (Optional) A unit to attach to this plot. Units support automatic scaling (eg thousands of bytes will be displayed as kilobytes). Values values are `Bit, Kilobit, Megabit, Gigabit, Terabit, Petabit, Exabit, Zettabit, Yottabit, Byte, Kibibyte, Mebibyte, Gibibyte (note: this was previously typoed as Gigibyte), Tebibyte, Pebibyte, Exbibyte, Zebibyte, Yobibyte, Nanosecond, Microsecond, Millisecond, Second, Minute, Hour, Day, Week`.
   * `value_prefix`, `value_suffix` - (Optional) Arbitrary prefix/suffix to display with the value of this plot.
 * `legend_fields_to_hide` - (Optional) List of properties that should not be displayed in the chart legend (i.e. dimension names). All the properties are visible by default. Deprecated, please use `legend_options_fields`.
@@ -87,7 +87,7 @@ The following arguments are supported in the resource block:
   * `gte` - (Optional) Indicates the lower threshold inclusive value for this range.
   * `lt` - (Optional) Indicates the upper threshold non-inculsive value for this range.
   * `lte` - (Optional) Indicates the upper threshold inclusive value for this range.
-  * `color` - (Required) The color to use. Must be one of gray, blue, light_blue, navy, dark_orange, orange, dark_yellow, magenta, cerise, pink, violet, purple, gray_blue, dark_green, green, aquamarine, red, yellow, vivid_yellow, light_green, or lime_green.
+  * `color` - (Required) The color to use. Must be one of red, gold, iris, green, jade, gray, blue, azure, navy, brown, orange, yellow, magenta, cerise, pink, violet, purple, lilac, emerald, chartreuse, yellowgreen, aquamarine.
 * `sort_by` - (Optional) The property to use when sorting the elements. Use `value` if you want to sort by value. Must be prepended with `+` for ascending or `-` for descending (e.g. `-foo`). Note there are some special values for some of the options provided in the UX: `"value"` for Value, `"sf_originatingMetric"` for Metric, and `"sf_metric"` for plot.
 * `time_range` - (Optional) How many seconds ago from which to display data. For example, the last hour would be `3600`, etc. Conflicts with `start_time` and `end_time`.
 * `start_time` - (Optional) Seconds since epoch. Used for visualization. Conflicts with `time_range`.
