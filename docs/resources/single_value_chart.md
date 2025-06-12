@@ -45,7 +45,7 @@ The following arguments are supported in the resource block:
   * `gte` - (Optional) Indicates the lower threshold inclusive value for this range.
   * `lt` - (Optional) Indicates the upper threshold non-inculsive value for this range.
   * `lte` - (Optional) Indicates the upper threshold inclusive value for this range.
-  * `color` - (Required) The color to use. Must be one of gray, blue, light_blue, navy, dark_orange, orange, dark_yellow, magenta, cerise, pink, violet, purple, gray_blue, dark_green, green, aquamarine, red, yellow, vivid_yellow, light_green, or lime_green.
+  * `color` - (Required) The color to use. Must be one of red, gold, iris, green, jade, gray, blue, azure, navy, brown, orange, yellow, magenta, cerise, pink, violet, purple, lilac, emerald, chartreuse, yellowgreen, aquamarine.
 * `viz_options` - (Optional) Plot-level customization options, associated with a publish statement.
   * `label` - (Required) Label used in the publish statement that displays the plot (metric time series data) you want to customize.
   * `display_name` - (Optional) Specifies an alternate value for the Plot Name column of the Data Table associated with the chart.
