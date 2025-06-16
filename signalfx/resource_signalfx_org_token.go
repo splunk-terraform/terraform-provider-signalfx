@@ -151,7 +151,7 @@ func orgTokenResource() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     true,
-				Description: "Whether to store the token's secret in the terraform state. Set to false for improved security. Defaults to true for backward compatibility.",
+				Description: "Whether to store the token's secret in the terraform state. Defaults to true.",
 			},
 		},
 
