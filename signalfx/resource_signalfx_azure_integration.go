@@ -138,6 +138,11 @@ func integrationAzureResource() *schema.Resource {
 				Description: "A named token to use for ingest",
 				ForceNew:    true,
 			},
+			"use_batch_api": &schema.Schema{
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "If enabled, Splunk Observability Cloud will collect datapoints using Azure Metrics Batch API. Consider this option if you are synchronizing high loads of data and you want to avoid throttling issues. Contrary to the default Metrics List API, Metrics Batch API is paid. Refer to Azure documentation for pricing info.",
+			},
 		},
 
 		Create: integrationAzureCreate,
@@ -191,6 +196,7 @@ func azureIntegrationAPIToTF(d *schema.ResourceData, azure *integration.AzureInt
 	if err := d.Set("import_azure_monitor", *azure.ImportAzureMonitor); err != nil {
 		return err
 	}
+
 	if len(azure.Services) > 0 {
 		services := make([]interface{}, len(azure.Services))
 		for i, v := range azure.Services {
@@ -246,12 +252,16 @@ func azureIntegrationAPIToTF(d *schema.ResourceData, azure *integration.AzureInt
 			return err
 		}
 	}
+	if err := d.Set("use_batch_api", *azure.UseBatchApi); err != nil {
+		return err
+	}
 
 	return nil
 }
 
 func getPayloadAzureIntegration(d *schema.ResourceData) (*integration.AzureIntegration, error) {
 	importAzureMonitor := d.Get("import_azure_monitor").(bool)
+	useBatchApi := d.Get("use_batch_api").(bool)
 	azure := &integration.AzureIntegration{
 		Name:                  d.Get("name").(string),
 		Type:                  "Azure",
@@ -262,6 +272,7 @@ func getPayloadAzureIntegration(d *schema.ResourceData) (*integration.AzureInteg
 		TenantId:              d.Get("tenant_id").(string),
 		SyncGuestOsNamespaces: d.Get("sync_guest_os_namespaces").(bool),
 		ImportAzureMonitor:    &importAzureMonitor,
+		UseBatchApi:           &useBatchApi,
 	}
 
 	if val, ok := d.GetOk("named_token"); ok {

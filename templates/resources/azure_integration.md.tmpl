@@ -32,6 +32,7 @@ Splunk Observability Cloud Azure integrations. For help with this integration se
 * `sync_guest_os_namespaces` - (Optional) If enabled, Splunk Observability Cloud will try to sync additional namespaces for VMs (including VMs in scale sets): telegraf/mem, telegraf/cpu, azure.vm.windows.guest (these are namespaces recommended by Azure when enabling their Diagnostic Extension). If there are no metrics there, no new datapoints will be ingested. Defaults to false.
 * `import_azure_monitor` - (Optional) If enabled, Splunk Observability Cloud will sync also Azure Monitor data. If disabled, Splunk Observability Cloud will import only metadata. Defaults to true.
 * `tenant_id` (Required) Azure ID of the Azure tenant. To learn how to get this ID, see the topic [Connect to Microsoft Azure](https://docs.splunk.com/observability/en/gdi/get-data-in/connect/azure/azure.html) in the product documentation.
+* `use_batch_api` - (Optional) If enabled, Splunk Observability Cloud will collect datapoints using Azure Metrics Batch API. Consider this option if you are synchronizing high loads of data and you want to avoid throttling issues. Contrary to the default Metrics List API, Metrics Batch API is paid. Refer to [Azure documentation](https://azure.microsoft.com/en-us/pricing/details/api-management/) for pricing info.
 
 ## Attributes
 
