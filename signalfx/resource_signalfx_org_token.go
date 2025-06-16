@@ -147,6 +147,12 @@ func orgTokenResource() *schema.Resource {
 				Computed:  true,
 				Sensitive: true,
 			},
+			"store_secret": &schema.Schema{
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     true,
+				Description: "Whether to store the token's secret in the terraform state. Set to false for improved security. Defaults to true for backward compatibility.",
+			},
 		},
 
 		Create: orgTokenCreate,
@@ -347,6 +353,49 @@ func orgTokenAPIToTF(d *schema.ResourceData, t *orgtoken.Token) error {
 		return err
 	}
 
+	secret := func() string {
+		if d.Get("store_secret").(bool) {
+			return t.Secret
+		}
+		return ""
+	}()
+
+	if err := d.Set("secret", secret); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func orgTokenLookupDataSource() *schema.Resource {
+	return &schema.Resource{
+		Read: orgTokenLookupRead,
+		Schema: map[string]*schema.Schema{
+			"name": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Name of the token to look up",
+			},
+			"secret": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Sensitive:   true,
+				Description: "The token's secret value",
+			},
+		},
+	}
+}
+
+func orgTokenLookupRead(d *schema.ResourceData, meta interface{}) error {
+	config := meta.(*signalfxConfig)
+	name := d.Get("name").(string)
+
+	t, err := config.Client.GetOrgToken(context.TODO(), name)
+	if err != nil {
+		return fmt.Errorf("error looking up org token %s: %s", name, err)
+	}
+
+	d.SetId(name)
 	if err := d.Set("secret", t.Secret); err != nil {
 		return err
 	}
@@ -356,7 +405,7 @@ func orgTokenAPIToTF(d *schema.ResourceData, t *orgtoken.Token) error {
 
 func orgTokenRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	fmt.Printf("[DEBUG] SignalFx: Looking for org token %s\n", d.Id())
+	log.Printf("[DEBUG] SignalFx: Looking for org token %s\n", d.Id())
 	t, err := config.Client.GetOrgToken(context.TODO(), d.Id())
 	if err != nil {
 		return err
