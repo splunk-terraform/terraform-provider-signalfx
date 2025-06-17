@@ -1,4 +1,4 @@
-package autoarchive
+package autoarchivesettings
 
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"

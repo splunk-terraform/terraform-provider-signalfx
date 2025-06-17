@@ -1,4 +1,4 @@
-package autoarchive
+package autoarchivesettings
 
 import (
 	"context"
