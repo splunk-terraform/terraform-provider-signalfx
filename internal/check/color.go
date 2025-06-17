@@ -33,3 +33,22 @@ func ColorName() schema.SchemaValidateDiagFunc {
 		)
 	}
 }
+
+func ColorHexValue() schema.SchemaValidateDiagFunc {
+	return func(i any, p cty.Path) diag.Diagnostics {
+		s, ok := i.(string)
+		if !ok {
+			return tfext.AsErrorDiagnostics(
+				fmt.Errorf("expected %v to be of type string", i),
+				p,
+			)
+		}
+		if len(s) != 7 || s[0] != '#' {
+			return tfext.AsErrorDiagnostics(
+				fmt.Errorf("value %q is not a valid hex color code", s),
+				p,
+			)
+		}
+		return nil
+	}
+}

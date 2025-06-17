@@ -15,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	chart "github.com/signalfx/signalfx-go/chart"
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/check"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/common"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/convert"
 	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
@@ -129,10 +130,10 @@ func heatmapChartResource() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"color": &schema.Schema{
-							Type:         schema.TypeString,
-							Required:     true,
-							Description:  "The color to use. Must be one of gray, blue, light_blue, navy, dark_orange, orange, dark_yellow, magenta, cerise, pink, violet, purple, gray_blue, dark_green, green, aquamarine, red, yellow, vivid_yellow, light_green, or lime_green.",
-							ValidateFunc: validateHeatmapChartColor,
+							Type:             schema.TypeString,
+							Required:         true,
+							Description:      "The color to use. Must be one of gray, blue, light_blue, navy, dark_orange, orange, dark_yellow, magenta, cerise, pink, violet, purple, gray_blue, dark_green, green, aquamarine, red, yellow, vivid_yellow, light_green, or lime_green.",
+							ValidateDiagFunc: check.ColorName(),
 						},
 						"gt": &schema.Schema{
 							Type:        schema.TypeFloat,
@@ -480,24 +481,4 @@ func heatmapchartDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 
 	return config.Client.DeleteChart(context.TODO(), d.Id())
-}
-
-/*
-Validates the color_range field against a list of allowed words.
-*/
-func validateHeatmapChartColor(v interface{}, k string) (we []string, errors []error) {
-	value := v.(string)
-	keys := make([]string, 0, len(ChartColorsSlice))
-	found := false
-	for _, item := range ChartColorsSlice {
-		if value == item.name {
-			found = true
-		}
-		keys = append(keys, item.name)
-	}
-	if !found {
-		joinedColors := strings.Join(keys, ",")
-		errors = append(errors, fmt.Errorf("%s not allowed; must be either %s", value, joinedColors))
-	}
-	return
 }
