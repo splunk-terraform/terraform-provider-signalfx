@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"log"
 	"math"
-	"regexp"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -20,8 +19,6 @@ import (
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/convert"
 	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
 )
-
-var validHexColor = regexp.MustCompile("^#[A-Fa-f0-9]{6}")
 
 func heatmapChartResource() *schema.Resource {
 	return &schema.Resource{
@@ -102,10 +99,10 @@ func heatmapChartResource() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"color": &schema.Schema{
-							Type:         schema.TypeString,
-							Required:     true,
-							ValidateFunc: validation.StringMatch(validHexColor, "does not look like a hex color, similar to #0000ff"),
-							Description:  "The color range to use. The starting hex color value for data values in a heatmap chart. Specify the value as a 6-character hexadecimal value preceded by the '#' character, for example \"#ea1849\" (grass green).",
+							Type:             schema.TypeString,
+							Required:         true,
+							ValidateDiagFunc: check.ColorHexValue(),
+							Description:      "The color range to use. The starting hex color value for data values in a heatmap chart. Specify the value as a 6-character hexadecimal value preceded by the '#' character, for example \"#ea1849\" (grass green).",
 						},
 						"min_value": &schema.Schema{
 							Type:        schema.TypeFloat,

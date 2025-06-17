@@ -5,6 +5,7 @@ package check
 
 import (
 	"fmt"
+	"regexp"
 
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -43,7 +44,7 @@ func ColorHexValue() schema.SchemaValidateDiagFunc {
 				p,
 			)
 		}
-		if len(s) != 7 || s[0] != '#' {
+		if matched, _ := regexp.MatchString(`"^#[A-Fa-f0-9]{6}"`, s); !matched {
 			return tfext.AsErrorDiagnostics(
 				fmt.Errorf("value %q is not a valid hex color code", s),
 				p,
