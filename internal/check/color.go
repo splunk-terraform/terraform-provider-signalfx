@@ -44,7 +44,7 @@ func ColorHexValue() schema.SchemaValidateDiagFunc {
 				p,
 			)
 		}
-		if matched, _ := regexp.MatchString(`"^#[A-Fa-f0-9]{6}"`, s); !matched {
+		if matched, _ := regexp.MatchString(`^#[A-Fa-f0-9]{6}$`, s); !matched {
 			return tfext.AsErrorDiagnostics(
 				fmt.Errorf("value %q is not a valid hex color code", s),
 				p,
