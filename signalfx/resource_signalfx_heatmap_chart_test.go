@@ -8,8 +8,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
@@ -129,14 +127,4 @@ func testAccHeatmapChartDestroy(s *terraform.State) error {
 	}
 
 	return nil
-}
-
-func TestValidateHeatmapChartColors(t *testing.T) {
-	_, err := validateHeatmapChartColor("blue", "color")
-	assert.Equal(t, 0, len(err))
-}
-
-func TestValidateHeatmapChartColorsFail(t *testing.T) {
-	_, err := validateHeatmapChartColor("whatever", "color")
-	assert.Equal(t, 1, len(err))
 }

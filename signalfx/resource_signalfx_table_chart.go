@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	chart "github.com/signalfx/signalfx-go/chart"
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/check"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/common"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/convert"
 	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
@@ -103,10 +104,10 @@ func tableChartResource() *schema.Resource {
 							Description: "The label used in the publish statement that displays the plot (metric time series data) you want to customize",
 						},
 						"color": &schema.Schema{
-							Type:         schema.TypeString,
-							Optional:     true,
-							Description:  "Color to use",
-							ValidateFunc: validatePerSignalColor,
+							Type:             schema.TypeString,
+							Optional:         true,
+							Description:      "Color to use",
+							ValidateDiagFunc: check.ColorName(),
 						},
 						"display_name": &schema.Schema{
 							Type:        schema.TypeString,

@@ -19,6 +19,7 @@ import (
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/common"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/convert"
 	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/visual"
 )
 
 const (
@@ -298,10 +299,10 @@ func dashboardResource() *schema.Resource {
 							Description: "The text displaying in the dropdown menu used to select this event overlay as an active overlay for the dashboard.",
 						},
 						"color": &schema.Schema{
-							Type:         schema.TypeString,
-							Optional:     true,
-							Description:  "Color to use",
-							ValidateFunc: validatePerSignalColor,
+							Type:             schema.TypeString,
+							Optional:         true,
+							Description:      "Color to use",
+							ValidateDiagFunc: check.ColorName(),
 						},
 						"type": &schema.Schema{
 							Type:         schema.TypeString,
@@ -751,9 +752,9 @@ func getDashboardEventOverlays(overlays []interface{}) []*dashboard.ChartEventOv
 		}
 
 		if val, ok := overlay["color"].(string); ok {
-			if elem, ok := PaletteColors[val]; ok {
-				i := int32(elem)
-				item.EventColorIndex = &i
+			pc := visual.NewColorPalette()
+			if elem, ok := pc.ColorIndex(val); ok {
+				item.EventColorIndex = &elem
 			}
 		}
 
@@ -1037,8 +1038,9 @@ func dashboardAPIToTF(d *schema.ResourceData, dash *dashboard.Dashboard) error {
 			evOverlay["label"] = v.Label
 
 			if v.EventColorIndex != nil {
-				colorName, err := getNameFromPaletteColorsByIndex(int(*v.EventColorIndex))
-				if err != nil {
+				pc := visual.NewColorPalette()
+				colorName, ok := pc.IndexColorName(*v.EventColorIndex)
+				if !ok {
 					return fmt.Errorf("Unknown event overlay color: %d", v.EventColorIndex)
 				}
 				evOverlay["color"] = colorName
