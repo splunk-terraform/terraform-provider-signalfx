@@ -10,27 +10,27 @@ func newSchema() map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"creator": {
 			Type:        schema.TypeString,
-			Required:    true,
+			Computed:    true,
 			Description: "ID of the creator of the automated archival setting",
 		},
 		"last_updated_by": {
 			Type:        schema.TypeString,
-			Required:    true,
+			Computed:    true,
 			Description: "ID of user who last updated the automated archival setting",
 		},
 		"created": {
 			Type:        schema.TypeInt,
-			Required:    true,
+			Computed:    true,
 			Description: "Timestamp of when the automated archival setting was created",
 		},
 		"last_updated": {
 			Type:        schema.TypeInt,
-			Required:    true,
+			Computed:    true,
 			Description: "Timestamp of when the automated archival setting was last updated",
 		},
 		"version": {
-			Type:        schema.TypeInt,
-			Required:    true,
+			Type:        schema.TypeString,
+			Computed:    true,
 			Description: "Version of the automated archival setting",
 		},
 		"enabled": {
@@ -50,7 +50,7 @@ func newSchema() map[string]*schema.Schema {
 		},
 		"ruleset_limit": {
 			Type:        schema.TypeInt,
-			Required:    true,
+			Optional:    true,
 			Description: "Org limit for the number of rulesets that can be created",
 		},
 	}
@@ -58,31 +58,52 @@ func newSchema() map[string]*schema.Schema {
 
 func decodeTerraform(data *schema.ResourceData) (*autoarch.AutomatedArchivalSettings, error) {
 	settings := &autoarch.AutomatedArchivalSettings{
-		Creator:        data.Get("creator").(*string),
-		LastUpdatedBy:  data.Get("last_updated_by").(*string),
-		Created:        data.Get("created").(*int64),
-		LastUpdated:    data.Get("last_updated").(*int64),
-		Version:        data.Get("version").(int64),
 		Enabled:        data.Get("enabled").(bool),
 		LookbackPeriod: data.Get("lookback_period").(string),
 		GracePeriod:    data.Get("grace_period").(string),
-		RulesetLimit:   data.Get("ruleset_limit").(*int32),
 	}
+	if creatorStr, ok := data.GetOk("creator"); ok {
+		settings.Creator = creatorStr.(*string)
+	}
+	if lastUpdatedByStr, ok := data.GetOk("last_updated_by"); ok {
+		settings.LastUpdatedBy = lastUpdatedByStr.(*string)
+	}
+	if createdStr, ok := data.GetOk("created"); ok {
+		settings.Created = createdStr.(*int64)
+	}
+	if lastUpdatedStr, ok := data.GetOk("last_updated"); ok {
+		settings.LastUpdated = lastUpdatedStr.(*int64)
+	}
+	if versionStr, ok := data.GetOk("version"); ok {
+		settings.Version = versionStr.(int64)
+	}
+	if rulesetLimit, ok := data.GetOk("ruleset_limit"); ok {
+		settings.RulesetLimit = rulesetLimit.(*int32)
+	}
+
 	return settings, nil
 }
 
 func encodeTerraform(settings *autoarch.AutomatedArchivalSettings, data *schema.ResourceData) error {
 	errs := multierr.Combine(
-		data.Set("creator", settings.Creator),
-		data.Set("last_updated_by", settings.LastUpdatedBy),
-		data.Set("created", settings.Created),
-		data.Set("last_updated", settings.LastUpdated),
-		data.Set("version", settings.Version),
 		data.Set("enabled", settings.Enabled),
 		data.Set("lookback_period", settings.LookbackPeriod),
 		data.Set("grace_period", settings.GracePeriod),
+		data.Set("version", settings.Version),
 		data.Set("ruleset_limit", settings.RulesetLimit),
 	)
+	if settings.Creator != nil {
+		errs = multierr.Append(errs, data.Set("creator", *settings.Creator))
+	}
+	if settings.LastUpdatedBy != nil {
+		errs = multierr.Append(errs, data.Set("last_updated_by", *settings.LastUpdatedBy))
+	}
+	if settings.Created != nil {
+		errs = multierr.Append(errs, data.Set("created", *settings.Created))
+	}
+	if settings.LastUpdated != nil {
+		errs = multierr.Append(errs, data.Set("last_updated", *settings.LastUpdated))
+	}
 
 	return errs
 }
