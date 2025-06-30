@@ -82,7 +82,7 @@ func resourceDelete(ctx context.Context, data *schema.ResourceData, meta any) di
 		return tfext.AsErrorDiagnostics(err)
 	}
 
-	if len(data.State().ID) == 0 {
+	if data.State().ID == "" {
 		return tfext.AsErrorDiagnostics(common.HandleError(ctx, errors.New("no id found for the resource"), data))
 	}
 	ids := strings.Split(data.State().ID, ",")
