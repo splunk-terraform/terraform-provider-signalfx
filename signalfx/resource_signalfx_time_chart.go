@@ -14,54 +14,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/check"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/common"
 	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/visual"
 
 	chart "github.com/signalfx/signalfx-go/chart"
 )
-
-var PaletteColors = map[string]int{
-	"gray":       0,
-	"blue":       1,
-	"azure":      2,
-	"navy":       3,
-	"brown":      4,
-	"orange":     5,
-	"yellow":     6,
-	"magenta":    7,
-	"purple":     8,
-	"pink":       9,
-	"violet":     10,
-	"lilac":      11,
-	"iris":       12,
-	"emerald":    13,
-	"green":      14,
-	"aquamarine": 15,
-}
-
-var FullPaletteColors = map[string]int{
-	"gray":        0,
-	"blue":        1,
-	"azure":       2,
-	"navy":        3,
-	"brown":       4,
-	"orange":      5,
-	"yellow":      6,
-	"magenta":     7,
-	"purple":      8,
-	"pink":        9,
-	"violet":      10,
-	"lilac":       11,
-	"iris":        12,
-	"emerald":     13,
-	"green":       14,
-	"aquamarine":  15,
-	"red":         16,
-	"gold":        17,
-	"greenyellow": 18,
-	"chartreuse":  19,
-	"jade":        20,
-}
 
 func resourceAxisMigrateState(v int, is *terraform.InstanceState, meta interface{}) (*terraform.InstanceState, error) {
 	switch v {
@@ -397,10 +356,10 @@ func timeChartResource() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"color_theme": &schema.Schema{
-							Type:         schema.TypeString,
-							Optional:     true,
-							Description:  "Base color theme to use for the graph.",
-							ValidateFunc: validateFullPaletteColors,
+							Type:             schema.TypeString,
+							Optional:         true,
+							Description:      "Base color theme to use for the graph.",
+							ValidateDiagFunc: check.ColorName(),
 						},
 					},
 				},
@@ -417,10 +376,10 @@ func timeChartResource() *schema.Resource {
 							Description: "The label used in the publish statement that displays the plot (metric time series data) you want to customize",
 						},
 						"color": &schema.Schema{
-							Type:         schema.TypeString,
-							Optional:     true,
-							Description:  "Color to use",
-							ValidateFunc: validatePerSignalColor,
+							Type:             schema.TypeString,
+							Optional:         true,
+							Description:      "Color to use",
+							ValidateDiagFunc: check.ColorName(),
 						},
 						"axis": &schema.Schema{
 							Type:        schema.TypeString,
@@ -475,10 +434,10 @@ func timeChartResource() *schema.Resource {
 							Description: "The label used in the publish statement that displays the events you want to customize",
 						},
 						"color": &schema.Schema{
-							Type:         schema.TypeString,
-							Optional:     true,
-							Description:  "Color to use",
-							ValidateFunc: validatePerSignalColor,
+							Type:             schema.TypeString,
+							Optional:         true,
+							Description:      "Color to use",
+							ValidateDiagFunc: check.ColorName(),
 						},
 						"display_name": &schema.Schema{
 							Type:        schema.TypeString,
@@ -583,7 +542,8 @@ func getPerSignalVizOptions(d *schema.ResourceData, includePaletteIndex bool) []
 			item.DisplayName = val
 		}
 		if val, ok := v["color"].(string); ok {
-			if elem, ok := PaletteColors[val]; includePaletteIndex && ok {
+			pc := visual.NewColorPalette()
+			if elem, ok := pc.ColorIndex(val); includePaletteIndex && ok {
 				i := int32(elem)
 				item.PaletteIndex = &i
 			}
@@ -625,7 +585,8 @@ func getPerEventOptions(d *schema.ResourceData) []*chart.EventPublishLabelOption
 			item.DisplayName = val
 		}
 		if val, ok := ev["color"].(string); ok {
-			if elem, ok := PaletteColors[val]; ok {
+			pc := visual.NewColorPalette()
+			if elem, ok := pc.ColorIndex(val); ok {
 				i := int32(elem)
 				item.PaletteIndex = &i
 			}
@@ -763,7 +724,8 @@ func getTimeChartOptions(d *schema.ResourceData) *chart.Options {
 				hOptions := histogramOptions.([]interface{})
 				hOption := hOptions[0].(map[string]interface{})
 				if colorTheme, ok := hOption["color_theme"].(string); ok {
-					if elem, ok := FullPaletteColors[colorTheme]; ok {
+					pc := visual.NewColorPalette()
+					if elem, ok := pc.ColorIndex(colorTheme); ok {
 						i := int32(elem)
 						options.HistogramChartOptions = &chart.HistogramChartOptions{
 							ColorThemeIndex: &i,
@@ -883,9 +845,10 @@ func timechartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 	}
 	if options.HistogramChartOptions != nil {
 		if options.HistogramChartOptions.ColorThemeIndex != nil {
-			color, err := getNameFromFullPaletteColorsByIndex(int(*options.HistogramChartOptions.ColorThemeIndex))
-			if err != nil {
-				return err
+			pc := visual.NewColorPalette()
+			color, ok := pc.IndexColorName(*options.HistogramChartOptions.ColorThemeIndex)
+			if !ok {
+				return fmt.Errorf("invalid color theme index: %d", *options.HistogramChartOptions.ColorThemeIndex)
 			}
 			histOptions := map[string]interface{}{
 				"color_theme": color,
@@ -980,9 +943,10 @@ func timechartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 			color := ""
 			if eplo.PaletteIndex != nil {
 				// We might not have a color, so tread lightly
-				c, err := getNameFromPaletteColorsByIndex(int(*eplo.PaletteIndex))
-				if err != nil {
-					return err
+				pc := visual.NewColorPalette()
+				c, ok := pc.IndexColorName(*eplo.PaletteIndex)
+				if !ok {
+					return fmt.Errorf("invalid color palette index: %d", *eplo.PaletteIndex)
 				}
 				// Ok, we can set the color now
 				color = c
@@ -1069,9 +1033,10 @@ func publishNonTimeLabelOptionsToMap(options *chart.PublishLabelOptions) (map[st
 	color := ""
 	if options.PaletteIndex != nil {
 		// We might not have a color, so tread lightly
-		c, err := getNameFromPaletteColorsByIndex(int(*options.PaletteIndex))
-		if err != nil {
-			return map[string]interface{}{}, err
+		pc := visual.NewColorPalette()
+		c, ok := pc.IndexColorName(*options.PaletteIndex)
+		if !ok {
+			return map[string]interface{}{}, fmt.Errorf("invalid color palette index: %d", *options.PaletteIndex)
 		}
 		// Ok, we can set the color now
 		color = c
@@ -1091,9 +1056,10 @@ func publishLabelOptionsToMap(options *chart.PublishLabelOptions) (map[string]in
 	color := ""
 	if options.PaletteIndex != nil {
 		// We might not have a color, so tread lightly
-		c, err := getNameFromPaletteColorsByIndex(int(*options.PaletteIndex))
-		if err != nil {
-			return map[string]interface{}{}, err
+		pc := visual.NewColorPalette()
+		c, ok := pc.IndexColorName(*options.PaletteIndex)
+		if !ok {
+			return map[string]interface{}{}, fmt.Errorf("invalid color palette index: %d", *options.PaletteIndex)
 		}
 		// Ok, we can set the color now
 		color = c

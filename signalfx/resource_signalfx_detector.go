@@ -21,6 +21,7 @@ import (
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/common"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/convert"
 	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/visual"
 )
 
 const (
@@ -230,10 +231,10 @@ func detectorResource() *schema.Resource {
 							Description: "The label used in the publish statement that displays the plot (metric time series data) you want to customize",
 						},
 						"color": {
-							Type:         schema.TypeString,
-							Optional:     true,
-							Description:  "Color to use",
-							ValidateFunc: validatePerSignalColor,
+							Type:             schema.TypeString,
+							Optional:         true,
+							Description:      "Color to use",
+							ValidateDiagFunc: check.ColorName(),
 						},
 						"display_name": {
 							Type:        schema.TypeString,
@@ -505,9 +506,10 @@ func detectorPublishLabelOptionsToMap(options *detector.PublishLabelOptions) (ma
 	color := ""
 	if options.PaletteIndex != nil {
 		// We might not have a color, so tread lightly
-		c, err := getNameFromPaletteColorsByIndex(int(*options.PaletteIndex))
-		if err != nil {
-			return map[string]any{}, err
+		pc := visual.NewColorPalette()
+		c, ok := pc.IndexColorName(*options.PaletteIndex)
+		if !ok {
+			return map[string]any{}, fmt.Errorf("invalid color palette index: %d", *options.PaletteIndex)
 		}
 		// Ok, we can set the color now
 		color = c
@@ -792,7 +794,8 @@ func getPerSignalDetectorVizOptions(d *schema.ResourceData) []*detector.PublishL
 			item.DisplayName = val
 		}
 		if val, ok := v["color"].(string); ok {
-			if elem, ok := PaletteColors[val]; ok {
+			pc := visual.NewColorPalette()
+			if elem, ok := pc.ColorIndex(val); ok {
 				i := int32(elem)
 				item.PaletteIndex = &i
 			}
