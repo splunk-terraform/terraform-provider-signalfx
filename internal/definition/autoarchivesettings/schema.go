@@ -4,6 +4,8 @@
 package autoarchivesettings
 
 import (
+	"strconv"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	autoarch "github.com/signalfx/signalfx-go/automated-archival"
 	"go.uber.org/multierr"
@@ -92,7 +94,7 @@ func encodeTerraform(settings *autoarch.AutomatedArchivalSettings, data *schema.
 		data.Set("enabled", settings.Enabled),
 		data.Set("lookback_period", settings.LookbackPeriod),
 		data.Set("grace_period", settings.GracePeriod),
-		data.Set("version", settings.Version),
+		data.Set("version", strconv.FormatInt(settings.Version, 10)),
 		data.Set("ruleset_limit", settings.RulesetLimit),
 	)
 	if settings.Creator != nil {
