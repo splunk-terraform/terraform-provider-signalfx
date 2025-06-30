@@ -9,18 +9,16 @@ import (
 	"fmt"
 	"log"
 	"math"
-	"regexp"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	chart "github.com/signalfx/signalfx-go/chart"
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/check"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/common"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/convert"
 	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
 )
-
-var validHexColor = regexp.MustCompile("^#[A-Fa-f0-9]{6}")
 
 func heatmapChartResource() *schema.Resource {
 	return &schema.Resource{
@@ -101,10 +99,10 @@ func heatmapChartResource() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"color": &schema.Schema{
-							Type:         schema.TypeString,
-							Required:     true,
-							ValidateFunc: validation.StringMatch(validHexColor, "does not look like a hex color, similar to #0000ff"),
-							Description:  "The color range to use. The starting hex color value for data values in a heatmap chart. Specify the value as a 6-character hexadecimal value preceded by the '#' character, for example \"#ea1849\" (grass green).",
+							Type:             schema.TypeString,
+							Required:         true,
+							ValidateDiagFunc: check.ColorHexValue(),
+							Description:      "The color range to use. The starting hex color value for data values in a heatmap chart. Specify the value as a 6-character hexadecimal value preceded by the '#' character, for example \"#ea1849\" (grass green).",
 						},
 						"min_value": &schema.Schema{
 							Type:        schema.TypeFloat,
@@ -129,10 +127,10 @@ func heatmapChartResource() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"color": &schema.Schema{
-							Type:         schema.TypeString,
-							Required:     true,
-							Description:  "The color to use. Must be one of gray, blue, light_blue, navy, dark_orange, orange, dark_yellow, magenta, cerise, pink, violet, purple, gray_blue, dark_green, green, aquamarine, red, yellow, vivid_yellow, light_green, or lime_green.",
-							ValidateFunc: validateHeatmapChartColor,
+							Type:             schema.TypeString,
+							Required:         true,
+							Description:      "The color to use. Must be one of gray, blue, light_blue, navy, dark_orange, orange, dark_yellow, magenta, cerise, pink, violet, purple, gray_blue, dark_green, green, aquamarine, red, yellow, vivid_yellow, light_green, or lime_green.",
+							ValidateDiagFunc: check.ColorName(),
 						},
 						"gt": &schema.Schema{
 							Type:        schema.TypeFloat,
@@ -480,24 +478,4 @@ func heatmapchartDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 
 	return config.Client.DeleteChart(context.TODO(), d.Id())
-}
-
-/*
-Validates the color_range field against a list of allowed words.
-*/
-func validateHeatmapChartColor(v interface{}, k string) (we []string, errors []error) {
-	value := v.(string)
-	keys := make([]string, 0, len(ChartColorsSlice))
-	found := false
-	for _, item := range ChartColorsSlice {
-		if value == item.name {
-			found = true
-		}
-		keys = append(keys, item.name)
-	}
-	if !found {
-		joinedColors := strings.Join(keys, ",")
-		errors = append(errors, fmt.Errorf("%s not allowed; must be either %s", value, joinedColors))
-	}
-	return
 }

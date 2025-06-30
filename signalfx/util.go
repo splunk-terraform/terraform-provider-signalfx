@@ -21,35 +21,6 @@ const (
 	CHART_APP_PATH = "/chart/"
 )
 
-type chartColor struct {
-	name string
-	hex  string
-}
-
-var ChartColorsSlice = []chartColor{
-	{"gray", "#999999"},
-	{"blue", "#0077c2"},
-	{"light_blue", "#00b9ff"},
-	{"navy", "#6CA2B7"},
-	{"dark_orange", "#b04600"},
-	{"orange", "#f47e00"},
-	{"dark_yellow", "#e5b312"},
-	{"magenta", "#bd468d"},
-	{"cerise", "#e9008a"},
-	{"pink", "#ff8dd1"},
-	{"violet", "#876ff3"},
-	{"purple", "#a747ff"},
-	{"gray_blue", "#ab99bc"},
-	{"dark_green", "#007c1d"},
-	{"green", "#05ce00"},
-	{"aquamarine", "#0dba8f"},
-	{"red", "#ea1849"},
-	{"yellow", "#ea1849"},
-	{"vivid_yellow", "#ea1849"},
-	{"light_green", "#acef7f"},
-	{"lime_green", "#6bd37e"},
-}
-
 func buildAppURL(appURL string, fragment string) (string, error) {
 	// Include a trailing slash, as without this Go doesn't add one for the fragment and that seems to be a required part of the url
 	u, err := url.Parse(appURL + "/")
@@ -83,33 +54,6 @@ func validateSortBy(v interface{}, k string) (we []string, errors []error) {
 		errors = append(errors, fmt.Errorf("%s not allowed; must start either with + or - (ascending or descending)", value))
 	}
 	return
-}
-
-func getNameFromPaletteColorsByIndex(index int) (string, error) {
-	for k, v := range PaletteColors {
-		if v == index {
-			return k, nil
-		}
-	}
-	return "", fmt.Errorf("Unknown color index %d", index)
-}
-
-func getNameFromFullPaletteColorsByIndex(index int) (string, error) {
-	for k, v := range FullPaletteColors {
-		if v == index {
-			return k, nil
-		}
-	}
-	return "", fmt.Errorf("Unknown color index %d", index)
-}
-
-func getNameFromChartColorsByIndex(index int) (string, error) {
-	for i, v := range ChartColorsSlice {
-		if i == index {
-			return v.name, nil
-		}
-	}
-	return "", fmt.Errorf("Unknown color index %d", index)
 }
 
 // Deprecated: Use `convert.SchemaListAll(d.Get("color_scale"), convert.ToChartSecondaryVisualization)` instead
@@ -177,35 +121,6 @@ func getLegendFieldOptions(d *schema.ResourceData) *chart.DataTableOptions {
 		}
 	}
 	return nil
-}
-
-/*
-Validates the color field against a list of allowed words.
-*/
-func validatePerSignalColor(v interface{}, k string) (we []string, errors []error) {
-	value := v.(string)
-	if _, ok := PaletteColors[value]; !ok {
-		keys := make([]string, 0, len(PaletteColors))
-		for k := range PaletteColors {
-			keys = append(keys, k)
-		}
-		joinedColors := strings.Join(keys, ",")
-		errors = append(errors, fmt.Errorf("%s not allowed; must be either %s", value, joinedColors))
-	}
-	return
-}
-
-func validateFullPaletteColors(v interface{}, k string) (we []string, errors []error) {
-	value := v.(string)
-	if _, ok := FullPaletteColors[value]; !ok {
-		keys := make([]string, 0, len(FullPaletteColors))
-		for k := range FullPaletteColors {
-			keys = append(keys, k)
-		}
-		joinedColors := strings.Join(keys, ",")
-		errors = append(errors, fmt.Errorf("%s not allowed; must be either %s", value, joinedColors))
-	}
-	return
 }
 
 func validateSecondaryVisualization(v interface{}, k string) (we []string, errors []error) {
