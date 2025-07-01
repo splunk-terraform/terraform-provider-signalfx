@@ -62,24 +62,29 @@ func decodeTerraform(data *schema.ResourceData) (*[]automated_archival.ExemptMet
 					Name: itemMap["name"].(string),
 				}
 
-				if creator, ok := itemMap["creator"]; ok && creator != nil {
+				// Only set if field exists and contains a value
+				if creator, exists := itemMap["creator"]; exists && creator != nil && creator.(string) != "" {
 					str := creator.(string)
 					exempt_metric.Creator = &str
 				}
 
-				if lastUpdatedBy, ok := itemMap["last_updated_by"]; ok && lastUpdatedBy != nil {
+				if lastUpdatedBy, exists := itemMap["last_updated_by"]; exists && lastUpdatedBy != nil && lastUpdatedBy.(string) != "" {
 					str := lastUpdatedBy.(string)
 					exempt_metric.LastUpdatedBy = &str
 				}
 
-				if created, ok := itemMap["created"]; ok && created != nil {
+				if created, exists := itemMap["created"]; exists && created != nil {
 					val := int64(created.(int))
-					exempt_metric.Created = &val
+					if val != 0 {
+						exempt_metric.Created = &val
+					}
 				}
 
-				if lastUpdated, ok := itemMap["last_updated"]; ok && lastUpdated != nil {
+				if lastUpdated, exists := itemMap["last_updated"]; exists && lastUpdated != nil {
 					val := int64(lastUpdated.(int))
-					exempt_metric.LastUpdated = &val
+					if val != 0 {
+						exempt_metric.LastUpdated = &val
+					}
 				}
 
 				*exempt_metrics = append(*exempt_metrics, exempt_metric)
