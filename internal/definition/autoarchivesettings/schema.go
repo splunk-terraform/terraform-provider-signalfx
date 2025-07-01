@@ -80,10 +80,14 @@ func decodeTerraform(data *schema.ResourceData) (*autoarch.AutomatedArchivalSett
 		settings.LastUpdated = lastUpdatedStr.(*int64)
 	}
 	if versionStr, ok := data.GetOk("version"); ok {
-		settings.Version = versionStr.(int64)
+		version, err := strconv.ParseInt(versionStr.(string), 10, 64)
+		if err == nil {
+			settings.Version = version
+		}
 	}
 	if rulesetLimit, ok := data.GetOk("ruleset_limit"); ok {
-		settings.RulesetLimit = rulesetLimit.(*int32)
+		rulesetLimit := rulesetLimit.(int)
+		settings.RulesetLimit = autoarch.PtrInt32(int32(rulesetLimit))
 	}
 
 	return settings, nil
