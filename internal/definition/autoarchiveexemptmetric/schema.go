@@ -4,6 +4,8 @@
 package autoarchiveexemptmetric
 
 import (
+	"fmt"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	automated_archival "github.com/signalfx/signalfx-go/automated-archival"
 	"go.uber.org/multierr"
@@ -96,7 +98,10 @@ func decodeTerraform(data *schema.ResourceData) (*[]automated_archival.ExemptMet
 
 func encodeTerraform(exempt_metrics *[]automated_archival.ExemptMetric, data *schema.ResourceData) error {
 	if exempt_metrics == nil {
-		data.Set("exempt_metrics", nil)
+		err := data.Set("exempt_metrics", nil)
+		if err != nil {
+			return fmt.Errorf("failed to set exempt_metrics: %w", err)
+		}
 		return nil
 	}
 

@@ -4,6 +4,8 @@
 package autoarchivesettings
 
 import (
+	"fmt"
+	"math"
 	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -87,6 +89,9 @@ func decodeTerraform(data *schema.ResourceData) (*autoarch.AutomatedArchivalSett
 	}
 	if rulesetLimit, ok := data.GetOk("ruleset_limit"); ok {
 		rulesetLimit := rulesetLimit.(int)
+		if rulesetLimit > math.MaxInt32 || rulesetLimit < math.MinInt32 {
+			return nil, fmt.Errorf("ruleset_limit %d is out of range", rulesetLimit)
+		}
 		settings.RulesetLimit = autoarch.PtrInt32(int32(rulesetLimit))
 	}
 
