@@ -9,7 +9,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1
 	github.com/go-git/go-git/v5 v5.16.2
 	github.com/hashicorp/go-cty v1.5.0
-	github.com/hashicorp/go-retryablehttp v0.7.7
+	github.com/hashicorp/go-retryablehttp v0.7.8
 	github.com/hashicorp/terraform-plugin-log v0.9.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.37.0
 	github.com/mitchellh/go-homedir v1.1.0
