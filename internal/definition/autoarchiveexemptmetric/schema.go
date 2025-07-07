@@ -8,11 +8,25 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	automated_archival "github.com/signalfx/signalfx-go/automated-archival"
-	"go.uber.org/multierr"
 )
 
-var (
-	exemptMetricSchema = map[string]*schema.Schema{
+func newSchema() map[string]*schema.Schema {
+	return map[string]*schema.Schema{
+		"exempt_metrics": {
+			Type:        schema.TypeList,
+			Required:    true,
+			Description: "List of metrics to be exempted from automated archival",
+			Elem: &schema.Resource{
+				Schema: getExemptMetricSchema(),
+			},
+			ForceNew: true,
+			MinItems: 1,
+		},
+	}
+}
+
+func getExemptMetricSchema() map[string]*schema.Schema {
+	return map[string]*schema.Schema{
 		"creator": {
 			Type:        schema.TypeString,
 			Computed:    true,
@@ -39,65 +53,51 @@ var (
 			Description: "Name of the metric to be exempted from automated archival",
 		},
 	}
-)
-
-func newSchema() map[string]*schema.Schema {
-	return map[string]*schema.Schema{
-		"exempt_metrics": {
-			Type:        schema.TypeList,
-			Required:    true,
-			Description: "List of metrics to be exempted from automated archival",
-			Elem: &schema.Resource{
-				Schema: exemptMetricSchema,
-			},
-			ForceNew: true,
-		},
-	}
 }
 
 func decodeTerraform(data *schema.ResourceData) (*[]automated_archival.ExemptMetric, error) {
 	exempt_metrics := &[]automated_archival.ExemptMetric{}
-	if v, ok := data.GetOk("exempt_metrics"); ok {
-		for _, item := range v.([]any) {
-			if itemMap, ok := item.(map[string]any); ok {
-				exempt_metric := automated_archival.ExemptMetric{
-					Name: itemMap["name"].(string),
-				}
+	v, ok := data.GetOk("exempt_metrics")
+	if !ok {
+		return exempt_metrics, nil
+	}
 
-				// Only set if field exists and contains a value
-				if creator, exists := itemMap["creator"]; exists && creator != nil && creator.(string) != "" {
-					str := creator.(string)
-					exempt_metric.Creator = &str
-				}
-
-				if lastUpdatedBy, exists := itemMap["last_updated_by"]; exists && lastUpdatedBy != nil && lastUpdatedBy.(string) != "" {
-					str := lastUpdatedBy.(string)
-					exempt_metric.LastUpdatedBy = &str
-				}
-
-				if created, exists := itemMap["created"]; exists && created != nil {
-					val := int64(created.(int))
-					if val != 0 {
-						exempt_metric.Created = &val
-					}
-				}
-
-				if lastUpdated, exists := itemMap["last_updated"]; exists && lastUpdated != nil {
-					val := int64(lastUpdated.(int))
-					if val != 0 {
-						exempt_metric.LastUpdated = &val
-					}
-				}
-
-				*exempt_metrics = append(*exempt_metrics, exempt_metric)
-			}
+	for _, item := range v.([]any) {
+		itemMap, ok := item.(map[string]any)
+		if !ok {
+			continue
 		}
+
+		exempt_metric := automated_archival.ExemptMetric{
+			Name: itemMap["name"].(string),
+		}
+
+		// Only set if field exists and contains a value
+		if creator, ok := itemMap["creator"].(string); ok && creator != "" {
+			exempt_metric.Creator = &creator
+		}
+
+		if lastUpdatedBy, ok := itemMap["last_updated_by"].(string); ok && lastUpdatedBy != "" {
+			exempt_metric.LastUpdatedBy = &lastUpdatedBy
+		}
+
+		if created, ok := itemMap["created"].(int); ok && created != 0 {
+			val := int64(created)
+			exempt_metric.Created = &val
+		}
+
+		if lastUpdated, ok := itemMap["last_updated"].(int); ok && lastUpdated != 0 {
+			val := int64(lastUpdated)
+			exempt_metric.LastUpdated = &val
+		}
+
+		*exempt_metrics = append(*exempt_metrics, exempt_metric)
 	}
 	return exempt_metrics, nil
 }
 
 func encodeTerraform(exempt_metrics *[]automated_archival.ExemptMetric, data *schema.ResourceData) error {
-	if exempt_metrics == nil {
+	if exempt_metrics == nil || len(*exempt_metrics) == 0 {
 		err := data.Set("exempt_metrics", nil)
 		if err != nil {
 			return fmt.Errorf("failed to set exempt_metrics: %w", err)
@@ -124,9 +124,5 @@ func encodeTerraform(exempt_metrics *[]automated_archival.ExemptMetric, data *sc
 		}
 	}
 
-	errs := multierr.Combine(
-		data.Set("exempt_metrics", exemptMetricsList),
-	)
-
-	return errs
+	return data.Set("exempt_metrics", exemptMetricsList)
 }
