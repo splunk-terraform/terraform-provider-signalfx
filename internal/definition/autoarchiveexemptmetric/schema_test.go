@@ -8,8 +8,9 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	automated_archival "github.com/signalfx/signalfx-go/automated-archival"
-	"github.com/splunk-terraform/terraform-provider-signalfx/internal/common"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/common"
 )
 
 func TestSchemaDecode(t *testing.T) {
