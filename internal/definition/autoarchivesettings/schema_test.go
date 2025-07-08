@@ -4,10 +4,13 @@
 package autoarchivesettings
 
 import (
+	"fmt"
+	"math"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	autoarch "github.com/signalfx/signalfx-go/automated-archival"
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/common"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -41,6 +44,62 @@ func TestSchemaDecode(t *testing.T) {
 				GracePeriod:    "P15D",
 				RulesetLimit:   autoarch.PtrInt32(10),
 				Version:        1.0,
+			},
+			errVal: "",
+		},
+		{
+			name: "ruleset_limit out of range",
+			values: map[string]any{
+				"enabled":         true,
+				"lookback_period": "P30D",
+				"grace_period":    "P15D",
+				"ruleset_limit":   math.MaxInt32 + 1,
+				"version":         1,
+			},
+			expect: nil,
+			errVal: fmt.Sprintf("ruleset_limit %d is out of range", math.MaxInt32+1),
+		},
+		{
+			name: "missing required fields",
+			values: map[string]any{
+				"enabled":         true,
+				"lookback_period": "P30D",
+				// grace_period is missing
+				"ruleset_limit": 10,
+				"version":       1,
+			},
+			expect: &autoarch.AutomatedArchivalSettings{
+				Enabled:        true,
+				LookbackPeriod: "P30D",
+				GracePeriod:    "", // Default value since not provided
+				RulesetLimit:   autoarch.PtrInt32(10),
+				Version:        1,
+			},
+			errVal: "",
+		},
+		{
+			name: "settings with additional fields",
+			values: map[string]any{
+				"enabled":         true,
+				"lookback_period": "P30D",
+				"grace_period":    "P15D",
+				"ruleset_limit":   10,
+				"version":         1,
+				"creator":         "user1",
+				"last_updated_by": "user2",
+				"created":         1234567890,
+				"last_updated":    1234567999,
+			},
+			expect: &autoarch.AutomatedArchivalSettings{
+				Enabled:        true,
+				LookbackPeriod: "P30D",
+				GracePeriod:    "P15D",
+				RulesetLimit:   autoarch.PtrInt32(10),
+				Version:        1,
+				Creator:        common.AsPointer("user1"),
+				LastUpdatedBy:  common.AsPointer("user2"),
+				Created:        common.AsPointer[int64](1234567890),
+				LastUpdated:    common.AsPointer[int64](1234567999),
 			},
 			errVal: "",
 		},

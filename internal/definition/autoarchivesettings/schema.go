@@ -70,16 +70,26 @@ func decodeTerraform(data *schema.ResourceData) (*autoarch.AutomatedArchivalSett
 		GracePeriod:    data.Get("grace_period").(string),
 	}
 	if creatorStr, ok := data.GetOk("creator"); ok {
-		settings.Creator = creatorStr.(*string)
+		if s, ok := creatorStr.(string); ok {
+			settings.Creator = &s
+		}
 	}
 	if lastUpdatedByStr, ok := data.GetOk("last_updated_by"); ok {
-		settings.LastUpdatedBy = lastUpdatedByStr.(*string)
+		if s, ok := lastUpdatedByStr.(string); ok {
+			settings.LastUpdatedBy = &s
+		}
 	}
 	if createdStr, ok := data.GetOk("created"); ok {
-		settings.Created = createdStr.(*int64)
+		if i, ok := createdStr.(int); ok {
+			i64 := int64(i)
+			settings.Created = &i64
+		}
 	}
 	if lastUpdatedStr, ok := data.GetOk("last_updated"); ok {
-		settings.LastUpdated = lastUpdatedStr.(*int64)
+		if i, ok := lastUpdatedStr.(int); ok {
+			i64 := int64(i)
+			settings.LastUpdated = &i64
+		}
 	}
 	if versionStr, ok := data.GetOk("version"); ok {
 		version, err := strconv.ParseInt(versionStr.(string), 10, 64)
