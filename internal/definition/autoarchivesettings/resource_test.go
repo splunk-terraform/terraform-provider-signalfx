@@ -11,8 +11,9 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	automated_archival "github.com/signalfx/signalfx-go/automated-archival"
-	"github.com/splunk-terraform/terraform-provider-signalfx/internal/tftest"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/tftest"
 )
 
 func TestNewResource(t *testing.T) {
