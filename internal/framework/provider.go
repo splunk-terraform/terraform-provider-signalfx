@@ -91,7 +91,7 @@ func (op *ollyProvider) Schema(ctx context.Context, req provider.SchemaRequest, 
 			"feature_preview": schema.MapAttribute{
 				ElementType: types.BoolType,
 				Optional:    true,
-				Description: "Allows for users to opt-in to new features that are considered experimental or not ready for general availabilty yet.",
+				Description: "Allows for users to opt-in to new features that are considered experimental or not ready for general availability yet.",
 			},
 			"tags": schema.ListAttribute{
 				ElementType: types.StringType,
