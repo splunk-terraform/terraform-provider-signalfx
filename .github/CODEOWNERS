@@ -1,4 +1,5 @@
-* @atoulme @benkeith-splunk
+* @splunk-terraform/terraform-provider-approvers @splunk-terraform/terraform-provider-maintainers
+
 signalfx/resource_signalfx_slo.go @dwalasek
 signalfx/resource_signalfx_slo_test.go @dwalasek
 website/docs/r/slo.html.markdown @dwalasek
