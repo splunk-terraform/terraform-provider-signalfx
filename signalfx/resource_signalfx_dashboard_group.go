@@ -509,6 +509,10 @@ func dashboardGroupAPIToTF(d *schema.ResourceData, dg *dashboard_group.Dashboard
 					for i, v := range dc.FiltersOverride.Variables {
 						dvar := make(map[string]interface{})
 						dvar["property"] = v.Property
+						/* API Seems to require alias, but doesn't seem to end up using the value at all
+							 Pass it here to avoid API issues
+						*/
+						dvar["alias"] = v.Property
 						dvar["values"] = flattenStringSliceToSet(v.Value)
 						dvar["values_suggested"] = flattenStringSliceToSet(v.PreferredSuggestions)
 						vars[i] = dvar
