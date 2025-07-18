@@ -381,7 +381,7 @@ func TestMergeProviderTeams(t *testing.T) {
 	}
 }
 
-func TestDetectCustomAPPULR(t *testing.T) {
+func TestDetectCustomAPPURL(t *testing.T) {
 	t.Parallel()
 
 	for _, tc := range []struct {
@@ -456,4 +456,17 @@ func TestDetectCustomAPPULR(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestMetaDetectorCustomAppURL_EdgeCases(t *testing.T) {
+	t.Parallel()
+
+	t.Run("invalid api name", func(t *testing.T) {
+		m := &Meta{
+			APIURL: "\tinvalid",
+		}
+
+		_, err := m.DetectCustomAPPURL(context.Background())
+		assert.Error(t, err, "Must return an error when api URL is invalid")
+	})
 }
