@@ -5,7 +5,10 @@ package pmeta
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"io"
+	"net/http"
 	"net/url"
 	"path"
 	"slices"
@@ -166,4 +169,50 @@ func (m *Meta) Validate() (errs error) {
 		errs = multierr.Append(errs, errors.New("api url is not set"))
 	}
 	return errs
+}
+
+func (m *Meta) DetectCustomAPPURL(ctx context.Context) (string, error) {
+	// Note(MovieStoreGuy):
+	//
+	// This is a temporary solution to auto-detect the custom app URL.
+	// Once the changes are added into the go-sdk, this method can adopt the sfx client directly.
+
+	u, err := url.ParseRequestURI(m.APIURL)
+	if err != nil {
+		return "", err
+	}
+	u.Path = "/v2/organization"
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), http.NoBody)
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("X-SF-Token", m.AuthToken)
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		tflog.Error(ctx, "Failed to auto-detect custom app URL", map[string]any{
+			"status_code": resp.StatusCode,
+			"body":        string(body),
+		})
+		return "", errors.New("failed fetching organization details")
+	}
+
+	var content map[string]any
+	if err := json.NewDecoder(resp.Body).Decode(&content); err != nil {
+		return "", err
+	}
+
+	if site, ok := content["url"].(string); ok {
+		return site, nil
+	}
+	// Failover to the provided value
+	return m.CustomAppURL, nil
 }

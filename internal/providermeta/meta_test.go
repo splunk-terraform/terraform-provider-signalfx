@@ -380,3 +380,69 @@ func TestMergeProviderTeams(t *testing.T) {
 		})
 	}
 }
+
+func TestDetectCustomAPPULR(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name    string
+		handler http.HandlerFunc
+		expect  string
+		errVal  string
+	}{
+		{
+			name: "not authorised",
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				_, _ = io.Copy(io.Discard, r.Body)
+				_ = r.Body.Close()
+
+				http.Error(w, "not authorised", http.StatusUnauthorized)
+			},
+			expect: "",
+			errVal: "failed fetching organization details",
+		},
+		{
+			name: "missing content",
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				_, _ = io.Copy(io.Discard, r.Body)
+				_ = r.Body.Close()
+
+				_ = json.NewEncoder(w).Encode(map[string]any{})
+			},
+			expect: "",
+			errVal: "",
+		},
+		{
+			name: "custom domain configured",
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				_, _ = io.Copy(io.Discard, r.Body)
+				_ = r.Body.Close()
+
+				_ = json.NewEncoder(w).Encode(map[string]any{
+					"url": "https://custom.signalfx.com",
+				})
+			},
+			expect: "https://custom.signalfx.com",
+			errVal: "",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			s := httptest.NewServer(tc.handler)
+			t.Cleanup(s.Close)
+
+			m := &Meta{
+				APIURL: s.URL,
+			}
+
+			domain, err := m.DetectCustomAPPURL(t.Context())
+			assert.Equal(t, tc.expect, domain, "Must match the expected value")
+			if tc.errVal != "" {
+				assert.EqualError(t, err, tc.errVal, "Must match the expected error")
+			} else {
+				assert.NoError(t, err, "Must not error when detecting custom app URL")
+			}
+		})
+	}
+}
