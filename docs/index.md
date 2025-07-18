@@ -97,7 +97,7 @@ provider "signalfx" {
 
 - `api_url` (String) API URL for your Splunk Observability Cloud org, may include a realm
 - `auth_token` (String) Splunk Observability Cloud auth token
-- `custom_app_url` (String) Application URL for your Splunk Observability Cloud org, often customized for organizations using SSO
+- `custom_app_url` (String, Deprecated) Application URL for your Splunk Observability Cloud org, often customized for organizations using SSO
 - `email` (String) Used to create a session token instead of an API token, it requires the account to be configured to login with Email and Password
 - `feature_preview` (Map of Boolean) Allows for users to opt-in to new features that are considered experimental or not ready for general availabilty yet.
 - `organization_id` (String) Required if the user is configured to be part of multiple organizations
