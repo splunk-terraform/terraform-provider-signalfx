@@ -391,12 +391,12 @@ func TestDetectCustomAPPULR(t *testing.T) {
 		errVal  string
 	}{
 		{
-			name: "not authorised",
+			name: "not authorized",
 			handler: func(w http.ResponseWriter, r *http.Request) {
 				_, _ = io.Copy(io.Discard, r.Body)
 				_ = r.Body.Close()
 
-				http.Error(w, "not authorised", http.StatusUnauthorized)
+				http.Error(w, "not authorized", http.StatusUnauthorized)
 			},
 			expect: "",
 			errVal: "failed fetching organization details",
@@ -424,6 +424,17 @@ func TestDetectCustomAPPULR(t *testing.T) {
 			},
 			expect: "https://custom.signalfx.com",
 			errVal: "",
+		},
+		{
+			name: "invalid json content suppplied",
+			handler: func(w http.ResponseWriter, r *http.Request) {
+				_, _ = io.Copy(io.Discard, r.Body)
+				_ = r.Body.Close()
+
+				_, _ = w.Write([]byte("{"))
+			},
+			expect: "",
+			errVal: "unexpected EOF",
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
