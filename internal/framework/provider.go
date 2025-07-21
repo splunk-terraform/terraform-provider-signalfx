@@ -56,8 +56,9 @@ func (op *ollyProvider) Schema(ctx context.Context, req provider.SchemaRequest, 
 				Description: "API URL for your Splunk Observability Cloud org, may include a realm",
 			},
 			"custom_app_url": schema.StringAttribute{
-				Optional:    true,
-				Description: "Application URL for your Splunk Observability Cloud org, often customized for organizations using SSO",
+				Optional:           true,
+				DeprecationMessage: "Remove the definition, the provider will automatically populate the custom app URL as needed",
+				Description:        "Application URL for your Splunk Observability Cloud org, often customized for organizations using SSO",
 			},
 			"timeout_seconds": schema.Int64Attribute{
 				Optional:    true,
