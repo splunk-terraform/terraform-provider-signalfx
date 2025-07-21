@@ -119,7 +119,7 @@ func Provider() *schema.Provider {
 					Type: schema.TypeBool,
 				},
 				Optional:    true,
-				Description: "Allows for users to opt-in to new features that are considered experimental or not ready for general availabilty yet.",
+				Description: "Allows for users to opt-in to new features that are considered experimental or not ready for general availability yet.",
 			},
 			"tags": {
 				Type: schema.TypeList,
