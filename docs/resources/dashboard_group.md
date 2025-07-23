@@ -99,7 +99,7 @@ The following arguments are supported in the resource block:
     * `property` - (Required) The name of a dimension to filter against.
     * `values` - (Required) A list of values to be used with the `property`, they will be combined via `OR`.
     * `negated` - (Optional) If true, only data that does not match the specified value of the specified property appear in the event overlay. Defaults to `false`.
-  * `filter_override` - (Optional) The description that will override the original dashboards's description.
+  * `variable_override` - (Optional) The description that will override the original dashboards's description.
     * `property` - (Required) A metric time series dimension or property name.
     * `values` - (Optional) (Optional) List of of strings (which will be treated as an OR filter on the property).
     * `values_suggested` - (Optional) A list of strings of suggested values for this variable; these suggestions will receive priority when values are autosuggested for this variable.
