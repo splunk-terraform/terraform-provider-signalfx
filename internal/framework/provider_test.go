@@ -378,7 +378,8 @@ func TestProviderValidateConfig(t *testing.T) {
 					path.Empty().
 						AtName("auth_token").
 						AtName("email").
-						AtName("password"),
+						AtName("password").
+						AtName("organization_id"),
 					"Missing Authentication Method",
 					"Either 'auth_token' or both 'email' and 'password' must be set for authentication.",
 				),

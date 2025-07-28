@@ -291,13 +291,16 @@ func (op *ollyProvider) ValidateConfig(ctx context.Context, req provider.Validat
 	switch {
 	case !model.AuthToken.IsNull():
 		tflog.Debug(ctx, "Using auth token for authentication")
-	case !model.Email.IsNull() && !model.Password.IsNull():
+	case !model.Email.IsNull() &&
+		!model.Password.IsNull() &&
+		!model.OrganizationID.IsNull():
 		tflog.Debug(ctx, "Using email and password for authentication")
 	default:
 		p := path.Empty().
 			AtName("auth_token").
 			AtName("email").
-			AtName("password")
+			AtName("password").
+			AtName("organization_id")
 		resp.Diagnostics.AddAttributeError(
 			p,
 			"Missing Authentication Method",
