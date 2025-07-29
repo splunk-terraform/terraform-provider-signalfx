@@ -5,16 +5,28 @@ package internalframework
 
 import (
 	"context"
+	"fmt"
+	"net"
+	"net/http"
+	"time"
 
+	"github.com/hashicorp/go-retryablehttp"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/function"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/logging"
+	"github.com/signalfx/signalfx-go"
 
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/feature"
 	internalfunction "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/function"
+	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
+	tfext "github.com/splunk-terraform/terraform-provider-signalfx/internal/tfextension"
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/track"
 )
 
 type ollyProvider struct {
@@ -23,8 +35,9 @@ type ollyProvider struct {
 }
 
 var (
-	_ provider.Provider              = (*ollyProvider)(nil)
-	_ provider.ProviderWithFunctions = (*ollyProvider)(nil)
+	_ provider.Provider                   = (*ollyProvider)(nil)
+	_ provider.ProviderWithFunctions      = (*ollyProvider)(nil)
+	_ provider.ProviderWithValidateConfig = (*ollyProvider)(nil)
 )
 
 func NewProvider(version string, opts ...ProviderOption) provider.Provider {
@@ -111,12 +124,136 @@ func (op *ollyProvider) Schema(ctx context.Context, req provider.SchemaRequest, 
 func (op *ollyProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
 	model := newDefaultOllyProviderModel()
 
-	diags := req.Config.Get(ctx, model)
-	if diags.HasError() {
-		resp.Diagnostics = diags
+	if errs := req.Config.Get(ctx, model); errs.HasError() {
+		// The original code uses unexposed types that make it hard to validate
+		// however, this path should not be possible to hit in typical usage.
+		resp.Diagnostics.AddAttributeError(
+			path.Empty(),
+			"Internal Provider Error",
+			"An expected error occurred while configuring the provider. Please report this issue to the provider developers.",
+		)
+		tflog.Error(ctx, "Error configuring provider", tfext.NewLogFields().Field("errors", errs))
 		return
 	}
 
+	meta := &pmeta.Meta{
+		Registry:       op.features,
+		Email:          model.Email.ValueString(),
+		Password:       model.Password.ValueString(),
+		OrganizationID: model.OrganizationID.ValueString(),
+	}
+
+	for _, val := range model.Tags.Elements() {
+		if tag, ok := val.(types.String); ok && !tag.IsNull() {
+			meta.Tags = append(meta.Tags, tag.ValueString())
+		}
+	}
+
+	for _, val := range model.Teams.Elements() {
+		if team, ok := val.(types.String); ok && !team.IsNull() {
+			meta.Teams = append(meta.Teams, team.ValueString())
+		}
+	}
+
+	for _, lookup := range pmeta.NewDefaultProviderLookups() {
+		if err := lookup.Do(ctx, meta); err != nil {
+			tflog.Debug(ctx,
+				"Issue trying to load external provider configuration, skipping",
+				tfext.ErrorLogFields(err),
+			)
+		}
+	}
+
+	if !model.AuthToken.IsNull() {
+		meta.AuthToken = model.AuthToken.ValueString()
+	}
+
+	if !model.APIURL.IsNull() {
+		meta.APIURL = model.APIURL.ValueString()
+	}
+
+	if err := meta.Validate(); err != nil {
+		resp.Diagnostics.AddError("Issue configuring provider", err.Error())
+		return
+	}
+
+	var (
+		attempts = int(model.RetryMaxAttempts.ValueInt32())
+		timeout  = time.Duration(model.TimeoutSeconds.ValueInt64()) * time.Second
+		waitmin  = time.Duration(model.RetryWaitMinSeconds.ValueInt64()) * time.Second
+		waitmax  = time.Duration(model.RetryWaitMaxSeconds.ValueInt64()) * time.Second
+	)
+
+	token, err := meta.LoadSessionToken(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError("Issue loading session token", err.Error())
+		return
+	}
+
+	rc := retryablehttp.NewClient()
+	rc.RetryMax = attempts
+	rc.RetryWaitMin = waitmin
+	rc.RetryWaitMax = waitmax
+	rc.HTTPClient.Timeout = timeout
+	rc.HTTPClient.Transport = logging.NewSubsystemLoggingHTTPTransport("signalfx", &http.Transport{
+		Proxy:               http.ProxyFromEnvironment,
+		DialContext:         (&net.Dialer{Timeout: 5 * time.Second}).DialContext,
+		TLSHandshakeTimeout: 5 * time.Second,
+		MaxIdleConns:        100,
+		MaxIdleConnsPerHost: 100,
+	})
+
+	meta.Client, err = signalfx.NewClient(
+		token,
+		signalfx.APIUrl(meta.APIURL),
+		signalfx.HTTPClient(rc.StandardClient()),
+		signalfx.UserAgent(fmt.Sprintf("Terraform %s terraform-provider-signalfx/%s", req.TerraformVersion, op.version)),
+	)
+
+	if err != nil {
+		resp.Diagnostics.AddError("Issue creating Signalfx client", err.Error())
+		return
+	}
+
+	tflog.Debug(ctx, "Configured settings for http client", tfext.NewLogFields().
+		Field("attempts", attempts).
+		Duration("timeout", timeout).
+		Duration("wait_min", waitmin).
+		Duration("wait_max", waitmax),
+	)
+
+	if site, err := meta.DetectCustomAPPURL(ctx); err != nil {
+		if !model.CustomAppURL.IsNull() {
+			meta.CustomAppURL = model.CustomAppURL.ValueString()
+		}
+	} else {
+		meta.CustomAppURL = site
+	}
+
+	for name, val := range model.FeaturePreview.Elements() {
+		active := val.Equal(types.BoolValue(true))
+		if err := pmeta.LoadPreviewRegistry(ctx, meta).Configure(ctx, name, active); err != nil {
+			resp.Diagnostics.AddAttributeWarning(
+				path.Root("feature_preview").AtMapKey(name),
+				"Failed to load feature preview",
+				err.Error(),
+			)
+		}
+	}
+
+	if gate, ok := pmeta.LoadPreviewRegistry(ctx, meta).Get(feature.PreviewProviderTracking); ok && gate.Enabled() {
+		tracking, err := track.ReadGitDetails(ctx)
+		if err != nil {
+			tflog.Info(ctx, "Unable to load git details, skipping", tfext.ErrorLogFields(err))
+		} else {
+			meta.Tags = append(meta.Tags, tracking.Tags()...)
+		}
+	}
+
+	// Ensure all the data sources are set so they can be consumed by each of the components.
+	resp.DataSourceData = meta
+	resp.ResourceData = meta
+	resp.EphemeralResourceData = meta
 }
 
 func (op *ollyProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
@@ -132,5 +269,42 @@ func (op *ollyProvider) Resources(ctx context.Context) []func() resource.Resourc
 func (op *ollyProvider) Functions(ctx context.Context) []func() function.Function {
 	return []func() function.Function{
 		internalfunction.NewTimeRangeParser,
+	}
+}
+
+func (op *ollyProvider) ValidateConfig(ctx context.Context, req provider.ValidateConfigRequest, resp *provider.ValidateConfigResponse) {
+	model := newDefaultOllyProviderModel()
+
+	resp.Diagnostics.Append(req.Config.Get(ctx, model)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if model.APIURL.IsNull() {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("api_url"),
+			"Missing API Endpoint",
+			"Field must be set to a valid endpoint for the Splunk Observability Cloud provider.",
+		)
+	}
+
+	switch {
+	case !model.AuthToken.IsNull():
+		tflog.Debug(ctx, "Using auth token for authentication")
+	case !model.Email.IsNull() &&
+		!model.Password.IsNull() &&
+		!model.OrganizationID.IsNull():
+		tflog.Debug(ctx, "Using email and password for authentication")
+	default:
+		p := path.Empty().
+			AtName("auth_token").
+			AtName("email").
+			AtName("password").
+			AtName("organization_id")
+		resp.Diagnostics.AddAttributeError(
+			p,
+			"Missing Authentication Method",
+			"Either 'auth_token' or both 'email' and 'password' must be set for authentication.",
+		)
 	}
 }

@@ -5,9 +5,9 @@ package internalframework
 
 import "github.com/hashicorp/terraform-plugin-framework/types"
 
-type ollyProviderModel struct {
-	AuthToken           types.String `tfsdk:"auth_token"`
+type OllyProviderModel struct {
 	APIURL              types.String `tfsdk:"api_url"`
+	AuthToken           types.String `tfsdk:"auth_token"`
 	CustomAppURL        types.String `tfsdk:"custom_app_url"`
 	TimeoutSeconds      types.Int64  `tfsdk:"timeout_seconds"`
 	RetryMaxAttempts    types.Int32  `tfsdk:"retry_max_attempts"`
@@ -21,8 +21,8 @@ type ollyProviderModel struct {
 	Teams               types.List   `tfsdk:"teams"`
 }
 
-func newDefaultOllyProviderModel() *ollyProviderModel {
-	return &ollyProviderModel{
+func newDefaultOllyProviderModel() *OllyProviderModel {
+	return &OllyProviderModel{
 		AuthToken:           types.StringNull(),
 		APIURL:              types.StringNull(),
 		CustomAppURL:        types.StringNull(),

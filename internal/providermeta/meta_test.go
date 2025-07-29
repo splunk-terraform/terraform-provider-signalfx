@@ -120,7 +120,7 @@ func TestLoadPreviewRegistry(t *testing.T) {
 		{
 			name: "empty local registry",
 			meta: &Meta{
-				reg: &feature.Registry{},
+				Registry: &feature.Registry{},
 			},
 			expect: &feature.Registry{},
 		},
@@ -283,7 +283,7 @@ func TestLoadProviderTags(t *testing.T) {
 		{
 			name: "disabled provider",
 			meta: &Meta{
-				reg: func() *feature.Registry {
+				Registry: func() *feature.Registry {
 					r := feature.NewRegistry()
 					r.MustRegister(feature.PreviewProviderTags)
 					return r
@@ -298,7 +298,7 @@ func TestLoadProviderTags(t *testing.T) {
 		{
 			name: "disabled provider",
 			meta: &Meta{
-				reg: func() *feature.Registry {
+				Registry: func() *feature.Registry {
 					r := feature.NewRegistry()
 					r.MustRegister(feature.PreviewProviderTags, feature.WithPreviewGlobalAvailable())
 					return r
@@ -344,7 +344,7 @@ func TestMergeProviderTeams(t *testing.T) {
 		{
 			name: "provide has details, preview not enabled",
 			meta: &Meta{
-				reg: func() *feature.Registry {
+				Registry: func() *feature.Registry {
 					r := feature.NewRegistry()
 					_ = r.MustRegister(feature.PreviewProviderTeams)
 					return r
@@ -357,7 +357,7 @@ func TestMergeProviderTeams(t *testing.T) {
 		{
 			name: "provider has details, preview enabled",
 			meta: &Meta{
-				reg: func() *feature.Registry {
+				Registry: func() *feature.Registry {
 					r := feature.NewRegistry()
 					_ = r.MustRegister(feature.PreviewProviderTeams, feature.WithPreviewGlobalAvailable())
 					return r
