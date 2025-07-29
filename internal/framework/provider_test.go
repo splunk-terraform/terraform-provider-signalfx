@@ -353,6 +353,62 @@ func TestProviderConfigure(t *testing.T) {
 			assert.Equal(t, tc.expect.Teams, meta.Teams, "Teams should match expected")
 		})
 	}
+	t.Run("Provider with git tracking", func(t *testing.T) {
+		t.Parallel()
+
+		reg := feature.NewRegistry()
+		_ = reg.MustRegister(feature.PreviewProviderTracking, feature.WithPreviewGlobalAvailable())
+		p := NewProvider("1.0.0", WithProviderFeatureRegistry(reg))
+
+		schema := &provider.SchemaResponse{}
+		p.Schema(context.Background(), provider.SchemaRequest{}, schema)
+		assert.NotNil(t, schema.Schema, "Schema should not be nil")
+
+		resp := &provider.ConfigureResponse{}
+		p.Configure(
+			context.Background(),
+			provider.ConfigureRequest{
+				TerraformVersion: "1.0.0",
+				Config: NewTestConfig(p, map[string]tftypes.Value{
+					"api_url":    tftypes.NewValue(tftypes.String, "http://localhost"),
+					"auth_token": tftypes.NewValue(tftypes.String, "my-secret-token"),
+				}),
+			},
+			resp,
+		)
+		assert.Empty(t, resp.Diagnostics, "Diagnostics should be empty for valid configuration")
+		assert.NotNil(t, resp.DataSourceData, "DataSourceData should not be nil")
+		meta := resp.DataSourceData.(*pmeta.Meta)
+		assert.Len(t, meta.Tags, 3, "Must have 3 tags for git tracking")
+	})
+
+	t.Run("Invalid provider details", func(t *testing.T) {
+		t.Parallel()
+
+		p := NewProvider("1.0.0")
+
+		schema := &provider.SchemaResponse{}
+		p.Schema(context.Background(), provider.SchemaRequest{}, schema)
+		assert.NotNil(t, schema.Schema, "Schema should not be nil")
+
+		resp := &provider.ConfigureResponse{}
+		p.Configure(
+			context.Background(),
+			provider.ConfigureRequest{
+				TerraformVersion: "1.0.0",
+				Config:           tfsdk.Config{Schema: schema.Schema},
+			},
+			resp,
+		)
+
+		assert.Equal(
+			t,
+			diag.Diagnostics{
+				diag.NewAttributeErrorDiagnostic(path.Empty(), "Internal Provider Error", "An expected error occurred while configuring the provider. Please report this issue to the provider developers."),
+			},
+			resp.Diagnostics,
+		)
+	})
 }
 
 func TestProviderValidateConfig(t *testing.T) {
@@ -386,11 +442,23 @@ func TestProviderValidateConfig(t *testing.T) {
 			},
 		},
 		{
-			name: "Minimal required values",
+			name: "Minimal Token Auth values",
 			data: func(_ *testing.T) map[string]tftypes.Value {
 				return map[string]tftypes.Value{
 					"api_url":    tftypes.NewValue(tftypes.String, "http://localhost"),
 					"auth_token": tftypes.NewValue(tftypes.String, "my-secret-token"),
+				}
+			},
+			issues: nil,
+		},
+		{
+			name: "Minimal Service User values",
+			data: func(_ *testing.T) map[string]tftypes.Value {
+				return map[string]tftypes.Value{
+					"api_url":         tftypes.NewValue(tftypes.String, "http://localhost"),
+					"email":           tftypes.NewValue(tftypes.String, "my-email@example.com"),
+					"password":        tftypes.NewValue(tftypes.String, "my-password"),
+					"organization_id": tftypes.NewValue(tftypes.String, "my-organization-id"),
 				}
 			},
 			issues: nil,
