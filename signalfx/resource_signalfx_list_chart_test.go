@@ -50,7 +50,7 @@ resource "signalfx_list_chart" "mychartLX" {
 	viz_options {
 		label = "CPU Idle"
 		display_name = "CPU Idle Display"
-		color = "gray"
+		color = "azure"
 		value_unit = "Bit"
 		value_prefix = "foo"
 		value_suffix = "bar"
@@ -80,7 +80,7 @@ resource "signalfx_list_chart" "mychartLX" {
 	color_by = "Scale"
 	color_scale {
 		gt = 40
-		color = "teal"
+		color = "cerise"
 	}
 
 	color_scale {
@@ -96,7 +96,7 @@ resource "signalfx_list_chart" "mychartLX" {
 	viz_options {
 		label = "CPU Idle"
 		display_name = "CPU Idle Display"
-		color = "lilac"
+		color = "azure"
 		value_unit = "Bit"
 		value_prefix = "foo"
 		value_suffix = "bar"
