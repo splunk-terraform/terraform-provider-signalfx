@@ -28,7 +28,11 @@ func TestColorPalette(t *testing.T) {
 	}
 
 	for idx := range seen {
-		assert.Equal(t, 1, seen[idx], "Must have seen index %d once", idx)
+		if idx > 5 {
+			assert.Equal(t, 1, seen[idx], "Must have seen index %d once", idx)
+		} else {
+			assert.Equal(t, 2, seen[idx], "Must have seen index %d twice", idx)
+		}
 	}
 }
 
@@ -50,20 +54,26 @@ func TestHistoricalNames(t *testing.T) {
 	for _, name := range []string{
 		"gray",
 		"blue",
-		"cyan",
-		"steel",
-		"rust",
+		"azure",
+		"navy",
+		"brown",
 		"orange",
-		"gold",
+		"yellow",
 		"magenta",
 		"red",
 		"pink",
-		"lavender",
+		"violet",
 		"purple",
 		"lilac",
+		"emerald",
+		"chartreuse",
+		"yellowgreen",
+		"gold",
+		"iris",
 		"green",
-		"lime",
-		"teal",
+		"jade",
+		"cerise",
+		"aquamarine",
 	} {
 		_, ok := NewColorPalette().ColorIndex(name)
 		assert.True(t, ok, "Must have the %q set as an option", name)
