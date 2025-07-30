@@ -73,7 +73,7 @@ func NewColorPalette() ColorPalette {
 
 func (cp ColorPalette) ColorIndex(name string) (int32, bool) {
 	index, exist := cp.named[name]
-	return index % 16, exist // Since accepted colours are 16. Making sure that the index returned is within 16
+	return index % 16, exist // Since accepted colors are 16. Making sure that the index returned is within 16
 }
 
 func (cp ColorPalette) IndexColorName(index int32) (string, bool) {
