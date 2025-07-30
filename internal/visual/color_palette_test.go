@@ -15,7 +15,7 @@ func TestColorPalette(t *testing.T) {
 
 	var (
 		cp   = NewColorPalette()
-		seen = make([]int, 16)
+		seen = make([]int, len(cp.Names()))
 	)
 
 	for _, name := range cp.Names() {
