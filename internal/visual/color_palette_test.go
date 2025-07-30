@@ -28,11 +28,7 @@ func TestColorPalette(t *testing.T) {
 	}
 
 	for idx := range seen {
-		if idx > 5 {
-			assert.Equal(t, 1, seen[idx], "Must have seen index %d once", idx)
-		} else {
-			assert.Equal(t, 2, seen[idx], "Must have seen index %d twice", idx)
-		}
+		assert.Equal(t, 1, seen[idx], "Must have seen index %d once", idx)
 	}
 }
 

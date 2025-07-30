@@ -95,9 +95,11 @@ func (cp ColorPalette) HexCodebyIndex(index int32) (string, bool) {
 }
 
 func (cp ColorPalette) Names() []string {
-	names := make([]string, len(cp.named))
+	names := make([]string, int(16))
 	for name, idx := range cp.named {
-		names[idx] = name
+		if idx < 16 {
+			names[idx] = name
+		}
 	}
 	return names
 }

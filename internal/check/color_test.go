@@ -33,7 +33,7 @@ func TestColorName(t *testing.T) {
 				{
 					Severity: diag.Error,
 					Summary: "value \"nop\" is not allowed; must be one of " +
-						"[gray blue azure navy brown orange yellow magenta red pink violet purple lilac emerald chartreuse yellowgreen gold iris green jade cerise aquamarine]",
+						"[gray blue azure navy brown orange yellow magenta red pink violet purple lilac emerald chartreuse yellowgreen]",
 				},
 			},
 		},
