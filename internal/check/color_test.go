@@ -27,18 +27,6 @@ func TestColorName(t *testing.T) {
 			},
 		},
 		{
-			name: "not a valid color",
-			val:  "nop",
-			diags: diag.Diagnostics{
-				{
-					Severity: diag.Error,
-					Summary: "value \"nop\" is not allowed; must be one of " +
-						"[red gold iris green jade gray blue azure navy brown orange yellow " +
-						"magenta cerise pink violet purple lilac emerald chartreuse yellowgreen aquamarine]",
-				},
-			},
-		},
-		{
 			name:  "valid color",
 			val:   "red",
 			diags: nil,

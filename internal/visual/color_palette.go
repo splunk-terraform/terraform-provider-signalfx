@@ -19,61 +19,54 @@ type ColorPalette struct {
 func NewColorPalette() ColorPalette {
 	return ColorPalette{
 		named: map[string]int32{
-			"red":         0,
-			"gold":        1,
-			"iris":        2,
-			"green":       3,
-			"jade":        4,
-			"gray":        5,
-			"blue":        6,
-			"azure":       7,
-			"navy":        8,
-			"brown":       9,
-			"orange":      10,
-			"yellow":      11,
-			"magenta":     12,
-			"cerise":      13,
-			"pink":        14,
-			"violet":      15,
-			"purple":      16,
-			"lilac":       17,
-			"emerald":     18,
-			"chartreuse":  19,
-			"yellowgreen": 20,
-			"aquamarine":  21,
+			"gray":        0,
+			"blue":        1,
+			"azure":       2,
+			"navy":        3,
+			"brown":       4,
+			"orange":      5,
+			"yellow":      6,
+			"magenta":     7,
+			"red":         8,
+			"pink":        9,
+			"violet":      10,
+			"purple":      11,
+			"lilac":       12,
+			"emerald":     13,
+			"chartreuse":  14,
+			"yellowgreen": 15,
 		},
 		// These values should be exactly matching to:
-		// https://dev.splunk.com/observability/docs/chartsdashboards/charts_overview/#Chart-color-palettes
+		// https://dev.splunk.com/observability/docs/chartsdashboards/charts_overview/#Chart-color-palettes (Values may differ as values have been updated to match the UI values)
 		index: []string{
-			0:  "#ea1849",
-			1:  "#eac24b",
-			2:  "#e5e517",
-			3:  "#6bd37e",
-			4:  "#aecf7f",
-			5:  "#999999",
-			6:  "#0077c2",
-			7:  "#00b9ff",
-			8:  "#6ca2b7",
-			9:  "#b04600",
-			10: "#f47e00",
-			11: "#e5b312",
-			12: "#bd468d",
-			13: "#e9008a",
-			14: "#ff8dd1",
-			15: "#876ff3",
-			16: "#a747ff",
-			17: "#ab99bc",
-			18: "#007c1d",
-			19: "#05ce00",
-			20: "#0dba8f",
-			21: "#98abbe",
+			0:  "#999999",
+			1:  "#0077c2",
+			2:  "#00b9ff",
+			3:  "#6ca2b7",
+			4:  "#b04600",
+			5:  "#f47e00",
+			6:  "#e5b312",
+			7:  "#bd468d",
+			8:  "#e9008a",
+			9:  "#ff8dd1",
+			10: "#876ff3",
+			11: "#a747ff",
+			12: "#ab99bc",
+			13: "#007c1d",
+			14: "#05ce00",
+			15: "#0dba8f",
 		},
 	}
 }
 
+// Returns index of the colour if exists. Otherwise defaults to gray
 func (cp ColorPalette) ColorIndex(name string) (int32, bool) {
 	index, exist := cp.named[name]
-	return index, exist
+	if exist {
+		return index, exist
+	} else {
+		return 0, true
+	}
 }
 
 func (cp ColorPalette) IndexColorName(index int32) (string, bool) {

@@ -56,7 +56,7 @@ events(eventType='some.testing').publish(label='testing events')
 		event_options {
 			label = "testing events"
 			display_name = "events display name"
-			color = "azure"
+			color = "gray"
 		}
 
 		histogram_options {

@@ -95,7 +95,7 @@ func TestDecodeTerraform(t *testing.T) {
 						Range: common.AsPointer[int64](3600000),
 					},
 					PublishLabelOptions: []*detector.PublishLabelOptions{
-						{Label: "label-01", PaletteIndex: common.AsPointer[int32](14)},
+						{Label: "label-01", PaletteIndex: common.AsPointer[int32](9)},
 					},
 				},
 				DetectorOrigin: "Standard",

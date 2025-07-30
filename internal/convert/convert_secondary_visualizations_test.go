@@ -29,10 +29,10 @@ func TestToChartSecondaryVisualization(t *testing.T) {
 		{
 			name: "set color value",
 			input: map[string]any{
-				"color": "purple",
+				"color": "lilac",
 			},
 			expect: &chart.SecondaryVisualization{
-				PaletteIndex: common.AsPointer[int32](16),
+				PaletteIndex: common.AsPointer[int32](12),
 			},
 		},
 		{
