@@ -75,7 +75,7 @@ The following arguments are supported in the resource block:
   * `gte` - (Optional) Indicates the lower threshold inclusive value for this range.
   * `lt` - (Optional) Indicates the upper threshold non-inclusive value for this range.
   * `lte` - (Optional) Indicates the upper threshold inclusive value for this range.
-  * `color` - (Required) The color range to use. Hex values are not supported here. Must be one of red, gold, iris, green, jade, gray, blue, azure, navy, brown, orange, yellow, magenta, cerise, pink, violet, purple, lilac, emerald, chartreuse, yellowgreen, aquamarine.
+  * `color` - (Required) The color range to use. Hex values are not supported here. Must be one of gray, blue, azure, navy, brown, orange, yellow, magenta, cerise, pink, violet, purple, lilac, emerald, chartreuse, yellowgreen, red, gold, iris, green, jade, aquamarine.
 
 ## Attributes
 

@@ -359,7 +359,7 @@ func timeChartResource() *schema.Resource {
 							Type:             schema.TypeString,
 							Optional:         true,
 							Description:      "Base color theme to use for the graph.",
-							ValidateDiagFunc: check.ColorName(),
+							ValidateDiagFunc: check.ColorScaleName(),
 						},
 					},
 				},
@@ -724,7 +724,7 @@ func getTimeChartOptions(d *schema.ResourceData) *chart.Options {
 				hOptions := histogramOptions.([]interface{})
 				hOption := hOptions[0].(map[string]interface{})
 				if colorTheme, ok := hOption["color_theme"].(string); ok {
-					pc := visual.NewColorPalette()
+					pc := visual.NewColorScalePalette()
 					if elem, ok := pc.ColorIndex(colorTheme); ok {
 						i := int32(elem)
 						options.HistogramChartOptions = &chart.HistogramChartOptions{
