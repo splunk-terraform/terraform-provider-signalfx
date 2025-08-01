@@ -106,7 +106,7 @@ func tableChartResource() *schema.Resource {
 						"color": &schema.Schema{
 							Type:             schema.TypeString,
 							Optional:         true,
-							Description:      "Color to use",
+							Description:      "The color to use. Must be one of gray, blue, azure, navy, brown, orange, yellow, magenta, red, pink, violet, purple, lilac, emerald, chartreuse, yellowgreen.",
 							ValidateDiagFunc: check.ColorName(),
 						},
 						"display_name": &schema.Schema{

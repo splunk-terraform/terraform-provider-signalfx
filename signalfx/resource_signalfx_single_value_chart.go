@@ -107,8 +107,8 @@ func singleValueChartResource() *schema.Resource {
 						"color": &schema.Schema{
 							Type:             schema.TypeString,
 							Required:         true,
-							Description:      "The color to use. Must be one of gray, blue, light_blue, navy, dark_orange, orange, dark_yellow, magenta, cerise, pink, violet, purple, gray_blue, dark_green, green, aquamarine, red, yellow, vivid_yellow, light_green, or lime_green.",
-							ValidateDiagFunc: check.ColorName(),
+							Description:      "The color to use. Must be one of gray, blue, azure, navy, brown, orange, yellow, magenta, cerise, pink, violet, purple, lilac, emerald, chartreuse, yellowgreen, red, gold, iris, green, jade, aquamarine.",
+							ValidateDiagFunc: check.ColorScaleName(),
 						},
 						"gt": &schema.Schema{
 							Type:        schema.TypeFloat,
@@ -151,7 +151,7 @@ func singleValueChartResource() *schema.Resource {
 						"color": &schema.Schema{
 							Type:             schema.TypeString,
 							Optional:         true,
-							Description:      "Color to use",
+							Description:      "The color to use. Must be one of gray, blue, azure, navy, brown, orange, yellow, magenta, red, pink, violet, purple, lilac, emerald, chartreuse, yellowgreen.",
 							ValidateDiagFunc: check.ColorName(),
 						},
 						"display_name": &schema.Schema{
@@ -409,7 +409,7 @@ func decodeColorScale(options *chart.Options) ([]map[string]interface{}, error) 
 			scale["lte"] = *cs.Lte
 		}
 		if cs.PaletteIndex != nil {
-			cp := visual.NewColorPalette()
+			cp := visual.NewColorScalePalette()
 			color, ok := cp.IndexColorName(*cs.PaletteIndex)
 			if !ok {
 				return nil, fmt.Errorf("invalid color palette index: %d", *cs.PaletteIndex)

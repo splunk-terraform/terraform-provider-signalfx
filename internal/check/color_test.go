@@ -33,8 +33,7 @@ func TestColorName(t *testing.T) {
 				{
 					Severity: diag.Error,
 					Summary: "value \"nop\" is not allowed; must be one of " +
-						"[red gold iris green jade gray blue azure navy brown orange yellow " +
-						"magenta cerise pink violet purple lilac emerald chartreuse yellowgreen aquamarine]",
+						"[gray blue azure navy brown orange yellow magenta red pink violet purple lilac emerald chartreuse yellowgreen]",
 				},
 			},
 		},
@@ -48,6 +47,47 @@ func TestColorName(t *testing.T) {
 			t.Parallel()
 
 			diags := ColorName()(tc.val, cty.Path{})
+			assert.Equal(t, tc.diags, diags, "Must match the expected values")
+		})
+	}
+}
+
+func TestColorScaleName(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name  string
+		val   any
+		diags diag.Diagnostics
+	}{
+		{
+			name: "no values provided",
+			val:  nil,
+			diags: diag.Diagnostics{
+				{Severity: diag.Error, Summary: "expected <nil> to be of type string"},
+			},
+		},
+		{
+			name: "not a valid color",
+			val:  "nop",
+			diags: diag.Diagnostics{
+				{
+					Severity: diag.Error,
+					Summary: "value \"nop\" is not allowed; must be one of " +
+						"[gray blue azure navy brown orange yellow magenta cerise pink violet purple lilac emerald chartreuse yellowgreen red gold iris green jade aquamarine]",
+				},
+			},
+		},
+		{
+			name:  "valid color",
+			val:   "aquamarine",
+			diags: nil,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			diags := ColorScaleName()(tc.val, cty.Path{})
 			assert.Equal(t, tc.diags, diags, "Must match the expected values")
 		})
 	}
