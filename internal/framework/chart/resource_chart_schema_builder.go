@@ -435,7 +435,7 @@ func (sb *SchemaBuilder) WithOptionalShowDataMarkers() *SchemaBuilder {
 					Optional:    true,
 					Computed:    true,
 					Default:     booldefault.StaticBool(false),
-					Description: "Enables showing data points in the chart with circluar markers.",
+					Description: "Enables showing data points in the chart with circular markers.",
 				},
 			},
 		}),
