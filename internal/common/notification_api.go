@@ -32,6 +32,8 @@ func NewNotificationStringFromAPI(n *notification.Notification) (string, error) 
 		return fmt.Sprintf("%s,%s", n.Type, v.CredentialId), nil
 	case *notification.SlackNotification:
 		return fmt.Sprintf("%s,%s,%s", n.Type, v.CredentialId, v.Channel), nil
+	case *notification.SplunkPlatformNotification:
+		return fmt.Sprintf("%s,%s", n.Type, v.CredentialId), nil
 	case *notification.TeamNotification:
 		return fmt.Sprintf("%s,%s", n.Type, v.Team), nil
 	case *notification.TeamEmailNotification:
