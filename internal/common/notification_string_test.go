@@ -267,6 +267,18 @@ func TestNewNotificationFromString(t *testing.T) {
 			errVal: "",
 		},
 		{
+			name: "splunk platform",
+			str:  "SplunkPlatform,creds",
+			expect: &notification.Notification{
+				Type: SplunkPlatformNotificationType,
+				Value: &notification.SplunkPlatformNotification{
+					Type:         SplunkPlatformNotificationType,
+					CredentialId: "creds",
+				},
+			},
+			errVal: "",
+		},
+		{
 			name:   "invalid provider",
 			str:    "invalid,creds",
 			expect: nil,
