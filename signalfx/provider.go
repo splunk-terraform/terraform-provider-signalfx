@@ -183,6 +183,14 @@ func Provider() *schema.Provider {
 		ConfigureFunc: signalfxConfigure,
 	}
 
+	for _, res := range sfxProvider.ResourcesMap {
+		res = deprecatedMethodDecorator(res)
+	}
+
+	for _, ds := range sfxProvider.DataSourcesMap {
+		ds = deprecatedMethodDecorator(ds)
+	}
+
 	return sfxProvider
 }
 
