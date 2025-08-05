@@ -10,11 +10,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestColorPalette(t *testing.T) {
+func TestColorScalePalette(t *testing.T) {
 	t.Parallel()
 
 	var (
-		cp   = NewColorPalette()
+		cp   = NewColorScalePalette()
 		seen = make([]int, len(cp.Names()))
 	)
 
@@ -32,10 +32,10 @@ func TestColorPalette(t *testing.T) {
 	}
 }
 
-func TestColorPaletteIndexColorName(t *testing.T) {
+func TestColorScalePaletteIndexColorName(t *testing.T) {
 	t.Parallel()
 
-	cp := NewColorPalette()
+	cp := NewColorScalePalette()
 	for idx, expect := range cp.Names() {
 		//nolint:gosec // Ignore warning for int overflow
 		actual, exist := cp.IndexColorName(int32(idx))
@@ -44,7 +44,7 @@ func TestColorPaletteIndexColorName(t *testing.T) {
 	}
 }
 
-func TestHistoricalNames(t *testing.T) {
+func TestHistoricalColorScaleNames(t *testing.T) {
 	t.Parallel()
 
 	for _, name := range []string{
@@ -71,7 +71,7 @@ func TestHistoricalNames(t *testing.T) {
 		"cerise",
 		"aquamarine",
 	} {
-		_, ok := NewColorPalette().ColorIndex(name)
+		_, ok := NewColorScalePalette().ColorIndex(name)
 		assert.True(t, ok, "Must have the %q set as an option", name)
 	}
 }

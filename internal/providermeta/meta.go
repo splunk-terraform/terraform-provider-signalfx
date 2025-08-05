@@ -34,8 +34,8 @@ var (
 // It is abstracted out from the provider definition to make it easier
 // to test CRUD operations within unit tests.
 type Meta struct {
-	reg    *feature.Registry `json:"-"`
-	Client *signalfx.Client  `json:"-"`
+	Registry *feature.Registry `json:"-"`
+	Client   *signalfx.Client  `json:"-"`
 
 	AuthToken      string   `json:"auth_token"`
 	APIURL         string   `json:"api_url"`
@@ -85,8 +85,8 @@ func LoadApplicationURL(ctx context.Context, meta any, fragments ...string) stri
 // LoadPreviewRegistry provides an abstraction around loading from either
 // the cached meta provider object or return the global registry.
 func LoadPreviewRegistry(ctx context.Context, meta any) *feature.Registry {
-	if m, ok := meta.(*Meta); ok && m.reg != nil {
-		return m.reg
+	if m, ok := meta.(*Meta); ok && m.Registry != nil {
+		return m.Registry
 	}
 	return feature.GetGlobalRegistry()
 }
