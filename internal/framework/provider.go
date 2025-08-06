@@ -23,6 +23,7 @@ import (
 	"github.com/signalfx/signalfx-go"
 
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/feature"
+	fwchart "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/chart"
 	internalfunction "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/function"
 	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
 	tfext "github.com/splunk-terraform/terraform-provider-signalfx/internal/tfextension"
@@ -263,7 +264,9 @@ func (op *ollyProvider) DataSources(ctx context.Context) []func() datasource.Dat
 
 func (op *ollyProvider) Resources(ctx context.Context) []func() resource.Resource {
 	// To implement: Register resources.
-	return nil
+	return []func() resource.Resource{
+		fwchart.NewResourceChart,
+	}
 }
 
 func (op *ollyProvider) Functions(ctx context.Context) []func() function.Function {
