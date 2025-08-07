@@ -16,7 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
 	"github.com/signalfx/signalfx-go"
-
+	
 	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
 )
 
@@ -81,7 +81,11 @@ func NewMockProviderFactory(tb testing.TB, endpoints map[string]http.Handler, op
 	}
 
 	return map[string]func() (tfprotov5.ProviderServer, error){
+<<<<<<< HEAD
 		"signalfx": func() (tfprotov5.ProviderServer, error) { //nolint:unparam // required signature for provider server
+=======
+		"signalfx": func() (tfprotov5.ProviderServer, error) {
+>>>>>>> 2aa88932 (Adding in mock provider for unit tests)
 			return providerserver.NewProtocol5(mock)(), nil
 		},
 	}
@@ -92,13 +96,21 @@ func (mp MockProvider) Metadata(ctx context.Context, req provider.MetadataReques
 	resp.Version = "1.0.0"
 }
 
+<<<<<<< HEAD
 func (mp MockProvider) Schema(_ context.Context, _ provider.SchemaRequest, resp *provider.SchemaResponse) {
+=======
+func (mp MockProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
+>>>>>>> 2aa88932 (Adding in mock provider for unit tests)
 	resp.Schema = schema.Schema{
 		Description: "This is a mock provider for testing purposes.",
 	}
 }
 
+<<<<<<< HEAD
 func (mp MockProvider) Configure(_ context.Context, _ provider.ConfigureRequest, resp *provider.ConfigureResponse) {
+=======
+func (mp MockProvider) Configure(ctx context.Context, _ provider.ConfigureRequest, resp *provider.ConfigureResponse) {
+>>>>>>> 2aa88932 (Adding in mock provider for unit tests)
 	resp.ResourceData = mp.data
 	resp.DataSourceData = mp.data
 	resp.EphemeralResourceData = mp.data
