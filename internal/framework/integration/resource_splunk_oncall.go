@@ -43,7 +43,12 @@ func (oncall *ResourceSplunkOncall) Metadata(_ context.Context, req resource.Met
 
 func (oncall *ResourceSplunkOncall) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
+		Description: "Use this resource to manage a Splunk Oncall Integration",
 		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				Computed:    true,
+				Description: "The unique identifier for the Splunk Oncall integration.",
+			},
 			"enabled": schema.BoolAttribute{
 				Required:    true,
 				Description: "Enables or disables the Splunk Oncall integration.",
@@ -57,10 +62,6 @@ func (oncall *ResourceSplunkOncall) Schema(_ context.Context, _ resource.SchemaR
 				Sensitive:   true,
 				Description: "This is the Splunk OnCall integration URL.",
 			},
-			"id": schema.StringAttribute{
-				Computed:    true,
-				Description: "The unique identifier for the Splunk Oncall integration.",
-			},
 		},
 	}
 }
@@ -72,9 +73,11 @@ func (oncall *ResourceSplunkOncall) Create(ctx context.Context, req resource.Cre
 		return
 	}
 
-	_, err := oncall.Details().Client.CreateVictorOpsIntegration(
+	details, err := oncall.Details().Client.CreateVictorOpsIntegration(
 		ctx,
 		&integration.VictorOpsIntegration{
+			// Internally this still uses the VictorOps details
+			// but the API has been rebranded to Splunk Oncall.
 			Type:    integration.VICTOR_OPS,
 			Enabled: model.Enabled.ValueBool(),
 			Name:    model.Name.ValueString(),
@@ -82,9 +85,13 @@ func (oncall *ResourceSplunkOncall) Create(ctx context.Context, req resource.Cre
 		},
 	)
 
-	if resp.Diagnostics.Append(fwerr.ErrorHandler(err)...); resp.Diagnostics.HasError() {
+	if resp.Diagnostics.Append(fwerr.ErrorHandler(ctx, resp.State, err)...); resp.Diagnostics.HasError() {
 		return
 	}
+
+	model.Id = types.StringValue(details.Id)
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &model)...)
 }
 
 func (oncall *ResourceSplunkOncall) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
@@ -96,10 +103,15 @@ func (oncall *ResourceSplunkOncall) Read(ctx context.Context, req resource.ReadR
 
 	details, err := oncall.Details().Client.GetVictorOpsIntegration(
 		ctx,
-		model.Id.String(),
+		model.Id.ValueString(),
 	)
 
-	if resp.Diagnostics.Append(fwerr.ErrorHandler(err)...); resp.Diagnostics.HasError() {
+	if resp.Diagnostics.Append(fwerr.ErrorHandler(ctx, resp.State, err)...); resp.Diagnostics.HasError() {
+		return
+	}
+
+	if details == nil {
+		resp.State.RemoveResource(ctx)
 		return
 	}
 
@@ -127,7 +139,12 @@ func (oncall *ResourceSplunkOncall) Update(ctx context.Context, req resource.Upd
 		},
 	)
 
-	if resp.Diagnostics.Append(fwerr.ErrorHandler(err)...); resp.Diagnostics.HasError() {
+	if resp.Diagnostics.Append(fwerr.ErrorHandler(ctx, resp.State, err)...); resp.Diagnostics.HasError() {
+		return
+	}
+
+	if details == nil {
+		resp.State.RemoveResource(ctx)
 		return
 	}
 
@@ -146,7 +163,8 @@ func (oncall *ResourceSplunkOncall) Delete(ctx context.Context, req resource.Del
 
 	err := oncall.Details().Client.DeleteVictorOpsIntegration(
 		ctx,
-		model.Id.String(),
+		model.Id.ValueString(),
 	)
-	resp.Diagnostics.Append(fwerr.ErrorHandler(err)...)
+
+	resp.Diagnostics.Append(fwerr.ErrorHandler(ctx, resp.State, err)...)
 }
