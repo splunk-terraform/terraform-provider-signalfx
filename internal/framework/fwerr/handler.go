@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/signalfx/signalfx-go"
+
 	tfext "github.com/splunk-terraform/terraform-provider-signalfx/internal/tfextension"
 )
 

@@ -10,8 +10,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
-	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
 	"github.com/stretchr/testify/require"
+
+	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
 )
 
 func TestNewMockProviderFactory_WithOptions(t *testing.T) {

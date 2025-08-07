@@ -16,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
 	"github.com/signalfx/signalfx-go"
+
 	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
 )
 
@@ -69,7 +70,7 @@ func NewMockProviderFactory(tb testing.TB, endpoints map[string]http.Handler, op
 	}
 
 	return map[string]func() (tfprotov5.ProviderServer, error){
-		"signalfx": func() (tfprotov5.ProviderServer, error) {
+		"signalfx": func() (tfprotov5.ProviderServer, error) { //nolint:unparam // required signature for provider server
 			return providerserver.NewProtocol5(mock)(), nil
 		},
 	}
