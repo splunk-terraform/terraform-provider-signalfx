@@ -80,13 +80,13 @@ func (mp MockProvider) Metadata(ctx context.Context, req provider.MetadataReques
 	resp.Version = "1.0.0"
 }
 
-func (mp MockProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
+func (mp MockProvider) Schema(_ context.Context, _ provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Description: "This is a mock provider for testing purposes.",
 	}
 }
 
-func (mp MockProvider) Configure(ctx context.Context, _ provider.ConfigureRequest, resp *provider.ConfigureResponse) {
+func (mp MockProvider) Configure(_ context.Context, _ provider.ConfigureRequest, resp *provider.ConfigureResponse) {
 	resp.ResourceData = mp.data
 	resp.DataSourceData = mp.data
 	resp.EphemeralResourceData = mp.data

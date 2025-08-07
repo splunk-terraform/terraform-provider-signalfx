@@ -5,6 +5,7 @@ package fwembed
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -23,7 +24,7 @@ func (rd *ResourceData) Configure(_ context.Context, req resource.ConfigureReque
 		resp.Diagnostics.AddAttributeError(
 			path.Empty(),
 			"Missing Provider Data",
-			"Provider data must be configured before using the resource.",
+			fmt.Sprintf("Expected provider data to be of type %T, got %T instead.", &pmeta.Meta{}, req.ProviderData),
 		)
 	} else {
 		rd.meta = meta
