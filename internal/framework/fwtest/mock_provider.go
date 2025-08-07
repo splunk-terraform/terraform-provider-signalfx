@@ -81,7 +81,7 @@ func NewMockProviderFactory(tb testing.TB, endpoints map[string]http.Handler, op
 	}
 
 	return map[string]func() (tfprotov5.ProviderServer, error){
-		"signalfx": func() (tfprotov5.ProviderServer, error) {
+		"signalfx": func() (tfprotov5.ProviderServer, error) { //nolint:unparam // required signature for provider server
 			return providerserver.NewProtocol5(mock)(), nil
 		},
 	}
