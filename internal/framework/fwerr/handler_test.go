@@ -4,10 +4,12 @@
 package fwerr
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/signalfx/signalfx-go"
 	"github.com/stretchr/testify/assert"
 )
@@ -40,7 +42,7 @@ func TestErrorHandler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := ErrorHandler(tt.err)
+			result := ErrorHandler(context.TODO(), tfsdk.State{}, tt.err)
 			assert.Equal(t, tt.expected, result, "Must match expected diagnostics")
 		})
 	}
