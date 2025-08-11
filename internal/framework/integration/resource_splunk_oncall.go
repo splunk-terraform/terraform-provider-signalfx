@@ -8,6 +8,8 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/signalfx/signalfx-go/integration"
 
@@ -48,6 +50,9 @@ func (oncall *ResourceSplunkOncall) Schema(_ context.Context, _ resource.SchemaR
 			"id": schema.StringAttribute{
 				Computed:    true,
 				Description: "The unique identifier for the Splunk Oncall integration.",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"enabled": schema.BoolAttribute{
 				Required:    true,
@@ -130,7 +135,7 @@ func (oncall *ResourceSplunkOncall) Update(ctx context.Context, req resource.Upd
 
 	details, err := oncall.Details().Client.UpdateVictorOpsIntegration(
 		ctx,
-		model.Id.String(),
+		model.Id.ValueString(),
 		&integration.VictorOpsIntegration{
 			Type:    integration.VICTOR_OPS,
 			Enabled: model.Enabled.ValueBool(),

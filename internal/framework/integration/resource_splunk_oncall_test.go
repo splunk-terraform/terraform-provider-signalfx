@@ -6,12 +6,16 @@ package fwintegration
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-testing/config"
 	testresource "github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 	"github.com/signalfx/signalfx-go/integration"
 	"github.com/stretchr/testify/assert"
@@ -75,16 +79,72 @@ func TestResourceSplunkOncallUnitTest(t *testing.T) {
 						return
 					}
 				}),
+				"PUT /v2/integration/test-id": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					var data integration.VictorOpsIntegration
+					if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+						http.Error(w, err.Error(), http.StatusBadRequest)
+						return
+					}
+
+					if err := json.NewEncoder(w).Encode(data); err != nil {
+						http.Error(w, err.Error(), http.StatusInternalServerError)
+						return
+					}
+				}),
+				"DELETE /v2/integration/test-id": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					_, _ = io.Copy(io.Discard, r.Body) // Drain the body
+					_ = r.Body.Close()
+					w.WriteHeader(http.StatusNoContent)
+				}),
 			},
 			cases: []testresource.TestStep{
 				{
 					ConfigFile: config.StaticFile("testdata/00_splunk_oncall.tf"),
 					Check: testresource.ComposeAggregateTestCheckFunc(
-						testresource.TestCheckResourceAttr("signalfx.signalfx_integration_splunk_oncall.test", "id", "test-id"),
-						testresource.TestCheckResourceAttr("signalfx.signalfx_integration_splunk_oncall.test", "enabled", "true"),
-						testresource.TestCheckResourceAttr("signalfx.signalfx_integration_splunk_oncall.test", "name", "Test Integration"),
-						testresource.TestCheckResourceAttr("signalfx.signalfx_integration_splunk_oncall.test", "post_url", "https://example.com/post"),
+						testresource.TestCheckResourceAttr("signalfx_integration_splunk_oncall.test", "id", "test-id"),
+						testresource.TestCheckResourceAttr("signalfx_integration_splunk_oncall.test", "enabled", "true"),
+						testresource.TestCheckResourceAttr("signalfx_integration_splunk_oncall.test", "name", "Test Integration"),
+						testresource.TestCheckResourceAttr("signalfx_integration_splunk_oncall.test", "post_url", "https://example.com/splunk_oncall"),
 					),
+					// This will check to see if the resource already exists
+					// and cause an update in place so the plan is expected to be non empty.
+					ExpectNonEmptyPlan: true,
+					ConfigPlanChecks: testresource.ConfigPlanChecks{
+						PreApply: []plancheck.PlanCheck{
+							plancheck.ExpectUnknownValue("signalfx_integration_splunk_oncall.test", tfjsonpath.New("id")),
+							plancheck.ExpectKnownValue("signalfx_integration_splunk_oncall.test", tfjsonpath.New("name"), knownvalue.StringExact("Test Integration")),
+							plancheck.ExpectKnownValue("signalfx_integration_splunk_oncall.test", tfjsonpath.New("enabled"), knownvalue.Bool(true)),
+							plancheck.ExpectKnownValue("signalfx_integration_splunk_oncall.test", tfjsonpath.New("post_url"), knownvalue.StringExact("https://example.com/splunk_oncall")),
+						},
+						PostApplyPreRefresh: []plancheck.PlanCheck{
+							plancheck.ExpectKnownValue("signalfx_integration_splunk_oncall.test", tfjsonpath.New("id"), knownvalue.StringExact("test-id")),
+							plancheck.ExpectKnownValue("signalfx_integration_splunk_oncall.test", tfjsonpath.New("post_url"), knownvalue.StringExact("https://example.com/splunk_oncall")),
+						},
+					},
+				},
+				{
+					ConfigFile: config.StaticFile("testdata/01_modified_integration.tf"),
+					Check: testresource.ComposeAggregateTestCheckFunc(
+						testresource.TestCheckResourceAttr("signalfx_integration_splunk_oncall.test", "id", "test-id"),
+						testresource.TestCheckResourceAttr("signalfx_integration_splunk_oncall.test", "enabled", "false"),
+						testresource.TestCheckResourceAttr("signalfx_integration_splunk_oncall.test", "name", "Test Integration"),
+						testresource.TestCheckResourceAttr("signalfx_integration_splunk_oncall.test", "post_url", "https://example.com/post"),
+					),
+					// This will check to see if the resource already exists
+					// and cause an update in place so the plan is expected to be non empty.
+					ExpectNonEmptyPlan: true,
+					ConfigPlanChecks: testresource.ConfigPlanChecks{
+						PreApply: []plancheck.PlanCheck{
+							plancheck.ExpectKnownValue("signalfx_integration_splunk_oncall.test", tfjsonpath.New("id"), knownvalue.StringExact("test-id")),
+							plancheck.ExpectKnownValue("signalfx_integration_splunk_oncall.test", tfjsonpath.New("name"), knownvalue.StringExact("Test Integration")),
+							plancheck.ExpectKnownValue("signalfx_integration_splunk_oncall.test", tfjsonpath.New("enabled"), knownvalue.Bool(false)),
+							plancheck.ExpectKnownValue("signalfx_integration_splunk_oncall.test", tfjsonpath.New("post_url"), knownvalue.StringExact("https://example.com/post")),
+						},
+						PostApplyPreRefresh: []plancheck.PlanCheck{
+							plancheck.ExpectKnownValue("signalfx_integration_splunk_oncall.test", tfjsonpath.New("id"), knownvalue.StringExact("test-id")),
+							plancheck.ExpectKnownValue("signalfx_integration_splunk_oncall.test", tfjsonpath.New("post_url"), knownvalue.StringExact("https://example.com/post")),
+						},
+					},
 				},
 			},
 		},
