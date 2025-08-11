@@ -38,7 +38,7 @@ func TestResource_Configure(t *testing.T) {
 		{
 			name:              "nil provider data",
 			providerData:      nil,
-			expectDiagnostics: true,
+			expectDiagnostics: false,
 			expectedMeta:      nil,
 		},
 		{

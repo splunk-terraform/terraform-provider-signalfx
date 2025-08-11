@@ -19,10 +19,16 @@ type ResourceData struct {
 }
 
 func (rd *ResourceData) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	// The configure can be called before the provider has actually been configured.
+	// To avoid against erroring early when this happens, the configure method should just return instead
+	if req.ProviderData == nil {
+		return
+	}
+
 	if meta, ok := req.ProviderData.(*pmeta.Meta); !ok {
 		resp.Diagnostics.AddAttributeError(
 			path.Empty(),
-			"Missing Provider Data",
+			"Invalid Provider Data",
 			"Provider data must be configured before using the resource.",
 		)
 	} else {
