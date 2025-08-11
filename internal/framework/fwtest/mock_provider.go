@@ -48,10 +48,15 @@ func NewMockProviderFactory(tb testing.TB, endpoints map[string]http.Handler, op
 	for path, handler := range endpoints {
 		mux.Handle(path, handler)
 	}
-
+	// The pattern matchers will match based on the longest prefix matching
+	// so this acts to help identify unmatched paths and will force the test
+	// to fail so it the behaviour is not dependant on.
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		tb.Log("Unhandled request:", r.Method, r.URL.Path)
+
 		http.Error(w, "Internal Test Error: "+tb.Name(), http.StatusInternalServerError)
+
+		tb.Fail()
 	})
 
 	s := httptest.NewServer(mux)
