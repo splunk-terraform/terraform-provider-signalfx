@@ -8,13 +8,12 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/signalfx/signalfx-go/integration"
 
 	fwembed "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/embed"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/fwerr"
+	fwshared "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/shared"
 )
 
 type ResourceSplunkOncall struct {
@@ -47,13 +46,7 @@ func (oncall *ResourceSplunkOncall) Schema(_ context.Context, _ resource.SchemaR
 	resp.Schema = schema.Schema{
 		Description: "Use this resource to manage a Splunk Oncall Integration",
 		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
-				Computed:    true,
-				Description: "The unique identifier for the Splunk Oncall integration.",
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
+			"id": fwshared.ResourceIDAttribute(),
 			"enabled": schema.BoolAttribute{
 				Required:    true,
 				Description: "Enables or disables the Splunk Oncall integration.",

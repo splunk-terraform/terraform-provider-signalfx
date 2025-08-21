@@ -310,6 +310,7 @@ func TestResourceSplunkOncallUnitTest(t *testing.T) {
 					ExpectNonEmptyPlan: true,
 					ConfigPlanChecks: testresource.ConfigPlanChecks{
 						PreApply: []plancheck.PlanCheck{
+							plancheck.ExpectResourceAction("signalfx_integration_splunk_oncall.test", plancheck.ResourceActionCreate),
 							plancheck.ExpectUnknownValue("signalfx_integration_splunk_oncall.test", tfjsonpath.New("id")),
 							plancheck.ExpectKnownValue("signalfx_integration_splunk_oncall.test", tfjsonpath.New("name"), knownvalue.StringExact("Test Integration")),
 							plancheck.ExpectKnownValue("signalfx_integration_splunk_oncall.test", tfjsonpath.New("enabled"), knownvalue.Bool(true)),
