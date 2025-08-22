@@ -59,6 +59,10 @@ func ResourceSchemaValidate(res resource.Resource, model any) (errs error) {
 	}
 
 	for field, actual := range resp.Schema.Attributes {
+		if actual.GetDescription() == "" && actual.GetMarkdownDescription() == "" {
+			errs = multierr.Append(errs, fmt.Errorf("field %q has no description", field))
+		}
+
 		t, ok := expected[field]
 		if !ok {
 			errs = multierr.Append(errs, fmt.Errorf("expected field not found in model: %q, check struct tags", field))

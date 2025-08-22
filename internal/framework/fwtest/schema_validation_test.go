@@ -26,6 +26,11 @@ func (rm ResourceMock) Schema(_ context.Context, _ resource.SchemaRequest, resp 
 func TestResourceSchemaValidate(t *testing.T) {
 	t.Parallel()
 
+	id := schema.StringAttribute{
+		Required:    true,
+		Description: "The unique identifier for the resource.",
+	}
+
 	for _, tc := range []struct {
 		name   string
 		res    ResourceMock
@@ -38,9 +43,7 @@ func TestResourceSchemaValidate(t *testing.T) {
 				schema: schema.Schema{
 					Description: "Test schema",
 					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{
-							Required: true,
-						},
+						"id": id,
 					},
 				},
 			},
@@ -53,9 +56,7 @@ func TestResourceSchemaValidate(t *testing.T) {
 				schema: schema.Schema{
 					Description: "Test schema",
 					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{
-							Required: true,
-						},
+						"id": id,
 					},
 				},
 			},
@@ -68,9 +69,7 @@ func TestResourceSchemaValidate(t *testing.T) {
 				schema: schema.Schema{
 					Description: "Test schema",
 					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{
-							Required: true,
-						},
+						"id": id,
 					},
 				},
 			},
@@ -84,9 +83,7 @@ func TestResourceSchemaValidate(t *testing.T) {
 				schema: schema.Schema{
 					Description: "Test schema",
 					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{
-							Required: true,
-						},
+						"id": id,
 					},
 				},
 			},
@@ -101,9 +98,7 @@ func TestResourceSchemaValidate(t *testing.T) {
 			res: ResourceMock{
 				schema: schema.Schema{
 					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{
-							Required: true,
-						},
+						"id": id,
 					},
 				},
 			},
@@ -127,9 +122,7 @@ func TestResourceSchemaValidate(t *testing.T) {
 				schema: schema.Schema{
 					Description: "Test schema",
 					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{
-							Required: true,
-						},
+						"id": id,
 					},
 				},
 			},
@@ -145,9 +138,7 @@ func TestResourceSchemaValidate(t *testing.T) {
 				schema: schema.Schema{
 					Description: "Test schema",
 					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{
-							Required: true,
-						},
+						"id": id,
 					},
 				},
 			},
@@ -155,6 +146,23 @@ func TestResourceSchemaValidate(t *testing.T) {
 				Id types.Int64 `tfsdk:"id"`
 			}{},
 			expect: `field "id" has type "basetypes.StringType", expected "basetypes.Int64Type"`,
+		},
+		{
+			name: "no description applied",
+			res: ResourceMock{
+				schema: schema.Schema{
+					Description: "awesome",
+					Attributes: map[string]schema.Attribute{
+						"id": schema.StringAttribute{
+							Required: true,
+						},
+					},
+				},
+			},
+			model: &struct {
+				Id types.String `tfsdk:"id"`
+			}{},
+			expect: `field "id" has no description`,
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
