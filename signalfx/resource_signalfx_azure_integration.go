@@ -157,7 +157,8 @@ func integrationAzureResource() *schema.Resource {
 
 func integrationAzureRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	int, err := config.Client.GetAzureIntegration(context.TODO(), d.Id())
+
+	in, err := config.Client.GetAzureIntegration(context.TODO(), d.Id())
 	if err != nil {
 		if strings.Contains(err.Error(), "404") {
 			d.SetId("")
@@ -165,7 +166,7 @@ func integrationAzureRead(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	return azureIntegrationAPIToTF(d, int)
+	return azureIntegrationAPIToTF(d, in)
 }
 
 func azureIntegrationAPIToTF(d *schema.ResourceData, azure *integration.AzureIntegration) error {

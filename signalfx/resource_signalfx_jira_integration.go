@@ -102,7 +102,8 @@ func integrationJiraResource() *schema.Resource {
 
 func integrationJiraRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	int, err := config.Client.GetJiraIntegration(context.TODO(), d.Id())
+
+	in, err := config.Client.GetJiraIntegration(context.TODO(), d.Id())
 	if err != nil {
 		if strings.Contains(err.Error(), "404") {
 			d.SetId("")
@@ -110,7 +111,7 @@ func integrationJiraRead(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	return jiraIntegrationAPIToTF(d, int)
+	return jiraIntegrationAPIToTF(d, in)
 }
 
 func jiraIntegrationAPIToTF(d *schema.ResourceData, jira *integration.JiraIntegration) error {

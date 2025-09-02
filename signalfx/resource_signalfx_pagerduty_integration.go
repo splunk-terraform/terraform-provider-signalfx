@@ -47,7 +47,8 @@ func integrationPagerDutyResource() *schema.Resource {
 
 func integrationPagerDutyRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	int, err := config.Client.GetPagerDutyIntegration(context.TODO(), d.Id())
+
+	in, err := config.Client.GetPagerDutyIntegration(context.TODO(), d.Id())
 	if err != nil {
 		if strings.HasPrefix(err.Error(), "404") {
 			d.SetId("")
@@ -55,7 +56,7 @@ func integrationPagerDutyRead(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	return pagerDutyIntegrationAPIToTF(d, int)
+	return pagerDutyIntegrationAPIToTF(d, in)
 }
 
 func pagerDutyIntegrationAPIToTF(d *schema.ResourceData, pd *integration.PagerDutyIntegration) error {

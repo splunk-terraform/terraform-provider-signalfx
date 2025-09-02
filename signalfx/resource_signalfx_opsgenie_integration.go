@@ -62,7 +62,8 @@ func getOpsgeniePayloadIntegration(d *schema.ResourceData) *integration.Opsgenie
 
 func integrationOpsgenieRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
-	int, err := config.Client.GetOpsgenieIntegration(context.TODO(), d.Id())
+
+	in, err := config.Client.GetOpsgenieIntegration(context.TODO(), d.Id())
 	if err != nil {
 		if strings.Contains(err.Error(), "404") {
 			d.SetId("")
@@ -70,7 +71,7 @@ func integrationOpsgenieRead(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	return opsgenieIntegrationAPIToTF(d, int)
+	return opsgenieIntegrationAPIToTF(d, in)
 }
 
 func opsgenieIntegrationAPIToTF(d *schema.ResourceData, og *integration.OpsgenieIntegration) error {
