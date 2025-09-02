@@ -9,6 +9,7 @@ crash.log
 terraform-provider-signalfx
 dist
 .idea
+.env*
 
 # Generated files/directories as a result of CI/tooling actions
 /coverage
