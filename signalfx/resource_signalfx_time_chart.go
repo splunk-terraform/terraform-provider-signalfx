@@ -775,7 +775,7 @@ func timechartCreate(d *schema.ResourceData, meta interface{}) error {
 	return timechartAPIToTF(d, c)
 }
 
-func timeChartAttemptRecreate(existingError error, config *signalfxConfig, d *schema.ResourceData, meta interface{}) (*chart.Chart, error) {
+func timechartAttemptRecreate(existingError error, config *signalfxConfig, d *schema.ResourceData, meta interface{}) (*chart.Chart, error) {
 	sfxRespErr, ok := existingError.(*sfxgo.ResponseError)
 	if !ok || sfxRespErr.Code() != 404 {
 		return nil, existingError
@@ -795,7 +795,7 @@ func timechartRead(d *schema.ResourceData, meta interface{}) error {
 
 	c, err := config.Client.GetChart(context.TODO(), d.Id())
 	if err != nil {
-		c, err = timeChartAttemptRecreate(err, config, d, meta)
+		c, err = timechartAttemptRecreate(err, config, d, meta)
 		if err != nil {
 			return err
 		}
