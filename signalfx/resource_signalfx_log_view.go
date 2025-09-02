@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/common"
@@ -14,6 +15,7 @@ import (
 	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	sfxgo "github.com/signalfx/signalfx-go"
 	chart "github.com/signalfx/signalfx-go/chart"
 )
 
@@ -296,10 +298,20 @@ func logViewAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 	return nil
 }
 
+func isLogViewNotFound(err error) bool {
+	sfxRespErr, ok := err.(*sfxgo.ResponseError)
+	return ok && sfxRespErr.Code() == http.StatusNotFound
+}
+
 func logViewRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
+
 	c, err := config.Client.GetChart(context.TODO(), d.Id())
 	if err != nil {
+		if isLogViewNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return err
 	}
 

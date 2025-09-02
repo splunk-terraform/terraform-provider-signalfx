@@ -5,10 +5,12 @@ package signalfx
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	sfxgo "github.com/signalfx/signalfx-go"
 	chart "github.com/signalfx/signalfx-go/chart"
 
 	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
@@ -73,10 +75,20 @@ func slochartAPIToTF(d *schema.ResourceData, c *chart.Chart) diag.Diagnostics {
 	return diag.FromErr(d.Set("slo_id", c.SloId))
 }
 
+func isSlochartNotFound(err error) bool {
+	sfxRespErr, ok := err.(*sfxgo.ResponseError)
+	return ok && sfxRespErr.Code() == http.StatusNotFound
+}
+
 func slochartRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	config := meta.(*signalfxConfig)
+
 	sloChart, err := config.Client.GetChart(ctx, d.Id())
 	if err != nil {
+		if isSlochartNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return diag.FromErr(err)
 	}
 

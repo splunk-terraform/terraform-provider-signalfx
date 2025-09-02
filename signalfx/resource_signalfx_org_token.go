@@ -8,9 +8,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"sort"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	sfxgo "github.com/signalfx/signalfx-go"
 	"github.com/signalfx/signalfx-go/orgtoken"
 
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/check"
@@ -354,11 +356,21 @@ func orgTokenAPIToTF(d *schema.ResourceData, t *orgtoken.Token) error {
 	return nil
 }
 
+func isOrgTokenNotFound(err error) bool {
+	sfxRespErr, ok := err.(*sfxgo.ResponseError)
+	return ok && sfxRespErr.Code() == http.StatusNotFound
+}
+
 func orgTokenRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 	fmt.Printf("[DEBUG] SignalFx: Looking for org token %s\n", d.Id())
+
 	t, err := config.Client.GetOrgToken(context.TODO(), d.Id())
 	if err != nil {
+		if isOrgTokenNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return err
 	}
 

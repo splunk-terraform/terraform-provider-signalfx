@@ -9,9 +9,11 @@ import (
 	"fmt"
 	"log"
 	"math"
+	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	sfxgo "github.com/signalfx/signalfx-go"
 	chart "github.com/signalfx/signalfx-go/chart"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/check"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/common"
@@ -521,10 +523,20 @@ func listchartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 	return nil
 }
 
+func isListChartNotFound(err error) bool {
+	sfxRespErr, ok := err.(*sfxgo.ResponseError)
+	return ok && sfxRespErr.Code() == http.StatusNotFound
+}
+
 func listchartRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
+
 	c, err := config.Client.GetChart(context.TODO(), d.Id())
 	if err != nil {
+		if isListChartNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return err
 	}
 

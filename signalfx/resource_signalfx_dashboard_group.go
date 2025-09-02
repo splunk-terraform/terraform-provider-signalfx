@@ -8,9 +8,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	sfxgo "github.com/signalfx/signalfx-go"
 	dashboard_group "github.com/signalfx/signalfx-go/dashboard_group"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/convert"
 	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
@@ -550,10 +552,20 @@ func dashboardGroupAPIToTF(d *schema.ResourceData, dg *dashboard_group.Dashboard
 	return nil
 }
 
+func isDashboardgroupNotFound(err error) bool {
+	sfxRespErr, ok := err.(*sfxgo.ResponseError)
+	return ok && sfxRespErr.Code() == http.StatusNotFound
+}
+
 func dashboardgroupRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
+
 	dg, err := config.Client.GetDashboardGroup(context.TODO(), d.Id())
 	if err != nil {
+		if isDashboardgroupNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return err
 	}
 

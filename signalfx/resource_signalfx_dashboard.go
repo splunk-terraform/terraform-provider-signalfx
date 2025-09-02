@@ -8,11 +8,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"strconv"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	sfxgo "github.com/signalfx/signalfx-go"
 	"github.com/signalfx/signalfx-go/dashboard"
 	"github.com/signalfx/signalfx-go/util"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/check"
@@ -847,10 +849,20 @@ func dashboardCreate(d *schema.ResourceData, meta interface{}) error {
 	return dashboardAPIToTF(d, dash)
 }
 
+func isDashboardNotFound(err error) bool {
+	sfxRespErr, ok := err.(*sfxgo.ResponseError)
+	return ok && sfxRespErr.Code() == http.StatusNotFound
+}
+
 func dashboardRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
+
 	dash, err := config.Client.GetDashboard(context.TODO(), d.Id())
 	if err != nil {
+		if isDashboardNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return err
 	}
 

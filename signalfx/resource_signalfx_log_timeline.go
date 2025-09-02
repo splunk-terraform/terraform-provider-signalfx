@@ -7,9 +7,11 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	sfxgo "github.com/signalfx/signalfx-go"
 	"github.com/signalfx/signalfx-go/chart"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/common"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/convert"
@@ -193,10 +195,20 @@ func logTimelineCreate(d *schema.ResourceData, meta interface{}) error {
 	return logTimelineAPIToTF(d, c)
 }
 
+func isLogTimelineNotFound(err error) bool {
+	sfxRespErr, ok := err.(*sfxgo.ResponseError)
+	return ok && sfxRespErr.Code() == http.StatusNotFound
+}
+
 func logTimelineRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
+
 	c, err := config.Client.GetChart(context.TODO(), d.Id())
 	if err != nil {
+		if isLogTimelineNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return err
 	}
 

@@ -9,11 +9,13 @@ import (
 	"fmt"
 	"log"
 	"math"
+	"net/http"
 	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+
 	sfxgo "github.com/signalfx/signalfx-go"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/check"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/common"
@@ -775,19 +777,9 @@ func timechartCreate(d *schema.ResourceData, meta interface{}) error {
 	return timechartAPIToTF(d, c)
 }
 
-func timechartAttemptRecreate(existingError error, config *signalfxConfig, d *schema.ResourceData, meta interface{}) (*chart.Chart, error) {
-	sfxRespErr, ok := existingError.(*sfxgo.ResponseError)
-	if !ok || sfxRespErr.Code() != 404 {
-		return nil, existingError
-	}
-
-	err := timechartCreate(d, meta)
-	if err != nil {
-		fmt.Printf("[DEBUG] SignalFx: Recreate Time Chart Error Payload: %v\n", err.Error())
-		return nil, err
-	}
-
-	return config.Client.GetChart(context.TODO(), d.Id())
+func isTimechartNotFound(err error) bool {
+	sfxRespErr, ok := err.(*sfxgo.ResponseError)
+	return ok && sfxRespErr.Code() == http.StatusNotFound
 }
 
 func timechartRead(d *schema.ResourceData, meta interface{}) error {
@@ -795,10 +787,11 @@ func timechartRead(d *schema.ResourceData, meta interface{}) error {
 
 	c, err := config.Client.GetChart(context.TODO(), d.Id())
 	if err != nil {
-		c, err = timechartAttemptRecreate(err, config, d, meta)
-		if err != nil {
-			return err
+		if isTimechartNotFound(err) {
+			d.SetId("")
+			return nil
 		}
+		return err
 	}
 
 	appURL, err := buildAppURL(config.CustomAppURL, CHART_APP_PATH+c.Id)

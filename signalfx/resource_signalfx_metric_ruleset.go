@@ -8,10 +8,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	sfxgo "github.com/signalfx/signalfx-go"
 	"github.com/signalfx/signalfx-go/metric_ruleset"
 )
 
@@ -307,10 +309,20 @@ func metricRulesetCreate(d *schema.ResourceData, meta interface{}) error {
 	return metricRulesetAPIToTF(d, &metricRuleset)
 }
 
+func isMetricRulesetNotFound(err error) bool {
+	sfxRespErr, ok := err.(*sfxgo.ResponseError)
+	return ok && sfxRespErr.Code() == http.StatusNotFound
+}
+
 func metricRulesetRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
+
 	metricRulesetResp, err := config.Client.GetMetricRuleset(context.TODO(), d.Id())
 	if err != nil {
+		if isMetricRulesetNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return err
 	}
 
