@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	sfxgo "github.com/signalfx/signalfx-go"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/check"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/common"
 	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
@@ -774,12 +775,30 @@ func timechartCreate(d *schema.ResourceData, meta interface{}) error {
 	return timechartAPIToTF(d, c)
 }
 
+func timeChartAttemptRecreate(existingError error, config *signalfxConfig, d *schema.ResourceData, meta interface{}) (*chart.Chart, error) {
+	sfxRespErr, ok := existingError.(*sfxgo.ResponseError)
+	if !ok || sfxRespErr.Code() != 404 {
+		return nil, existingError
+	}
+
+	err := timechartCreate(d, meta)
+	if err != nil {
+		fmt.Printf("[DEBUG] SignalFx: Recreate Time Chart Error Payload: %v\n", err.Error())
+		return nil, err
+	}
+
+	return config.Client.GetChart(context.TODO(), d.Id())
+}
+
 func timechartRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 
 	c, err := config.Client.GetChart(context.TODO(), d.Id())
 	if err != nil {
-		return err
+		c, err = timeChartAttemptRecreate(err, config, d, meta)
+		if err != nil {
+			return err
+		}
 	}
 
 	appURL, err := buildAppURL(config.CustomAppURL, CHART_APP_PATH+c.Id)
