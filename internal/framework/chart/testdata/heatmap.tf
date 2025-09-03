@@ -5,6 +5,12 @@ resource "signalfx_chart" "heatmap" {
     "tag-00",
     "tag-01"
   ]
+  
+  heatmap = {
+    color_by = "Range"
+    group_by = ["dimension-00"]
+  }
+
 
   program_options = {
     text             = <<-EOT
@@ -14,13 +20,6 @@ resource "signalfx_chart" "heatmap" {
     max_delay        = "5m"
     disable_sampling = false
     timezone         = "UTC"
-  }
-
-  visualization_options = {
-    heatmap = {
-      color_by = "Range"
-      group_by = ["dimension-00"]
-    }
   }
 
   data_options = {

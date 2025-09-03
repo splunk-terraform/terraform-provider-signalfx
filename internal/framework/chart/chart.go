@@ -6,10 +6,7 @@ package fwchart
 import (
 	"context"
 
-	"github.com/hashicorp/terraform-plugin-framework-timetypes/timetypes"
-	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
-	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
@@ -28,15 +25,20 @@ type ResourceChart struct {
 }
 
 type ResourceChartModel struct {
-	Id                   types.String `tfsdk:"id"`
-	URL                  types.String `tfsdk:"url"`
-	Name                 types.String `tfsdk:"name"`
-	Description          types.String `tfsdk:"description"`
-	Tags                 types.List   `tfsdk:"tags"`
-	ProgramOptions       types.Object `tfsdk:"program_options"`
-	VisualizationOptions types.Object `tfsdk:"visualization_options"`
-	DataOptions          types.Object `tfsdk:"data_options"`
-	PublishOptions       types.List   `tfsdk:"publish_options"`
+	Id             types.String `tfsdk:"id"`
+	URL            types.String `tfsdk:"url"`
+	Name           types.String `tfsdk:"name"`
+	Description    types.String `tfsdk:"description"`
+	Tags           types.List   `tfsdk:"tags"`
+	Heatmap        types.Object `tfsdk:"heatmap"`
+	List           types.Object `tfsdk:"list"`
+	Table          types.Object `tfsdk:"table"`
+	SingleValue    types.Object `tfsdk:"single_value"`
+	Text           types.Object `tfsdk:"text"`
+	TimeSeries     types.Object `tfsdk:"time_series"`
+	ProgramOptions types.Object `tfsdk:"program_options"`
+	DataOptions    types.Object `tfsdk:"data_options"`
+	PublishOptions types.List   `tfsdk:"publish_options"`
 }
 
 var (
@@ -86,11 +88,11 @@ func (rc *ResourceChart) Schema(_ context.Context, _ resource.SchemaRequest, res
 					},
 					"min_resolution": schema.StringAttribute{
 						Optional:   true,
-						CustomType: timetypes.GoDurationType{},
+						CustomType: fwtypes.TimeRangeType{},
 					},
 					"max_delay": schema.StringAttribute{
 						Optional:   true,
-						CustomType: timetypes.GoDurationType{},
+						CustomType: fwtypes.TimeRangeType{},
 					},
 					"disable_sampling": schema.BoolAttribute{
 						Optional: true,
@@ -102,105 +104,91 @@ func (rc *ResourceChart) Schema(_ context.Context, _ resource.SchemaRequest, res
 					},
 				},
 			},
-			"visualization_options": schema.SingleNestedAttribute{
-				Required: true,
+			"heatmap": schema.SingleNestedAttribute{
+				Optional: true,
 				Attributes: map[string]schema.Attribute{
-					"heatmap": schema.SingleNestedAttribute{
+					"color_by": schema.StringAttribute{
 						Optional: true,
-						Attributes: map[string]schema.Attribute{
-							"color_by": schema.StringAttribute{
-								Optional: true,
-								Validators: []validator.String{
-									stringvalidator.OneOf("Range", "Scale"),
-								},
-							},
-							"group_by": schema.ListAttribute{
-								Optional:    true,
-								ElementType: types.StringType,
-							},
+						Validators: []validator.String{
+							stringvalidator.OneOf("Range", "Scale"),
 						},
 					},
-					"list": schema.SingleNestedAttribute{
-						Optional: true,
-						Attributes: map[string]schema.Attribute{
-							"hide_missing_values": schema.BoolAttribute{
-								Optional: true,
-								Computed: true,
-								Default:  booldefault.StaticBool(false),
-							},
-						},
-					},
-					"table": schema.SingleNestedAttribute{
-						Optional: true,
-						Attributes: map[string]schema.Attribute{
-							"group_by": schema.ListAttribute{
-								Optional:    true,
-								ElementType: types.StringType,
-							},
-							"hide_missing_values": schema.BoolAttribute{
-								Optional: true,
-								Computed: true,
-								Default:  booldefault.StaticBool(false),
-							},
-						},
-					},
-					"single_value": schema.SingleNestedAttribute{
-						Optional: true,
-						Attributes: map[string]schema.Attribute{
-							"show_sparkline": schema.BoolAttribute{
-								Optional: true,
-								Computed: true,
-								Default:  booldefault.StaticBool(false),
-							},
-						},
-					},
-					"text": schema.SingleNestedAttribute{
-						Optional: true,
-					},
-					"time_series": schema.SingleNestedAttribute{
-						Optional: true,
-						Attributes: map[string]schema.Attribute{
-							"color_by": schema.StringAttribute{
-								Optional: true,
-								Computed: true,
-								Default:  stringdefault.StaticString("Dimension"),
-								Validators: []validator.String{
-									stringvalidator.OneOf("Metric", "Dimension"),
-								},
-							},
-							"include_zero": schema.BoolAttribute{
-								Optional: true,
-								Computed: true,
-								Default:  booldefault.StaticBool(false),
-							},
-							"show_data_markers": schema.BoolAttribute{
-								Optional: true,
-							},
-							"show_legend": schema.BoolAttribute{
-								Optional: true,
-							},
-							"show_event_lines": schema.BoolAttribute{
-								Optional: true,
-								Computed: true,
-								Default:  booldefault.StaticBool(true),
-							},
-							"sort_by": schema.StringAttribute{
-								Optional: true,
-							},
-							"stacked": schema.BoolAttribute{
-								Optional: true,
-							},
-						},
+					"group_by": schema.ListAttribute{
+						Optional:    true,
+						ElementType: types.StringType,
 					},
 				},
-				Validators: []validator.Object{
-					objectvalidator.AtLeastOneOf(
-						path.MatchRoot("heatmap"),
-						path.MatchRoot("list"),
-						path.MatchRoot("table"),
-						path.MatchRoot("single_value"),
-						path.MatchRoot("text"),
-						path.MatchRoot("time_series")),
+			},
+			"list": schema.SingleNestedAttribute{
+				Optional: true,
+				Attributes: map[string]schema.Attribute{
+					"hide_missing_values": schema.BoolAttribute{
+						Optional: true,
+						Computed: true,
+						Default:  booldefault.StaticBool(false),
+					},
+				},
+			},
+			"table": schema.SingleNestedAttribute{
+				Optional: true,
+				Attributes: map[string]schema.Attribute{
+					"group_by": schema.ListAttribute{
+						Optional:    true,
+						ElementType: types.StringType,
+					},
+					"hide_missing_values": schema.BoolAttribute{
+						Optional: true,
+						Computed: true,
+						Default:  booldefault.StaticBool(false),
+					},
+				},
+			},
+			"single_value": schema.SingleNestedAttribute{
+				Optional: true,
+				Attributes: map[string]schema.Attribute{
+					"show_sparkline": schema.BoolAttribute{
+						Optional: true,
+						Computed: true,
+						Default:  booldefault.StaticBool(false),
+					},
+				},
+			},
+			"text": schema.SingleNestedAttribute{
+				Optional: true,
+			},
+			"time_series": schema.SingleNestedAttribute{
+				Optional: true,
+				Attributes: map[string]schema.Attribute{
+					"color_by": schema.StringAttribute{
+						Optional: true,
+						Computed: true,
+						Default:  stringdefault.StaticString("Dimension"),
+						Validators: []validator.String{
+							stringvalidator.OneOf("Metric", "Dimension"),
+						},
+					},
+					"include_zero": schema.BoolAttribute{
+						Optional: true,
+						Computed: true,
+						Default:  booldefault.StaticBool(false),
+					},
+					"show_data_markers": schema.BoolAttribute{
+						Optional: true,
+					},
+					"show_legend": schema.BoolAttribute{
+						Optional: true,
+					},
+					"show_event_lines": schema.BoolAttribute{
+						Optional: true,
+						Computed: true,
+						Default:  booldefault.StaticBool(true),
+					},
+					"sort_by": schema.StringAttribute{
+						Optional: true,
+					},
+					"stacked": schema.BoolAttribute{
+						Optional: true,
+					},
 				},
 			},
 			"data_options": schema.SingleNestedAttribute{
