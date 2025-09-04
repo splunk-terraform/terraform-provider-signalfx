@@ -10,6 +10,11 @@ The [Splunk Observability Cloud](https://www.splunk.com/en_us/products/observabi
 
 Use the navigation to learn more about the available resources.
 
+-> The next major release of the provider (v10) is will require a minimum Terraform version of 1.11.0. 
+Please prepare to migrate to a newer version of Terraform soon.
+This will allow the provider to handle secrets more securely and take advantage of new features in the Terraform Plugin Framework.
+
+
 # Learn about Splunk Observability Cloud
 
 To learn more about Splunk Observability Cloud and its features, see [the official documentation](https://docs.splunk.com/observability/en/).
