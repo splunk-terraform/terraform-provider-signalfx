@@ -15,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/signalfx/signalfx-go"
 
 	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
@@ -43,10 +44,24 @@ func WithMockDataSources(datasources ...func() datasource.DataSource) func(*Mock
 	}
 }
 
-func NewMockProviderFactory(tb testing.TB, endpoints map[string]http.Handler, opts ...func(*MockProvider)) map[string]func() (tfprotov5.ProviderServer, error) {
+func NewMockProto5Server(tb testing.TB, endpoints map[string]http.Handler, opts ...func(*MockProvider)) map[string]func() (tfprotov5.ProviderServer, error) {
+	return map[string]func() (tfprotov5.ProviderServer, error){
+		"signalfx": providerserver.NewProtocol5WithError(NewMock(tb, endpoints, opts...)),
+	}
+}
+
+func NewMockProto6Server(tb testing.TB, endpoints map[string]http.Handler, opts ...func(*MockProvider)) map[string]func() (tfprotov6.ProviderServer, error) {
+	return map[string]func() (tfprotov6.ProviderServer, error){
+		"signalfx": providerserver.NewProtocol6WithError(NewMock(tb, endpoints, opts...)),
+	}
+}
+
+func NewMock(tb testing.TB, handler map[string]http.Handler, opts ...func(*MockProvider)) *MockProvider {
+	tb.Helper()
+
 	mux := http.NewServeMux()
-	for path, handler := range endpoints {
-		mux.Handle(path, handler)
+	for path, h := range handler {
+		mux.Handle(path, h)
 	}
 	// The pattern matchers will match based on the longest prefix matching
 	// so this acts to help identify unmatched paths and will force the test
@@ -80,11 +95,7 @@ func NewMockProviderFactory(tb testing.TB, endpoints map[string]http.Handler, op
 		opt(mock)
 	}
 
-	return map[string]func() (tfprotov5.ProviderServer, error){
-		"signalfx": func() (tfprotov5.ProviderServer, error) { //nolint:unparam // required signature for provider server
-			return providerserver.NewProtocol5(mock)(), nil
-		},
-	}
+	return mock
 }
 
 func (mp MockProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {

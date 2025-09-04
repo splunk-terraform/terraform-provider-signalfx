@@ -65,7 +65,7 @@ func TestNewMockProviderFactory_WithOptions(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			factory := NewMockProviderFactory(t, endpoints, tc.options...)
+			factory := NewMockProto5Server(t, endpoints, tc.options...)
 			providerFunc, ok := factory["signalfx"]
 			require.True(t, ok, "Provider function should exist in factory")
 
