@@ -354,7 +354,7 @@ func TestResourceSplunkOncallUnitTest(t *testing.T) {
 					TerraformVersionChecks: []tfversion.TerraformVersionCheck{
 						tfversion.RequireAbove(tfversion.Version0_12_26),
 					},
-					ProtoV5ProviderFactories: fwtest.NewMockProviderFactory(
+					ProtoV5ProviderFactories: fwtest.NewMockProto5Server(
 						t,
 						tc.endpoints,
 						fwtest.WithMockResources(NewResourceSplunkOncall),
