@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/function"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	fwtypes "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -33,6 +34,7 @@ func TestTimeRangeParser_Definition(t *testing.T) {
 	assert.Equal(t,
 		function.StringParameter{
 			AllowNullValue: false,
+			CustomType:     fwtypes.TimeRangeType{},
 			Name:           "time_range",
 			Description:    "Used to parse the given relative time string into a the amount of milliseconds.",
 		},
@@ -57,8 +59,8 @@ func TestTimeRangeParser_Run(t *testing.T) {
 				}),
 			},
 			expect: &function.RunResponse{
-				Result: function.NewResultData(types.Int64Unknown()),
-				Error:  function.NewFuncError(`invalid timerange "0": no negative prefix`),
+				Result: function.NewResultData(types.Int64Value(0)),
+				Error:  nil,
 			},
 		},
 		{
@@ -69,8 +71,8 @@ func TestTimeRangeParser_Run(t *testing.T) {
 				}),
 			},
 			expect: &function.RunResponse{
-				Result: function.NewResultData(types.Int64Unknown()),
-				Error:  function.NewFuncError(`invalid timerange "1h": no negative prefix`),
+				Result: function.NewResultData(types.Int64Value(3600000)),
+				Error:  nil,
 			},
 		},
 		{
@@ -81,7 +83,7 @@ func TestTimeRangeParser_Run(t *testing.T) {
 				}),
 			},
 			expect: &function.RunResponse{
-				Result: function.NewResultData(types.Int64Value(3600000)),
+				Result: function.NewResultData(types.Int64Value(-3600000)),
 			},
 		},
 	} {

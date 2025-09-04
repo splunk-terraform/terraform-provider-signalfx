@@ -7,8 +7,9 @@ import (
 	"context"
 
 	"github.com/hashicorp/terraform-plugin-framework/function"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 
-	"github.com/splunk-terraform/terraform-provider-signalfx/internal/common"
+	fwtypes "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/types"
 )
 
 type TimeRangeParser struct{}
@@ -30,6 +31,7 @@ func (TimeRangeParser) Definition(_ context.Context, _ function.DefinitionReques
 		Parameters: []function.Parameter{
 			function.StringParameter{
 				AllowNullValue: false,
+				CustomType:     fwtypes.TimeRangeType{},
 				Name:           "time_range",
 				Description:    "Used to parse the given relative time string into a the amount of milliseconds.",
 			},
@@ -40,12 +42,16 @@ func (TimeRangeParser) Definition(_ context.Context, _ function.DefinitionReques
 
 func (TimeRangeParser) Run(ctx context.Context, req function.RunRequest, resp *function.RunResponse) {
 	var relative string
-
 	resp.Error = function.ConcatFuncErrors(resp.Error, req.Arguments.Get(ctx, &relative))
 
-	if val, err := common.FromTimeRangeToMilliseconds(relative); err != nil {
+	tr := fwtypes.TimeRange{
+		StringValue: basetypes.NewStringValue(relative),
+	}
+
+	if val, err := tr.ParseDuration(); err != nil {
 		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError(err.Error()))
 	} else {
-		resp.Error = function.ConcatFuncErrors(resp.Error, resp.Result.Set(ctx, int64(val)))
+		resp.Result.Set(ctx, val.Milliseconds())
 	}
+
 }
