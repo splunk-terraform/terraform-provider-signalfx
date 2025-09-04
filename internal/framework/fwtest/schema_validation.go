@@ -7,10 +7,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"reflect"
+	"maps"
+	"slices"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"go.uber.org/multierr"
 )
 
@@ -26,49 +28,33 @@ func ResourceSchemaValidate(res resource.Resource, model any) (errs error) {
 		return multierr.Combine(errs, errors.New("missing schema attribute definitions"))
 	}
 
-	v := reflect.ValueOf(model)
-	if v.Kind() == reflect.Ptr {
-		v = v.Elem()
-	}
-
-	if v.Kind() != reflect.Struct {
-		return multierr.Combine(errs, fmt.Errorf("model must be a struct, provided: %T", model))
-	}
-
 	expected := make(map[string]attr.Value)
-	for i := range v.Type().NumField() {
-		var (
-			field = v.Type().Field(i)
-			named = field.Tag.Get("tfsdk")
-		)
-		if named == "" {
-			continue
+	for wv := range WalkStruct(model) {
+		if wv.Err() != nil {
+			return wv.Err()
 		}
-		if !field.IsExported() {
-			errs = multierr.Append(errs, fmt.Errorf("framework requires field exported %q", field.Name))
-			continue
-		}
-		// TODO(MovieStoreGuy): This is fine until we handle more complex types.
-		switch f := reflect.Zero(field.Type).Interface().(type) {
-		case attr.Value:
-			expected[named] = f
-		default:
-			// Handle the case where the field is potentially nested or complex.
-			panic("You have entered the twilight zone. Please check the model definition.")
-		}
+		expected[wv.Path().String()] = wv.Attr()
 	}
 
-	for field, actual := range resp.Schema.Attributes {
-		if actual.GetDescription() == "" && actual.GetMarkdownDescription() == "" {
-			errs = multierr.Append(errs, fmt.Errorf("field %q has no description", field))
+	actual := make(map[string]schema.Attribute)
+	for p, attr := range WalkResourceSchema(resp.Schema.Attributes) {
+		if attr.GetDescription() == "" && attr.GetMarkdownDescription() == "" {
+			errs = multierr.Append(errs, fmt.Errorf("field %q has no description", p.String()))
 		}
+		if _, ok := actual[p.String()]; ok {
+			return fmt.Errorf("duplicate field in schema: %q", p.String())
+		}
+		actual[p.String()] = attr
+	}
 
+	for _, field := range slices.Sorted(maps.Keys(actual)) {
+		actual := actual[field]
 		t, ok := expected[field]
 		if !ok {
 			errs = multierr.Append(errs, fmt.Errorf("expected field not found in model: %q, check struct tags", field))
 			continue
 		}
-		if actual.GetType() != t.Type(context.TODO()) {
+		if t != nil && actual.GetType() != t.Type(context.TODO()) {
 			errs = multierr.Append(errs, fmt.Errorf("field %q has type %q, expected %q", field, actual.GetType(), t.Type(context.TODO())))
 		}
 		delete(expected, field)
