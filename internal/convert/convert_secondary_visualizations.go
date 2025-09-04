@@ -40,7 +40,7 @@ func ToChartSecondaryVisualization(in any) *chart.SecondaryVisualization {
 	}
 
 	if c, ok := opt["color"].(string); ok {
-		idx, ok := visual.NewColorPalette().ColorIndex(c)
+		idx, ok := visual.NewColorScalePalette().ColorIndex(c)
 		if ok {
 			viz.PaletteIndex = common.AsPointer(idx)
 		}

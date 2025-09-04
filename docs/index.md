@@ -10,6 +10,11 @@ The [Splunk Observability Cloud](https://www.splunk.com/en_us/products/observabi
 
 Use the navigation to learn more about the available resources.
 
+-> The next major release of the provider (v10) is will require a minimum Terraform version of 1.11.0. 
+Please prepare to migrate to a newer version of Terraform soon.
+This will allow the provider to handle secrets more securely and take advantage of new features in the Terraform Plugin Framework.
+
+
 # Learn about Splunk Observability Cloud
 
 To learn more about Splunk Observability Cloud and its features, see [the official documentation](https://docs.splunk.com/observability/en/).
@@ -97,9 +102,9 @@ provider "signalfx" {
 
 - `api_url` (String) API URL for your Splunk Observability Cloud org, may include a realm
 - `auth_token` (String) Splunk Observability Cloud auth token
-- `custom_app_url` (String) Application URL for your Splunk Observability Cloud org, often customized for organizations using SSO
+- `custom_app_url` (String, Deprecated) Application URL for your Splunk Observability Cloud org, often customized for organizations using SSO
 - `email` (String) Used to create a session token instead of an API token, it requires the account to be configured to login with Email and Password
-- `feature_preview` (Map of Boolean) Allows for users to opt-in to new features that are considered experimental or not ready for general availabilty yet.
+- `feature_preview` (Map of Boolean) Allows for users to opt-in to new features that are considered experimental or not ready for general availability yet.
 - `organization_id` (String) Required if the user is configured to be part of multiple organizations
 - `password` (String, Sensitive) Used to create a session token instead of an API token, it requires the account to be configured to login with Email and Password
 - `retry_max_attempts` (Number) Max retries for a single HTTP call. Defaults to 4

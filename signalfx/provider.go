@@ -61,6 +61,7 @@ func Provider() *schema.Provider {
 			"custom_app_url": {
 				Type:        schema.TypeString,
 				Optional:    true,
+				Deprecated:  "Remove the definition, the provider will automatically populate the custom app URL as needed",
 				DefaultFunc: schema.EnvDefaultFunc("SFX_CUSTOM_APP_URL", "https://app.signalfx.com"),
 				Description: "Application URL for your Splunk Observability Cloud org, often customized for organizations using SSO",
 			},
@@ -118,7 +119,7 @@ func Provider() *schema.Provider {
 					Type: schema.TypeBool,
 				},
 				Optional:    true,
-				Description: "Allows for users to opt-in to new features that are considered experimental or not ready for general availabilty yet.",
+				Description: "Allows for users to opt-in to new features that are considered experimental or not ready for general availability yet.",
 			},
 			"tags": {
 				Type: schema.TypeList,
@@ -182,6 +183,14 @@ func Provider() *schema.Provider {
 		ConfigureFunc: signalfxConfigure,
 	}
 
+	for _, res := range sfxProvider.ResourcesMap {
+		res = deprecatedMethodDecorator(res)
+	}
+
+	for _, ds := range sfxProvider.DataSourcesMap {
+		ds = deprecatedMethodDecorator(ds)
+	}
+
 	return sfxProvider
 }
 
@@ -232,12 +241,17 @@ func signalfxConfigure(data *schema.ResourceData) (interface{}, error) {
 	if url, ok := data.GetOk("api_url"); ok {
 		config.APIURL = url.(string)
 	}
-	if customAppURL, ok := data.GetOk("custom_app_url"); ok {
-		config.CustomAppURL = customAppURL.(string)
-	}
 
 	if err = config.Validate(); err != nil {
 		return nil, err
+	}
+
+	if site, err := config.DetectCustomAPPURL(context.TODO()); err != nil {
+		if app, ok := data.GetOk("custom_app_url"); ok {
+			config.CustomAppURL = app.(string)
+		}
+	} else {
+		config.CustomAppURL = site
 	}
 
 	netTransport := logging.NewTransport("SignalFx", &http.Transport{

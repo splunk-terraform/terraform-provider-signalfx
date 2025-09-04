@@ -359,7 +359,7 @@ func timeChartResource() *schema.Resource {
 							Type:             schema.TypeString,
 							Optional:         true,
 							Description:      "Base color theme to use for the graph.",
-							ValidateDiagFunc: check.ColorName(),
+							ValidateDiagFunc: check.ColorScaleName(),
 						},
 					},
 				},
@@ -378,7 +378,7 @@ func timeChartResource() *schema.Resource {
 						"color": &schema.Schema{
 							Type:             schema.TypeString,
 							Optional:         true,
-							Description:      "Color to use",
+							Description:      "The color to use. Must be one of gray, blue, azure, navy, brown, orange, yellow, magenta, red, pink, violet, purple, lilac, emerald, chartreuse, yellowgreen.",
 							ValidateDiagFunc: check.ColorName(),
 						},
 						"axis": &schema.Schema{
@@ -436,7 +436,7 @@ func timeChartResource() *schema.Resource {
 						"color": &schema.Schema{
 							Type:             schema.TypeString,
 							Optional:         true,
-							Description:      "Color to use",
+							Description:      "The color to use. Must be one of gray, blue, azure, navy, brown, orange, yellow, magenta, red, pink, violet, purple, lilac, emerald, chartreuse, yellowgreen.",
 							ValidateDiagFunc: check.ColorName(),
 						},
 						"display_name": &schema.Schema{
@@ -724,7 +724,7 @@ func getTimeChartOptions(d *schema.ResourceData) *chart.Options {
 				hOptions := histogramOptions.([]interface{})
 				hOption := hOptions[0].(map[string]interface{})
 				if colorTheme, ok := hOption["color_theme"].(string); ok {
-					pc := visual.NewColorPalette()
+					pc := visual.NewColorScalePalette()
 					if elem, ok := pc.ColorIndex(colorTheme); ok {
 						i := int32(elem)
 						options.HistogramChartOptions = &chart.HistogramChartOptions{

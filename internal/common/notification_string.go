@@ -22,6 +22,7 @@ const (
 	PagerDutyNotificationType        string = "PagerDuty"
 	ServiceNowNotificationType       string = "ServiceNow"
 	SlackNotificationType            string = "Slack"
+	SplunkPlatformNotificationType   string = "SplunkPlatform"
 	TeamNotificationType             string = "Team"
 	TeamEmailNotificationType        string = "TeamEmail"
 	VictorOpsNotificationType        string = "VictorOps"
@@ -100,6 +101,11 @@ func NewNotificationFromString(str string) (*notification.Notification, error) {
 			Type:         values[0],
 			CredentialId: values[1],
 			Channel:      values[2],
+		}
+	case SplunkPlatformNotificationType:
+		value = &notification.SplunkPlatformNotification{
+			Type:         values[0],
+			CredentialId: values[1],
 		}
 	case TeamNotificationType:
 		value = &notification.TeamNotification{

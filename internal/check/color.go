@@ -35,6 +35,26 @@ func ColorName() schema.SchemaValidateDiagFunc {
 	}
 }
 
+func ColorScaleName() schema.SchemaValidateDiagFunc {
+	return func(i any, p cty.Path) diag.Diagnostics {
+		s, ok := i.(string)
+		if !ok {
+			return tfext.AsErrorDiagnostics(
+				fmt.Errorf("expected %v to be of type string", i),
+				p,
+			)
+		}
+		cp := visual.NewColorScalePalette()
+		if _, exist := cp.ColorIndex(s); exist {
+			return nil
+		}
+		return tfext.AsErrorDiagnostics(
+			fmt.Errorf("value %q is not allowed; must be one of %v", s, cp.Names()),
+			p,
+		)
+	}
+}
+
 func ColorHexValue() schema.SchemaValidateDiagFunc {
 	return func(i any, p cty.Path) diag.Diagnostics {
 		s, ok := i.(string)

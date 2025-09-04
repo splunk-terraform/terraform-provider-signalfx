@@ -15,7 +15,7 @@ func TestColorPalette(t *testing.T) {
 
 	var (
 		cp   = NewColorPalette()
-		seen = make([]int, 22)
+		seen = make([]int, len(cp.Names()))
 	)
 
 	for _, name := range cp.Names() {
@@ -48,27 +48,28 @@ func TestHistoricalNames(t *testing.T) {
 	t.Parallel()
 
 	for _, name := range []string{
-		"red",
-		"gold",
-		"iris",
-		"jade",
 		"gray",
-		"azure",
 		"blue",
+		"azure",
 		"navy",
 		"brown",
 		"orange",
 		"yellow",
 		"magenta",
-		"purple",
+		"red",
 		"pink",
 		"violet",
+		"purple",
 		"lilac",
 		"emerald",
-		"green",
-		"aquamarine",
-		"yellowgreen",
 		"chartreuse",
+		"yellowgreen",
+		"gold",
+		"iris",
+		"green",
+		"jade",
+		"cerise",
+		"aquamarine",
 	} {
 		_, ok := NewColorPalette().ColorIndex(name)
 		assert.True(t, ok, "Must have the %q set as an option", name)

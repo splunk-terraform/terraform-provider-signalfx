@@ -147,6 +147,18 @@ func TestNewStringFromAPI(t *testing.T) {
 			errVal: "",
 		},
 		{
+			name: "splunk platform",
+			nt: &notification.Notification{
+				Type: SplunkPlatformNotificationType,
+				Value: &notification.SplunkPlatformNotification{
+					Type:         SplunkPlatformNotificationType,
+					CredentialId: "iii",
+				},
+			},
+			expect: "SplunkPlatform,iii",
+			errVal: "",
+		},
+		{
 			name: "team",
 			nt: &notification.Notification{
 				Type: TeamNotificationType,

@@ -39,7 +39,7 @@ resource "signalfx_list_chart" "mychartLX" {
 
 	color_scale {
 		lte = 40
-		color = "vivid_yellow"
+		color = "gold"
 	}
 
 	legend_options_fields {
@@ -85,7 +85,7 @@ resource "signalfx_list_chart" "mychartLX" {
 
 	color_scale {
 		lte = 40
-		color = "vivid_yellow"
+		color = "gold"
 	}
 
 	legend_options_fields {
