@@ -68,7 +68,7 @@ func (tr TimeRange) ParseDuration() (time.Duration, error) {
 			'd': 24 * time.Hour,
 			'w': 7 * 24 * time.Hour,
 		}
-		raw     = tr.StringValue.ValueString()
+		raw     = tr.ValueString()
 		partial time.Duration
 		total   time.Duration
 	)
@@ -124,7 +124,7 @@ func (tr TimeRange) StringSemanticEquals(ctx context.Context, newValuable basety
 	}
 
 	old, _ := tr.ParseDuration()
-	new, _ := nv.ParseDuration()
+	n, _ := nv.ParseDuration()
 
-	return old == new, diags
+	return old == n, diags
 }

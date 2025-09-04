@@ -51,7 +51,7 @@ func (TimeRangeParser) Run(ctx context.Context, req function.RunRequest, resp *f
 	if val, err := tr.ParseDuration(); err != nil {
 		resp.Error = function.ConcatFuncErrors(resp.Error, function.NewFuncError(err.Error()))
 	} else {
-		resp.Result.Set(ctx, val.Milliseconds())
+		resp.Error = function.ConcatFuncErrors(resp.Error, resp.Result.Set(ctx, val.Milliseconds()))
 	}
 
 }

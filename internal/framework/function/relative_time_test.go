@@ -9,8 +9,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/function"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	fwtypes "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/types"
 	"github.com/stretchr/testify/assert"
+
+	fwtypes "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/types"
 )
 
 func TestTimeRangeParser_Metadata(t *testing.T) {
