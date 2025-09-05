@@ -425,6 +425,10 @@ func singlevaluechartRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 	c, err := config.Client.GetChart(context.TODO(), d.Id())
 	if err != nil {
+		if isNotFoundError(err) {
+			d.SetId("")
+			return nil
+		}
 		return err
 	}
 

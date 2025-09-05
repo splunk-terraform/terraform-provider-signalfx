@@ -77,6 +77,10 @@ func slochartRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Di
 	config := meta.(*signalfxConfig)
 	sloChart, err := config.Client.GetChart(ctx, d.Id())
 	if err != nil {
+		if isNotFoundError(err) {
+			d.SetId("")
+			return nil
+		}
 		return diag.FromErr(err)
 	}
 
