@@ -322,7 +322,7 @@ func TestProviderConfigure(t *testing.T) {
 			p.Configure(
 				context.Background(),
 				provider.ConfigureRequest{
-					TerraformVersion: "1.0.0",
+					TerraformVersion: "1.11.0",
 					Config:           NewTestConfig(p, tc.data(t)),
 				},
 				resp,
@@ -368,7 +368,7 @@ func TestProviderConfigure(t *testing.T) {
 		p.Configure(
 			context.Background(),
 			provider.ConfigureRequest{
-				TerraformVersion: "1.0.0",
+				TerraformVersion: "1.12.0",
 				Config: NewTestConfig(p, map[string]tftypes.Value{
 					"api_url":    tftypes.NewValue(tftypes.String, "http://localhost"),
 					"auth_token": tftypes.NewValue(tftypes.String, "my-secret-token"),
@@ -395,7 +395,7 @@ func TestProviderConfigure(t *testing.T) {
 		p.Configure(
 			context.Background(),
 			provider.ConfigureRequest{
-				TerraformVersion: "1.0.0",
+				TerraformVersion: "1.12.0",
 				Config:           tfsdk.Config{Schema: schema.Schema},
 			},
 			resp,
@@ -407,6 +407,49 @@ func TestProviderConfigure(t *testing.T) {
 				diag.NewAttributeErrorDiagnostic(path.Empty(), "Internal Provider Error", "An expected error occurred while configuring the provider. Please report this issue to the provider developers."),
 			},
 			resp.Diagnostics,
+		)
+	})
+
+	t.Run("Unsupported Terraform version", func(t *testing.T) {
+		t.Parallel()
+
+		p := NewProvider("1.0.0")
+
+		schema := &provider.SchemaResponse{}
+		p.Schema(context.Background(), provider.SchemaRequest{}, schema)
+		assert.NotNil(t, schema.Schema, "Schema should not be nil")
+
+		resp := &provider.ConfigureResponse{}
+		p.Configure(
+			context.Background(),
+			provider.ConfigureRequest{
+				TerraformVersion: "1.0.0",
+				Config: NewTestConfig(p, map[string]tftypes.Value{
+					"api_url":    tftypes.NewValue(tftypes.String, "http://localhost"),
+					"auth_token": tftypes.NewValue(tftypes.String, "my-secret-token"),
+				}),
+			},
+			resp,
+		)
+		assert.Equal(
+			t,
+			diag.Diagnostics{
+				diag.NewWarningDiagnostic(
+					"Unsupported Terraform Version",
+					"In version 10.x of the SignalFx provider, the framework is adopting features that require the installed terraform version to be greater than 1.11.0 to function properly.\nPlease prepare to migrate to a newer version of terraform soon.",
+				),
+			},
+			resp.Diagnostics,
+		)
+
+		// cover bad provider details with unsupported version
+		p.Configure(
+			context.Background(),
+			provider.ConfigureRequest{
+				TerraformVersion: "no-a-version",
+				Config:           tfsdk.Config{Schema: schema.Schema},
+			},
+			resp,
 		)
 	})
 }

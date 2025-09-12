@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-retryablehttp"
+	"github.com/hashicorp/go-version"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/function"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -122,6 +123,16 @@ func (op *ollyProvider) Schema(ctx context.Context, req provider.SchemaRequest, 
 }
 
 func (op *ollyProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
+	if pv, err := version.NewVersion(req.TerraformVersion); err != nil {
+		tflog.Debug(ctx, "Unable to parse the terraform version used", tfext.ErrorLogFields(err))
+	} else if pv.LessThan(version.Must(version.NewVersion("1.11.0"))) {
+		resp.Diagnostics.AddWarning(
+			"Unsupported Terraform Version",
+			"In version 10.x of the SignalFx provider, the framework is adopting features that require the installed terraform version to be greater than 1.11.0 to function properly.\n"+
+				"Please prepare to migrate to a newer version of terraform soon.",
+		)
+	}
+
 	model := newDefaultOllyProviderModel()
 
 	if errs := req.Config.Get(ctx, model); errs.HasError() {
