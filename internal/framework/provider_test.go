@@ -473,14 +473,9 @@ func TestProviderValidateConfig(t *testing.T) {
 					"Missing API Endpoint",
 					"Field must be set to a valid endpoint for the Splunk Observability Cloud provider.",
 				),
-				diag.NewAttributeErrorDiagnostic(
-					path.Empty().
-						AtName("auth_token").
-						AtName("email").
-						AtName("password").
-						AtName("organization_id"),
+				diag.NewWarningDiagnostic(
 					"Missing Authentication Method",
-					"Either 'auth_token' or both 'email' and 'password' must be set for authentication.",
+					"Either 'auth_token' or both 'email' and 'password' must be set for authentication as part of the terraform configuration. Using external configuration methods will be deprecated in a future major release.",
 				),
 			},
 		},

@@ -309,7 +309,7 @@ func (op *ollyProvider) ValidateConfig(ctx context.Context, req provider.Validat
 	default:
 		resp.Diagnostics.AddWarning(
 			"Missing Authentication Method",
-			"Either 'auth_token' or both 'email' and 'password' must be set for authentication as part of the terraform configuration."+
+			"Either 'auth_token' or both 'email' and 'password' must be set for authentication as part of the terraform configuration. "+
 				"Using external configuration methods will be deprecated in a future major release.",
 		)
 	}
