@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -74,12 +75,13 @@ func (dt *DatasourceTopology) Schema(ctx context.Context, req datasource.SchemaR
 			"start_time": schema.StringAttribute{
 				Required:    true,
 				CustomType:  fwtypes.TimeRangeType{},
-				Description: "Start Time is the relative time range of how far to look back when querying for running services that instrumented and reporting data to APM.",
+				Description: "Start time allows for a relative lookback duration based on the current time of execution.",
 			},
 			"end_time": schema.StringAttribute{
-				Optional:    true,
-				CustomType:  fwtypes.TimeRangeType{},
-				Description: "Allows to set the exact time window for gathering existing services running",
+				Optional:   true,
+				CustomType: fwtypes.TimeRangeType{},
+				Description: "Allows to set the exact time window for gathering existing services running." +
+					"Note this is relative from the provided start time value. ie: [(now - start_time), (now - start_time + end_time)]",
 			},
 			"filters": schema.ListNestedAttribute{
 				Optional:    true,
@@ -105,11 +107,17 @@ func (dt *DatasourceTopology) Schema(ctx context.Context, req datasource.SchemaR
 						"exactly": schema.StringAttribute{
 							Optional:    true,
 							Description: "Exactly ensures that the key value explicitly matches the provided value, and sets the operator to equals",
+							Validators: []validator.String{
+								stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("matches")),
+							},
 						},
 						"matches": schema.ListAttribute{
 							Optional:    true,
 							ElementType: types.StringType,
 							Description: "Matches allows to provide a list of values to match against",
+							Validators: []validator.List{
+								listvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("exactly")),
+							},
 						},
 					},
 				},
@@ -170,6 +178,8 @@ func (dt *DatasourceTopology) Read(ctx context.Context, req datasource.ReadReque
 		return
 	}
 
+	// Converting to a positive duration if a negative value was provided
+	// to make it easier to reason in the error messages
 	if duration < 0 {
 		duration = -duration
 	}
@@ -204,15 +214,7 @@ func (dt *DatasourceTopology) Read(ctx context.Context, req datasource.ReadReque
 		TimeRange: fmt.Sprintf("%d/%d", begin.UnixMilli(), end.UnixMilli()),
 	}
 
-	for i, ft := range model.Filters {
-		if ft == nil {
-			resp.Diagnostics.AddAttributeError(
-				path.Root("filters").AtListIndex(i),
-				"Invalid Filter",
-				"Filter cannot be null",
-			)
-			return
-		}
+	for _, ft := range model.Filters {
 		switch {
 		case !ft.Exactly.IsNull() && !ft.Exactly.IsUnknown():
 			ask.TagFilters = append(ask.TagFilters, apm.TagFiltersInner{
@@ -232,7 +234,7 @@ func (dt *DatasourceTopology) Read(ctx context.Context, req datasource.ReadReque
 				InTagFilter: &apm.InTagFilter{
 					Name:     ft.Name.ValueString(),
 					Scope:    ft.Scope.ValueString(),
-					Operator: "matches",
+					Operator: "in",
 					Values:   matches,
 				},
 			})

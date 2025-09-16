@@ -14,8 +14,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/config"
 	resourcetest "github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
-	"github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/fwtest"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/fwtest"
 )
 
 func TestNewDatasourceTopology(t *testing.T) {
@@ -50,11 +51,14 @@ func TestDatasourceTopology(t *testing.T) {
 					topology := map[string]any{
 						"data": map[string]any{
 							"nodes": []map[string]any{
-								{"serviceName": "my-awesome-service", "infered": true},
+								{"serviceName": "my-awesome-service", "inferred": true},
+							},
+							"edges": []map[string]any{
+								{"fromNode": "service-a", "toNode": "service-b"},
 							},
 						},
 					}
-					json.NewEncoder(w).Encode(topology)
+					_ = json.NewEncoder(w).Encode(topology)
 				}),
 			},
 			steps: []resourcetest.TestStep{
@@ -76,18 +80,37 @@ func TestDatasourceTopology(t *testing.T) {
 					topology := map[string]any{
 						"data": map[string]any{
 							"nodes": []map[string]any{
-								{"serviceName": "my-awesome-service", "infered": true},
+								{"serviceName": "my-awesome-service", "inferred": true},
 							},
 						},
 					}
-					json.NewEncoder(w).Encode(topology)
+					_ = json.NewEncoder(w).Encode(topology)
 				}),
 			},
 			steps: []resourcetest.TestStep{
 				{
 					ConfigFile:  config.StaticFile("testdata/service_topology_misuse.tf"),
 					PlanOnly:    true,
-					ExpectError: regexp.MustCompile(".*"),
+					ExpectError: regexp.MustCompile("Error: Invalid Attribute Combination"),
+				},
+			},
+		},
+		{
+			name: "Too small of lookback period",
+			endpoints: map[string]http.Handler{
+				"POST /v2/apm/topology": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					http.Error(w, "Should not be called", http.StatusBadRequest)
+				}),
+			},
+			steps: []resourcetest.TestStep{
+				{
+					ConfigFile: config.StaticFile("testdata/service_topology_bad_lookback.tf"),
+					ConfigPlanChecks: resourcetest.ConfigPlanChecks{
+						PostApplyPreRefresh: []plancheck.PlanCheck{
+							plancheck.ExpectNonEmptyPlan(),
+						},
+					},
+					ExpectError: regexp.MustCompile("Error: Invalid Time Range"),
 				},
 			},
 		},
