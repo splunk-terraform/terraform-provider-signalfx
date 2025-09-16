@@ -6,3 +6,9 @@ data "signalfx_apm_service_topology" "production" {
   ]
 }
 
+output "nodes" {
+  value = data.signalfx_apm_service_topology.production.nodes
+}
+output "edges" {
+  value = data.signalfx_apm_service_topology.production.edges
+}

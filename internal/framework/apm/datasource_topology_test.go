@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-testing/config"
 	resourcetest "github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/stretchr/testify/assert"
 
@@ -58,7 +59,9 @@ func TestDatasourceTopology(t *testing.T) {
 							},
 						},
 					}
-					_ = json.NewEncoder(w).Encode(topology)
+					if err := json.NewEncoder(w).Encode(topology); err != nil {
+						http.Error(w, err.Error(), http.StatusInternalServerError)
+					}
 				}),
 			},
 			steps: []resourcetest.TestStep{
@@ -66,7 +69,8 @@ func TestDatasourceTopology(t *testing.T) {
 					ConfigFile: config.StaticFile("testdata/service_topology_example.tf"),
 					ConfigPlanChecks: resourcetest.ConfigPlanChecks{
 						PostApplyPreRefresh: []plancheck.PlanCheck{
-							plancheck.ExpectNonEmptyPlan(),
+							plancheck.ExpectKnownOutputValue("nodes", knownvalue.NotNull()),
+							plancheck.ExpectKnownOutputValue("edges", knownvalue.NotNull()),
 						},
 					},
 				},
@@ -84,7 +88,9 @@ func TestDatasourceTopology(t *testing.T) {
 							},
 						},
 					}
-					_ = json.NewEncoder(w).Encode(topology)
+					if err := json.NewEncoder(w).Encode(topology); err != nil {
+						http.Error(w, err.Error(), http.StatusInternalServerError)
+					}
 				}),
 			},
 			steps: []resourcetest.TestStep{
