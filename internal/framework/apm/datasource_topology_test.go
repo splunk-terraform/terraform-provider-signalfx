@@ -113,7 +113,7 @@ func TestDatasourceTopology(t *testing.T) {
 					ConfigFile: config.StaticFile("testdata/service_topology_bad_lookback.tf"),
 					ConfigPlanChecks: resourcetest.ConfigPlanChecks{
 						PostApplyPreRefresh: []plancheck.PlanCheck{
-							plancheck.ExpectNonEmptyPlan(),
+							plancheck.ExpectEmptyPlan(),
 						},
 					},
 					ExpectError: regexp.MustCompile("Error: Invalid Time Range"),
