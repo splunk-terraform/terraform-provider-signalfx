@@ -5,7 +5,6 @@ package signalfx
 
 import (
 	"fmt"
-	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/signalfx/signalfx-go"
@@ -45,15 +44,6 @@ func wrapDeprecatedMethod[Func schema.CreateFunc | schema.UpdateFunc | schema.Re
 		rerr, ok := signalfx.AsResponseError(err)
 		if !ok {
 			return err
-		}
-		// HACK(MovieStoreGuy):
-		// By default, if a resource is externally deleted,
-		// it should be removed from the state file
-		// Since the deprecated methods treat a returned error as a failures,
-		// the error is suppressed here and should encourage the user to try again.
-		if rerr.Code() == http.StatusNotFound {
-			data.SetId("")
-			return nil
 		}
 
 		// Include the API response details as a part of the returned error

@@ -6,12 +6,10 @@ package signalfx
 import (
 	"fmt"
 	"math"
-	"net/http"
 	"net/url"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	sfxgo "github.com/signalfx/signalfx-go"
 	chart "github.com/signalfx/signalfx-go/chart"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/convert"
 )
@@ -135,9 +133,4 @@ func validateSecondaryVisualization(v interface{}, k string) (we []string, error
 	}
 	errors = append(errors, fmt.Errorf("%s not allowed; must be one of: %s", value, strings.Join(allowedWords, ", ")))
 	return
-}
-
-func isNotFoundError(err error) bool {
-	sfxRespErr, ok := err.(*sfxgo.ResponseError)
-	return ok && sfxRespErr.Code() == http.StatusNotFound
 }

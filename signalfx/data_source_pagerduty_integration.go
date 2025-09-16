@@ -38,6 +38,7 @@ func dataSourcePagerDutyIntegrationRead(d *schema.ResourceData, meta interface{}
 
 	if int == nil {
 		d.SetId("")
+
 		return nil
 	}
 

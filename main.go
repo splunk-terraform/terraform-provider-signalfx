@@ -9,10 +9,9 @@ import (
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
-	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
-	"github.com/hashicorp/terraform-plugin-go/tfprotov6/tf6server"
-	"github.com/hashicorp/terraform-plugin-mux/tf5to6server"
-	"github.com/hashicorp/terraform-plugin-mux/tf6muxserver"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov5/tf5server"
+	"github.com/hashicorp/terraform-plugin-mux/tf5muxserver"
 
 	internalframework "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework"
 	"github.com/splunk-terraform/terraform-provider-signalfx/signalfx"
@@ -31,33 +30,22 @@ var (
 func main() {
 	flag.Parse()
 
-	upgrader, err := tf5to6server.UpgradeServer(
-		context.Background(),
+	providers := []func() tfprotov5.ProviderServer{
+		providerserver.NewProtocol5(internalframework.NewProvider(Version)),
 		signalfx.Provider().GRPCProvider, // Provider to be sunset during the migration of 10.x
-	)
+	}
 
+	mux, err := tf5muxserver.NewMuxServer(context.Background(), providers...)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	providers := []func() tfprotov6.ProviderServer{
-		providerserver.NewProtocol6(internalframework.NewProvider(Version)),
-		func() tfprotov6.ProviderServer {
-			return upgrader
-		},
-	}
-
-	mux, err := tf6muxserver.NewMuxServer(context.Background(), providers...)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	var opts []tf6server.ServeOpt
+	var opts []tf5server.ServeOpt
 	if *debug {
-		opts = append(opts, tf6server.WithManagedDebug())
+		opts = append(opts, tf5server.WithManagedDebug())
 	}
 
-	if err = tf6server.Serve(ProviderRegistry, mux.ProviderServer, opts...); err != nil {
+	if err = tf5server.Serve(ProviderRegistry, mux.ProviderServer, opts...); err != nil {
 		log.Fatal(err)
 	}
 }
