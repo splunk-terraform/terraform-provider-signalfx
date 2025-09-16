@@ -24,6 +24,7 @@ import (
 	"github.com/signalfx/signalfx-go"
 
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/feature"
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/apm"
 	internalfunction "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/function"
 	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
 	tfext "github.com/splunk-terraform/terraform-provider-signalfx/internal/tfextension"
@@ -268,8 +269,9 @@ func (op *ollyProvider) Configure(ctx context.Context, req provider.ConfigureReq
 }
 
 func (op *ollyProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
-	// To implement: Register data sources.
-	return nil
+	return []func() datasource.DataSource{
+		apm.NewDatasourceTopology,
+	}
 }
 
 func (op *ollyProvider) Resources(ctx context.Context) []func() resource.Resource {
