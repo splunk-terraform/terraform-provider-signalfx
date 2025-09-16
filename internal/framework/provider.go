@@ -307,15 +307,10 @@ func (op *ollyProvider) ValidateConfig(ctx context.Context, req provider.Validat
 		!model.OrganizationID.IsNull():
 		tflog.Debug(ctx, "Using email and password for authentication")
 	default:
-		p := path.Empty().
-			AtName("auth_token").
-			AtName("email").
-			AtName("password").
-			AtName("organization_id")
-		resp.Diagnostics.AddAttributeError(
-			p,
+		resp.Diagnostics.AddWarning(
 			"Missing Authentication Method",
-			"Either 'auth_token' or both 'email' and 'password' must be set for authentication.",
+			"Either 'auth_token' or both 'email' and 'password' must be set for authentication as part of the terraform configuration. "+
+				"Using external configuration methods will be deprecated in a future major release.",
 		)
 	}
 }
