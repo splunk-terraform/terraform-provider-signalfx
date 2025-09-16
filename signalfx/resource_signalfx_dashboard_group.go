@@ -554,10 +554,6 @@ func dashboardgroupRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 	dg, err := config.Client.GetDashboardGroup(context.TODO(), d.Id())
 	if err != nil {
-		if isNotFoundError(err) {
-			d.SetId("")
-			return nil
-		}
 		return err
 	}
 

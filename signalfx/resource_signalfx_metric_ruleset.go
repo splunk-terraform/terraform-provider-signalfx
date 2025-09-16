@@ -311,10 +311,6 @@ func metricRulesetRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 	metricRulesetResp, err := config.Client.GetMetricRuleset(context.TODO(), d.Id())
 	if err != nil {
-		if isNotFoundError(err) {
-			d.SetId("")
-			return nil
-		}
 		return err
 	}
 

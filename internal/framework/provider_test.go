@@ -10,7 +10,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
@@ -116,20 +115,7 @@ func TestProviderDataSources(t *testing.T) {
 
 	p := NewProvider("1.0.0")
 
-	expect := map[string]struct{}{
-		"signalfx_apm_service_topology": {},
-	}
-
-	actual := p.DataSources(context.Background())
-	assert.Len(t, actual, len(expect), "Must return expected number of data sources")
-
-	for _, ds := range actual {
-		var (
-			resp = &datasource.MetadataResponse{}
-		)
-		ds().Metadata(context.Background(), datasource.MetadataRequest{ProviderTypeName: "signalfx"}, resp)
-		assert.Contains(t, expect, resp.TypeName, "Data source %s must be expected", resp.TypeName)
-	}
+	assert.Empty(t, p.DataSources(context.Background()), "Must not return any values")
 }
 
 func TestProviderResource(t *testing.T) {

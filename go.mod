@@ -10,9 +10,7 @@ require (
 	github.com/go-git/go-git/v5 v5.16.2
 	github.com/hashicorp/go-cty v1.5.0
 	github.com/hashicorp/go-retryablehttp v0.7.8
-	github.com/hashicorp/go-version v1.7.0
 	github.com/hashicorp/terraform-plugin-framework v1.15.1
-	github.com/hashicorp/terraform-plugin-framework-validators v0.18.0
 	github.com/hashicorp/terraform-plugin-go v0.28.0
 	github.com/hashicorp/terraform-plugin-log v0.9.0
 	github.com/hashicorp/terraform-plugin-mux v0.20.0
@@ -21,7 +19,6 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/signalfx/signalfx-go v1.52.0
 	github.com/stretchr/testify v1.11.1
-	github.com/tilinna/clock v1.1.0
 	go.uber.org/multierr v1.11.0
 )
 
@@ -47,6 +44,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/go-plugin v1.6.3 // indirect
 	github.com/hashicorp/go-uuid v1.0.3 // indirect
+	github.com/hashicorp/go-version v1.7.0 // indirect
 	github.com/hashicorp/hc-install v0.9.2 // indirect
 	github.com/hashicorp/hcl/v2 v2.23.0 // indirect
 	github.com/hashicorp/logutils v1.0.0 // indirect
