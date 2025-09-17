@@ -27,8 +27,8 @@ type OllyProviderModel struct {
 
 func newDefaultOllyProviderModel() *OllyProviderModel {
 	return &OllyProviderModel{
-		AuthToken:           NewStringFromEnvironment("SFX_AUTH_TOKEN"),
-		APIURL:              NewStringFromEnvironment("SFX_API_URL"),
+		AuthToken:           types.StringNull(),
+		APIURL:              types.StringNull(),
 		CustomAppURL:        types.StringNull(),
 		TimeoutSeconds:      types.Int64Value(60),
 		RetryMaxAttempts:    types.Int32Value(5),
@@ -43,9 +43,25 @@ func newDefaultOllyProviderModel() *OllyProviderModel {
 	}
 }
 
-func NewStringFromEnvironment(envvar string) types.String {
-	if val, ok := os.LookupEnv(envvar); ok {
-		return types.StringValue(val)
+// EnsureDefaults sets the default values for the provider model fields if they are not already set.
+// This is due to the fact that the Terraform Framework does not support default values for provider schema attributes.
+func (model *OllyProviderModel) EnsureDefaults() {
+	if data, ok := os.LookupEnv("SFX_AUTH_TOKEN"); ok && model.AuthToken.IsNull() {
+		model.AuthToken = types.StringValue(data)
 	}
-	return types.StringNull()
+	if data, ok := os.LookupEnv("SFX_API_URL"); ok && model.APIURL.IsNull() {
+		model.APIURL = types.StringValue(data)
+	}
+	if model.TimeoutSeconds.IsNull() {
+		model.TimeoutSeconds = types.Int64Value(60)
+	}
+	if model.RetryMaxAttempts.IsNull() {
+		model.RetryMaxAttempts = types.Int32Value(5)
+	}
+	if model.RetryWaitMinSeconds.IsNull() {
+		model.RetryWaitMinSeconds = types.Int64Value(1)
+	}
+	if model.RetryWaitMaxSeconds.IsNull() {
+		model.RetryWaitMaxSeconds = types.Int64Value(10)
+	}
 }

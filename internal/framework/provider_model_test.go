@@ -10,35 +10,74 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNewStringFromEnvironment(t *testing.T) {
+func TestModelEnsureDefaults(t *testing.T) {
 
 	for _, tc := range []struct {
-		name   string
-		env    map[string]string
-		expect types.String
+		name     string
+		model    *OllyProviderModel
+		env      map[string]string
+		expected *OllyProviderModel
 	}{
 		{
-			name:   "missing env var",
-			env:    map[string]string{},
-			expect: types.StringNull(),
+			name:  "no env, no defaults set",
+			model: &OllyProviderModel{},
+			env:   map[string]string{},
+			expected: &OllyProviderModel{
+				AuthToken:           types.StringNull(),
+				APIURL:              types.StringNull(),
+				TimeoutSeconds:      types.Int64Value(60),
+				RetryMaxAttempts:    types.Int32Value(5),
+				RetryWaitMinSeconds: types.Int64Value(1),
+				RetryWaitMaxSeconds: types.Int64Value(10),
+			},
 		},
 		{
-			name:   "empty env var",
-			env:    map[string]string{"TEST_ENVVAR": ""},
-			expect: types.StringValue(""),
+			name:  "environment variables set, no defaults set",
+			model: &OllyProviderModel{},
+			env: map[string]string{
+				"SFX_AUTH_TOKEN": "test-auth-token",
+				"SFX_API_URL":    "https://example.com",
+			},
+			expected: &OllyProviderModel{
+				AuthToken:           types.StringValue("test-auth-token"),
+				APIURL:              types.StringValue("https://example.com"),
+				TimeoutSeconds:      types.Int64Value(60),
+				RetryMaxAttempts:    types.Int32Value(5),
+				RetryWaitMinSeconds: types.Int64Value(1),
+				RetryWaitMaxSeconds: types.Int64Value(10),
+			},
 		},
 		{
-			name:   "set env var",
-			env:    map[string]string{"TEST_ENVVAR": "some-value"},
-			expect: types.StringValue("some-value"),
+			name: "values are defined",
+			model: &OllyProviderModel{
+				AuthToken:           types.StringValue("defined-auth-token"),
+				APIURL:              types.StringValue("https://example.com"),
+				TimeoutSeconds:      types.Int64Value(120),
+				RetryMaxAttempts:    types.Int32Value(10),
+				RetryWaitMinSeconds: types.Int64Value(2),
+				RetryWaitMaxSeconds: types.Int64Value(20),
+			},
+			env: map[string]string{
+				"SFX_AUTH_TOKEN": "test-auth-token",
+				"SFX_API_URL":    "https://example.com/v2",
+			},
+			expected: &OllyProviderModel{
+				AuthToken:           types.StringValue("defined-auth-token"),
+				APIURL:              types.StringValue("https://example.com"),
+				TimeoutSeconds:      types.Int64Value(120),
+				RetryMaxAttempts:    types.Int32Value(10),
+				RetryWaitMinSeconds: types.Int64Value(2),
+				RetryWaitMaxSeconds: types.Int64Value(20),
+			},
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			for k, v := range tc.env {
 				t.Setenv(k, v)
 			}
-			actual := NewStringFromEnvironment("TEST_ENVVAR")
-			assert.Equal(t, tc.expect, actual, "Must match the expected value")
+
+			tc.model.EnsureDefaults()
+			assert.Equal(t, tc.expected, tc.model)
 		})
 	}
 }
