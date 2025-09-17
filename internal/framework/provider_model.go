@@ -3,7 +3,11 @@
 
 package internalframework
 
-import "github.com/hashicorp/terraform-plugin-framework/types"
+import (
+	"os"
+
+	"github.com/hashicorp/terraform-plugin-framework/types"
+)
 
 type OllyProviderModel struct {
 	APIURL              types.String `tfsdk:"api_url"`
@@ -36,5 +40,28 @@ func newDefaultOllyProviderModel() *OllyProviderModel {
 		FeaturePreview:      types.MapNull(types.BoolType),
 		Tags:                types.ListNull(types.StringType),
 		Teams:               types.ListNull(types.StringType),
+	}
+}
+
+// init sets the default values for the provider model fields if they are not already set.
+// This is due to the fact that the Terraform Framework does not support default values for provider schema attributes.
+func (model *OllyProviderModel) init() {
+	if data, ok := os.LookupEnv("SFX_AUTH_TOKEN"); ok && model.AuthToken.IsNull() {
+		model.AuthToken = types.StringValue(data)
+	}
+	if data, ok := os.LookupEnv("SFX_API_URL"); ok && model.APIURL.IsNull() {
+		model.APIURL = types.StringValue(data)
+	}
+	if model.TimeoutSeconds.IsNull() {
+		model.TimeoutSeconds = types.Int64Value(60)
+	}
+	if model.RetryMaxAttempts.IsNull() {
+		model.RetryMaxAttempts = types.Int32Value(5)
+	}
+	if model.RetryWaitMinSeconds.IsNull() {
+		model.RetryWaitMinSeconds = types.Int64Value(1)
+	}
+	if model.RetryWaitMaxSeconds.IsNull() {
+		model.RetryWaitMaxSeconds = types.Int64Value(10)
 	}
 }
