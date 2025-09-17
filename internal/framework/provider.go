@@ -148,6 +148,8 @@ func (op *ollyProvider) Configure(ctx context.Context, req provider.ConfigureReq
 		return
 	}
 
+	model.init()
+
 	meta := &pmeta.Meta{
 		Registry:       op.features,
 		Email:          model.Email.ValueString(),
@@ -292,6 +294,8 @@ func (op *ollyProvider) ValidateConfig(ctx context.Context, req provider.Validat
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	model.init()
 
 	if model.APIURL.IsNull() {
 		resp.Diagnostics.AddAttributeError(
