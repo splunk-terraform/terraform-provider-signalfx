@@ -400,6 +400,10 @@ func dataLinkRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 	dl, err := config.Client.GetDataLink(context.TODO(), d.Id())
 	if err != nil {
+		if isNotFoundError(err) {
+			d.SetId("")
+			return nil
+		}
 		return err
 	}
 
