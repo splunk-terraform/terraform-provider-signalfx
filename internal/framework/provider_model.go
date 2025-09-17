@@ -3,7 +3,11 @@
 
 package internalframework
 
-import "github.com/hashicorp/terraform-plugin-framework/types"
+import (
+	"os"
+
+	"github.com/hashicorp/terraform-plugin-framework/types"
+)
 
 type OllyProviderModel struct {
 	APIURL              types.String `tfsdk:"api_url"`
@@ -23,8 +27,8 @@ type OllyProviderModel struct {
 
 func newDefaultOllyProviderModel() *OllyProviderModel {
 	return &OllyProviderModel{
-		AuthToken:           types.StringNull(),
-		APIURL:              types.StringNull(),
+		AuthToken:           NewStringFromEnvironment("SFX_AUTH_TOKEN"),
+		APIURL:              NewStringFromEnvironment("SFX_API_URL"),
 		CustomAppURL:        types.StringNull(),
 		TimeoutSeconds:      types.Int64Value(60),
 		RetryMaxAttempts:    types.Int32Value(5),
@@ -37,4 +41,11 @@ func newDefaultOllyProviderModel() *OllyProviderModel {
 		Tags:                types.ListNull(types.StringType),
 		Teams:               types.ListNull(types.StringType),
 	}
+}
+
+func NewStringFromEnvironment(envvar string) types.String {
+	if val, ok := os.LookupEnv(envvar); ok {
+		return types.StringValue(val)
+	}
+	return types.StringNull()
 }
