@@ -148,7 +148,7 @@ func (op *ollyProvider) Configure(ctx context.Context, req provider.ConfigureReq
 		return
 	}
 
-	model.EnsureDefaults()
+	model.init()
 
 	meta := &pmeta.Meta{
 		Registry:       op.features,
@@ -295,7 +295,7 @@ func (op *ollyProvider) ValidateConfig(ctx context.Context, req provider.Validat
 		return
 	}
 
-	model.EnsureDefaults()
+	model.init()
 
 	if model.APIURL.IsNull() {
 		resp.Diagnostics.AddAttributeError(

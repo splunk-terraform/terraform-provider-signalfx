@@ -76,7 +76,7 @@ func TestModelEnsureDefaults(t *testing.T) {
 				t.Setenv(k, v)
 			}
 
-			tc.model.EnsureDefaults()
+			tc.model.init()
 			assert.Equal(t, tc.expected, tc.model)
 		})
 	}

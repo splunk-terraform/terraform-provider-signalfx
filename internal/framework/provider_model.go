@@ -43,9 +43,9 @@ func newDefaultOllyProviderModel() *OllyProviderModel {
 	}
 }
 
-// EnsureDefaults sets the default values for the provider model fields if they are not already set.
+// init sets the default values for the provider model fields if they are not already set.
 // This is due to the fact that the Terraform Framework does not support default values for provider schema attributes.
-func (model *OllyProviderModel) EnsureDefaults() {
+func (model *OllyProviderModel) init() {
 	if data, ok := os.LookupEnv("SFX_AUTH_TOKEN"); ok && model.AuthToken.IsNull() {
 		model.AuthToken = types.StringValue(data)
 	}
