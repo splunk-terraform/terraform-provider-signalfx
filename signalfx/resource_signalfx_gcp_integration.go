@@ -76,12 +76,12 @@ func integrationGCPResource() *schema.Resource {
 						},
 					},
 				},
+				ConflictsWith: []string{"project_wif_configs"},
 			},
 			"project_wif_configs": {
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "GCP WIF configs",
-				Sensitive:   true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"project_id": {
@@ -89,9 +89,40 @@ func integrationGCPResource() *schema.Resource {
 							Required: true,
 						},
 						"wif_config": {
-							Type:      schema.TypeString,
-							Required:  true,
-							Sensitive: true,
+							Type:     schema.TypeString,
+							Required: true,
+						},
+					},
+				},
+				ConflictsWith: []string{"project_service_keys"},
+			},
+			"workload_identity_federation_config": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				Description:   "Workload Identity Federation configuration JSON",
+				ConflictsWith: []string{"project_service_keys", "project_wif_configs"},
+			},
+			"projects": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				MaxItems:    1,
+				Description: "GCP projects configuration",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"sync_mode": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							ValidateFunc: validateSyncMode,
+							Default:      "SELECTED",
+							Description:  "What mode of synchronizing projects should be used. Sync all tries to synchronize metrics and metadata from all discoverable projects.",
+						},
+						"selected_project_ids": {
+							Type:     schema.TypeSet,
+							Optional: true,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+							Description: "List of project IDs to synchronize metrics and metadata from. Use only if you don't want to automatically synchronize all projects.",
 						},
 					},
 				},
@@ -210,6 +241,34 @@ func getGCPPayloadIntegration(d *schema.ResourceData) *integration.GCPIntegratio
 		gcp.WifConfigs = wifConfigs
 	}
 
+	if val, ok := d.GetOk("workload_identity_federation_config"); ok {
+		gcp.WorkloadIdentityFederationConfig = val.(string)
+	}
+
+	if val, ok := d.GetOk("projects"); ok {
+		projects := &integration.GCPProjects{}
+		projectsList := val.([]any)
+		if len(projectsList) > 0 {
+			projectsConfig := projectsList[0].(map[string]any)
+
+			if syncMode, exists := projectsConfig["sync_mode"]; exists && syncMode != nil {
+				projects.SyncMode = integration.SyncMode(syncMode.(string))
+			}
+
+			if selectedProjects, exists := projectsConfig["selected_project_ids"]; exists && selectedProjects != nil {
+				if projectSet, ok := selectedProjects.(*schema.Set); ok {
+					projectList := projectSet.List()
+					projectIds := make([]string, len(projectList))
+					for i, project := range projectList {
+						projectIds[i] = project.(string)
+					}
+					projects.SelectedProjectIds = projectIds
+				}
+			}
+		}
+		gcp.Projects = projects
+	}
+
 	if val, ok := d.GetOk("include_list"); ok {
 		gcp.IncludeList = convert.SchemaListAll(val, convert.ToString)
 	}
@@ -269,6 +328,31 @@ func gcpIntegrationAPIToTF(d *schema.ResourceData, gcp *integration.GCPIntegrati
 			return fmt.Errorf("error unsetting project_wif_configs: %w", err)
 		}
 	}
+
+	if err := d.Set("workload_identity_federation_config", gcp.WorkloadIdentityFederationConfig); err != nil {
+		return fmt.Errorf("error setting workload_identity_federation_config: %w", err)
+	}
+
+	// Set projects field as a list with proper handling of selected_project_ids as a set
+	projectsConfig := map[string]any{
+		"sync_mode": string(gcp.Projects.SyncMode),
+	}
+
+	if len(gcp.Projects.SelectedProjectIds) > 0 {
+		projectIds := make([]any, len(gcp.Projects.SelectedProjectIds))
+		for i, id := range gcp.Projects.SelectedProjectIds {
+			projectIds[i] = id
+		}
+		projectsConfig["selected_project_ids"] = schema.NewSet(schema.HashString, projectIds)
+	} else {
+		projectsConfig["selected_project_ids"] = schema.NewSet(schema.HashString, []any{})
+	}
+
+	projectsList := []any{projectsConfig}
+	if err := d.Set("projects", projectsList); err != nil {
+		return fmt.Errorf("error setting projects: %w", err)
+	}
+
 	if err := d.Set("wif_splunk_identity", gcp.WifSplunkIdentity); err != nil {
 		return err
 	}
@@ -346,4 +430,12 @@ func convertWifConfigsToMap(wifConfigs []*integration.GCPProjectWIFConfig) []map
 		}
 	}
 	return result
+}
+
+func validateSyncMode(v any, _ string) (we []string, errors []error) {
+	value := v.(string)
+	if value != string(integration.ALL_REACHABLE) && value != string(integration.SELECTED) {
+		errors = append(errors, fmt.Errorf("%s not allowed; sync mode must be one of %s or %s", value, integration.ALL_REACHABLE, integration.SELECTED))
+	}
+	return
 }
