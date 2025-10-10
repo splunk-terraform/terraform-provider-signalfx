@@ -779,6 +779,10 @@ func timechartRead(d *schema.ResourceData, meta interface{}) error {
 
 	c, err := config.Client.GetChart(context.TODO(), d.Id())
 	if err != nil {
+		if isNotFoundError(err) {
+			d.SetId("")
+			return nil
+		}
 		return err
 	}
 

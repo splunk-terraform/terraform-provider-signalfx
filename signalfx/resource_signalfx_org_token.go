@@ -359,6 +359,10 @@ func orgTokenRead(d *schema.ResourceData, meta interface{}) error {
 	fmt.Printf("[DEBUG] SignalFx: Looking for org token %s\n", d.Id())
 	t, err := config.Client.GetOrgToken(context.TODO(), d.Id())
 	if err != nil {
+		if isNotFoundError(err) {
+			d.SetId("")
+			return nil
+		}
 		return err
 	}
 
