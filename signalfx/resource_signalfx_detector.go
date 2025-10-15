@@ -568,8 +568,9 @@ func detectorRead(d *schema.ResourceData, meta any) error {
 	config := meta.(*signalfxConfig)
 	det, err := config.Client.GetDetector(context.TODO(), d.Id())
 	if err != nil {
-		if strings.Contains(err.Error(), "404") {
+		if isNotFoundError(err) {
 			d.SetId("")
+			return nil
 		}
 		return err
 	}
