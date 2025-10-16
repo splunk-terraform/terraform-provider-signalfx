@@ -15,7 +15,7 @@ import (
 
 func handleIntegrationRead(err error, d *schema.ResourceData) bool {
 	if err != nil {
-		if strings.Contains(err.Error(), "404") {
+		if isNotFoundError(err) {
 			d.SetId("")
 		}
 		return false

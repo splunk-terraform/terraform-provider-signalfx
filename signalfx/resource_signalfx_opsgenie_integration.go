@@ -64,8 +64,9 @@ func integrationOpsgenieRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 	int, err := config.Client.GetOpsgenieIntegration(context.TODO(), d.Id())
 	if err != nil {
-		if strings.Contains(err.Error(), "404") {
+		if isNotFoundError(err) {
 			d.SetId("")
+			return nil
 		}
 		return err
 	}
