@@ -272,8 +272,9 @@ func integrationAWSRead(d *schema.ResourceData, meta any) error {
 
 	int, err := config.Client.GetAWSCloudWatchIntegration(context.TODO(), d.Get("integration_id").(string))
 	if err != nil {
-		if strings.Contains(err.Error(), "404") {
+		if isNotFoundError(err) {
 			d.SetId("")
+			return nil
 		}
 		return err
 	}
