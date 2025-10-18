@@ -185,6 +185,7 @@ func alertMutingRuleCreate(d *schema.ResourceData, meta interface{}) error {
 
 func alertMutingRuleRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
+
 	amr, err := config.Client.GetAlertMutingRule(context.TODO(), d.Id())
 	if err != nil {
 		if isNotFoundError(err) {

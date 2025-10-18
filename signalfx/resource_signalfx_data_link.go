@@ -398,6 +398,7 @@ func dataLinkAPIToTF(d *schema.ResourceData, dl *datalink.DataLink) error {
 
 func dataLinkRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
+
 	dl, err := config.Client.GetDataLink(context.TODO(), d.Id())
 	if err != nil {
 		if isNotFoundError(err) {

@@ -16,6 +16,7 @@ import (
 
 func IntegrationAWSRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
+
 	int, err := config.Client.GetAWSCloudWatchIntegration(context.TODO(), d.Id())
 	if err != nil {
 		if isNotFoundError(err) {

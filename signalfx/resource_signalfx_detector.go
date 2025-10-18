@@ -566,6 +566,7 @@ func detectorCreate(d *schema.ResourceData, meta any) error {
 
 func detectorRead(d *schema.ResourceData, meta any) error {
 	config := meta.(*signalfxConfig)
+
 	det, err := config.Client.GetDetector(context.TODO(), d.Id())
 	if err != nil {
 		if isNotFoundError(err) {
