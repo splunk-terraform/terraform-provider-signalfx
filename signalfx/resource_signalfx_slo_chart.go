@@ -75,6 +75,7 @@ func slochartAPIToTF(d *schema.ResourceData, c *chart.Chart) diag.Diagnostics {
 
 func slochartRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	config := meta.(*signalfxConfig)
+
 	sloChart, err := config.Client.GetChart(ctx, d.Id())
 	if err != nil {
 		if isNotFoundError(err) {

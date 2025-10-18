@@ -173,6 +173,7 @@ func integrationGCPResource() *schema.Resource {
 
 func integrationGCPRead(d *schema.ResourceData, meta any) error {
 	config := meta.(*signalfxConfig)
+
 	int, err := config.Client.GetGCPIntegration(context.TODO(), d.Id())
 	if err != nil {
 		if isNotFoundError(err) {

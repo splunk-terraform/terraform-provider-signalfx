@@ -132,7 +132,11 @@ func integrationServiceNowRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 
 	in, err := config.Client.GetServiceNowIntegration(context.TODO(), d.Id())
-	if !handleIntegrationRead(err, d) {
+	if err != nil {
+		if isNotFoundError(err) {
+			d.SetId("")
+			return nil
+		}
 		return err
 	}
 	logIntegrationResponse(in, serviceNowIntegrationName)

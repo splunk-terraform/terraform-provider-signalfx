@@ -55,6 +55,7 @@ func getVictorOpsPayloadIntegration(d *schema.ResourceData) *integration.VictorO
 
 func integrationVictorOpsRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
+
 	int, err := config.Client.GetVictorOpsIntegration(context.TODO(), d.Id())
 	if err != nil {
 		if isNotFoundError(err) {
