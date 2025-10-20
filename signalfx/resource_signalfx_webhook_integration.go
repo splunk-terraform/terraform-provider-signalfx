@@ -108,6 +108,7 @@ func getWebhookPayloadIntegration(d *schema.ResourceData) *integration.WebhookIn
 
 func integrationWebhookRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
+
 	int, err := config.Client.GetWebhookIntegration(context.TODO(), d.Id())
 	if err != nil {
 		if isNotFoundError(err) {

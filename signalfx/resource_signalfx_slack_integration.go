@@ -56,6 +56,7 @@ func getSlackPayloadIntegration(d *schema.ResourceData) *integration.SlackIntegr
 
 func integrationSlackRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
+
 	int, err := config.Client.GetSlackIntegration(context.TODO(), d.Id())
 	if err != nil {
 		if isNotFoundError(err) {
