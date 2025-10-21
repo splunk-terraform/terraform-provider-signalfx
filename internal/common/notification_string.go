@@ -130,23 +130,17 @@ func NewNotificationFromString(str string) (*notification.Notification, error) {
 		if count != 4 {
 			return nil, fmt.Errorf("invalid Webhook notification string, please consult the documentation (not enough parts)")
 		}
-		if values[1] != "" {
-			// We got a credential ID, so verify we didn't get the other parts
-			if values[2] != "" || values[3] != "" {
-				return nil, fmt.Errorf("invalid Webhook notification string, please consult the documentation (use one of URL and secret or credential id)")
-			}
-		} else {
-			// We didn't get a credential ID so verify we got the other parts
-			if values[2] == "" || values[3] == "" {
-				return nil, fmt.Errorf("invalid Webhook notification string, please consult the documentation (use one of URL and secret or credential id)")
-			}
-		}
-		// The URL might be an empty string in the case that the user
-		// only supplied a credential ID
-		if values[3] != "" {
+		switch {
+		case values[1] != "" && values[3] != "":
+			return nil, fmt.Errorf("invalid Webhook notification string, please consult the documentation (use one of URL and secret or credential id)")
+		case values[1] != "":
+			// Do nothing, credentialId is set
+		case values[3] != "":
 			if _, err := url.ParseRequestURI(values[3]); err != nil {
-				return nil, fmt.Errorf("invalid Webhook URL %q", values[2])
+				return nil, fmt.Errorf("invalid Webhook URL %q", values[3])
 			}
+		default:
+			return nil, fmt.Errorf("invalid Webhook notification string, please consult the documentation (use one of URL or credential id)")
 		}
 		value = &notification.WebhookNotification{
 			Type:         values[0],

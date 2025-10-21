@@ -240,7 +240,7 @@ func TestNewNotificationFromString(t *testing.T) {
 			name:   "webhook no values set",
 			str:    "Webhook,,,",
 			expect: nil,
-			errVal: "invalid Webhook notification string, please consult the documentation (use one of URL and secret or credential id)",
+			errVal: "invalid Webhook notification string, please consult the documentation (use one of URL or credential id)",
 		},
 		{
 			name:   "webhook all values set",
@@ -252,7 +252,7 @@ func TestNewNotificationFromString(t *testing.T) {
 			name:   "webhook invalid url",
 			str:    "Webhook,,secret,zzz",
 			expect: nil,
-			errVal: "invalid Webhook URL \"secret\"",
+			errVal: "invalid Webhook URL \"zzz\"",
 		},
 		{
 			name: "xmatters",

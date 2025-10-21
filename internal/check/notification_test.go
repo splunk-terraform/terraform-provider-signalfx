@@ -171,7 +171,7 @@ func TestNotification(t *testing.T) {
 			expect: diag.Diagnostics{
 				{
 					Severity: diag.Error,
-					Summary:  "invalid Webhook notification string, please consult the documentation (use one of URL and secret or credential id)",
+					Summary:  "invalid Webhook notification string, please consult the documentation (use one of URL or credential id)",
 				},
 			},
 		},
@@ -189,7 +189,7 @@ func TestNotification(t *testing.T) {
 			name: "Webhook url invalid",
 			val:  "Webhook,,verysercretsecret,foo",
 			expect: diag.Diagnostics{
-				{Severity: diag.Error, Summary: "invalid Webhook URL \"verysercretsecret\""},
+				{Severity: diag.Error, Summary: "invalid Webhook URL \"foo\""},
 			},
 		},
 		{
