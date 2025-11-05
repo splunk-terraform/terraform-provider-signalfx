@@ -82,6 +82,7 @@ func integrationGCPResource() *schema.Resource {
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "GCP WIF configs",
+				Deprecated:  "Please use workload_identity_federation_config with projects instead",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"project_id": {
@@ -335,24 +336,26 @@ func gcpIntegrationAPIToTF(d *schema.ResourceData, gcp *integration.GCPIntegrati
 		return fmt.Errorf("error setting workload_identity_federation_config: %w", err)
 	}
 
-	// Set projects field as a list with proper handling of selected_project_ids as a set
-	projectsConfig := map[string]any{
-		"sync_mode": string(gcp.Projects.SyncMode),
-	}
-
-	if len(gcp.Projects.SelectedProjectIds) > 0 {
-		projectIds := make([]any, len(gcp.Projects.SelectedProjectIds))
-		for i, id := range gcp.Projects.SelectedProjectIds {
-			projectIds[i] = id
+	if gcp.Projects != nil {
+		// Set projects field as a list with proper handling of selected_project_ids as a set
+		projectsConfig := map[string]any{
+			"sync_mode": string(gcp.Projects.SyncMode),
 		}
-		projectsConfig["selected_project_ids"] = schema.NewSet(schema.HashString, projectIds)
-	} else {
-		projectsConfig["selected_project_ids"] = schema.NewSet(schema.HashString, []any{})
-	}
 
-	projectsList := []any{projectsConfig}
-	if err := d.Set("projects", projectsList); err != nil {
-		return fmt.Errorf("error setting projects: %w", err)
+		if len(gcp.Projects.SelectedProjectIds) > 0 {
+			projectIds := make([]any, len(gcp.Projects.SelectedProjectIds))
+			for i, id := range gcp.Projects.SelectedProjectIds {
+				projectIds[i] = id
+			}
+			projectsConfig["selected_project_ids"] = schema.NewSet(schema.HashString, projectIds)
+		} else {
+			projectsConfig["selected_project_ids"] = schema.NewSet(schema.HashString, []any{})
+		}
+
+		projectsList := []any{projectsConfig}
+		if err := d.Set("projects", projectsList); err != nil {
+			return fmt.Errorf("error setting projects: %w", err)
+		}
 	}
 
 	if err := d.Set("wif_splunk_identity", gcp.WifSplunkIdentity); err != nil {
