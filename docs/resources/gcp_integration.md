@@ -20,9 +20,13 @@ resource "signalfx_gcp_integration" "gcp_myteam" {
   services                   = ["compute"]
   custom_metric_type_domains = ["istio.io"]
   import_gcp_metrics         = true
-  workload_identity_federation_config = "{\"your\":\"config\"}"
-  projects {
-    sync_mode = "ALL_REACHABLE"
+  project_service_keys {
+    project_id  = "gcp_project_id_1"
+    project_key = "${file("/path/to/gcp_credentials_1.json")}"
+  }
+  project_service_keys {
+    project_id  = "gcp_project_id_2"
+    project_key = "${file("/path/to/gcp_credentials_2.json")}"
   }
 }
 ```
