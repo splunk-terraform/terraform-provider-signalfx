@@ -55,7 +55,7 @@ func TestDataSourceRead(t *testing.T) {
 				"user-01@example.com",
 			},
 			diags: diag.Diagnostics{
-				{Severity: diag.Error, Summary: "route \"/v2/organization/member\" had issues with status code 401"},
+				{Severity: diag.Error, Summary: "route \"/v2/organization/member\" had issues with status code 401", Detail: "failed to read"},
 			},
 		},
 		{
