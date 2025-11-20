@@ -55,16 +55,16 @@ func slochartCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.
 
 	tflog.Debug(ctx, "Creating SLO chart", tfext.NewLogFields().JSON("payload", payload))
 
-	sloChart, err := config.Client.CreateSloChart(ctx, payload)
-	if err != nil {
-		return diag.FromErr(err)
-	}
+    sloChart, err := config.Client.CreateSloChart(ctx, payload)
+    if err != nil {
+        return tfext.AsErrorDiagnostics(err)
+    }
 	// Since things worked, set the URL and move on
 	appURL := pmeta.LoadApplicationURL(ctx, meta, CHART_APP_PATH, sloChart.Id)
 
-	if err := d.Set("url", appURL); err != nil {
-		return diag.FromErr(err)
-	}
+    if err := d.Set("url", appURL); err != nil {
+        return tfext.AsErrorDiagnostics(err)
+    }
 	d.SetId(sloChart.Id)
 	return slochartAPIToTF(d, sloChart)
 }
@@ -77,19 +77,19 @@ func slochartRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Di
 	config := meta.(*signalfxConfig)
 
 	sloChart, err := config.Client.GetChart(ctx, d.Id())
-	if err != nil {
-		if isNotFoundError(err) {
+    if err != nil {
+        if isNotFoundError(err) {
 			d.SetId("")
 			return nil
 		}
-		return diag.FromErr(err)
+        return tfext.AsErrorDiagnostics(err)
 	}
 
 	appURL := pmeta.LoadApplicationURL(ctx, meta, CHART_APP_PATH, sloChart.Id)
 
-	if err := d.Set("url", appURL); err != nil {
-		return diag.FromErr(err)
-	}
+    if err := d.Set("url", appURL); err != nil {
+        return tfext.AsErrorDiagnostics(err)
+    }
 
 	return slochartAPIToTF(d, sloChart)
 }
@@ -99,10 +99,10 @@ func slochartUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.
 	payload := getPayloadSloChart(d)
 	tflog.Debug(ctx, "Updating SLO chart", tfext.NewLogFields().JSON("payload", payload))
 
-	c, err := config.Client.UpdateSloChart(ctx, d.Id(), payload)
-	if err != nil {
-		return diag.FromErr(err)
-	}
+    c, err := config.Client.UpdateSloChart(ctx, d.Id(), payload)
+    if err != nil {
+        return tfext.AsErrorDiagnostics(err)
+    }
 	tflog.Debug(ctx, "SLO chart update response", tfext.NewLogFields().JSON("response", c))
 
 	d.SetId(c.Id)
@@ -112,5 +112,5 @@ func slochartUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.
 func slochartDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	config := meta.(*signalfxConfig)
 
-	return diag.FromErr(config.Client.DeleteChart(ctx, d.Id()))
+    return tfext.AsErrorDiagnostics(config.Client.DeleteChart(ctx, d.Id()))
 }
