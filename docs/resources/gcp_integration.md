@@ -14,12 +14,13 @@ Splunk Observability Cloud GCP Integration.
 
 ```terraform
 resource "signalfx_gcp_integration" "gcp_myteam" {
-  name                       = "GCP - My Team"
-  enabled                    = true
-  poll_rate                  = 300
-  services                   = ["compute"]
-  custom_metric_type_domains = ["istio.io"]
-  import_gcp_metrics         = true
+  name                              = "GCP - My Team"
+  enabled                           = true
+  poll_rate                         = 300
+  services                          = ["compute"]
+  custom_metric_type_domains        = ["istio.io"]
+  import_gcp_metrics                = true
+  exclude_gce_instances_with_labels = ["goog-dataproc-cluster-uuid"]
   project_service_keys {
     project_id  = "gcp_project_id_1"
     project_key = "${file("/path/to/gcp_credentials_1.json")}"
@@ -46,6 +47,7 @@ resource "signalfx_gcp_integration" "gcp_myteam" {
 * `workload_identity_federation_config` - (Optional) Your Workload Identity Federation config. To easily set up WIF you can use helpers provided in the [gcp_workload_identity_federation](https://github.com/signalfx/gcp_workload_identity_federation/tree/main/terraform) repository.
 * `projects` - (Optional) Object comprised of `sync_mode` and optional `selected_project_ids`. If you use `sync_mode` `ALL_REACHABLE` then Splunk Observability Cloud will automatically discover GCP projects that the provided WIF principal has permissions to query. If `sync_mode` is `SELECTED`, you need to provide a list of project ids in the `selected_project_ids` field.
 * `project_wif_configs` (Deprecated) Please use `workload_identity_federation_config` with `projects` instead.
+* `exclude_gce_instances_with_labels` - (Optional) List of label keys. GCP Compute Engine instances with any of these labels applied are excluded from metric sync. Requires the `compute.instances.list` permission on the project’s service account.
 
 ## Attributes
 
