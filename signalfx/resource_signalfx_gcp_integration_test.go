@@ -19,6 +19,7 @@ resource "signalfx_gcp_integration" "gcp_myteamXX" {
     poll_rate = 600
     services = ["compute"]
     include_list = ["labels"]
+    exclude_gce_instances_with_labels = ["test-label-1", "test-label-2"]
 
     project_service_keys {
 		    project_id = "gcp_project_id_1"
@@ -39,17 +40,13 @@ resource "signalfx_gcp_integration" "gcp_myteamXX" {
     poll_rate = 60
     services = ["compute"]
     include_list = ["labels"]
+    exclude_gce_instances_with_labels = ["updated-label"]
 
 	auth_method = "WORKLOAD_IDENTITY_FEDERATION"
 
     project_wif_configs {
 		    project_id = "gcp_project_id_1"
 		    wif_config = "{\"sample\":\"config1\"}"
-    }
-
-    project_wif_configs {
-		    project_id = "gcp_project_id_2"
-		    wif_config = "{\"sample\":\"config2\"}"
     }
 
     use_metric_source_project_for_quota = true
@@ -78,6 +75,9 @@ func TestAccCreateUpdateIntegrationGCP(t *testing.T) {
 					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "project_service_keys.1.project_key", "secret_key_project_2"),
 					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "include_list.#", "1"),
 					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "include_list.0", "labels"),
+					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "exclude_gce_instances_with_labels.#", "2"),
+					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "exclude_gce_instances_with_labels.0", "test-label-1"),
+					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "exclude_gce_instances_with_labels.1", "test-label-2"),
 					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "poll_rate", "600"),
 					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "use_metric_source_project_for_quota", "false"),
 					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "import_gcp_metrics", "true"),
@@ -99,11 +99,13 @@ func TestAccCreateUpdateIntegrationGCP(t *testing.T) {
 					testAccCheckIntegrationGCPResourceExists,
 					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "name", "GCP - My Team NEW"),
 					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "poll_rate", "60"),
+					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "exclude_gce_instances_with_labels.#", "1"),
+					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "exclude_gce_instances_with_labels.0", "updated-label"),
 					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "use_metric_source_project_for_quota", "true"),
 					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "import_gcp_metrics", "false"),
 					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "custom_metric_type_domains.#", "1"),
 					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "auth_method", "WORKLOAD_IDENTITY_FEDERATION"),
-					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "project_wif_configs.#", "2"),
+					resource.TestCheckResourceAttr("signalfx_gcp_integration.gcp_myteamXX", "project_wif_configs.#", "1"),
 				),
 			},
 		},
