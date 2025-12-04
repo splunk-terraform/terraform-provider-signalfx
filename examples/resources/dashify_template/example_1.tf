@@ -1,7 +1,5 @@
 # Create a Dashify template
 resource "signalfx_dashify_template" "example_template" {
-  name = "My Example Template"
-
   template_contents = jsonencode({
     metadata = {
       imports = []

@@ -32,7 +32,6 @@ type ResourceDashifyTemplate struct {
 
 type resourceDashifyTemplateModel struct {
 	Id               types.String `tfsdk:"id"`
-	Name             types.String `tfsdk:"name"`
 	TemplateContents types.String `tfsdk:"template_contents"`
 }
 
@@ -55,10 +54,6 @@ func (r *ResourceDashifyTemplate) Schema(_ context.Context, _ resource.SchemaReq
 		Description: "Manage Dashify templates for modern dashboards in Splunk Observability Cloud",
 		Attributes: map[string]schema.Attribute{
 			"id": fwshared.ResourceIDAttribute(),
-			"name": schema.StringAttribute{
-				Optional:    true,
-				Description: "Name of the dashify template",
-			},
 			"template_contents": schema.StringAttribute{
 				Required:    true,
 				Description: "JSON contents of the dashify template. Must be valid JSON containing the template structure with metadata and spec sections.",
@@ -163,12 +158,8 @@ func (r *ResourceDashifyTemplate) Create(ctx context.Context, req resource.Creat
 	model.Id = types.StringValue(templateID)
 	tflog.Debug(ctx, "Created Dashify Template", map[string]interface{}{"id": templateID})
 
-	// Read back the template to ensure state is up to date
-	r.readTemplate(ctx, &model, &resp.Diagnostics)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
+	// Don't read back - keep the user's original input to avoid inconsistencies
+	// The API adds default fields (like metadata.imports, type) that weren't in the input
 	resp.Diagnostics.Append(resp.State.Set(ctx, &model)...)
 }
 
@@ -263,8 +254,20 @@ func (r *ResourceDashifyTemplate) readTemplate(ctx context.Context, model *resou
 		templateData = result
 	}
 
-	// Set the template contents - marshal back to JSON
-	templateJSON, err := json.Marshal(templateData)
+	// Filter out API-generated fields to maintain consistency with input
+	// Only keep the fields that users provide: metadata, spec, title, type (if user-provided)
+	filteredData := make(map[string]interface{})
+
+	// These are the fields users provide in their template
+	userProvidedFields := []string{"metadata", "spec", "title", "type"}
+	for _, field := range userProvidedFields {
+		if val, exists := templateData[field]; exists {
+			filteredData[field] = val
+		}
+	}
+
+	// Set the template contents - marshal back to JSON (without API metadata)
+	templateJSON, err := json.Marshal(filteredData)
 	if err != nil {
 		diags.AddError(
 			"Error Marshaling Template",
@@ -274,11 +277,6 @@ func (r *ResourceDashifyTemplate) readTemplate(ctx context.Context, model *resou
 	}
 
 	model.TemplateContents = types.StringValue(string(templateJSON))
-
-	// Set name/title if present
-	if title, ok := templateData["title"].(string); ok {
-		model.Name = types.StringValue(title)
-	}
 
 	tflog.Debug(ctx, "Read Dashify Template", map[string]interface{}{"id": templateID})
 }
@@ -348,12 +346,8 @@ func (r *ResourceDashifyTemplate) Update(ctx context.Context, req resource.Updat
 
 	tflog.Debug(ctx, "Updated Dashify Template", map[string]interface{}{"id": templateID})
 
-	// Read back the template to ensure state is up to date
-	r.readTemplate(ctx, &model, &resp.Diagnostics)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
+	// Don't read back - keep the user's original input to avoid inconsistencies
+	// The API adds default fields (like metadata.imports, type) that weren't in the input
 	resp.Diagnostics.Append(resp.State.Set(ctx, &model)...)
 }
 
