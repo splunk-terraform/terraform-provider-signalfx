@@ -14,13 +14,12 @@ Splunk Observability Cloud GCP Integration.
 
 ```terraform
 resource "signalfx_gcp_integration" "gcp_myteam" {
-  name                              = "GCP - My Team"
-  enabled                           = true
-  poll_rate                         = 300
-  services                          = ["compute"]
-  custom_metric_type_domains        = ["istio.io"]
-  import_gcp_metrics                = true
-  exclude_gce_instances_with_labels = ["goog-dataproc-cluster-uuid"]
+  name                       = "GCP - My Team"
+  enabled                    = true
+  poll_rate                  = 300
+  services                   = ["compute"]
+  custom_metric_type_domains = ["istio.io"]
+  import_gcp_metrics         = true
   project_service_keys {
     project_id  = "gcp_project_id_1"
     project_key = "${file("/path/to/gcp_credentials_1.json")}"
