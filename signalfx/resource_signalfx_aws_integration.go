@@ -182,9 +182,10 @@ func integrationAWSResource() *schema.Resource {
 				ValidateFunc: validation.IntBetween(60, 600),
 			},
 			"cold_poll_rate": {
-				Type:        schema.TypeInt,
-				Optional:    true,
-				Description: "AWS cold poll rate (in seconds).",
+				Type:         schema.TypeInt,
+				Optional:     true,
+				Description:  "AWS cold poll rate (in seconds).",
+				ValidateFunc: validation.IntBetween(60, 3600),
 			},
 			"external_id": {
 				Type:          schema.TypeString,
@@ -325,6 +326,11 @@ func awsIntegrationAPIToTF(d *schema.ResourceData, aws *integration.AwsCloudWatc
 		return err
 	}
 
+	if aws.ColdPollRate != 0 {
+		if err := d.Set("cold_poll_rate", aws.ColdPollRate/1000); err != nil {
+			return err
+		}
+	}
 	if aws.Token != "" {
 		if err := d.Set("token", aws.Token); err != nil {
 			return err
@@ -423,12 +429,6 @@ func awsIntegrationAPIToTF(d *schema.ResourceData, aws *integration.AwsCloudWatc
 			if err := d.Set("metric_stats_to_sync", metricStatsToSync); err != nil {
 				return err
 			}
-		}
-	}
-
-	if aws.ColdPollRate != 0 {
-		if err := d.Set("cold_poll_rate", aws.ColdPollRate/1000); err != nil {
-			return err
 		}
 	}
 
