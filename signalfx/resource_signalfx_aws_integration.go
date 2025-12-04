@@ -184,8 +184,8 @@ func integrationAWSResource() *schema.Resource {
 			"cold_poll_rate": {
 				Type:         schema.TypeInt,
 				Optional:     true,
-				Description:  "AWS cold poll rate (in seconds).",
-				ValidateFunc: validation.IntBetween(60, 3600),
+				Description:  "AWS cold poll rate (in seconds). Between `60` and `1200`",
+				ValidateFunc: validation.IntBetween(60, 1200),
 			},
 			"external_id": {
 				Type:          schema.TypeString,
