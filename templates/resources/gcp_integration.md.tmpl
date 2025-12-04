@@ -33,6 +33,7 @@ Splunk Observability Cloud GCP Integration.
 * `workload_identity_federation_config` - (Optional) Your Workload Identity Federation config. To easily set up WIF you can use helpers provided in the [gcp_workload_identity_federation](https://github.com/signalfx/gcp_workload_identity_federation/tree/main/terraform) repository.
 * `projects` - (Optional) Object comprised of `sync_mode` and optional `selected_project_ids`. If you use `sync_mode` `ALL_REACHABLE` then Splunk Observability Cloud will automatically discover GCP projects that the provided WIF principal has permissions to query. If `sync_mode` is `SELECTED`, you need to provide a list of project ids in the `selected_project_ids` field.
 * `project_wif_configs` (Deprecated) Please use `workload_identity_federation_config` with `projects` instead.
+* `exclude_gce_instances_with_labels` - (Optional) List of label keys. GCP Compute Engine instances with any of these labels applied are excluded from metric sync. Requires the `compute.instances.list` permission on the project’s service account.
 
 ## Attributes
 
