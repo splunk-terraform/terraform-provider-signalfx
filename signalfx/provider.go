@@ -155,7 +155,6 @@ func Provider() *schema.Provider {
 			"signalfx_azure_integration":                integrationAzureResource(),
 			"signalfx_dashboard":                        dashboardResource(),
 			"signalfx_dashboard_group":                  dashboardGroupResource(),
-			"signalfx_dashify_template":                 dashifyTemplateResource(),
 			"signalfx_data_link":                        dataLinkResource(),
 			"signalfx_detector":                         detectorResource(),
 			"signalfx_event_feed_chart":                 eventFeedChartResource(),
