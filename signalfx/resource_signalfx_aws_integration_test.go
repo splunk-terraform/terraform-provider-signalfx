@@ -29,6 +29,7 @@ const newIntegrationAWSConfig = `
 	role_arn           = "arn:aws:iam::XXX:role/SignalFx-Read-Role"
 	regions            = ["us-east-1"]
 	poll_rate          = 300
+	cold_poll_rate     = 600
 	import_cloud_watch = true
 	enable_aws_usage   = true
 
@@ -81,6 +82,7 @@ const updatedIntegrationAWSConfig = `
 	role_arn           = "arn:aws:iam::XXX:role/SignalFx-Read-Role"
 	regions            = ["us-east-1"]
 	poll_rate          = 300
+	cold_poll_rate     = 900
 	import_cloud_watch = true
 	enable_aws_usage   = true
 
@@ -220,6 +222,8 @@ func TestAccCreateUpdateIntegrationAWS(t *testing.T) {
 				Config: newIntegrationAWSConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckIntegrationAWSResourceExists,
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "poll_rate", "300"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "cold_poll_rate", "600"),
 					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.#", "2"),
 					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.0.namespace", "AWS/EC2"),
 					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.0.metric", "NetworkPacketsIn"),
@@ -239,6 +243,8 @@ func TestAccCreateUpdateIntegrationAWS(t *testing.T) {
 					testAccCheckIntegrationAWSResourceExists,
 					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "name", "AWS TF Test (ext/updated)"),
 					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteam_tokXX", "name", "AWS TF Test (token/updated)"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "poll_rate", "300"),
+					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "cold_poll_rate", "900"),
 					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.#", "2"),
 					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.0.namespace", "AWS/EC2"),
 					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteamXX", "metric_stats_to_sync.0.metric", "NetworkPacketsIn"),
