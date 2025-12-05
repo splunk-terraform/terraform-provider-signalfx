@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+    "github.com/splunk-terraform/terraform-provider-signalfx/internal/tfextension"
 	"github.com/signalfx/signalfx-go/detector"
 	"github.com/signalfx/signalfx-go/slo"
 )
@@ -285,15 +286,15 @@ func sloCreate(ctx context.Context, sloResource *schema.ResourceData, config int
 	log.Printf("[DEBUG] Create SLO Payload: %s", string(debugOutput))
 
 	createdSlo, err := client.CreateSlo(ctx, payload)
-	if err != nil {
-		return diag.FromErr(err)
-	}
+    if err != nil {
+        return tfext.AsErrorDiagnostics(err)
+    }
 
 	id := createdSlo.Id
 	sloResource.SetId(id)
 
-	err = sloAPIToTF(sloResource, createdSlo)
-	return diag.FromErr(err)
+    err = sloAPIToTF(sloResource, createdSlo)
+    return tfext.AsErrorDiagnostics(err)
 }
 
 func sloUpdate(ctx context.Context, sloResource *schema.ResourceData, config interface{}) diag.Diagnostics {
@@ -307,12 +308,12 @@ func sloUpdate(ctx context.Context, sloResource *schema.ResourceData, config int
 	log.Printf("[DEBUG] Update SLO Payload: %s", string(debugOutput))
 
 	updatedSlo, err := client.UpdateSlo(ctx, sloResource.Id(), payload)
-	if err != nil {
-		return diag.FromErr(err)
-	}
+    if err != nil {
+        return tfext.AsErrorDiagnostics(err)
+    }
 
-	err = sloAPIToTF(sloResource, updatedSlo)
-	return diag.FromErr(err)
+    err = sloAPIToTF(sloResource, updatedSlo)
+    return tfext.AsErrorDiagnostics(err)
 }
 
 func sloRead(ctx context.Context, d *schema.ResourceData, config interface{}) diag.Diagnostics {
@@ -324,11 +325,11 @@ func sloRead(ctx context.Context, d *schema.ResourceData, config interface{}) di
 			d.SetId("")
 			return nil
 		}
-		return diag.FromErr(err)
+        return tfext.AsErrorDiagnostics(err)
 	}
 
-	err = sloAPIToTF(d, returnedSlo)
-	return diag.FromErr(err)
+    err = sloAPIToTF(d, returnedSlo)
+    return tfext.AsErrorDiagnostics(err)
 }
 
 func sloDelete(ctx context.Context, d *schema.ResourceData, config interface{}) diag.Diagnostics {
@@ -336,9 +337,9 @@ func sloDelete(ctx context.Context, d *schema.ResourceData, config interface{}) 
 
 	err := client.DeleteSlo(ctx, d.Id())
 
-	if err != nil {
-		return diag.FromErr(err)
-	}
+    if err != nil {
+        return tfext.AsErrorDiagnostics(err)
+    }
 
 	return nil
 }
