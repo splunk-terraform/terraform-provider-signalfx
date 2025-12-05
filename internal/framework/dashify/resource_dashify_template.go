@@ -72,7 +72,8 @@ func (r *ResourceDashifyTemplate) Create(ctx context.Context, req resource.Creat
 	// Validate JSON
 	templateContents := model.TemplateContents.ValueString()
 	var js interface{}
-	if err := json.Unmarshal([]byte(templateContents), &js); err != nil {
+	err := json.Unmarshal([]byte(templateContents), &js)
+	if err != nil {
 		resp.Diagnostics.AddError(
 			"Invalid JSON",
 			fmt.Sprintf("template_contents must be valid JSON: %s", err.Error()),
