@@ -245,7 +245,7 @@ func dashboardResource() *schema.Resource {
 				},
 			},
 			"filter": &schema.Schema{
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "Filter to apply to each chart in the dashboard",
 				Elem: &schema.Resource{
@@ -789,7 +789,7 @@ func getDashboardEventOverlayFilters(sources []interface{}) []*dashboard.EventOv
 }
 
 func getDashboardFilters(d *schema.ResourceData) []*dashboard.ChartsSingleFilter {
-	filters := d.Get("filter").([]interface{})
+	filters := d.Get("filter").(*schema.Set).List()
 	filterList := make([]*dashboard.ChartsSingleFilter, len(filters))
 	for i, filter := range filters {
 		filter := filter.(map[string]interface{})
