@@ -185,7 +185,7 @@ func dashboardResource() *schema.Resource {
 				},
 			},
 			"variable": &schema.Schema{
-				Type:        schema.TypeSet,
+				Type:        schema.TypeList,
 				Optional:    true,
 				Description: "Dashboard variable to apply to each chart in the dashboard",
 				Elem: &schema.Resource{
@@ -696,7 +696,7 @@ func getDashboardGrids(d *schema.ResourceData) []*dashboard.DashboardChart {
 }
 
 func getDashboardVariables(d *schema.ResourceData) []*dashboard.ChartsWebUiFilter {
-	variables := d.Get("variable").(*schema.Set).List()
+	variables := d.Get("variable").([]interface{})
 	varsList := make([]*dashboard.ChartsWebUiFilter, len(variables))
 	for i, variable := range variables {
 		variable := variable.(map[string]interface{})
