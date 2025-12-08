@@ -190,7 +190,7 @@ func (r *ResourceDashifyTemplate) readTemplate(ctx context.Context, model *resou
 	templateID := model.Id.ValueString()
 	url := fmt.Sprintf("%s%s/%s", details.APIURL, TemplateAPIPath, templateID)
 
-	httpReq, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+httpReq, err := http.NewRequestWithContext(ctx, http.MethodGet, url, http.NoBody)
 	if err != nil {
 		diags.AddError(
 			"Error Creating HTTP Request",
