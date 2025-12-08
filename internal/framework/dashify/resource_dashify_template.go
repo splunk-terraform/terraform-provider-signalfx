@@ -4,12 +4,13 @@
 package fwdashify
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"path"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -36,9 +37,9 @@ type resourceDashifyTemplateModel struct {
 }
 
 var (
-	_ resource.Resource                = &ResourceDashifyTemplate{}
-	_ resource.ResourceWithConfigure   = &ResourceDashifyTemplate{}
-	_ resource.ResourceWithImportState = &ResourceDashifyTemplate{}
+	_ resource.Resource                = (*ResourceDashifyTemplate)(nil)
+	_ resource.ResourceWithConfigure   = (*ResourceDashifyTemplate)(nil)
+	_ resource.ResourceWithImportState = (*ResourceDashifyTemplate)(nil)
 )
 
 func NewResourceDashifyTemplate() resource.Resource {
@@ -83,9 +84,9 @@ func (r *ResourceDashifyTemplate) Create(ctx context.Context, req resource.Creat
 
 	// Make API request
 	details := r.Details()
-	url := fmt.Sprintf("%s%s", details.APIURL, TemplateAPIPath)
+	url := path.Join(details.APIURL, TemplateAPIPath)
 
-	httpReq, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer([]byte(templateContents)))
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, url, strings.NewReader(templateContents))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Creating HTTP Request",
@@ -190,7 +191,7 @@ func (r *ResourceDashifyTemplate) readTemplate(ctx context.Context, model *resou
 	templateID := model.Id.ValueString()
 	url := fmt.Sprintf("%s%s/%s", details.APIURL, TemplateAPIPath, templateID)
 
-httpReq, err := http.NewRequestWithContext(ctx, http.MethodGet, url, http.NoBody)
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodGet, url, http.NoBody)
 	if err != nil {
 		diags.AddError(
 			"Error Creating HTTP Request",
@@ -305,7 +306,7 @@ func (r *ResourceDashifyTemplate) Update(ctx context.Context, req resource.Updat
 	templateID := model.Id.ValueString()
 	url := fmt.Sprintf("%s%s/%s", details.APIURL, TemplateAPIPath, templateID)
 
-	httpReq, err := http.NewRequestWithContext(ctx, "PUT", url, bytes.NewBuffer([]byte(templateContents)))
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPut, url, strings.NewReader(templateContents))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Creating HTTP Request",
@@ -363,7 +364,7 @@ func (r *ResourceDashifyTemplate) Delete(ctx context.Context, req resource.Delet
 	templateID := model.Id.ValueString()
 	url := fmt.Sprintf("%s%s/%s", details.APIURL, TemplateAPIPath, templateID)
 
-	httpReq, err := http.NewRequestWithContext(ctx, "DELETE", url, nil)
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodDelete, url, http.NoBody)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Creating HTTP Request",
