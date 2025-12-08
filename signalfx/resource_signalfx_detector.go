@@ -16,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/signalfx/signalfx-go"
 	"github.com/signalfx/signalfx-go/detector"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/check"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/common"
@@ -565,10 +566,12 @@ func detectorCreate(d *schema.ResourceData, meta any) error {
 
 func detectorRead(d *schema.ResourceData, meta any) error {
 	config := meta.(*signalfxConfig)
+
 	det, err := config.Client.GetDetector(context.TODO(), d.Id())
 	if err != nil {
-		if strings.Contains(err.Error(), "404") {
+		if isNotFoundError(err) {
 			d.SetId("")
+			return nil
 		}
 		return err
 	}
@@ -982,6 +985,9 @@ func validateProgramText(ctx context.Context, d *schema.ResourceDiff, meta any) 
 		ParentDetectorId: d.Get("parent_detector_id").(string),
 	})
 	if err != nil {
+		if re, ok := signalfx.AsResponseError(err); ok {
+			err = fmt.Errorf("%w: %q", err, re.Details())
+		}
 		return err
 	}
 

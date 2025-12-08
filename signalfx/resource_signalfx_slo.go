@@ -8,10 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"net/http"
 	"sort"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -318,18 +315,19 @@ func sloUpdate(ctx context.Context, sloResource *schema.ResourceData, config int
 	return diag.FromErr(err)
 }
 
-func sloRead(ctx context.Context, sloResource *schema.ResourceData, config interface{}) diag.Diagnostics {
+func sloRead(ctx context.Context, d *schema.ResourceData, config interface{}) diag.Diagnostics {
 	client := config.(*signalfxConfig).Client
 
-	returnedSlo, err := client.GetSlo(ctx, sloResource.Id())
+	returnedSlo, err := client.GetSlo(ctx, d.Id())
 	if err != nil {
-		if isSloNotFound(err) {
-			sloResource.SetId("")
+		if isNotFoundError(err) {
+			d.SetId("")
+			return nil
 		}
 		return diag.FromErr(err)
 	}
 
-	err = sloAPIToTF(sloResource, returnedSlo)
+	err = sloAPIToTF(d, returnedSlo)
 	return diag.FromErr(err)
 }
 
@@ -343,10 +341,6 @@ func sloDelete(ctx context.Context, d *schema.ResourceData, config interface{}) 
 	}
 
 	return nil
-}
-
-func isSloNotFound(err error) bool {
-	return strings.Contains(err.Error(), strconv.Itoa(http.StatusNotFound))
 }
 
 // getPayloadSlo is called with objects: *schema.ResourceDiff or *schema.ResourceData - that's why we need this interface to have only one method
