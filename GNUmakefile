@@ -101,7 +101,7 @@ check-docs: gen-docs
 
 
 gen-docs: $(WEBSITE_PLUGIN)
-	$(WEBSITE_PLUGIN)
+	$(WEBSITE_PLUGIN) generate --provider-name signalfx
 
 test-docs: $(WEBSITE_PLUGIN)
 	$(WEBSITE_PLUGIN) validate 
