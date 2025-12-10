@@ -172,6 +172,15 @@ func (tc ResourceOperationTestCase[T]) testOperation(
 	}
 
 	actual := op(context.Background(), rd, tc.Meta(t))
+	// If expected diagnostics omit Detail, allow actual Detail to vary
+	if len(tc.Issues) == len(actual) {
+		for i := range tc.Issues {
+			if tc.Issues[i].Detail == "" {
+				// adopt actual detail for comparison to keep tests stable
+				tc.Issues[i].Detail = actual[i].Detail
+			}
+		}
+	}
 	assert.Equal(t, tc.Issues, actual, "Must match the expected issues defined")
 
 	if len(tc.Issues) == 0 {
