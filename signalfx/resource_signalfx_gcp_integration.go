@@ -160,6 +160,14 @@ func integrationGCPResource() *schema.Resource {
 				Default:     true,
 				Description: "If enabled, Splunk Observability Cloud will sync also Google Cloud Metrics data. If disabled, Splunk Observability Cloud will import only metadata. Defaults to true.",
 			},
+			"exclude_gce_instances_with_labels": {
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Description: "List of label keys. GCP Compute Engine instances with any of these labels applied are excluded from metric sync. Requires the compute.instances.list permission on the project’s service account.",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 		},
 
 		Create: integrationGCPCreate,
@@ -280,6 +288,10 @@ func getGCPPayloadIntegration(d *schema.ResourceData) *integration.GCPIntegratio
 		gcp.CustomMetricTypeDomains = convert.SchemaListAll(val, convert.ToString)
 	}
 
+	if val, ok := d.GetOk("exclude_gce_instances_with_labels"); ok {
+		gcp.ExcludeGCEInstancesWithLabels = convert.SchemaListAll(val, convert.ToString)
+	}
+
 	return gcp
 }
 
@@ -369,6 +381,10 @@ func gcpIntegrationAPIToTF(d *schema.ResourceData, gcp *integration.GCPIntegrati
 	}
 
 	if err := d.Set("custom_metric_type_domains", flattenStringSliceToSet(gcp.CustomMetricTypeDomains)); err != nil {
+		return err
+	}
+
+	if err := d.Set("exclude_gce_instances_with_labels", flattenStringSliceToSet(gcp.ExcludeGCEInstancesWithLabels)); err != nil {
 		return err
 	}
 

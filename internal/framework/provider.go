@@ -25,6 +25,7 @@ import (
 
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/feature"
 	fwdashify "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/dashify"
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/apm"
 	internalfunction "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/function"
 	fwintegration "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/integration"
 	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
@@ -272,8 +273,9 @@ func (op *ollyProvider) Configure(ctx context.Context, req provider.ConfigureReq
 }
 
 func (op *ollyProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
-	// To implement: Register data sources.
-	return nil
+	return []func() datasource.DataSource{
+		apm.NewDatasourceTopology,
+	}
 }
 
 func (op *ollyProvider) Resources(ctx context.Context) []func() resource.Resource {
