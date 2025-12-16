@@ -48,6 +48,7 @@ resource "signalfx_gcp_integration" "gcp_myteam" {
 * `project_wif_configs` (Deprecated) Please use `workload_identity_federation_config` with `projects` instead.
 * `exclude_gce_instances_with_labels` - (Optional) List of label keys. GCP Compute Engine instances with any of these labels applied are excluded from metric sync. Requires the `compute.instances.list` permission on the project’s service account.
 
+
 ## Attributes
 
 In addition to all arguments above, the following attributes are exported:

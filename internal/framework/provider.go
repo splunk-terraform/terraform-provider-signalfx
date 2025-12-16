@@ -24,8 +24,10 @@ import (
 	"github.com/signalfx/signalfx-go"
 
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/feature"
+	fwdashify "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/dashify"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/apm"
 	internalfunction "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/function"
+	fwintegration "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/integration"
 	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
 	tfext "github.com/splunk-terraform/terraform-provider-signalfx/internal/tfextension"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/track"
@@ -277,8 +279,10 @@ func (op *ollyProvider) DataSources(ctx context.Context) []func() datasource.Dat
 }
 
 func (op *ollyProvider) Resources(ctx context.Context) []func() resource.Resource {
-	// To implement: Register resources.
-	return nil
+	return []func() resource.Resource{
+		fwintegration.NewResourceSplunkOncall,
+		fwdashify.NewResourceDashifyTemplate,
+	}
 }
 
 func (op *ollyProvider) Functions(ctx context.Context) []func() function.Function {
