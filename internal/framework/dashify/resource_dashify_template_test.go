@@ -229,9 +229,10 @@ resource "signalfx_dashify_template" "test" {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			testresource.UnitTest(t, testresource.TestCase{
-				ProtoV5ProviderFactories: fwtest.NewProviderFactory(
-					fwtest.WithEndpoints(tc.endpoints),
-					fwtest.WithResourceFactory("signalfx_dashify_template", NewResourceDashifyTemplate),
+				ProtoV5ProviderFactories: fwtest.NewMockProto5Server(
+					t,
+					tc.endpoints,
+					fwtest.WithMockResources(NewResourceDashifyTemplate),
 				),
 				Steps: tc.cases,
 			})
