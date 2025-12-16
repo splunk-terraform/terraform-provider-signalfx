@@ -1,0 +1,80 @@
+---
+page_title: "Splunk Observability Cloud: signalfx_dashify_template"
+description: |-
+  Allows Terraform to create and manage Dashify templates in Splunk Observability Cloud
+---
+
+# Resource: signalfx_dashify_template
+
+A [Dashify template](https://dev.splunk.com/observability/docs/) represents a template configuration for creating modern dashboards in Splunk Observability Cloud. Templates can be used to define reusable dashboard structures with dynamic data sources and components.
+
+~> **NOTE** This resource is for managing Dashify templates which are part of the modern dashboard framework. The template format uses JSON to define dashboard structure, metadata, and specifications.
+
+## Example
+
+```terraform
+# Create a Dashify template
+resource "signalfx_dashify_template" "example_template" {
+  template_contents = jsonencode({
+    metadata = {
+      imports = []
+      datasource = {
+        type        = "SPLUNK_O11Y"
+        programText = "A = data('metric').publish(label='A')"
+      }
+      rootElement = "dashboard"
+    }
+    spec = {
+      "<Dashboard>" = [
+        {
+          "<o11y:ApmServiceMap>" = []
+          chart                   = {}
+          datasource = {
+            operationName = "Graph"
+            variables = {
+              filters = {
+                tags = [
+                  {
+                    tagName = "sf_service"
+                    "values$" = "$state.FILTERS().sf_service?.values"
+                  }
+                ]
+              }
+              timeRange = {
+                "endTimestampMillis$" = "$state.TIME().now"
+                lookbackMillis        = 691200000
+              }
+            }
+          }
+        }
+      ]
+    }
+  })
+}
+
+# Output the template ID
+output "template_id" {
+  value = signalfx_dashify_template.example_template.id
+}
+```
+
+## Arguments
+
+The following arguments are supported in the resource block:
+
+* `template_contents` - (Required) JSON contents of the dashify template. This should be a valid JSON string containing the template structure with metadata and spec sections.
+
+## Attributes
+
+In addition to all arguments above, the following attributes are exported:
+
+* `id` - The ID of the template.
+
+## Import
+
+Dashify templates can be imported using their ID:
+
+```
+$ terraform import signalfx_dashify_template.my_template G47WjI1AABc
+```
+

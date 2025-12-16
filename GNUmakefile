@@ -92,7 +92,7 @@ check-docs: gen-docs
 	fi
 
 
-gen-docs: 
+gen-docs:
 	$(WEBSITE_PLUGIN)
 
 test-docs:
