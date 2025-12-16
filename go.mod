@@ -12,6 +12,7 @@ require (
 	github.com/hashicorp/go-retryablehttp v0.7.8
 	github.com/hashicorp/go-version v1.8.0
 	github.com/hashicorp/terraform-plugin-framework v1.16.1
+	github.com/hashicorp/terraform-plugin-framework-validators v0.19.0
 	github.com/hashicorp/terraform-plugin-go v0.29.0
 	github.com/hashicorp/terraform-plugin-log v0.10.0
 	github.com/hashicorp/terraform-plugin-mux v0.21.0
@@ -20,6 +21,7 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/signalfx/signalfx-go v1.54.0
 	github.com/stretchr/testify v1.11.1
+	github.com/tilinna/clock v1.1.0
 	go.uber.org/multierr v1.11.0
 )
 
