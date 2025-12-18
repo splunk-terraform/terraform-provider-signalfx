@@ -52,7 +52,7 @@ func TestResourceDashifyTemplateUnitTest(t *testing.T) {
 			endpoints: map[string]http.Handler{
 				"POST /v2/template": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					templateCounter++
-					var data map[string]interface{}
+					var data map[string]any
 					if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
 						http.Error(w, err.Error(), http.StatusBadRequest)
 						return
@@ -69,8 +69,8 @@ func TestResourceDashifyTemplateUnitTest(t *testing.T) {
 					}
 
 					// Create response with API-generated fields
-					response := map[string]interface{}{
-						"data": map[string]interface{}{
+					response := map[string]any{
+						"data": map[string]any{
 							"id":        "test-template-id",
 							"createdAt": "2025-12-04T18:00:00.000Z[UTC]",
 							"createdBy": "/v2/user/test-user",
@@ -83,8 +83,8 @@ func TestResourceDashifyTemplateUnitTest(t *testing.T) {
 							"title":    data["title"],
 							"type":     "https://schema.splunkdev.com/dashify/v1/templates/Record",
 						},
-						"errors":   []interface{}{},
-						"includes": []interface{}{},
+						"errors":   []any{},
+						"includes": []any{},
 					}
 
 					if err := json.NewEncoder(w).Encode(response); err != nil {
@@ -93,24 +93,24 @@ func TestResourceDashifyTemplateUnitTest(t *testing.T) {
 					}
 				}),
 				"GET /v2/template/test-template-id": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					response := map[string]interface{}{
-						"data": map[string]interface{}{
+					response := map[string]any{
+						"data": map[string]any{
 							"id":        "test-template-id",
 							"createdAt": "2025-12-04T18:00:00.000Z[UTC]",
 							"createdBy": "/v2/user/test-user",
 							"self":      "/v2/template/test-template-id",
 							"updatedAt": "2025-12-04T18:00:00.000Z[UTC]",
 							"updatedBy": "/v2/user/test-user",
-							"metadata": map[string]interface{}{
+							"metadata": map[string]any{
 								"rootElement": "Chart",
-								"imports":     []interface{}{},
+								"imports":     []any{},
 							},
-							"spec": map[string]interface{}{
-								"<Chart>": []interface{}{
-									map[string]interface{}{
-										"<o11y:TimeSeriesChart>": []interface{}{},
-										"chart":                  map[string]interface{}{},
-										"datasource": map[string]interface{}{
+							"spec": map[string]any{
+								"<Chart>": []any{
+									map[string]any{
+										"<o11y:TimeSeriesChart>": []any{},
+										"chart":                  map[string]any{},
+										"datasource": map[string]any{
 											"program":    "A = data('cpu.utilization').publish('A')",
 											"resolution": 1000,
 										},
@@ -120,8 +120,8 @@ func TestResourceDashifyTemplateUnitTest(t *testing.T) {
 							"title": "Test Template",
 							"type":  "https://schema.splunkdev.com/dashify/v1/templates/Record",
 						},
-						"errors":   []interface{}{},
-						"includes": []interface{}{},
+						"errors":   []any{},
+						"includes": []any{},
 					}
 					if err := json.NewEncoder(w).Encode(response); err != nil {
 						http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -129,14 +129,14 @@ func TestResourceDashifyTemplateUnitTest(t *testing.T) {
 					}
 				}),
 				"PUT /v2/template/test-template-id": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					var data map[string]interface{}
+					var data map[string]any
 					if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
 						http.Error(w, err.Error(), http.StatusBadRequest)
 						return
 					}
 
-					response := map[string]interface{}{
-						"data": map[string]interface{}{
+					response := map[string]any{
+						"data": map[string]any{
 							"id":        "test-template-id",
 							"updatedAt": "2025-12-04T18:01:00.000Z[UTC]",
 							"updatedBy": "/v2/user/test-user",
@@ -145,8 +145,8 @@ func TestResourceDashifyTemplateUnitTest(t *testing.T) {
 							"title":     data["title"],
 							"type":      "https://schema.splunkdev.com/dashify/v1/templates/Record",
 						},
-						"errors":   []interface{}{},
-						"includes": []interface{}{},
+						"errors":   []any{},
+						"includes": []any{},
 					}
 
 					if err := json.NewEncoder(w).Encode(response); err != nil {
@@ -268,7 +268,7 @@ func TestResourceDashifyTemplateJSONValidation(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			var js interface{}
+			var js any
 			err := json.Unmarshal([]byte(tt.json), &js)
 			if tt.expectError {
 				assert.Error(t, err)
