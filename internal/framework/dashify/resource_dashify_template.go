@@ -4,13 +4,15 @@
 package fwdashify
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 	"path"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -20,6 +22,7 @@ import (
 
 	fwembed "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/embed"
 	fwshared "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/shared"
+	tfext "github.com/splunk-terraform/terraform-provider-signalfx/internal/tfextension"
 )
 
 const (
@@ -29,6 +32,8 @@ const (
 type ResourceDashifyTemplate struct {
 	fwembed.ResourceData
 	fwembed.ResourceIDImporter
+
+	net *http.Client
 }
 
 type resourceDashifyTemplateModel struct {
@@ -43,7 +48,11 @@ var (
 )
 
 func NewResourceDashifyTemplate() resource.Resource {
-	return &ResourceDashifyTemplate{}
+	return &ResourceDashifyTemplate{
+		net: &http.Client{
+			// TODO(smarciniak): Move this to be part of the official SDK once GA.
+		},
+	}
 }
 
 func (r *ResourceDashifyTemplate) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -72,7 +81,7 @@ func (r *ResourceDashifyTemplate) Create(ctx context.Context, req resource.Creat
 
 	// Validate JSON
 	templateContents := model.TemplateContents.ValueString()
-	var js interface{}
+	var js any
 	err := json.Unmarshal([]byte(templateContents), &js)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -83,53 +92,20 @@ func (r *ResourceDashifyTemplate) Create(ctx context.Context, req resource.Creat
 	}
 
 	// Make API request
-	details := r.Details()
-	url := path.Join(details.APIURL, TemplateAPIPath)
-
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, url, strings.NewReader(templateContents))
+	httpResp, err := r.doRequest(ctx, http.MethodPost, path.Join(TemplateAPIPath), js)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error Creating HTTP Request",
-			fmt.Sprintf("Could not create HTTP request: %s", err.Error()),
-		)
-		return
-	}
-
-	httpReq.Header.Set("Content-Type", "application/json")
-	httpReq.Header.Set("X-SF-TOKEN", details.AuthToken)
-
-	client := &http.Client{}
-	httpResp, err := client.Do(httpReq)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Making API Request",
-			fmt.Sprintf("Could not make API request: %s", err.Error()),
+			"Error Creating Template",
+			fmt.Sprintf("Could not create dashify template: %s", err.Error()),
 		)
 		return
 	}
 	defer httpResp.Body.Close()
 
-	body, err := io.ReadAll(httpResp.Body)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Reading Response",
-			fmt.Sprintf("Could not read response body: %s", err.Error()),
-		)
-		return
-	}
-
-	if httpResp.StatusCode != http.StatusOK && httpResp.StatusCode != http.StatusCreated {
-		resp.Diagnostics.AddError(
-			"Error Creating Template",
-			fmt.Sprintf("API returned status %d: %s", httpResp.StatusCode, string(body)),
-		)
-		return
-	}
-
 	// Parse response to get the template ID
 	// The API returns: {"data": {"id": "...", ...}, "errors": [], "includes": []}
-	var result map[string]interface{}
-	if err := json.Unmarshal(body, &result); err != nil {
+	var result map[string]any
+	if err := json.NewDecoder(httpResp.Body).Decode(&result); err != nil {
 		resp.Diagnostics.AddError(
 			"Error Parsing Response",
 			fmt.Sprintf("Could not parse response: %s", err.Error()),
@@ -138,11 +114,11 @@ func (r *ResourceDashifyTemplate) Create(ctx context.Context, req resource.Creat
 	}
 
 	// Extract the data object
-	data, ok := result["data"].(map[string]interface{})
+	data, ok := result["data"].(map[string]any)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Error Parsing Response",
-			fmt.Sprintf("data field not found in response: %s", string(body)),
+			fmt.Sprintf("data field not found in response: %v", result),
 		)
 		return
 	}
@@ -152,13 +128,13 @@ func (r *ResourceDashifyTemplate) Create(ctx context.Context, req resource.Creat
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Error Parsing Response",
-			fmt.Sprintf("template ID not found in response data: %s", string(body)),
+			fmt.Sprintf("template ID not found in response data: %v", result),
 		)
 		return
 	}
 
 	model.Id = types.StringValue(templateID)
-	tflog.Debug(ctx, "Created Dashify Template", map[string]interface{}{"id": templateID})
+	tflog.Debug(ctx, "Created Dashify Template", map[string]any{"id": templateID})
 
 	// Don't read back - keep the user's original input to avoid inconsistencies
 	// The API adds default fields (like metadata.imports, type) that weren't in the input
@@ -187,23 +163,7 @@ func (r *ResourceDashifyTemplate) Read(ctx context.Context, req resource.ReadReq
 }
 
 func (r *ResourceDashifyTemplate) readTemplate(ctx context.Context, model *resourceDashifyTemplateModel, diags *diag.Diagnostics) {
-	details := r.Details()
-	templateID := model.Id.ValueString()
-	url := fmt.Sprintf("%s%s/%s", details.APIURL, TemplateAPIPath, templateID)
-
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodGet, url, http.NoBody)
-	if err != nil {
-		diags.AddError(
-			"Error Creating HTTP Request",
-			fmt.Sprintf("Could not create HTTP request: %s", err.Error()),
-		)
-		return
-	}
-
-	httpReq.Header.Set("X-SF-TOKEN", details.AuthToken)
-
-	client := &http.Client{}
-	httpResp, err := client.Do(httpReq)
+	resp, err := r.doRequest(ctx, http.MethodGet, path.Join(TemplateAPIPath, model.Id.ValueString()), nil)
 	if err != nil {
 		diags.AddError(
 			"Error Making API Request",
@@ -211,34 +171,11 @@ func (r *ResourceDashifyTemplate) readTemplate(ctx context.Context, model *resou
 		)
 		return
 	}
-	defer httpResp.Body.Close()
-
-	if httpResp.StatusCode == http.StatusNotFound {
-		tflog.Debug(ctx, "Dashify Template not found", map[string]interface{}{"id": templateID})
-		model.Id = types.StringNull()
-		return
-	}
-
-	body, err := io.ReadAll(httpResp.Body)
-	if err != nil {
-		diags.AddError(
-			"Error Reading Response",
-			fmt.Sprintf("Could not read response body: %s", err.Error()),
-		)
-		return
-	}
-
-	if httpResp.StatusCode != http.StatusOK {
-		diags.AddError(
-			"Error Reading Template",
-			fmt.Sprintf("API returned status %d: %s", httpResp.StatusCode, string(body)),
-		)
-		return
-	}
+	defer resp.Body.Close()
 
 	// Parse response - GET may return data in same format as POST
-	var result map[string]interface{}
-	if err := json.Unmarshal(body, &result); err != nil {
+	var result map[string]any
+	if err = json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		diags.AddError(
 			"Error Parsing Response",
 			fmt.Sprintf("Could not parse response: %s", err.Error()),
@@ -247,8 +184,8 @@ func (r *ResourceDashifyTemplate) readTemplate(ctx context.Context, model *resou
 	}
 
 	// Check if response has a "data" wrapper
-	var templateData map[string]interface{}
-	if data, ok := result["data"].(map[string]interface{}); ok {
+	var templateData map[string]any
+	if data, ok := result["data"].(map[string]any); ok {
 		// Response is wrapped in {"data": {...}}
 		templateData = data
 	} else {
@@ -258,7 +195,7 @@ func (r *ResourceDashifyTemplate) readTemplate(ctx context.Context, model *resou
 
 	// Filter out API-generated fields to maintain consistency with input
 	// Only keep the fields that users provide: metadata, spec, title, type (if user-provided)
-	filteredData := make(map[string]interface{})
+	filteredData := make(map[string]any)
 
 	// These are the fields users provide in their template
 	userProvidedFields := []string{"metadata", "spec", "title", "type"}
@@ -280,7 +217,7 @@ func (r *ResourceDashifyTemplate) readTemplate(ctx context.Context, model *resou
 
 	model.TemplateContents = types.StringValue(string(templateJSON))
 
-	tflog.Debug(ctx, "Read Dashify Template", map[string]interface{}{"id": templateID})
+	tflog.Debug(ctx, "Read Dashify Template", map[string]any{"id": model.Id.ValueString()})
 }
 
 func (r *ResourceDashifyTemplate) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -292,7 +229,7 @@ func (r *ResourceDashifyTemplate) Update(ctx context.Context, req resource.Updat
 
 	// Validate JSON
 	templateContents := model.TemplateContents.ValueString()
-	var js interface{}
+	var js any
 	if err := json.Unmarshal([]byte(templateContents), &js); err != nil {
 		resp.Diagnostics.AddError(
 			"Invalid JSON",
@@ -301,52 +238,17 @@ func (r *ResourceDashifyTemplate) Update(ctx context.Context, req resource.Updat
 		return
 	}
 
-	// Make API request to update
-	details := r.Details()
-	templateID := model.Id.ValueString()
-	url := fmt.Sprintf("%s%s/%s", details.APIURL, TemplateAPIPath, templateID)
-
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPut, url, strings.NewReader(templateContents))
+	httpResp, err := r.doRequest(ctx, http.MethodPut, path.Join(TemplateAPIPath, model.Id.ValueString()), js)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error Creating HTTP Request",
-			fmt.Sprintf("Could not create HTTP request: %s", err.Error()),
-		)
-		return
-	}
-
-	httpReq.Header.Set("Content-Type", "application/json")
-	httpReq.Header.Set("X-SF-TOKEN", details.AuthToken)
-
-	client := &http.Client{}
-	httpResp, err := client.Do(httpReq)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Making API Request",
-			fmt.Sprintf("Could not make API request: %s", err.Error()),
+			"Error Updating Template",
+			fmt.Sprintf("Could not update dashify template: %s", err.Error()),
 		)
 		return
 	}
 	defer httpResp.Body.Close()
 
-	body, err := io.ReadAll(httpResp.Body)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Reading Response",
-			fmt.Sprintf("Could not read response body: %s", err.Error()),
-		)
-		return
-	}
-
-	if httpResp.StatusCode != http.StatusOK {
-		resp.Diagnostics.AddError(
-			"Error Updating Template",
-			fmt.Sprintf("API returned status %d: %s", httpResp.StatusCode, string(body)),
-		)
-		return
-	}
-
-	tflog.Debug(ctx, "Updated Dashify Template", map[string]interface{}{"id": templateID})
+	tflog.Debug(ctx, "Updated Dashify Template", tfext.NewLogFields().Field("id", model.Id.ValueString()))
 
 	// Don't read back - keep the user's original input to avoid inconsistencies
 	// The API adds default fields (like metadata.imports, type) that weren't in the input
@@ -360,40 +262,56 @@ func (r *ResourceDashifyTemplate) Delete(ctx context.Context, req resource.Delet
 		return
 	}
 
-	details := r.Details()
-	templateID := model.Id.ValueString()
-	url := fmt.Sprintf("%s%s/%s", details.APIURL, TemplateAPIPath, templateID)
-
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodDelete, url, http.NoBody)
+	httpResp, err := r.doRequest(ctx, http.MethodDelete, path.Join(TemplateAPIPath, model.Id.ValueString()), nil)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error Creating HTTP Request",
-			fmt.Sprintf("Could not create HTTP request: %s", err.Error()),
-		)
-		return
-	}
-
-	httpReq.Header.Set("X-SF-TOKEN", details.AuthToken)
-
-	client := &http.Client{}
-	httpResp, err := client.Do(httpReq)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Making API Request",
-			fmt.Sprintf("Could not make API request: %s", err.Error()),
+			"Error Deleting Template",
+			fmt.Sprintf("Could not delete dashify template: %s", err.Error()),
 		)
 		return
 	}
 	defer httpResp.Body.Close()
 
-	if httpResp.StatusCode != http.StatusOK && httpResp.StatusCode != http.StatusNoContent && httpResp.StatusCode != http.StatusNotFound {
-		body, _ := io.ReadAll(httpResp.Body)
-		resp.Diagnostics.AddError(
-			"Error Deleting Template",
-			fmt.Sprintf("API returned status %d: %s", httpResp.StatusCode, string(body)),
-		)
-		return
+	tflog.Debug(ctx, "Deleted Dashify Template", tfext.NewLogFields().Field("id", model.Id.ValueString()))
+}
+
+func (r *ResourceDashifyTemplate) doRequest(ctx context.Context, method string, path string, body any) (*http.Response, error) {
+	u, err := url.ParseRequestURI(r.Details().APIURL)
+	if err != nil {
+		return nil, err
+	}
+	u = u.JoinPath(path)
+
+	var content io.Reader = http.NoBody
+	if body != nil {
+		buf := bytes.NewBuffer(nil)
+		if err = json.NewEncoder(buf).Encode(body); err != nil {
+			return nil, err
+		}
+		content = buf
+	}
+	req, err := http.NewRequestWithContext(ctx, method, u.String(), content)
+	if err != nil {
+		return nil, err
 	}
 
-	tflog.Debug(ctx, "Deleted Dashify Template", map[string]interface{}{"id": templateID})
+	details := r.Details()
+	req.Header.Set("X-Sf-Token", details.AuthToken)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := r.net.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	switch resp.StatusCode {
+	case http.StatusOK, http.StatusCreated, http.StatusNoContent:
+		return resp, nil
+	default:
+		content, err := httputil.DumpResponse(resp, true)
+		if err != nil {
+			return nil, err
+		}
+		return nil, fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, string(content))
+	}
 }
