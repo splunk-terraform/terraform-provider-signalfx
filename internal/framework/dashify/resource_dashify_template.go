@@ -175,7 +175,7 @@ func (r *ResourceDashifyTemplate) readTemplate(ctx context.Context, model *resou
 
 	// Parse response - GET may return data in same format as POST
 	var result map[string]any
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+	if err = json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		diags.AddError(
 			"Error Parsing Response",
 			fmt.Sprintf("Could not parse response: %s", err.Error()),
@@ -285,7 +285,7 @@ func (r *ResourceDashifyTemplate) doRequest(ctx context.Context, method string, 
 	var content io.Reader = http.NoBody
 	if body != nil {
 		buf := bytes.NewBuffer(nil)
-		if err := json.NewEncoder(buf).Encode(body); err != nil {
+		if err = json.NewEncoder(buf).Encode(body); err != nil {
 			return nil, err
 		}
 		content = buf

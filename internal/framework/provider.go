@@ -24,8 +24,8 @@ import (
 	"github.com/signalfx/signalfx-go"
 
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/feature"
-	fwdashify "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/dashify"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/apm"
+	fwdashify "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/dashify"
 	internalfunction "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/function"
 	fwintegration "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/integration"
 	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
