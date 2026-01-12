@@ -757,10 +757,10 @@ func timechartCreate(d *schema.ResourceData, meta interface{}) error {
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Create Time Chart Payload: %s", string(debugOutput))
 
-	c, err := config.Client.CreateChart(context.TODO(), payload)
-	if err != nil {
-		return err
-	}
+    c, err := config.Client.CreateChart(context.TODO(), payload)
+    if err != nil {
+        return common.HandleError(context.TODO(), common.WrapResponseError(err), d)
+    }
 	// Since things worked, set the URL and move on
 	appURL, err := buildAppURL(config.CustomAppURL, CHART_APP_PATH+c.Id)
 	if err != nil {
@@ -777,14 +777,14 @@ func timechartCreate(d *schema.ResourceData, meta interface{}) error {
 func timechartRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 
-	c, err := config.Client.GetChart(context.TODO(), d.Id())
-	if err != nil {
-		if isNotFoundError(err) {
-			d.SetId("")
-			return nil
-		}
-		return err
-	}
+    c, err := config.Client.GetChart(context.TODO(), d.Id())
+    if err != nil {
+        if isNotFoundError(err) {
+            d.SetId("")
+            return nil
+        }
+        return common.HandleError(context.TODO(), common.WrapResponseError(err), d)
+    }
 
 	appURL, err := buildAppURL(config.CustomAppURL, CHART_APP_PATH+c.Id)
 	if err != nil {
@@ -1094,10 +1094,10 @@ func timechartUpdate(d *schema.ResourceData, meta interface{}) error {
 		payload.Tags,
 	)
 
-	c, err := config.Client.UpdateChart(context.TODO(), d.Id(), payload)
-	if err != nil {
-		return err
-	}
+    c, err := config.Client.UpdateChart(context.TODO(), d.Id(), payload)
+    if err != nil {
+        return common.HandleError(context.TODO(), common.WrapResponseError(err), d)
+    }
 	log.Printf("[DEBUG] SignalFx: Update Time Chart Response: %v", c)
 
 	// Since things worked, set the URL and move on
@@ -1115,7 +1115,10 @@ func timechartUpdate(d *schema.ResourceData, meta interface{}) error {
 func timechartDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*signalfxConfig)
 
-	return config.Client.DeleteChart(context.TODO(), d.Id())
+    if err := config.Client.DeleteChart(context.TODO(), d.Id()); err != nil {
+        return common.HandleError(context.TODO(), common.WrapResponseError(err), d)
+    }
+    return nil
 }
 
 var validateUnitTimeChart = validation.StringInSlice([]string{
