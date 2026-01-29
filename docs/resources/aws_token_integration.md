@@ -6,7 +6,7 @@ description: |-
 
 # Resource: signalfx_aws_token_integration
 
-Splunk Observability AWS CloudWatch integrations using security tokens. For help with this integration see [Connect to AWS CloudWatch](https://docs.signalfx.com/en/latest/integrations/amazon-web-services.html#connect-to-aws).
+Splunk Observability AWS CloudWatch integrations using security tokens. For help with this integration see [Connect to AWS CloudWatch](https://dev.splunk.com/observability/docs/integrations/aws_integration_overview/).
 
 ~> **NOTE** When managing integrations, use a session token of an administrator to authenticate the Splunk Observabilit Cloud provider. See [Operations that require a session token for an administrator](https://dev.splunk.com/observability/docs/administration/authtokens#Operations-that-require-a-session-token-for-an-administrator).
 

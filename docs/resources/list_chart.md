@@ -61,7 +61,7 @@ resource "signalfx_list_chart" "mylistchart0" {
 The following arguments are supported in the resource block:
 
 * `name` - (Required) Name of the chart.
-* `program_text` - (Required) Signalflow program text for the chart. More info[in the Splunk Observability Cloud docs](https://developers.signalfx.com/signalflow_analytics/signalflow_overview.html#_signalflow_programming_language).
+* `program_text` - (Required) Signalflow program text for the chart. More info[in the Splunk Observability Cloud docs](https://dev.splunk.com/observability/docs/signalflow/).
 * `description` - (Optional) Description of the chart.
 * `unit_prefix` - (Optional) Must be `"Metric"` or `"Binary`". `"Metric"` by default.
 * `color_by` - (Optional) Must be one of `"Scale"`, `"Dimension"` or `"Metric"`. `"Dimension"` by default.
