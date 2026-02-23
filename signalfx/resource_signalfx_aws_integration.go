@@ -181,10 +181,10 @@ func integrationAWSResource() *schema.Resource {
 				Description:  "AWS poll rate (in seconds). Between `60` and `600`.",
 				ValidateFunc: validation.IntBetween(60, 600),
 			},
-			"cold_poll_rate": {
+			"inactive_metrics_poll_rate": {
 				Type:         schema.TypeInt,
 				Optional:     true,
-				Description:  "AWS cold poll rate (in seconds). Between `60` and `3600`",
+				Description:  "AWS inactive_metrics poll rate (in seconds). Between `60` and `3600`",
 				ValidateFunc: validation.IntBetween(60, 3600),
 			},
 			"external_id": {
@@ -326,8 +326,8 @@ func awsIntegrationAPIToTF(d *schema.ResourceData, aws *integration.AwsCloudWatc
 		return err
 	}
 
-	if aws.ColdPollRate != 0 {
-		if err := d.Set("cold_poll_rate", aws.ColdPollRate/1000); err != nil {
+	if aws.InactiveMetricsPollRate != 0 {
+		if err := d.Set("inactive_metrics_poll_rate", aws.InactiveMetricsPollRate/1000); err != nil {
 			return err
 		}
 	}
@@ -495,8 +495,8 @@ func getPayloadAWSIntegration(d *schema.ResourceData) (*integration.AwsCloudWatc
 		aws.PollRate = int64(val.(int)) * 1000
 	}
 
-	if val, ok := d.GetOk("cold_poll_rate"); ok {
-		aws.ColdPollRate = int64(val.(int)) * 1000
+	if val, ok := d.GetOk("inactive_metrics_poll_rate"); ok {
+		aws.InactiveMetricsPollRate = int64(val.(int)) * 1000
 	}
 
 	if val, ok := d.GetOk("regions"); ok {
