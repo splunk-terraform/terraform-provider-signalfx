@@ -18,7 +18,7 @@ require (
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.38.1
 	github.com/hashicorp/terraform-plugin-testing v1.14.0
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/signalfx/signalfx-go v1.54.0
+	github.com/signalfx/signalfx-go v1.55.0
 	github.com/stretchr/testify v1.11.1
 	go.uber.org/multierr v1.11.0
 )
