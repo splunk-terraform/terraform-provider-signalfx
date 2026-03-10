@@ -28,13 +28,14 @@ resource "aws_iam_role" "aws_sfx_example" {
 resource "signalfx_aws_integration" "aws_myteam" {
   enabled = true
 
-  integration_id     = signalfx_aws_external_integration.aws_myteam_external.id
-  external_id        = signalfx_aws_external_integration.aws_myteam_external.external_id
-  role_arn           = aws_iam_role.aws_sfx_role.arn
-  regions            = ["us-east-1"]
-  poll_rate          = 300
-  import_cloud_watch = true
-  enable_aws_usage   = true
+  integration_id             = signalfx_aws_external_integration.aws_myteam_external.id
+  external_id                = signalfx_aws_external_integration.aws_myteam_external.external_id
+  role_arn                   = aws_iam_role.aws_sfx_role.arn
+  regions                    = ["us-east-1"]
+  poll_rate                  = 300
+  inactive_metrics_poll_rate = 1200
+  import_cloud_watch         = true
+  enable_aws_usage           = true
 
   custom_namespace_sync_rule {
     default_action = "Exclude"
@@ -86,6 +87,7 @@ resource "signalfx_aws_integration" "aws_myteam" {
   * `filter_source` - (Optional) Expression that selects the data that Splunk Observability Cloud should sync for the custom namespace associated with this sync rule. The expression uses the syntax defined for the SignalFlow `filter()` function; it can be any valid SignalFlow filter expression.
   * `namespace` - (Required) An AWS custom namespace having custom AWS metrics that you want to sync with Splunk Observability Cloud. See `services` field description below for additional information.
 * `poll_rate` - (Optional) AWS poll rate (in seconds). Value between `60` and `600`. Default: `300`.
+* `inactive_metrics_poll_rate` - (Optional) AWS inactive metrics poll rate (in seconds). Between `60` and `3600`.
 * `regions` - (Required) List of AWS regions that Splunk Observability Cloud should monitor. It cannot be empty.
 * `role_arn` - (Optional) Role ARN that you add to an existing AWS integration object. **Note**: Ensure you use the `arn` property of your role, not the id!
 * `services` - (Optional) List of AWS services that you want Splunk Observability Cloud to monitor. Each element is a string designating an AWS service. Can be an empty list to import data for all supported services. Conflicts with `namespace_sync_rule`. See [Amazon Web Services](https://docs.splunk.com/Observability/gdi/get-data-in/integrations.html#amazon-web-services) for a list of valid values.
