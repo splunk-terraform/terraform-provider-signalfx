@@ -86,16 +86,16 @@ func (dg *DashboardGroupsDataSource) Read(ctx context.Context, req datasource.Re
 			break
 		}
 		for _, r := range results.Results {
-			for _, dashboard := range r.Dashboards {
+			for _, id := range r.Dashboards {
 				group := dg.clean(r.Name)
 				resolved[group] = make(map[string]string)
 				wg.Go(func() error {
-					result, err := client.GetDashboard(ctx, dashboard)
+					dashboard, err := client.GetDashboard(ctx, id)
 					if err != nil {
 						return err
 					}
 					mu.Lock()
-					resolved[group][dg.clean(result.Name)] = dashboard
+					resolved[group][dg.clean(dashboard.Name)] = id
 					mu.Unlock()
 					return nil
 				})
