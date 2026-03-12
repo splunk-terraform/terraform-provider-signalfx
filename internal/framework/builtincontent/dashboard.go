@@ -12,9 +12,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"golang.org/x/sync/errgroup"
+
 	fwembed "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/embed"
 	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
-	"golang.org/x/sync/errgroup"
 )
 
 type DashboardGroupsDataSource struct {
