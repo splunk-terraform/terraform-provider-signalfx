@@ -66,10 +66,12 @@ func (dg *DashboardGroupsDataSource) Read(ctx context.Context, req datasource.Re
 	}
 
 	var (
-		references = make(map[string][]string)
-		mu         sync.Mutex
-		resolved   = make(map[string]map[string]string)
+		wg = errgroup.Group{}
+
+		mu       sync.Mutex
+		resolved = make(map[string]map[string]string)
 	)
+	wg.SetLimit(10)
 
 	for offset, limit := 0, 100; ; offset += limit {
 		results, err := client.ListBuiltInDashboardGroups(ctx, limit, offset)
@@ -84,27 +86,21 @@ func (dg *DashboardGroupsDataSource) Read(ctx context.Context, req datasource.Re
 			break
 		}
 		for _, r := range results.Results {
-			references[r.Name] = r.Dashboards
-		}
-	}
-
-	wg := errgroup.Group{}
-	wg.SetLimit(10)
-	for name, dashboards := range references {
-		wg.Go(func() error {
-			mappings := make(map[string]string)
-			for _, id := range dashboards {
-				dashboards, err := client.GetDashboard(ctx, id)
-				if err != nil {
-					return err
-				}
-				mappings[dg.clean(dashboards.Name)] = id
+			for _, dashboard := range r.Dashboards {
+				group := dg.clean(r.Name)
+				resolved[group] = make(map[string]string)
+				wg.Go(func() error {
+					result, err := client.GetDashboard(ctx, dashboard)
+					if err != nil {
+						return err
+					}
+					mu.Lock()
+					resolved[group][dg.clean(result.Name)] = dashboard
+					mu.Unlock()
+					return nil
+				})
 			}
-			mu.Lock()
-			resolved[dg.clean(name)] = mappings
-			mu.Unlock()
-			return nil
-		})
+		}
 	}
 
 	if err := wg.Wait(); err != nil {
