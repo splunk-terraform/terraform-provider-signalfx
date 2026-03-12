@@ -1,8 +1,6 @@
 module github.com/splunk-terraform/terraform-provider-signalfx
 
-go 1.24.1
-
-toolchain go1.24.4
+go 1.25.0
 
 require (
 	github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d
@@ -21,6 +19,7 @@ require (
 	github.com/signalfx/signalfx-go v1.56.0
 	github.com/stretchr/testify v1.11.1
 	go.uber.org/multierr v1.11.0
+	golang.org/x/sync v0.19.0
 )
 
 require (
@@ -76,7 +75,6 @@ require (
 	golang.org/x/mod v0.30.0 // indirect
 	golang.org/x/net v0.48.0 // indirect
 	golang.org/x/oauth2 v0.34.0 // indirect
-	golang.org/x/sync v0.19.0 // indirect
 	golang.org/x/sys v0.39.0 // indirect
 	golang.org/x/text v0.32.0 // indirect
 	golang.org/x/tools v0.39.0 // indirect
