@@ -14,8 +14,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/config"
 	resourcetest "github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/signalfx/signalfx-go/dashboard_group"
-	"github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/fwtest"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/fwtest"
 )
 
 func TestDashboardGroupsMetadata(t *testing.T) {
