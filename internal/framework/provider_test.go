@@ -115,7 +115,7 @@ func TestProviderDataSources(t *testing.T) {
 
 	p := NewProvider("1.0.0")
 
-	assert.Empty(t, p.DataSources(context.Background()), "Must not return any values")
+	assert.Len(t, p.DataSources(context.Background()), 1, "Must return exactly one data source")
 }
 
 func TestProviderResource(t *testing.T) {
