@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-testing/config"
 	resourcetest "github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/signalfx/signalfx-go/dashboard"
 	"github.com/signalfx/signalfx-go/dashboard_group"
 	"github.com/stretchr/testify/assert"
 
@@ -74,7 +75,7 @@ func TestDashboardGroupMockIngeration(t *testing.T) {
 		{
 			name: "dashboard group endpoint returns error",
 			endpoints: map[string]http.Handler{
-				"/v2/dashboardgroup": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				"GET /v2/dashboardgroup": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					defer r.Body.Close()
 					http.Error(w, "Not Serving Requests", http.StatusBadGateway)
 				}),
@@ -116,8 +117,54 @@ func TestDashboardGroupMockIngeration(t *testing.T) {
 			},
 			steps: []resourcetest.TestStep{
 				{
+					ConfigFile:  config.StaticFile("testdata/builtin-dashboards.tf"),
+					PlanOnly:    true,
+					ExpectError: regexp.MustCompilePOSIX(`route "/v2/dashboard/dashboard-1" had issues with status code 502`),
+				},
+			},
+		},
+		{
+			name: "successfully loaded built in content",
+			endpoints: map[string]http.Handler{
+				"GET /v2/dashboardgroup": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					_, _ = io.Copy(io.Discard, r.Body)
+					_ = r.Body.Close()
+
+					searched := &dashboard_group.SearchResult{
+						Count: 1,
+						Results: []*dashboard_group.DashboardGroup{
+							{
+								Name:       "Test Dashboard Group",
+								Dashboards: []string{"dashboard-1"},
+							},
+						},
+					}
+					if err := json.NewEncoder(w).Encode(searched); err != nil {
+						http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+					}
+				}),
+				"GET /v2/dashboard/dashboard-1": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					_, _ = io.Copy(io.Discard, r.Body)
+					_ = r.Body.Close()
+
+					dashboard := &dashboard.Dashboard{
+						Id:   "dashboard-1",
+						Name: "Test Dashboard",
+					}
+					if err := json.NewEncoder(w).Encode(dashboard); err != nil {
+						http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+					}
+				}),
+			},
+			steps: []resourcetest.TestStep{
+				{
 					ConfigFile: config.StaticFile("testdata/builtin-dashboards.tf"),
 					PlanOnly:   true,
+					Check: resourcetest.ComposeTestCheckFunc(
+						resourcetest.TestCheckResourceAttr("signalfx_builtin_dashbiards.example", "results.%", "1"),
+						resourcetest.TestCheckResourceAttr("signalfx_builtin_dashbiards.example", "results.Test_Dashboard_Group.%", "1"),
+						resourcetest.TestCheckResourceAttr("signalfx_builtin_dashbiards.example", "results.Test_Dashboard_Group.Test_Dashboard", "dashboard-1"),
+					),
 				},
 			},
 		},

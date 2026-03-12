@@ -82,9 +82,11 @@ func (dg *DashboardGroupsDataSource) Read(ctx context.Context, req datasource.Re
 			)
 			return
 		}
-		if len(results.Results) == 0 {
+
+		if len(resolved) == int(results.Count) {
 			break
 		}
+
 		for _, r := range results.Results {
 			for _, id := range r.Dashboards {
 				group := dg.clean(r.Name)
