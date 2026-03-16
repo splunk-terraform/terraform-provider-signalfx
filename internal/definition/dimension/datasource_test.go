@@ -48,7 +48,7 @@ func TestDataSource(t *testing.T) {
 			}),
 			values: []any{},
 			diags: diag.Diagnostics{
-				{Severity: diag.Error, Summary: "route \"/v2/dimension\" had issues with status code 400"},
+				{Severity: diag.Error, Summary: "route \"/v2/dimension\" had issues with status code 400", Detail: "unable to read dimensions"},
 			},
 		},
 		{
@@ -63,7 +63,7 @@ func TestDataSource(t *testing.T) {
 			}),
 			values: []any{},
 			diags: diag.Diagnostics{
-				{Severity: diag.Error, Summary: "route \"/v2/dimension\" had issues with status code 400"},
+				{Severity: diag.Error, Summary: "route \"/v2/dimension\" had issues with status code 400", Detail: "unable to read dimensions"},
 			},
 		},
 		{
