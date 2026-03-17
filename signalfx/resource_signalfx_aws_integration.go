@@ -184,6 +184,7 @@ func integrationAWSResource() *schema.Resource {
 			"inactive_metrics_poll_rate": {
 				Type:         schema.TypeInt,
 				Optional:     true,
+				Default:      1200,
 				Description:  "AWS inactive metrics poll rate (in seconds). Between `60` and `3600`",
 				ValidateFunc: validation.IntBetween(60, 3600),
 			},
