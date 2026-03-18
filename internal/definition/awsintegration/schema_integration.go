@@ -177,12 +177,6 @@ func newIntegrationSchema() map[string]*schema.Schema {
 			Computed:    true,
 			Description: "Enables the use of Cloudwatch Metric Streams for metrics synchronization.",
 		},
-		"enable_logs_sync": {
-			Type:        schema.TypeBool,
-			Optional:    true,
-			Computed:    true,
-			Description: "Enables AWS logs synchronization.",
-		},
 		"named_token": {
 			Type:        schema.TypeString,
 			Optional:    true,
@@ -270,13 +264,6 @@ func decodeTerraform(rd *schema.ResourceData) (*integration.AwsCloudWatchIntegra
 		cwi.MetricStreamsSyncState = "CANCELING"
 	}
 
-	if v, ok := rd.GetOk("enable_log_sync"); ok && v.(bool) {
-		cwi.LogsSyncState = "ENABLED"
-	} else if rd.HasChange("enable_log_sync") {
-		// enable_logs_sync is false, and it has changed, meaning it was ENABLED before
-		cwi.LogsSyncState = "CANCELING"
-	}
-
 	if v, ok := rd.GetOk("external_id"); ok && v != "" {
 		cwi.AuthMethod = integration.EXTERNAL_ID
 		cwi.ExternalId = v.(string)
@@ -330,7 +317,6 @@ func encodeTerraform(aws *integration.AwsCloudWatchIntegration, d *schema.Resour
 		d.Set("import_cloud_watch", aws.ImportCloudWatch),
 		d.Set("poll_rate", aws.PollRate/1000),
 		d.Set("use_metric_streams_sync", aws.MetricStreamsSyncState == "ENABLED"),
-		d.Set("enable_logs_sync", aws.LogsSyncState == "ENABLED"),
 		d.Set("enable_check_large_volume", aws.EnableCheckLargeVolume),
 		d.Set("sync_custom_namespaces_only", aws.SyncCustomNamespacesOnly),
 		d.Set("named_token", aws.NamedToken),

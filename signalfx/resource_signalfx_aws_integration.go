@@ -28,10 +28,6 @@ func metricStreamsStateSupplier(int *integration.AwsCloudWatchIntegration) strin
 	return int.MetricStreamsSyncState
 }
 
-func logsSyncStateSupplier(int *integration.AwsCloudWatchIntegration) string {
-	return int.LogsSyncState
-}
-
 func integrationAWSResource() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
@@ -206,6 +202,7 @@ func integrationAWSResource() *schema.Resource {
 				Optional:    true,
 				Computed:    true,
 				Description: "Enables AWS logs synchronization.",
+				Deprecated:  "enable_logs_sync field is no longer used and will be removed in a next major release.",
 			},
 			"named_token": {
 				Type:        schema.TypeString,
@@ -315,7 +312,6 @@ func awsIntegrationAPIToTF(d *schema.ResourceData, aws *integration.AwsCloudWatc
 		d.Set("import_cloud_watch", aws.ImportCloudWatch),
 		d.Set("poll_rate", aws.PollRate/1000),
 		d.Set("use_metric_streams_sync", aws.MetricStreamsSyncState == "ENABLED"),
-		d.Set("enable_logs_sync", aws.LogsSyncState == "ENABLED"),
 		d.Set("enable_check_large_volume", aws.EnableCheckLargeVolume),
 		d.Set("sync_custom_namespaces_only", aws.SyncCustomNamespacesOnly),
 		d.Set("named_token", aws.NamedToken),
@@ -454,12 +450,6 @@ func getPayloadAWSIntegration(d *schema.ResourceData) (*integration.AwsCloudWatc
 		aws.MetricStreamsSyncState = "ENABLED"
 	} else if d.HasChange("use_metric_streams_sync") {
 		aws.MetricStreamsSyncState = "CANCELLING" // use_metric_streams_sync is false, and it has changed, meaning it was ENABLED before
-	}
-
-	if d.Get("enable_logs_sync").(bool) {
-		aws.LogsSyncState = "ENABLED"
-	} else if d.HasChange("enable_logs_sync") {
-		aws.LogsSyncState = "CANCELLING" // enable_logs_sync is false, and it has changed, meaning it was ENABLED before
 	}
 
 	if d.Get("external_id").(string) != "" {
@@ -658,11 +648,6 @@ func integrationAWSUpdate(d *schema.ResourceData, meta any) error {
 			return err
 		}
 	}
-	if d.HasChange("enable_logs_sync") {
-		if int, err = waitForIntegrationStateToSettle(d, config, int.Id, "enable_logs_sync", logsSyncStateSupplier); err != nil {
-			return err
-		}
-	}
 
 	return awsIntegrationAPIToTF(d, int)
 }
@@ -681,16 +666,13 @@ func DoIntegrationAWSDelete(d *schema.ResourceData, meta any) error {
 		return fmt.Errorf("error fetching existing integration %s, %s", d.Id(), err.Error())
 	}
 
-	// Disable the AWS logs sync and/or CloudWatch metric streams sync if needed
+	// Disable CloudWatch metric streams sync if needed
 	needToDisableMetricStreams := int.Enabled && int.MetricStreamsSyncState != "" && int.MetricStreamsSyncState != "DISABLED"
-	needToDisableLogsSync := int.Enabled && int.LogsSyncState != "" && int.LogsSyncState != "DISABLED"
-	if needToDisableMetricStreams || needToDisableLogsSync {
+	if needToDisableMetricStreams {
 		if needToDisableMetricStreams {
 			int.MetricStreamsSyncState = "CANCELLING"
 		}
-		if needToDisableLogsSync {
-			int.LogsSyncState = "CANCELLING"
-		}
+
 		_, err := config.Client.UpdateAWSCloudWatchIntegration(context.TODO(), d.Id(), int)
 		if err != nil {
 			if strings.Contains(err.Error(), "40") {
@@ -700,11 +682,6 @@ func DoIntegrationAWSDelete(d *schema.ResourceData, meta any) error {
 		}
 		if needToDisableMetricStreams {
 			if _, err = waitForIntegrationSpecificSyncStateToSettle(d, false, config, int.Id, "use_metric_streams_sync", metricStreamsStateSupplier); err != nil {
-				return err
-			}
-		}
-		if needToDisableLogsSync {
-			if _, err = waitForIntegrationSpecificSyncStateToSettle(d, false, config, int.Id, "enable_logs_sync", logsSyncStateSupplier); err != nil {
 				return err
 			}
 		}
