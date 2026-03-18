@@ -173,7 +173,7 @@ const updatedIntegrationAWSConfigMetricStreams = `
 
 const updatedIntegrationAWSConfigLogsSync = `
   resource "signalfx_aws_token_integration" "aws_tok_myteamXX" {
-	name = "AWS TF Test (token/updated/logs:%s)"
+	name = "AWS TF Test (token/updated:%s)"
   }
 
   resource "signalfx_aws_integration" "aws_myteam_tokXX" {
@@ -186,7 +186,6 @@ const updatedIntegrationAWSConfigLogsSync = `
 	services                = ["AWS/Lambda"]
 	poll_rate               = 300
 	import_cloud_watch      = true
-	enable_logs_sync        = %s
   }
 `
 
@@ -274,26 +273,6 @@ func TestAccCreateUpdateIntegrationAWS(t *testing.T) {
 					testAccCheckIntegrationAWSResourceExists,
 					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteam_tokXX", "name", "AWS TF Test (token/updated/ms:disabled)"),
 					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteam_tokXX", "use_metric_streams_sync", "false"),
-				),
-			},
-			// Update again to enable AWS logs synchronization
-			{
-				SkipFunc: skipTestWhenAWSCredentialsAreMissing(t, awsAccessKeyID, awsSecretAccessKey),
-				Config:   fmt.Sprintf(updatedIntegrationAWSConfigLogsSync, "enabled", awsAccessKeyID, awsSecretAccessKey, "true"),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckIntegrationAWSResourceExists,
-					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteam_tokXX", "name", "AWS TF Test (token/updated/logs:enabled)"),
-					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteam_tokXX", "enable_logs_sync", "true"),
-				),
-			},
-			// Update again to disable AWS logs synchronization
-			{
-				SkipFunc: skipTestWhenAWSCredentialsAreMissing(t, awsAccessKeyID, awsSecretAccessKey),
-				Config:   fmt.Sprintf(updatedIntegrationAWSConfigLogsSync, "disabled", awsAccessKeyID, awsSecretAccessKey, "false"),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckIntegrationAWSResourceExists,
-					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteam_tokXX", "name", "AWS TF Test (token/updated/logs:disabled)"),
-					resource.TestCheckResourceAttr("signalfx_aws_integration.aws_myteam_tokXX", "enable_logs_sync", "false"),
 				),
 			},
 		},

@@ -129,7 +129,6 @@ func TestIntegrationDecode(t *testing.T) {
 				"key":                     "my-key",
 				"regions":                 []any{"us-east-1"},
 				"use_metric_streams_sync": true,
-				"enable_log_sync":         true,
 				"poll_rate":               10_000,
 				"named_token":             "my-awesome-token",
 				"metric_stats_to_sync": []any{

@@ -80,7 +80,7 @@ export SFX_TEST_AWS_ACCESS_KEY_ID=AKIAXXXXXX
 export SFX_TEST_AWS_SECRET_ACCESS_KEY=XXXXXX
 ```
 
-Grant the following permissions. Additional permissions may be required to capture logs from specific AWS services.
+Grant the following permissions. Additional permissions may be required to capture tags from specific AWS services.
 
 ```
 "cloudwatch:DeleteMetricStream",
@@ -89,15 +89,7 @@ Grant the following permissions. Additional permissions may be required to captu
 "cloudwatch:PutMetricStream",
 "cloudwatch:StartMetricStreams",
 "cloudwatch:StopMetricStreams",
-"iam:PassRole",
-
-"logs:DeleteSubscriptionFilter",
-"logs:DescribeLogGroups",
-"logs:DescribeSubscriptionFilters",
-"logs:PutSubscriptionFilter",
-"s3:GetBucketLogging",
-"s3:GetBucketNotification",
-"s3:PutBucketNotification"
+"iam:PassRole"
 ```
 
 See [Connect to AWS using the guided setup in Splunk Observability Cloud](https://docs.splunk.com/Observability/gdi/get-data-in/connect/aws/aws-wizardconfig.html) and [Enable CloudWatch Metric Streams](https://docs.splunk.com/Observability/gdi/get-data-in/connect/aws/aws-apiconfig.html#enable-cloudwatch-metric-streams) in Splunk documentation for more details about creating that IAM policy.
