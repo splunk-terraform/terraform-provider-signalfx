@@ -197,13 +197,6 @@ func integrationAWSResource() *schema.Resource {
 				Computed:    true,
 				Description: "Enables the use of Cloudwatch Metric Streams for metrics synchronization.",
 			},
-			"enable_logs_sync": {
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Computed:    true,
-				Description: "Enables AWS logs synchronization.",
-				Deprecated:  "enable_logs_sync field is no longer used and will be removed in a next major release.",
-			},
 			"named_token": {
 				Type:        schema.TypeString,
 				Optional:    true,
