@@ -63,7 +63,7 @@ To test the provider, run the following command:
 To run the full suite of acceptance tests, run `make testacc`.
 
 ```sh
-$ export SFX_API_URL=https://api.signalfx.com # or https://api.eu0.signalfx.com
+$ export SFX_API_URL=https://api.observability.splunk.com # or https://api.eu0.observability.splunk.com
 $ export SFX_AUTH_TOKEN=XXXXXX
 $ make testacc
 ```

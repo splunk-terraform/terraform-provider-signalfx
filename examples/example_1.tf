@@ -2,9 +2,7 @@
 provider "signalfx" {
   auth_token = "${var.signalfx_auth_token}"
   # If your organization uses a different realm
-  # api_url = "https://api.<realm>.signalfx.com"
-  # If your organization uses a custom URL
-  # custom_app_url = "https://myorg.signalfx.com"
+  # api_url = "https://api.<realm>.observability.splunk.com"
 }
 
 # Create a new detector

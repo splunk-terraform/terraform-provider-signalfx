@@ -119,6 +119,7 @@ func TestProviderDataSources(t *testing.T) {
 
 	expect := map[string]struct{}{
 		"signalfx_apm_service_topology": {},
+		"signalfx_builtin_dashboards":   {},
 	}
 
 	actual := p.DataSources(context.Background())

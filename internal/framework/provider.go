@@ -25,6 +25,7 @@ import (
 
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/feature"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/apm"
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/builtincontent"
 	fwdashify "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/dashify"
 	internalfunction "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/function"
 	fwintegration "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/integration"
@@ -274,6 +275,7 @@ func (op *ollyProvider) Configure(ctx context.Context, req provider.ConfigureReq
 
 func (op *ollyProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
+		builtincontent.NewDashboardGroupsDataSource,
 		apm.NewDatasourceTopology,
 	}
 }
