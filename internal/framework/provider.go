@@ -274,6 +274,7 @@ func (op *ollyProvider) DataSources(ctx context.Context) []func() datasource.Dat
 	// To implement: Register data sources.
 	return []func() datasource.DataSource{
 		builtincontent.NewDashboardGroupsDataSource,
+		builtincontent.NewAutoDetectorDataSource,
 	}
 }
 
