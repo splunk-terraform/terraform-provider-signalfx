@@ -31,5 +31,13 @@ output "cpu_utilization_auto_detector_id" {
 
 ### Read-Only
 
-- `results` (Map of String) Contains a map of existing auto detector names to their IDs. Note that the names are cleaned to be Terraform compatible, so they may differ from the actual auto detector names in Splunk.
+- `results` (Attributes Map) Contains a map of existing auto detector names to their IDs. Note that the names are cleaned to be Terraform compatible, so they may differ from the actual auto detector names in Splunk. (see [below for nested schema](#nestedatt--results))
+
+<a id="nestedatt--results"></a>
+### Nested Schema for `results`
+
+Read-Only:
+
+- `id` (String) The ID of the auto detector.
+- `inputs` (List of Map of String) The values that can be configured as part of the auto detector
 
