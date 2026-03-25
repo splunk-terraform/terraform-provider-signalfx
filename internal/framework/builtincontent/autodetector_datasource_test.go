@@ -16,6 +16,8 @@ import (
 	"github.com/signalfx/signalfx-go/detector"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/experimental/pkg/metadata"
+	flow "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/experimental/pkg/signalflow"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/fwtest"
 )
 
@@ -95,6 +97,40 @@ func TestAutoDetectorMockIntegration(t *testing.T) {
 						http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 					}
 				}),
+				"POST /v2/signalflow/_/getSignalFlowModel": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					_, _ = io.Copy(io.Discard, r.Body)
+					_ = r.Body.Close()
+
+					model := flow.ExecutionGraph{
+						flow.ExecutionBlockImport{
+							Typed:  "IMPORT",
+							Name:   "builtin",
+							Module: "my.superawesome.package",
+						},
+						flow.ExecutionBlockStream{
+							Typed: "DETECT",
+							Start: flow.ExecutionBlockStreamMethod{
+								FunctionName: "builtin.utilization",
+							},
+						},
+					}
+					if err := json.NewEncoder(w).Encode(model); err != nil {
+						http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+					}
+				}),
+				"GET /v2/signalflow/_/extractMetadata": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					_, _ = io.Copy(io.Discard, r.Body)
+					_ = r.Body.Close()
+
+					data := metadata.Metadata{
+						Arguments: []metadata.Argument{
+							{Name: "arg1"},
+						},
+					}
+					if err := json.NewEncoder(w).Encode(data); err != nil {
+						http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+					}
+				}),
 			},
 			steps: []resourcetest.TestStep{
 				{
@@ -102,8 +138,9 @@ func TestAutoDetectorMockIntegration(t *testing.T) {
 					PlanOnly:   true,
 					Check: resourcetest.ComposeTestCheckFunc(
 						resourcetest.TestCheckResourceAttr("data.signalfx_auto_detector.test", "results.%", "2"),
-						resourcetest.TestCheckResourceAttr("data.signalfx_auto_detector.test", "results.CPU_Utilization", "detector-1"),
-						resourcetest.TestCheckResourceAttr("data.signalfx_auto_detector.test", "results.Disk_Errors", "detector-3"),
+						resourcetest.TestCheckResourceAttr("data.signalfx_auto_detector.test", "results.CPU_Utilization.id", "detector-1"),
+						resourcetest.TestCheckResourceAttr("data.signalfx_auto_detector.test", "results.CPU_Utilization.inputs", "detector-1"),
+						resourcetest.TestCheckResourceAttr("data.signalfx_auto_detector.test", "results.Disk_Errors.id", "detector-3"),
 					),
 				},
 			},
@@ -154,6 +191,40 @@ func TestAutoDetectorMockIntegration(t *testing.T) {
 						http.Error(w, "Failed to encode response", http.StatusInternalServerError)
 					}
 				}),
+				"POST /v2/signalflow/_/getSignalFlowModel": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					_, _ = io.Copy(io.Discard, r.Body)
+					_ = r.Body.Close()
+
+					model := flow.ExecutionGraph{
+						flow.ExecutionBlockImport{
+							Typed:  "IMPORT",
+							Name:   "builtin",
+							Module: "my.superawesome.package",
+						},
+						flow.ExecutionBlockStream{
+							Typed: "DETECT",
+							Start: flow.ExecutionBlockStreamMethod{
+								FunctionName: "builtin.utilization",
+							},
+						},
+					}
+					if err := json.NewEncoder(w).Encode(model); err != nil {
+						http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+					}
+				}),
+				"GET /v2/signalflow/_/extractMetadata": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					_, _ = io.Copy(io.Discard, r.Body)
+					_ = r.Body.Close()
+
+					data := metadata.Metadata{
+						Arguments: []metadata.Argument{
+							{Name: "arg1"},
+						},
+					}
+					if err := json.NewEncoder(w).Encode(data); err != nil {
+						http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+					}
+				}),
 			},
 			steps: []resourcetest.TestStep{
 				{
@@ -161,8 +232,8 @@ func TestAutoDetectorMockIntegration(t *testing.T) {
 					PlanOnly:   true,
 					Check: resourcetest.ComposeTestCheckFunc(
 						resourcetest.TestCheckResourceAttr("data.signalfx_auto_detector.test", "results.%", "2"),
-						resourcetest.TestCheckResourceAttr("data.signalfx_auto_detector.test", "results.First_Auto_Detector", "detector-1"),
-						resourcetest.TestCheckResourceAttr("data.signalfx_auto_detector.test", "results.Second_Auto_Detector", "detector-101"),
+						resourcetest.TestCheckResourceAttr("data.signalfx_auto_detector.test", "results.First_Auto_Detector.id", "detector-1"),
+						resourcetest.TestCheckResourceAttr("data.signalfx_auto_detector.test", "results.Second_Auto_Detector.id", "detector-101"),
 					),
 				},
 			},

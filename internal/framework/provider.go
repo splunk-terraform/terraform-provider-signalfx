@@ -27,6 +27,7 @@ import (
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/apm"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/builtincontent"
 	fwdashify "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/dashify"
+	fwdetector "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/detector"
 	internalfunction "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/function"
 	fwintegration "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/integration"
 	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
@@ -285,6 +286,7 @@ func (op *ollyProvider) Resources(ctx context.Context) []func() resource.Resourc
 	return []func() resource.Resource{
 		fwintegration.NewResourceSplunkOncall,
 		fwdashify.NewResourceDashifyTemplate,
+		fwdetector.NewAutoDetectorResource,
 	}
 }
 
