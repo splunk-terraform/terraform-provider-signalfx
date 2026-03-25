@@ -143,6 +143,7 @@ func TestProviderResource(t *testing.T) {
 	expect := map[string]struct{}{
 		"signalfx_integration_splunk_oncall": {},
 		"signalfx_dashify_template":          {},
+		"signalfx_customized_auto_detector":  {},
 	}
 
 	actual := p.Resources(context.Background())
