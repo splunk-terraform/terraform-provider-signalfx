@@ -177,11 +177,12 @@ func integrationAWSResource() *schema.Resource {
 				Description:  "AWS poll rate (in seconds). Between `60` and `600`.",
 				ValidateFunc: validation.IntBetween(60, 600),
 			},
-			"cold_poll_rate": {
+			"inactive_metrics_poll_rate": {
 				Type:         schema.TypeInt,
 				Optional:     true,
-				Description:  "AWS cold poll rate (in seconds). Between `60` and `1200`",
-				ValidateFunc: validation.IntBetween(60, 1200),
+				Default:      1200,
+				Description:  "AWS inactive metrics poll rate (in seconds). Between `60` and `3600`",
+				ValidateFunc: validation.IntBetween(60, 3600),
 			},
 			"external_id": {
 				Type:          schema.TypeString,
@@ -195,6 +196,13 @@ func integrationAWSResource() *schema.Resource {
 				Optional:    true,
 				Computed:    true,
 				Description: "Enables the use of Cloudwatch Metric Streams for metrics synchronization.",
+			},
+			"enable_logs_sync": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Computed:    true,
+				Description: "Enables AWS logs synchronization.",
+				Deprecated:  "enable_logs_sync field is no longer used and will be removed in a next major release.",
 			},
 			"named_token": {
 				Type:        schema.TypeString,
@@ -315,8 +323,8 @@ func awsIntegrationAPIToTF(d *schema.ResourceData, aws *integration.AwsCloudWatc
 		return err
 	}
 
-	if aws.ColdPollRate != 0 {
-		if err := d.Set("cold_poll_rate", aws.ColdPollRate/1000); err != nil {
+	if aws.InactiveMetricsPollRate != 0 {
+		if err := d.Set("inactive_metrics_poll_rate", aws.InactiveMetricsPollRate/1000); err != nil {
 			return err
 		}
 	}
@@ -478,8 +486,8 @@ func getPayloadAWSIntegration(d *schema.ResourceData) (*integration.AwsCloudWatc
 		aws.PollRate = int64(val.(int)) * 1000
 	}
 
-	if val, ok := d.GetOk("cold_poll_rate"); ok {
-		aws.ColdPollRate = int64(val.(int)) * 1000
+	if val, ok := d.GetOk("inactive_metrics_poll_rate"); ok {
+		aws.InactiveMetricsPollRate = int64(val.(int)) * 1000
 	}
 
 	if val, ok := d.GetOk("regions"); ok {
