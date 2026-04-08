@@ -122,8 +122,7 @@ func (v *ProgramBuilderVisitor) WithFilter(name string, values ...string) *Progr
 }
 
 func (v *ProgramBuilderVisitor) WithInput(name string, value any) *ProgramBuilderVisitor {
-	switch v := value.(type) {
-	case string:
+	if v, ok := value.(string); ok {
 		if num, err := strconv.ParseFloat(v, 64); err == nil {
 			value = num
 		}
