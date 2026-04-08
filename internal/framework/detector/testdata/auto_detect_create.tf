@@ -3,8 +3,12 @@ resource "signalfx_customized_auto_detector" "example" {
   name        = "Modified Example Detector"
   description = "This is an example of a modified auto detector resource."
   severity    = "Critical"
-  tags        = []
-  teams       = []
+  tags        = [
+    "tag-01", "tag-02"
+  ]
+  teams       = [
+    "team-01", "team-02"
+  ]
 
   notifications = [
     { type = "Email", email = "example@example.com" },
@@ -12,7 +16,7 @@ resource "signalfx_customized_auto_detector" "example" {
   ]
 
   inputs = {
-    guardrail = "0.81"
+    guard = "0.81"
   }
 
   filters = [

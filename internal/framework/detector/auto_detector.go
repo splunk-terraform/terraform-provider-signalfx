@@ -416,11 +416,14 @@ func (r *AutoDetectorResource) buildRequest(ctx context.Context, parent *detecto
 		vb   = experimental.NewProgramBuilderVisitor()
 	)
 
-	if results, _, err := experimental.NewInspector(u, r.Details().AuthToken).GetAutoDetectorArgumentsAndFilters(ctx, parent.ProgramText); err == nil {
+	if results, filters, err := experimental.NewInspector(u, r.Details().AuthToken).GetAutoDetectorArgumentsAndFilters(ctx, parent.ProgramText); err == nil {
 		for _, r := range results {
 			if r.Type == "filter" {
 				vb.WithFilterKey(r.Name)
 			}
+		}
+		for key, values := range filters {
+			vb.WithFilter(key, values...)
 		}
 	} else {
 		tflog.Warn(ctx, "Unable to load results from server, filter key may be wrong", tfext.ErrorLogFields(err))
