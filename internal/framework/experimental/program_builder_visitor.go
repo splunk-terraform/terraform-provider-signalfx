@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"maps"
 	"slices"
+	"strconv"
 	"strings"
 
 	flow "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/experimental/pkg/signalflow"
@@ -121,6 +122,12 @@ func (v *ProgramBuilderVisitor) WithFilter(name string, values ...string) *Progr
 }
 
 func (v *ProgramBuilderVisitor) WithInput(name string, value any) *ProgramBuilderVisitor {
+	switch v := value.(type) {
+	case string:
+		if num, err := strconv.ParseFloat(v, 64); err == nil {
+			value = num
+		}
+	}
 	v.inputs[name] = value
 	return v
 }

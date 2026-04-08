@@ -118,9 +118,9 @@ func TestProviderDataSources(t *testing.T) {
 	p := NewProvider("1.0.0")
 
 	expect := map[string]struct{}{
-		"signalfx_apm_service_topology":     {},
-		"signalfx_builtin_dashboard_groups": {},
-		"signalfx_builtin_auto_detectors":   {},
+		"signalfx_apm_service_topology": {},
+		"signalfx_builtin_dashboards":   {},
+		"signalfx_auto_detector":        {},
 	}
 
 	actual := p.DataSources(context.Background())
