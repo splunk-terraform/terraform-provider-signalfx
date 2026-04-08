@@ -53,7 +53,9 @@ resource "aws_iam_policy" "aws_splunk_policy" {
   "Statement": [
     {
       "Effect": "Allow",
-      "Action": [
+      "Action":
+        "acm:DescribeCertificate",
+        "acm:ListCertificates",
         "airflow:GetEnvironment",
         "airflow:ListEnvironments",
         "apigateway:GET",
