@@ -516,13 +516,13 @@ func (r *AutoDetectorResource) syncModelFromDetector(ctx context.Context, model 
 		inspector = experimental.NewInspector(u, r.Details().AuthToken)
 	)
 
-	arugments, filters, err := inspector.GetAutoDetectorArgumentsAndFilters(ctx, current.ProgramText)
+	arguments, filters, err := inspector.GetAutoDetectorArgumentsAndFilters(ctx, current.ProgramText)
 	if err != nil {
 		diags.AddError("Unable to load auto detector input details", err.Error())
 		return diags
 	}
 
-	for _, r := range arugments {
+	for _, r := range arguments {
 		if r.Type != "filter" {
 			inputs[r.Name] = fmt.Sprint(r.DefaultValue)
 		}
