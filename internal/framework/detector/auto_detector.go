@@ -253,13 +253,15 @@ func (r *AutoDetectorResource) Update(ctx context.Context, req resource.UpdateRe
 		return
 	}
 
-	parent, err := client.GetDetector(ctx, model.ParentID.ValueString())
+	// Clean this up
+
+	current, err := client.GetDetector(ctx, model.ID.ValueString())
 	if err != nil {
 		resp.Diagnostics.Append(fwerr.ErrorHandler(ctx, resp.State, err)...)
 		return
 	}
 
-	request, diag := r.buildRequest(ctx, parent, &model)
+	request, diag := r.buildRequest(ctx, current, &model)
 	if resp.Diagnostics.Append(diag...); resp.Diagnostics.HasError() {
 		return
 	}
