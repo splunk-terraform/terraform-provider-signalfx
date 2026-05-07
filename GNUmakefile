@@ -52,7 +52,7 @@ checklicense: $(ADDLICENCESE)
 
 .PHONY: govulncheck
 govulncheck: $(GOVULNCHECK)
-	$(GOVULNCHECK)
+	$(GOVULNCHECK) ./...
 
 .PHONY: lint
 lint: $(GOLANGCI_LINT)
