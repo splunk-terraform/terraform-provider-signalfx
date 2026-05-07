@@ -42,7 +42,6 @@ func NewColorScalePalette() ColorScalePalette {
 			"jade":        20,
 			"aquamarine":  21,
 		},
-
 		index: []string{
 			0:  "#999999",
 			1:  "#0077c2",
@@ -94,7 +93,7 @@ func (cp ColorScalePalette) HexCodebyIndex(index int32) (string, bool) {
 }
 
 func (cp ColorScalePalette) Names() []string {
-	names := make([]string, int(22))
+	names := make([]string, len(cp.named))
 	for name, idx := range cp.named {
 		names[idx] = name
 	}
