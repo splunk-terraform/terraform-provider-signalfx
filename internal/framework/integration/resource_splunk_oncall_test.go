@@ -17,7 +17,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
-	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 	"github.com/signalfx/signalfx-go/integration"
 	"github.com/stretchr/testify/assert"
 
@@ -351,9 +350,6 @@ func TestResourceSplunkOncallUnitTest(t *testing.T) {
 				t,
 				testresource.TestCase{
 					IsUnitTest: true,
-					TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-						tfversion.RequireAbove(tfversion.Version0_12_26),
-					},
 					ProtoV5ProviderFactories: fwtest.NewMockProto5Server(
 						t,
 						tc.endpoints,
