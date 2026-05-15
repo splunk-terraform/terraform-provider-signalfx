@@ -155,6 +155,36 @@ func TestAcceptance(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "skip clear notification states",
+			steps: []resource.TestStep{
+				{
+					Config: tftest.LoadConfig("testdata/skip_clear_00.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("signalfx_detector.skip_clear", "rule.#", "1"),
+						resource.TestCheckResourceAttr("signalfx_detector.skip_clear", "rule.0.skip_clear_notification_states.#", "2"),
+						resource.TestCheckTypeSetElemAttr("signalfx_detector.skip_clear", "rule.0.skip_clear_notification_states.*", "OK"),
+						resource.TestCheckTypeSetElemAttr("signalfx_detector.skip_clear", "rule.0.skip_clear_notification_states.*", "AUTO_RESOLVED"),
+					),
+					ExpectNonEmptyPlan: false,
+				},
+				{
+					Config: tftest.LoadConfig("testdata/skip_clear_01.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("signalfx_detector.skip_clear", "rule.0.skip_clear_notification_states.#", "1"),
+						resource.TestCheckTypeSetElemAttr("signalfx_detector.skip_clear", "rule.0.skip_clear_notification_states.*", "OK"),
+					),
+					ExpectNonEmptyPlan: false,
+				},
+				{
+					Config: tftest.LoadConfig("testdata/skip_clear_02.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("signalfx_detector.skip_clear", "rule.0.skip_clear_notification_states.#", "0"),
+					),
+					ExpectNonEmptyPlan: false,
+				},
+			},
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			tftest.NewAcceptanceHandler(
