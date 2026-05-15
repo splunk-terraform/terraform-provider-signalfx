@@ -82,6 +82,15 @@ var (
 			Optional:    true,
 			Description: "Plain text suggested first course of action, such as a command to execute.",
 		},
+		"skip_clear_notification_states": {
+			Type:     schema.TypeSet,
+			Optional: true,
+			Elem: &schema.Schema{
+				Type:             schema.TypeString,
+				ValidateDiagFunc: check.AlertClearState(),
+			},
+			Description: "One or more alert clear states for which clear notifications are not sent (one or more of: OK, AUTO_RESOLVED, STOPPED, MANUALLY_RESOLVED)",
+		},
 		"reminder_notification": {
 			Optional:    true,
 			Description: "Reminder notification in a detector rule lets you send multiple notifications for active alerts over a defined period of time.",
@@ -461,6 +470,12 @@ func getDetectorRule(tfRule map[string]any) (*detector.Rule, error) {
 		rule.ReminderNotification = reminder
 	}
 
+	if states, ok := tfRule["skip_clear_notification_states"].(*schema.Set); ok {
+		for _, s := range states.List() {
+			rule.SkipClearNotificationStates = append(rule.SkipClearNotificationStates, s.(string))
+		}
+	}
+
 	return rule, nil
 }
 
@@ -743,6 +758,8 @@ func getTfDetectorRule(r *detector.Rule) (map[string]any, error) {
 		rule["reminder_notification"] = []any{reminder}
 	}
 
+	rule["skip_clear_notification_states"] = r.SkipClearNotificationStates
+
 	return rule, nil
 }
 
@@ -883,6 +900,17 @@ func resourceRuleHash(v any) int {
 		}
 	}
 
+	if states, ok := m["skip_clear_notification_states"].(*schema.Set); ok {
+		sorted := make([]string, 0, states.Len())
+		for _, s := range states.List() {
+			sorted = append(sorted, s.(string))
+		}
+		sort.Strings(sorted)
+		for _, s := range sorted {
+			buf.WriteString(fmt.Sprintf("%s-", s))
+		}
+	}
+
 	return HashCodeString(buf.String())
 }
 
@@ -970,6 +998,12 @@ func validateProgramText(ctx context.Context, d *schema.ResourceDiff, meta any) 
 		reminder := convert.ToReminderNotification(tfRule)
 		if reminder != nil {
 			rule.ReminderNotification = reminder
+		}
+
+		if states, ok := tfRule["skip_clear_notification_states"].(*schema.Set); ok {
+			for _, s := range states.List() {
+				rule.SkipClearNotificationStates = append(rule.SkipClearNotificationStates, s.(string))
+			}
 		}
 
 		rulesList[i] = rule

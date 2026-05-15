@@ -170,6 +170,7 @@ notifications = ["Webhook,,secret,url"]
   * `parameterized_subject` - (Optional) Custom notification message subject when an alert is triggered. See [Set Up Detectors to Trigger Alerts](https://docs.splunk.com/observability/en/alerts-detectors-notifications/create-detectors-for-alerts.html) for more info.
   * `runbook_url` - (Optional) URL of page to consult when an alert is triggered. This can be used with custom notification messages.
   * `tip` - (Optional) Plain text suggested first course of action, such as a command line to execute. This can be used with custom notification messages.
+  * `skip_clear_notification_states` - (Optional) Set of alert clear states for which clear notifications are not sent. Valid values: `OK`, `AUTO_RESOLVED`, `STOPPED`, `MANUALLY_RESOLVED`. **Note:** This feature is not present in all accounts. Please contact support if you are unsure.
   * `reminder_notification` - (Optional) Reminder notification in a detector rule lets you send multiple notifications for active alerts over a defined period of time. **Note:** This feature is not present in all accounts. Please contact support if you are unsure.
     * `interval_ms` - (Required) The interval at which you want to receive the notifications, in milliseconds.
     * `timeout_ms` - (Optional) The duration during which repeat notifications are sent, in milliseconds.

@@ -38,6 +38,11 @@ func DecodeTerraform(rd *schema.ResourceData) ([]*detector.Rule, error) {
 			}
 			rule.Notifications = notifiy
 		}
+		if states, ok := data["skip_clear_notification_states"].(*schema.Set); ok {
+			for _, s := range states.List() {
+				rule.SkipClearNotificationStates = append(rule.SkipClearNotificationStates, s.(string))
+			}
+		}
 		rules = append(rules, rule)
 	}
 	return rules, nil
@@ -55,15 +60,16 @@ func EncodeTerraform(rules []*detector.Rule, rd *schema.ResourceData) error {
 			return fmt.Errorf("notification issue: %w", err)
 		}
 		items = append(items, map[string]any{
-			"detect_label":          r.DetectLabel,
-			"description":           r.Description,
-			"disabled":              r.Disabled,
-			"notifications":         notifys,
-			"parameterized_body":    r.ParameterizedBody,
-			"parameterized_subject": r.ParameterizedSubject,
-			"runbook_url":           r.RunbookUrl,
-			"severity":              r.Severity,
-			"tip":                   r.Tip,
+			"detect_label":                   r.DetectLabel,
+			"description":                    r.Description,
+			"disabled":                       r.Disabled,
+			"notifications":                  notifys,
+			"parameterized_body":             r.ParameterizedBody,
+			"parameterized_subject":          r.ParameterizedSubject,
+			"runbook_url":                    r.RunbookUrl,
+			"severity":                       r.Severity,
+			"tip":                            r.Tip,
+			"skip_clear_notification_states": r.SkipClearNotificationStates,
 		})
 	}
 

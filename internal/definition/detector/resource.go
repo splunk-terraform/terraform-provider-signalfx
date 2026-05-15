@@ -211,6 +211,11 @@ func resourceValidateFunc(ctx context.Context, diff *schema.ResourceDiff, meta a
 			reminderNotification := convert.ToReminderNotification(data)
 			rule.ReminderNotification = reminderNotification
 		}
+		if states, ok := data["skip_clear_notification_states"].(*schema.Set); ok {
+			for _, s := range states.List() {
+				rule.SkipClearNotificationStates = append(rule.SkipClearNotificationStates, s.(string))
+			}
+		}
 		rules = append(rules, rule)
 	}
 
