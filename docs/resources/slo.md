@@ -61,6 +61,8 @@ Here are some example of how to configure each notification type:
 notifications = ["Email,foo-alerts@bar.com"]
 ```
 
+Optional **Cc** and **Bcc**: `Email,to@example.com,cc1|cc2,bcc1` (use `|` between multiple addresses in Cc or Bcc). Requires org feature `emailNotificationCcBccEnabled`.
+
 ### Jira
 
 Note that the `credentialId` is the Splunk-provided ID shown after setting up your Jira integration. See also `signalfx_jira_integration`.
