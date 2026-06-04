@@ -69,6 +69,26 @@ func TestNewNotificationFromString(t *testing.T) {
 			errVal: "",
 		},
 		{
+			name: "email with cc and bcc",
+			str:  "Email,alerts@example.com,oncall@example.com|ops@example.com,audit@example.com",
+			expect: &notification.Notification{
+				Type: EmailNotificationType,
+				Value: &notification.EmailNotification{
+					Type:  EmailNotificationType,
+					Email: "alerts@example.com",
+					Cc:    []string{"oncall@example.com", "ops@example.com"},
+					Bcc:   []string{"audit@example.com"},
+				},
+			},
+			errVal: "",
+		},
+		{
+			name:   "email invalid cc",
+			str:    "Email,alerts@example.com,bad-cc",
+			expect: nil,
+			errVal: "mail: missing '@' or angle-addr",
+		},
+		{
 			name: "jira",
 			str:  "Jira,creds",
 			expect: &notification.Notification{
@@ -297,4 +317,16 @@ func TestNewNotificationFromString(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestEmailNotificationRoundTrip(t *testing.T) {
+	t.Parallel()
+
+	str := "Email,alerts@example.com,oncall@example.com|ops@example.com,audit@example.com"
+	parsed, err := NewNotificationFromString(str)
+	require.NoError(t, err)
+
+	serialized, err := NewNotificationStringFromAPI(parsed)
+	require.NoError(t, err)
+	assert.Equal(t, str, serialized)
 }
