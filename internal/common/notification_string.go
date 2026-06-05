@@ -197,9 +197,6 @@ func parseEmailNotificationFromString(values []string) (*notification.EmailNotif
 }
 
 func parseEmailRecipientList(field string) ([]string, error) {
-	if field == "" {
-		return nil, nil
-	}
 	parts := strings.Split(field, emailRecipientListSeparator)
 	var addrs []string
 	for _, part := range parts {
@@ -213,6 +210,7 @@ func parseEmailRecipientList(field string) ([]string, error) {
 		addrs = append(addrs, part)
 	}
 	if len(addrs) == 0 {
+		// nil keeps Cc/Bcc unset when an optional comma field is empty.
 		return nil, nil
 	}
 	return addrs, nil
@@ -220,6 +218,7 @@ func parseEmailRecipientList(field string) ([]string, error) {
 
 func formatEmailRecipientList(addrs []string) string {
 	if len(addrs) == 0 {
+		// "" preserves the cc,bcc comma slots when only one side is populated.
 		return ""
 	}
 	sorted := append([]string(nil), addrs...)

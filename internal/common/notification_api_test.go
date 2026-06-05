@@ -71,6 +71,19 @@ func TestNewStringFromAPI(t *testing.T) {
 			errVal: "",
 		},
 		{
+			name: "email with cc only",
+			nt: &notification.Notification{
+				Type: EmailNotificationType,
+				Value: &notification.EmailNotification{
+					Type:  EmailNotificationType,
+					Email: "alerts@example.com",
+					Cc:    []string{"oncall@example.com"},
+				},
+			},
+			expect: "Email,alerts@example.com,oncall@example.com,",
+			errVal: "",
+		},
+		{
 			name: "email with cc and bcc",
 			nt: &notification.Notification{
 				Type: EmailNotificationType,
