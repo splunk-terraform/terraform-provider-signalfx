@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/mail"
 	"net/url"
+	"slices"
 	"sort"
 	"strings"
 
@@ -221,7 +222,7 @@ func formatEmailRecipientList(addrs []string) string {
 		// "" preserves the cc,bcc comma slots when only one side is populated.
 		return ""
 	}
-	sorted := append([]string(nil), addrs...)
+	sorted := slices.Clone(addrs)
 	sort.Strings(sorted)
 	return strings.Join(sorted, emailRecipientListSeparator)
 }
