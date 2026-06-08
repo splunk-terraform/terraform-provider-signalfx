@@ -402,7 +402,7 @@ func TestEmailNotificationRoundTrip(t *testing.T) {
 func TestFormatEmailRecipientList(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, "", formatEmailRecipientList(nil))
-	assert.Equal(t, "", formatEmailRecipientList([]string{}))
+	assert.Empty(t, formatEmailRecipientList(nil))
+	assert.Empty(t, formatEmailRecipientList([]string{}))
 	assert.Equal(t, "a@example.com|b@example.com", formatEmailRecipientList([]string{"b@example.com", "a@example.com"}))
 }
