@@ -11,8 +11,8 @@ Use this Terraform provider to automate the configuration of Splunk Observabilit
 
 ## Requirements
 
--	[Terraform](https://www.terraform.io/downloads.html) 0.12.x or higher
--	[Go](https://golang.org/doc/install) 1.19 or higher to build the provider plugin
+-	[Terraform](https://www.terraform.io/downloads.html) 1.x or higher
+-	[Go](https://golang.org/doc/install) latest stable version
 
 ## Build the provider
 
@@ -41,7 +41,7 @@ Further [usage documentation](https://www.terraform.io/docs/providers/signalfx/i
 
 If you wish to work on the provider, you need the following:
 
-- [Go](http://www.golang.org) version 1.11 or higher
+- [Go](http://www.golang.org) latest stable version
 - Configured [GOPATH](http://golang.org/doc/code.html#GOPATH)
 - `$GOPATH/bin` added to your `$PATH`
 
