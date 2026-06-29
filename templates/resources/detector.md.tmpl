@@ -20,6 +20,12 @@ If you're interested in using Splunk Observability Cloud detector features such 
 
 {{tffile "examples/resources/detector/example_1.tf"}}
 
+## Enhanced multi-condition detector example
+
+Use `program_text` to configure enhanced detector logic that combines historical anomaly conditions with threshold conditions. Each `rule.detect_label` must match the label published by a `detect(...).publish('<label>')` statement in `program_text`.
+
+{{tffile "examples/resources/detector/example_2.tf"}}
+
 ## Notification format
 
 As Splunk Observability Cloud supports different notification mechanisms, use a comma-delimited string to provide inputs. If you want to specify multiple notifications, each must be a member in the list, like so:
