@@ -94,8 +94,8 @@ func TestResourceBigPandaUnitTest(t *testing.T) {
 					assert.Equal(t, integration.BIG_PANDA, data.Type)
 					assert.Equal(t, "BigPanda - My Team", data.Name)
 					assert.False(t, data.Enabled)
-					assert.Equal(t, "{\"status\":\"critical\",\"summary\":\"{{{messageTitle}}}\"}", data.AlertTriggeredPayloadTemplate)
-					assert.Equal(t, "{\"status\":\"ok\",\"summary\":\"{{{messageTitle}}}\"}", data.AlertResolvedPayloadTemplate)
+					assert.JSONEq(t, "{\"status\":\"critical\",\"summary\":\"{{{messageTitle}}}\"}", data.AlertTriggeredPayloadTemplate)
+					assert.JSONEq(t, "{\"status\":\"ok\",\"summary\":\"{{{messageTitle}}}\"}", data.AlertResolvedPayloadTemplate)
 
 					data.Id = "test-id"
 					if err := json.NewEncoder(w).Encode(data); err != nil {
