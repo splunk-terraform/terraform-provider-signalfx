@@ -172,7 +172,7 @@ func TestDashboardGroupMockIngeration(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			fwtest.UnitTest(t, resourcetest.TestCase{
+			resourcetest.UnitTest(t, resourcetest.TestCase{
 				ProtoV6ProviderFactories: fwtest.NewMockProto6Server(
 					t,
 					tc.endpoints,
