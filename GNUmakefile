@@ -15,8 +15,12 @@ WEBSITE_PLUGIN := $(GOTOOLS_CMD) tfplugindocs
 
 default: build
 
+.PHONY: tool-cache
+tool-cache:
+	go -C $(shell dirname $(GOTOOLS_MOD_FILE)) mod download
+
 .PHONY: addlicense
-addlicense:
+addlicense: tool-cache
 	@ADDLICENCESEOUT=`$(ADDLICENCESE) -y "" -c 'Splunk, Inc.' -l mpl -s=only $(SRC_GO_FILES) 2>&1`; \
 		if [ "$$ADDLICENCESEOUT" ]; then \
 			echo "$(ADDLICENCESE) FAILED => add License errors:\n"; \
@@ -27,7 +31,7 @@ addlicense:
 		fi
 
 .PHONY: checklicense
-checklicense: 
+checklicense: tool-cache
 	@ADDLICENCESEOUT=`$(ADDLICENCESE) -check $(SRC_GO_FILES) 2>&1`; \
 		if [ "$$ADDLICENCESEOUT" ]; then \
 			echo "$(ADDLICENCESE) FAILED => add License errors:\n"; \
@@ -39,15 +43,15 @@ checklicense:
 		fi
 
 .PHONY: govulncheck
-govulncheck:
+govulncheck: tool-cache
 	$(GOVULNCHECK) ./...
 
 .PHONY: lint
-lint:
+lint: tool-cache
 	$(GOLANGCI_LINT) run -v
 
 .PHONY: lint-fix
-lint-fix:
+lint-fix: tool-cache
 	$(GOLANGCI_LINT) run -v --fix
 
 build:
