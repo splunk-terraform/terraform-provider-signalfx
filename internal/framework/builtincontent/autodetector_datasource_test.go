@@ -171,7 +171,7 @@ func TestAutoDetectorMockIntegration(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			resourcetest.UnitTest(t, resourcetest.TestCase{
+			fwtest.UnitTest(t, resourcetest.TestCase{
 				ProtoV6ProviderFactories: fwtest.NewMockProto6Server(
 					t,
 					tc.endpoints,

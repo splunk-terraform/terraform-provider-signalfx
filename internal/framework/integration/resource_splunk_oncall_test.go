@@ -347,7 +347,7 @@ func TestResourceSplunkOncallUnitTest(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			testresource.UnitTest(
+			fwtest.UnitTest(
 				t,
 				testresource.TestCase{
 					IsUnitTest: true,
