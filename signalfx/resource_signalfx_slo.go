@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/signalfx/signalfx-go"
 	"github.com/signalfx/signalfx-go/detector"
 	"github.com/signalfx/signalfx-go/slo"
 )
@@ -268,6 +269,9 @@ func sloValidate(ctx context.Context, sloObject *schema.ResourceDiff, config int
 
 	err = config.(*signalfxConfig).Client.ValidateSlo(ctx, payloadSlo)
 	if err != nil {
+		if sfxerr, ok := signalfx.AsResponseError(err); ok {
+			return fmt.Errorf("validation failed for SLO %q failed with details: %s", sloObject.Id(), sfxerr.Details())
+		}
 		return err
 	}
 

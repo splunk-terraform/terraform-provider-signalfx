@@ -91,6 +91,11 @@ func TestNotification(t *testing.T) {
 			},
 		},
 		{
+			name:   "email with cc and bcc",
+			val:    "Email,alerts@example.com,oncall@example.com,audit@example.com",
+			expect: nil,
+		},
+		{
 			name:   "Opsgenie",
 			val:    "Opsgenie,,,,",
 			expect: nil,

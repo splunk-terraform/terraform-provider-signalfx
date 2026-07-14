@@ -68,6 +68,15 @@ func NewSchema() map[string]*schema.Schema {
 			Optional:    true,
 			Description: "Plain text suggested first course of action, such as a command to execute.",
 		},
+		"skip_clear_notification_states": {
+			Type:     schema.TypeSet,
+			Optional: true,
+			Elem: &schema.Schema{
+				Type:             schema.TypeString,
+				ValidateDiagFunc: check.AlertClearState(),
+			},
+			Description: "One or more alert clear states for which clear notifications are not sent (one or more of: OK, AUTO_RESOLVED, STOPPED, MANUALLY_RESOLVED)",
+		},
 		"reminder_notification": {
 			Optional:    true,
 			Description: "Reminder notification in a detector rule lets you send multiple notifications for active alerts over a defined period of time.",
@@ -130,6 +139,17 @@ func Hash(v any) int {
 
 		for _, n := range notifys {
 			_, _ = io.WriteString(hash, fmt.Sprintf("%s-", n))
+		}
+	}
+
+	if states, ok := rule["skip_clear_notification_states"].(*schema.Set); ok {
+		sorted := make([]string, 0, states.Len())
+		for _, s := range states.List() {
+			sorted = append(sorted, s.(string))
+		}
+		slices.Sort(sorted)
+		for _, s := range sorted {
+			_, _ = io.WriteString(hash, fmt.Sprintf("%s-", s))
 		}
 	}
 

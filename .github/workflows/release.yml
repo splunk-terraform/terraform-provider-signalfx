@@ -24,4 +24,4 @@ jobs:
       gpg-private-key: '${{ secrets.GPG_PRIVATE_KEY }}'
       gpg-private-key-passphrase: ${{ secrets.PASSPHRASE }}
     with:
-      setup-go-version-file: 'go.mod'
+      setup-go-version: 'stable'

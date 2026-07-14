@@ -69,6 +69,94 @@ func TestNewNotificationFromString(t *testing.T) {
 			errVal: "",
 		},
 		{
+			name: "email with cc only",
+			str:  "Email,alerts@example.com,oncall@example.com",
+			expect: &notification.Notification{
+				Type: EmailNotificationType,
+				Value: &notification.EmailNotification{
+					Type:  EmailNotificationType,
+					Email: "alerts@example.com",
+					Cc:    []string{"oncall@example.com"},
+				},
+			},
+			errVal: "",
+		},
+		{
+			name: "email with cc and bcc",
+			str:  "Email,alerts@example.com,oncall@example.com|ops@example.com,audit@example.com",
+			expect: &notification.Notification{
+				Type: EmailNotificationType,
+				Value: &notification.EmailNotification{
+					Type:  EmailNotificationType,
+					Email: "alerts@example.com",
+					Cc:    []string{"oncall@example.com", "ops@example.com"},
+					Bcc:   []string{"audit@example.com"},
+				},
+			},
+			errVal: "",
+		},
+		{
+			name:   "email invalid cc",
+			str:    "Email,alerts@example.com,bad-cc",
+			expect: nil,
+			errVal: "mail: missing '@' or angle-addr",
+		},
+		{
+			name:   "email invalid bcc",
+			str:    "Email,alerts@example.com,oncall@example.com,bad-bcc",
+			expect: nil,
+			errVal: "mail: missing '@' or angle-addr",
+		},
+		{
+			name:   "email invalid cc with bcc field",
+			str:    "Email,alerts@example.com,bad-cc,audit@example.com",
+			expect: nil,
+			errVal: "mail: missing '@' or angle-addr",
+		},
+		{
+			name:   "email too many parts",
+			str:    "Email,alerts@example.com,oncall@example.com,audit@example.com,extra",
+			expect: nil,
+			errVal: "invalid Email notification string, please consult the documentation (too many parts)",
+		},
+		{
+			name: "email empty cc field",
+			str:  "Email,alerts@example.com,",
+			expect: &notification.Notification{
+				Type: EmailNotificationType,
+				Value: &notification.EmailNotification{
+					Type:  EmailNotificationType,
+					Email: "alerts@example.com",
+				},
+			},
+			errVal: "",
+		},
+		{
+			name: "email cc list with empty segments",
+			str:  "Email,alerts@example.com,|",
+			expect: &notification.Notification{
+				Type: EmailNotificationType,
+				Value: &notification.EmailNotification{
+					Type:  EmailNotificationType,
+					Email: "alerts@example.com",
+				},
+			},
+			errVal: "",
+		},
+		{
+			name: "email cc list trims whitespace",
+			str:  "Email,alerts@example.com, oncall@example.com | ops@example.com ",
+			expect: &notification.Notification{
+				Type: EmailNotificationType,
+				Value: &notification.EmailNotification{
+					Type:  EmailNotificationType,
+					Email: "alerts@example.com",
+					Cc:    []string{"oncall@example.com", "ops@example.com"},
+				},
+			},
+			errVal: "",
+		},
+		{
 			name: "jira",
 			str:  "Jira,creds",
 			expect: &notification.Notification{
@@ -297,4 +385,24 @@ func TestNewNotificationFromString(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestEmailNotificationRoundTrip(t *testing.T) {
+	t.Parallel()
+
+	str := "Email,alerts@example.com,oncall@example.com|ops@example.com,audit@example.com"
+	parsed, err := NewNotificationFromString(str)
+	require.NoError(t, err)
+
+	serialized, err := NewNotificationStringFromAPI(parsed)
+	require.NoError(t, err)
+	assert.Equal(t, str, serialized)
+}
+
+func TestFormatEmailRecipientList(t *testing.T) {
+	t.Parallel()
+
+	assert.Empty(t, formatEmailRecipientList(nil))
+	assert.Empty(t, formatEmailRecipientList([]string{}))
+	assert.Equal(t, "a@example.com|b@example.com", formatEmailRecipientList([]string{"b@example.com", "a@example.com"}))
 }

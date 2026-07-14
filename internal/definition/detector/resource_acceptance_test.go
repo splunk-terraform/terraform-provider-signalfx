@@ -4,6 +4,8 @@
 package detector_test
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -152,6 +154,65 @@ func TestAcceptance(t *testing.T) {
 						resource.TestCheckResourceAttr("signalfx_detector.my_detector", "rule.0.tip", "reboot it"),
 					),
 					ExpectNonEmptyPlan: true,
+				},
+			},
+		},
+		{
+			name: "skip clear notification states",
+			steps: []resource.TestStep{
+				{
+					Config: tftest.LoadConfig("testdata/skip_clear_00.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("signalfx_detector.skip_clear", "rule.#", "1"),
+						resource.TestCheckResourceAttr("signalfx_detector.skip_clear", "rule.0.skip_clear_notification_states.#", "2"),
+						resource.TestCheckTypeSetElemAttr("signalfx_detector.skip_clear", "rule.0.skip_clear_notification_states.*", "OK"),
+						resource.TestCheckTypeSetElemAttr("signalfx_detector.skip_clear", "rule.0.skip_clear_notification_states.*", "AUTO_RESOLVED"),
+					),
+					ExpectNonEmptyPlan: false,
+				},
+				{
+					Config: tftest.LoadConfig("testdata/skip_clear_01.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("signalfx_detector.skip_clear", "rule.0.skip_clear_notification_states.#", "1"),
+						resource.TestCheckTypeSetElemAttr("signalfx_detector.skip_clear", "rule.0.skip_clear_notification_states.*", "OK"),
+					),
+					ExpectNonEmptyPlan: false,
+				},
+				{
+					Config: tftest.LoadConfig("testdata/skip_clear_02.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("signalfx_detector.skip_clear", "rule.0.skip_clear_notification_states.#", "0"),
+					),
+					ExpectNonEmptyPlan: false,
+				},
+			},
+		},
+		{
+			name: "enhanced multi-condition detector",
+			steps: []resource.TestStep{
+				{
+					Config: tftest.LoadConfig("testdata/enhanced_multi_condition.tf"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttr("signalfx_detector.enhanced_multi_condition", "name", "Enhanced multi-condition detector"),
+						resource.TestCheckResourceAttr("signalfx_detector.enhanced_multi_condition", "description", "Historical anomaly and threshold conditions with custom logic."),
+						resource.TestCheckResourceAttrWith("signalfx_detector.enhanced_multi_condition", "program_text", func(value string) error {
+							for _, expected := range []string{
+								"from signalfx.detectors.against_periods import conditions",
+								"latency_anomaly_fire, latency_anomaly_clear = conditions.mean_std(",
+								"(latency_anomaly_fire and sustained_errors and high_saturation) or critical_saturation",
+								".publish('Historical anomaly and service health')",
+							} {
+								if !strings.Contains(value, expected) {
+									return fmt.Errorf("expected program_text to contain %q", expected)
+								}
+							}
+							return nil
+						}),
+						resource.TestCheckResourceAttr("signalfx_detector.enhanced_multi_condition", "rule.#", "1"),
+						resource.TestCheckResourceAttr("signalfx_detector.enhanced_multi_condition", "rule.0.detect_label", "Historical anomaly and service health"),
+						resource.TestCheckResourceAttr("signalfx_detector.enhanced_multi_condition", "rule.0.severity", "Critical"),
+					),
+					ExpectNonEmptyPlan: false,
 				},
 			},
 		},

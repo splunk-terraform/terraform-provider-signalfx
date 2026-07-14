@@ -370,6 +370,30 @@ func getListChartOptions(d *schema.ResourceData) (*chart.Options, error) {
 		if secondaryVisualization != "" {
 			options.SecondaryVisualization = secondaryVisualization
 		}
+		if secondaryVisualization == "Radial" || secondaryVisualization == "Linear" {
+			if options.ColorBy != "Scale" {
+				return nil, fmt.Errorf(
+					"`secondary_visualization = %q` requires `color_by = \"Scale\"`",
+					secondaryVisualization,
+				)
+			}
+			if len(options.ColorScale2) == 0 {
+				return nil, fmt.Errorf(
+					"`secondary_visualization = %q` requires at least one `color_scale` block",
+					secondaryVisualization,
+				)
+			}
+			for _, cs := range options.ColorScale2 {
+				hasLower := cs.Gt != nil || cs.Gte != nil
+				hasUpper := cs.Lt != nil || cs.Lte != nil
+				if !hasLower || !hasUpper {
+					return nil, fmt.Errorf(
+						"each `color_scale` block requires a lower bound (`gt` or `gte`) and an upper bound (`lt` or `lte`) when `secondary_visualization = %q`",
+						secondaryVisualization,
+					)
+				}
+			}
+		}
 	}
 
 	return options, nil

@@ -7,10 +7,14 @@ import (
 	"fmt"
 	"net/mail"
 	"net/url"
+	"slices"
+	"sort"
 	"strings"
 
 	"github.com/signalfx/signalfx-go/notification"
 )
+
+const emailRecipientListSeparator = "|"
 
 const (
 	AmazonEventBrigeNotificationType string = "AmazonEventBridge"
@@ -52,13 +56,11 @@ func NewNotificationFromString(str string) (*notification.Notification, error) {
 			CredentialId: values[1],
 		}
 	case EmailNotificationType:
-		if _, err := mail.ParseAddress(values[1]); err != nil {
+		email, err := parseEmailNotificationFromString(values)
+		if err != nil {
 			return nil, err
 		}
-		value = &notification.EmailNotification{
-			Type:  values[0],
-			Email: values[1],
-		}
+		value = email
 	case JiraNotificationType:
 		value = &notification.JiraNotification{
 			Type:         values[0],
@@ -158,4 +160,69 @@ func NewNotificationFromString(str string) (*notification.Notification, error) {
 	}
 
 	return &notification.Notification{Type: values[0], Value: value}, nil
+}
+
+func parseEmailNotificationFromString(values []string) (*notification.EmailNotification, error) {
+	if _, err := mail.ParseAddress(values[1]); err != nil {
+		return nil, err
+	}
+	email := &notification.EmailNotification{
+		Type:  values[0],
+		Email: values[1],
+	}
+	switch len(values) {
+	case 2:
+		return email, nil
+	case 3:
+		cc, err := parseEmailRecipientList(values[2])
+		if err != nil {
+			return nil, err
+		}
+		email.Cc = cc
+		return email, nil
+	case 4:
+		cc, err := parseEmailRecipientList(values[2])
+		if err != nil {
+			return nil, err
+		}
+		bcc, err := parseEmailRecipientList(values[3])
+		if err != nil {
+			return nil, err
+		}
+		email.Cc = cc
+		email.Bcc = bcc
+		return email, nil
+	default:
+		return nil, fmt.Errorf("invalid Email notification string, please consult the documentation (too many parts)")
+	}
+}
+
+func parseEmailRecipientList(field string) ([]string, error) {
+	parts := strings.Split(field, emailRecipientListSeparator)
+	var addrs []string
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		if _, err := mail.ParseAddress(part); err != nil {
+			return nil, err
+		}
+		addrs = append(addrs, part)
+	}
+	if len(addrs) == 0 {
+		// nil keeps Cc/Bcc unset when an optional comma field is empty.
+		return nil, nil
+	}
+	return addrs, nil
+}
+
+func formatEmailRecipientList(addrs []string) string {
+	if len(addrs) == 0 {
+		// "" preserves the cc,bcc comma slots when only one side is populated.
+		return ""
+	}
+	sorted := slices.Clone(addrs)
+	sort.Strings(sorted)
+	return strings.Join(sorted, emailRecipientListSeparator)
 }

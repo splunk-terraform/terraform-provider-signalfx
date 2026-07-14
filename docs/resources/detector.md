@@ -55,6 +55,54 @@ variable "clusters" {
 }
 ```
 
+## Enhanced multi-condition detector example
+
+Use `program_text` to configure enhanced detector logic that combines historical anomaly conditions with threshold conditions. Each `rule.detect_label` must match the label published by a `detect(...).publish('<label>')` statement in `program_text`.
+
+```terraform
+resource "signalfx_detector" "enhanced_multi_condition" {
+  name        = "Enhanced multi-condition detector"
+  description = "Historical anomaly and threshold conditions with custom logic."
+  max_delay   = 30
+  tags        = ["detectors", "historical-anomaly"]
+
+  program_text = <<-EOF
+    from signalfx.detectors.against_periods import conditions
+
+    latency = data('service.latency').mean(by=['service']).publish('service latency')
+    error_rate = data('service.error_rate').mean(by=['service']).publish('service error rate')
+    saturation = data('service.saturation').mean(by=['service']).publish('service saturation')
+
+    latency_anomaly_fire, latency_anomaly_clear = conditions.mean_std(
+      latency,
+      window_to_compare=duration('15m'),
+      space_between_windows=duration('1w'),
+      fire_num_stddev=3,
+      clear_num_stddev=2.5,
+      orientation='above',
+    )
+
+    sustained_errors = when(error_rate > 5, '5m')
+    high_saturation = when(saturation > 80, '10m')
+    critical_saturation = when(saturation > 95, '5m')
+
+    detect(
+      (latency_anomaly_fire and sustained_errors and high_saturation) or critical_saturation,
+      latency_anomaly_clear and when(error_rate < 2, '10m') and when(saturation < 70, '10m'),
+    ).publish('Historical anomaly and service health')
+  EOF
+
+  rule {
+    description   = "Historical latency anomaly with elevated error rate and saturation, or critical saturation"
+    severity      = "Critical"
+    detect_label  = "Historical anomaly and service health"
+    notifications = ["Email,foo-alerts@example.com"]
+  }
+}
+
+provider "signalfx" {}
+```
+
 ## Notification format
 
 As Splunk Observability Cloud supports different notification mechanisms, use a comma-delimited string to provide inputs. If you want to specify multiple notifications, each must be a member in the list, like so:
@@ -72,6 +120,14 @@ Here are some example of how to configure each notification type:
 ```
 notifications = ["Email,foo-alerts@bar.com"]
 ```
+
+Optional **Cc** and **Bcc** use a fourth comma-separated field. Separate multiple addresses within Cc or Bcc with `|`:
+
+```
+notifications = ["Email,foo-alerts@bar.com,oncall@example.com|ops@example.com,audit@example.com"]
+```
+
+Cc/Bcc require the org feature `emailNotificationCcBccEnabled` on the Observability backend. Without it, the API rejects configurations that include Cc or Bcc.
 
 ### Jira
 
@@ -174,6 +230,7 @@ notifications = ["Webhook,,secret,url"]
     * `interval_ms` - (Required) The interval at which you want to receive the notifications, in milliseconds.
     * `timeout_ms` - (Optional) The duration during which repeat notifications are sent, in milliseconds.
     * `type` - (Required) Type of reminder notification. Currently, the only supported value is TIMEOUT.
+  * `skip_clear_notification_states` - (Optional) Set of alert clear states for which clear notifications are not sent. Valid values: `OK`, `AUTO_RESOLVED`, `STOPPED`, `MANUALLY_RESOLVED`. **Note:** This feature is not present in all accounts. Please contact support if you are unsure.
 * `viz_options` - (Optional) Plot-level customization options, associated with a publish statement.
   * `label` - (Required) Label used in the publish statement that displays the plot (metric time series data) you want to customize.
   * `display_name` - (Optional) Specifies an alternate value for the Plot Name column of the Data Table associated with the chart.
