@@ -1,0 +1,119 @@
+name: Sync main into release/v10
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Run every Monday at 09:00 UTC. The workflow can also be run manually.
+    - cron: "0 9 * * 1"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: sync-main-into-release-v10
+  cancel-in-progress: false
+
+env:
+  MAIN_BRANCH: main
+  RELEASE_BRANCH: release/v10
+  SYNC_BRANCH: automation/sync-main-into-release-v10
+
+jobs:
+  create-sync-pr:
+    name: Create main to release/v10 sync PR
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Fetch source and target branches
+        run: |
+          git fetch origin \
+            "+refs/heads/${MAIN_BRANCH}:refs/remotes/origin/${MAIN_BRANCH}" \
+            "+refs/heads/${RELEASE_BRANCH}:refs/remotes/origin/${RELEASE_BRANCH}"
+          git fetch origin \
+            "+refs/heads/${SYNC_BRANCH}:refs/remotes/origin/${SYNC_BRANCH}" || true
+
+      - name: Check whether synchronization is needed
+        id: sync-check
+        run: |
+          if git merge-base --is-ancestor \
+            "origin/${MAIN_BRANCH}" "origin/${RELEASE_BRANCH}"; then
+            echo "needed=false" >> "${GITHUB_OUTPUT}"
+            echo "### No synchronization required" >> "${GITHUB_STEP_SUMMARY}"
+            echo "\`${RELEASE_BRANCH}\` already contains \`${MAIN_BRANCH}\`." \
+              >> "${GITHUB_STEP_SUMMARY}"
+          else
+            echo "needed=true" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Merge main into the sync branch
+        if: steps.sync-check.outputs.needed == 'true'
+        run: |
+          git switch --create "${SYNC_BRANCH}" "origin/${RELEASE_BRANCH}"
+
+          if ! git merge --no-ff --no-edit "origin/${MAIN_BRANCH}"; then
+            echo "### Synchronization has merge conflicts" >> "${GITHUB_STEP_SUMMARY}"
+            echo "The following files require manual resolution:" \
+              >> "${GITHUB_STEP_SUMMARY}"
+            echo '```text' >> "${GITHUB_STEP_SUMMARY}"
+            git diff --name-only --diff-filter=U >> "${GITHUB_STEP_SUMMARY}"
+            echo '```' >> "${GITHUB_STEP_SUMMARY}"
+            exit 1
+          fi
+
+      - name: Push the sync branch
+        if: steps.sync-check.outputs.needed == 'true'
+        run: |
+          git push --force-with-lease origin \
+            "HEAD:refs/heads/${SYNC_BRANCH}"
+
+      - name: Create or update the pull request
+        if: steps.sync-check.outputs.needed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          pr_number="$(gh pr list \
+            --base "${RELEASE_BRANCH}" \
+            --head "${SYNC_BRANCH}" \
+            --state open \
+            --json number \
+            --jq '.[0].number // empty')"
+
+          body_file="${RUNNER_TEMP}/sync-pr-body.md"
+          printf '%s\n' \
+            '## Summary' \
+            '' \
+            'Synchronizes the latest `main` changes into `release/v10`.' \
+            '' \
+            'This PR contains an explicit merge commit so Git retains the' \
+            'ancestry between the long-lived branches. Merge this PR using' \
+            '**Create a merge commit**. Do not squash or rebase it.' \
+            '' \
+            'This PR was created automatically by GitHub Actions.' \
+            > "${body_file}"
+
+          if [ -n "${pr_number}" ]; then
+            gh pr edit "${pr_number}" \
+              --title "Sync main into release/v10" \
+              --body-file "${body_file}"
+            pr_url="$(gh pr view "${pr_number}" --json url --jq '.url')"
+          else
+            pr_url="$(gh pr create \
+              --base "${RELEASE_BRANCH}" \
+              --head "${SYNC_BRANCH}" \
+              --title "Sync main into release/v10" \
+              --body-file "${body_file}")"
+          fi
+
+          echo "### Synchronization PR ready" >> "${GITHUB_STEP_SUMMARY}"
+          echo "${pr_url}" >> "${GITHUB_STEP_SUMMARY}"
