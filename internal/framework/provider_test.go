@@ -123,7 +123,7 @@ func TestProviderResource(t *testing.T) {
 
 	p := NewProvider("1.0.0")
 
-	assert.Empty(t, p.Resources(context.Background()), "Must not return any values")
+	assert.Len(t, p.Resources(context.Background()), 1, "Must return the registered framework resources")
 }
 
 func TestProviderFunctions(t *testing.T) {
