@@ -64,12 +64,6 @@ func TestHistoricalNames(t *testing.T) {
 		"emerald",
 		"chartreuse",
 		"yellowgreen",
-		"gold",
-		"iris",
-		"green",
-		"jade",
-		"cerise",
-		"aquamarine",
 	} {
 		_, ok := NewColorPalette().ColorIndex(name)
 		assert.True(t, ok, "Must have the %q set as an option", name)

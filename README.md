@@ -11,8 +11,8 @@ Use this Terraform provider to automate the configuration of Splunk Observabilit
 
 ## Requirements
 
--	[Terraform](https://www.terraform.io/downloads.html) 0.12.x or higher
--	[Go](https://golang.org/doc/install) 1.19 or higher to build the provider plugin
+-	[Terraform](https://www.terraform.io/downloads.html) 1.x or higher
+-	[Go](https://golang.org/doc/install) latest stable version
 
 ## Build the provider
 
@@ -41,7 +41,7 @@ Further [usage documentation](https://www.terraform.io/docs/providers/signalfx/i
 
 If you wish to work on the provider, you need the following:
 
-- [Go](http://www.golang.org) version 1.11 or higher
+- [Go](http://www.golang.org) latest stable version
 - Configured [GOPATH](http://golang.org/doc/code.html#GOPATH)
 - `$GOPATH/bin` added to your `$PATH`
 
@@ -63,7 +63,7 @@ To test the provider, run the following command:
 To run the full suite of acceptance tests, run `make testacc`.
 
 ```sh
-$ export SFX_API_URL=https://api.observability.splunk.com # or https://api.eu0.observability.splunk.com
+$ export SFX_API_URL=https://api.observability.splunkcloud.com # or https://api.eu0.observability.splunkcloud.com
 $ export SFX_AUTH_TOKEN=XXXXXX
 $ make testacc
 ```

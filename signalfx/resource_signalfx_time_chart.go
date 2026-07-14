@@ -849,7 +849,7 @@ func timechartAPIToTF(d *schema.ResourceData, c *chart.Chart) error {
 	}
 	if options.HistogramChartOptions != nil {
 		if options.HistogramChartOptions.ColorThemeIndex != nil {
-			pc := visual.NewColorPalette()
+			pc := visual.NewColorScalePalette()
 			color, ok := pc.IndexColorName(*options.HistogramChartOptions.ColorThemeIndex)
 			if !ok {
 				return fmt.Errorf("invalid color theme index: %d", *options.HistogramChartOptions.ColorThemeIndex)

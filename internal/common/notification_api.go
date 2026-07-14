@@ -19,7 +19,7 @@ func NewNotificationStringFromAPI(n *notification.Notification) (string, error) 
 	case *notification.BigPandaNotification:
 		return fmt.Sprintf("%s,%s", n.Type, v.CredentialId), nil
 	case *notification.EmailNotification:
-		return fmt.Sprintf("%s,%s", n.Type, v.Email), nil
+		return formatEmailNotificationString(v), nil
 	case *notification.JiraNotification:
 		return fmt.Sprintf("%s,%s", n.Type, v.CredentialId), nil
 	case *notification.Office365Notification:
@@ -46,4 +46,13 @@ func NewNotificationStringFromAPI(n *notification.Notification) (string, error) 
 		return fmt.Sprintf("%s,%s", n.Type, v.CredentialId), nil
 	}
 	return "", fmt.Errorf("unknown type %T provided", n.Value)
+}
+
+func formatEmailNotificationString(v *notification.EmailNotification) string {
+	if len(v.Cc) == 0 && len(v.Bcc) == 0 {
+		return fmt.Sprintf("%s,%s", v.Type, v.Email)
+	}
+	cc := formatEmailRecipientList(v.Cc)
+	bcc := formatEmailRecipientList(v.Bcc)
+	return fmt.Sprintf("%s,%s,%s,%s", v.Type, v.Email, cc, bcc)
 }

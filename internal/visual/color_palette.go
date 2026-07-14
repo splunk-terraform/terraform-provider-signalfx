@@ -35,12 +35,6 @@ func NewColorPalette() ColorPalette {
 			"emerald":     13,
 			"chartreuse":  14,
 			"yellowgreen": 15,
-			"gold":        16,
-			"iris":        17,
-			"green":       18,
-			"jade":        19,
-			"cerise":      20,
-			"aquamarine":  21,
 		},
 		// These values should be exactly matching to:
 		// https://dev.splunk.com/observability/docs/chartsdashboards/charts_overview/#Chart-color-palettes (Values may differ as values have been updated to match the UI values)
@@ -61,19 +55,13 @@ func NewColorPalette() ColorPalette {
 			13: "#007c1d",
 			14: "#05ce00",
 			15: "#0dba8f",
-			16: "#eac24b",
-			17: "#e5e517",
-			18: "#6bd37e",
-			19: "#aecf7f",
-			20: "#e9008a",
-			21: "#98abbe",
 		},
 	}
 }
 
 func (cp ColorPalette) ColorIndex(name string) (int32, bool) {
 	index, exist := cp.named[name]
-	return index % 16, exist // Since accepted colors are 16. Making sure that the index returned is within 16
+	return index, exist
 }
 
 func (cp ColorPalette) IndexColorName(index int32) (string, bool) {
@@ -95,11 +83,9 @@ func (cp ColorPalette) HexCodebyIndex(index int32) (string, bool) {
 }
 
 func (cp ColorPalette) Names() []string {
-	names := make([]string, int(16))
+	names := make([]string, len(cp.named))
 	for name, idx := range cp.named {
-		if idx < 16 {
-			names[idx] = name
-		}
+		names[idx] = name
 	}
 	return names
 }
