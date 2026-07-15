@@ -4,6 +4,8 @@ WEBSITE_REPO=github.com/hashicorp/terraform-website
 PKG_NAME=signalfx
 COVERAGE_MIN ?= 90.0
 COVERAGE_BASELINE ?= 34.7
+MIGRATED_PRODUCT_PACKAGES := \
+	./internal/framework/integration
 FRAMEWORK_SCOPE_PACKAGES := \
 	./internal/check \
 	./internal/common \
@@ -76,6 +78,23 @@ test-with-cover:
 		-covermode=atomic \
 		-coverprofile=$(PWD)/coverage.txt
 
+test-migrated-product-cover:
+	mkdir -p $(PWD)/coverage/products
+	@set -eu; \
+		for package in $(MIGRATED_PRODUCT_PACKAGES); do \
+			name=$${package##*/}; \
+			profile=$(PWD)/coverage/products/$$name.txt; \
+			go test --timeout 300s $$package \
+				-covermode=atomic \
+				-coverprofile=$$profile; \
+			total=$$(go tool cover -func=$$profile | awk '/^total:/ { gsub(/%/, "", $$3); print $$3 }'); \
+			echo "Migrated product package $$package coverage: $$total% (minimum $(COVERAGE_MIN)%)"; \
+			awk -v actual="$$total" -v minimum="$(COVERAGE_MIN)" 'BEGIN { exit !(actual + 0 >= minimum + 0) }'; \
+		done
+
+# This aggregate target is the final migration gate. Incremental checkpoints use
+# test-migrated-product-cover so existing Framework packages do not make every
+# one-resource review branch fail before their planned coverage closure.
 test-framework-cover:
 	mkdir -p $(PWD)/coverage
 	go test --timeout 300s $(FRAMEWORK_SCOPE_PACKAGES) \
@@ -124,4 +143,4 @@ test-docs:
 check-schema-docs:
 	./scripts/check-schema-docs.sh
 
-.PHONY: build test test-with-cover test-framework-cover check-coverage-no-regression testacc vet fmt fmtcheck errcheck gen-docs check-docs test-docs check-schema-docs
+.PHONY: build test test-with-cover test-migrated-product-cover test-framework-cover check-coverage-no-regression testacc vet fmt fmtcheck errcheck gen-docs check-docs test-docs check-schema-docs
