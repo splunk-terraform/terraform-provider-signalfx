@@ -144,6 +144,7 @@ func TestProviderResource(t *testing.T) {
 		"signalfx_integration_splunk_oncall": {},
 		"signalfx_dashify_template":          {},
 		"signalfx_customized_auto_detector":  {},
+		"signalfx_big_panda_integration":     {},
 	}
 
 	actual := p.Resources(context.Background())

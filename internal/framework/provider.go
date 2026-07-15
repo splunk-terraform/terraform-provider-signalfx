@@ -287,6 +287,7 @@ func (op *ollyProvider) Resources(ctx context.Context) []func() resource.Resourc
 		fwintegration.NewResourceSplunkOncall,
 		fwdashify.NewResourceDashifyTemplate,
 		fwdetector.NewAutoDetectorResource,
+		fwintegration.NewResourceBigPanda,
 	}
 }
 
