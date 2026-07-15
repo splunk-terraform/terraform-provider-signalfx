@@ -149,6 +149,7 @@ func TestProviderResource(t *testing.T) {
 		"signalfx_victor_ops_integration":    {},
 		"signalfx_webhook_integration":       {},
 		"signalfx_service_now_integration":   {},
+		"signalfx_jira_integration":          {},
 		"signalfx_dashify_template":          {},
 		"signalfx_customized_auto_detector":  {},
 		"signalfx_big_panda_integration":     {},
