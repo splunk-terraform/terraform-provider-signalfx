@@ -132,7 +132,6 @@ func Provider() *schema.Provider {
 		},
 		DataSourcesMap: map[string]*schema.Resource{},
 		ResourcesMap: map[string]*schema.Resource{
-			"signalfx_alert_muting_rule":  alertMutingRuleResource(),
 			"signalfx_dashboard":          dashboardResource(),
 			"signalfx_dashboard_group":    dashboardGroupResource(),
 			"signalfx_data_link":          dataLinkResource(),

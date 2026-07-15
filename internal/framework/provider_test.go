@@ -142,6 +142,7 @@ func TestProviderResource(t *testing.T) {
 	p := NewProvider("1.0.0")
 
 	expect := map[string]struct{}{
+		"signalfx_alert_muting_rule":                {},
 		"signalfx_integration_splunk_oncall":        {},
 		"signalfx_opsgenie_integration":             {},
 		"signalfx_pagerduty_integration":            {},
