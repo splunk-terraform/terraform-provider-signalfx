@@ -168,7 +168,6 @@ func Provider() *schema.Provider {
 			"signalfx_team":                             teamResource(),
 			"signalfx_time_chart":                       timeChartResource(),
 			"signalfx_text_chart":                       textChartResource(),
-			"signalfx_webhook_integration":              integrationWebhookResource(),
 			"signalfx_log_view":                         logViewResource(),
 			"signalfx_log_timeline":                     logTimelineResource(),
 			"signalfx_table_chart":                      tableChartResource(),

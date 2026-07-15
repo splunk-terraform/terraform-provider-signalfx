@@ -5,3 +5,4 @@ resource pagerduty_integration
 data-source pagerduty_integration
 resource slack_integration
 resource victor_ops_integration
+resource webhook_integration
