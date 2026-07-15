@@ -293,6 +293,7 @@ func (op *ollyProvider) Resources(ctx context.Context) []func() resource.Resourc
 		fwintegration.NewResourceWebhook,
 		fwintegration.NewResourceServiceNow,
 		fwintegration.NewResourceJira,
+		fwintegration.NewResourceAzure,
 		fwdashify.NewResourceDashifyTemplate,
 		fwdetector.NewAutoDetectorResource,
 		fwintegration.NewResourceBigPanda,

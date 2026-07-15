@@ -8,3 +8,4 @@ resource victor_ops_integration
 resource webhook_integration
 resource service_now_integration
 resource jira_integration
+resource azure_integration

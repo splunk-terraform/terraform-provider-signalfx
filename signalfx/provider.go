@@ -151,7 +151,6 @@ func Provider() *schema.Provider {
 			"signalfx_aws_external_integration":         integrationAWSExternalResource(),
 			"signalfx_aws_token_integration":            integrationAWSTokenResource(),
 			"signalfx_aws_integration":                  integrationAWSResource(),
-			"signalfx_azure_integration":                integrationAzureResource(),
 			"signalfx_dashboard":                        dashboardResource(),
 			"signalfx_dashboard_group":                  dashboardGroupResource(),
 			"signalfx_data_link":                        dataLinkResource(),
