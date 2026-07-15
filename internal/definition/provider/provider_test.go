@@ -143,6 +143,13 @@ func TestProviderTracking(t *testing.T) {
 	t.Parallel()
 
 	// Moved to a separate unit test since the tracking results are branch dependant
+	registry := feature.GetGlobalRegistry()
+	for _, name := range []string{feature.PreviewProviderTags, feature.PreviewProviderTracking} {
+		preview, ok := registry.Get(name)
+		require.True(t, ok, "Must have preview %q registered", name)
+		original := preview.Enabled()
+		t.Cleanup(func() { preview.SetEnabled(original) })
+	}
 
 	rc := terraform.NewResourceConfigRaw(map[string]any{
 		"auth_token": "hunter2",
