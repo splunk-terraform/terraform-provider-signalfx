@@ -287,6 +287,7 @@ func (op *ollyProvider) Resources(ctx context.Context) []func() resource.Resourc
 	return []func() resource.Resource{
 		fwintegration.NewResourceOpsgenie,
 		fwintegration.NewResourcePagerDuty,
+		fwintegration.NewResourceSlack,
 		fwintegration.NewResourceSplunkOncall,
 		fwdashify.NewResourceDashifyTemplate,
 		fwdetector.NewAutoDetectorResource,

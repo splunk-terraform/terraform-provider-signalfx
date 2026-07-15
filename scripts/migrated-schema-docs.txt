@@ -3,3 +3,4 @@
 resource opsgenie_integration
 resource pagerduty_integration
 data-source pagerduty_integration
+resource slack_integration
