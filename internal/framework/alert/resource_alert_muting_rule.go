@@ -5,6 +5,7 @@ package fwalert
 
 import (
 	"context"
+	"math"
 	"strings"
 	"time"
 
@@ -154,7 +155,7 @@ func (amr *ResourceAlertMutingRule) Schema(_ context.Context, _ resource.SchemaR
 						Required:    true,
 						Description: "amount of time, expressed as an integer applicable to the unit",
 						Validators: []validator.Int64{
-							int64validator.AtLeast(1),
+							int64validator.Between(1, math.MaxInt32),
 						},
 					},
 				}},
@@ -290,9 +291,10 @@ func (model alertMutingRuleModel) toRequest(ctx context.Context, update bool, no
 	if !model.Recurrence.IsNull() && !model.Recurrence.IsUnknown() {
 		diags.Append(model.Recurrence.ElementsAs(ctx, &recurrence, false)...)
 		if len(recurrence) > 0 {
+			recurrenceValue := recurrence[0].Value.ValueInt64()
 			payload.Recurrence = &alertmuting.AlertMutingRuleRecurrence{
 				Unit:  recurrence[0].Unit.ValueString(),
-				Value: int32(recurrence[0].Value.ValueInt64()),
+				Value: int32(recurrenceValue), // #nosec G115 -- schema validation bounds this value to int32.
 			}
 		}
 	}

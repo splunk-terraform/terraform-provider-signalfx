@@ -154,26 +154,26 @@ func TestResourceAlertMutingRuleMockedLifecycle(t *testing.T) {
 	handlers := map[string]http.Handler{
 		"POST /v2/alertmuting": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			var payload alertmuting.CreateUpdateAlertMutingRuleRequest
-			require.NoError(t, json.NewDecoder(r.Body).Decode(&payload))
+			assert.NoError(t, json.NewDecoder(r.Body).Decode(&payload))
 			assert.Equal(t, int64(1000), payload.StartTime)
 			assert.Equal(t, int64(2000), payload.StopTime)
 			assert.Equal(t, []string{"detector-1", "detector-2"}, detectorIDs(payload.Filters))
 			current = responseFromRequest("rule-1", 123456, payload)
 			w.WriteHeader(http.StatusCreated)
-			require.NoError(t, json.NewEncoder(w).Encode(current))
+			assert.NoError(t, json.NewEncoder(w).Encode(current))
 		}),
 		"GET /v2/alertmuting/rule-1": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			require.NoError(t, json.NewEncoder(w).Encode(current))
+			assert.NoError(t, json.NewEncoder(w).Encode(current))
 		}),
 		"PUT /v2/alertmuting/rule-1": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			var payload alertmuting.CreateUpdateAlertMutingRuleRequest
-			require.NoError(t, json.NewDecoder(r.Body).Decode(&payload))
+			assert.NoError(t, json.NewDecoder(r.Body).Decode(&payload))
 			assert.Equal(t, int64(123456), payload.StartTime)
 			assert.Equal(t, int64(3000), payload.StopTime)
 			assert.Equal(t, "updated maintenance", payload.Description)
 			assert.Equal(t, []string{"detector-1", "detector-2"}, detectorIDs(payload.Filters))
 			current = responseFromRequest("rule-1", 123456, payload)
-			require.NoError(t, json.NewEncoder(w).Encode(current))
+			assert.NoError(t, json.NewEncoder(w).Encode(current))
 		}),
 		"DELETE /v2/alertmuting/rule-1": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			_, _ = io.Copy(io.Discard, r.Body)
@@ -259,13 +259,13 @@ func TestResourceAlertMutingRuleExpiredDelete(t *testing.T) {
 	handlers := map[string]http.Handler{
 		"POST /v2/alertmuting": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			var payload alertmuting.CreateUpdateAlertMutingRuleRequest
-			require.NoError(t, json.NewDecoder(r.Body).Decode(&payload))
+			assert.NoError(t, json.NewDecoder(r.Body).Decode(&payload))
 			rule = responseFromRequest("rule-1", 123456, payload)
 			w.WriteHeader(http.StatusCreated)
-			require.NoError(t, json.NewEncoder(w).Encode(rule))
+			assert.NoError(t, json.NewEncoder(w).Encode(rule))
 		}),
 		"GET /v2/alertmuting/rule-1": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			require.NoError(t, json.NewEncoder(w).Encode(rule))
+			assert.NoError(t, json.NewEncoder(w).Encode(rule))
 		}),
 		"DELETE /v2/alertmuting/rule-1": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Cannot delete alert muting in the past", http.StatusBadRequest)
