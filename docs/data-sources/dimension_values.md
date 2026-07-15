@@ -1,5 +1,5 @@
 ---
-page_tile: "Splunk Observability Cloud - signalfx_dimension_values
+page_title: "Splunk Observability Cloud - signalfx_dimension_values"
 description: |-
     This data sources allows for obtaining a list of dimension values by on query provided.
 ---
