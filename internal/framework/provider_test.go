@@ -146,6 +146,7 @@ func TestProviderResource(t *testing.T) {
 		"signalfx_opsgenie_integration":      {},
 		"signalfx_pagerduty_integration":     {},
 		"signalfx_slack_integration":         {},
+		"signalfx_victor_ops_integration":    {},
 		"signalfx_dashify_template":          {},
 		"signalfx_customized_auto_detector":  {},
 		"signalfx_big_panda_integration":     {},

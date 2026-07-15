@@ -141,8 +141,8 @@ func Provider() *schema.Provider {
 			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
-			"signalfx_dimension_values":      dataSourceDimensionValues(),
-			organization.DataSourceName:      organization.NewDataSource(),
+			"signalfx_dimension_values": dataSourceDimensionValues(),
+			organization.DataSourceName: organization.NewDataSource(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"signalfx_alert_muting_rule":                alertMutingRuleResource(),
@@ -168,7 +168,6 @@ func Provider() *schema.Provider {
 			"signalfx_team":                             teamResource(),
 			"signalfx_time_chart":                       timeChartResource(),
 			"signalfx_text_chart":                       textChartResource(),
-			"signalfx_victor_ops_integration":           integrationVictorOpsResource(),
 			"signalfx_webhook_integration":              integrationWebhookResource(),
 			"signalfx_log_view":                         logViewResource(),
 			"signalfx_log_timeline":                     logTimelineResource(),
