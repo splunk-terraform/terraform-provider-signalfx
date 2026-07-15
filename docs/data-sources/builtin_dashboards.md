@@ -1,5 +1,5 @@
 ---
-page_tile: "Splunk Observability Cloud - signalfx_builtin_dashboards
+page_title: "Splunk Observability Cloud - signalfx_builtin_dashboards"
 description: |-
     This data source is responsible for capturing all the built in content available for the user so that they can be used within their own dashboard groups.
 ---

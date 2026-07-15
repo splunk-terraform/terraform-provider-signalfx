@@ -118,9 +118,10 @@ func TestProviderDataSources(t *testing.T) {
 	p := NewProvider("1.0.0")
 
 	expect := map[string]struct{}{
-		"signalfx_apm_service_topology": {},
-		"signalfx_auto_detector":        {},
-		"signalfx_builtin_dashboards":   {},
+		"signalfx_apm_service_topology":  {},
+		"signalfx_auto_detector":         {},
+		"signalfx_builtin_dashboards":    {},
+		"signalfx_pagerduty_integration": {},
 	}
 
 	actual := p.DataSources(context.Background())
@@ -142,6 +143,16 @@ func TestProviderResource(t *testing.T) {
 
 	expect := map[string]struct{}{
 		"signalfx_integration_splunk_oncall": {},
+		"signalfx_opsgenie_integration":      {},
+		"signalfx_pagerduty_integration":     {},
+		"signalfx_slack_integration":         {},
+		"signalfx_victor_ops_integration":    {},
+		"signalfx_webhook_integration":       {},
+		"signalfx_service_now_integration":   {},
+		"signalfx_jira_integration":          {},
+		"signalfx_azure_integration":         {},
+		"signalfx_gcp_integration":           {},
+		"signalfx_aws_external_integration":  {},
 		"signalfx_dashify_template":          {},
 		"signalfx_customized_auto_detector":  {},
 		"signalfx_big_panda_integration":     {},
