@@ -73,8 +73,10 @@ build:
 test:
 	go test --cover --race -v --timeout 30s ./...
 
+# Framework Protocol 6 lifecycle tests start local Terraform/provider processes.
+# The cumulative integration package exceeds five minutes on shared CI runners.
 test-with-cover:
-	go test --race --timeout 300s ./... \
+	go test --race --timeout 600s ./... \
 		-covermode=atomic \
 		-coverprofile=$(PWD)/coverage.txt
 
