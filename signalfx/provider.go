@@ -142,7 +142,6 @@ func Provider() *schema.Provider {
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"signalfx_dimension_values":      dataSourceDimensionValues(),
-			"signalfx_pagerduty_integration": dataSourcePagerDutyIntegration(),
 			organization.DataSourceName:      organization.NewDataSource(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
@@ -163,10 +162,7 @@ func Provider() *schema.Provider {
 			"signalfx_jira_integration":                 integrationJiraResource(),
 			"signalfx_list_chart":                       listChartResource(),
 			"signalfx_org_token":                        orgTokenResource(),
-			"signalfx_opsgenie_integration":             integrationOpsgenieResource(),
-			"signalfx_pagerduty_integration":            integrationPagerDutyResource(),
 			"signalfx_service_now_integration":          integrationServiceNowResource(),
-			"signalfx_slack_integration":                integrationSlackResource(),
 			"signalfx_single_value_chart":               singleValueChartResource(),
 			"signalfx_slo_chart":                        sloChartResource(),
 			"signalfx_team":                             teamResource(),

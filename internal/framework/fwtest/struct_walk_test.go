@@ -81,4 +81,25 @@ func TestWalkStruct(t *testing.T) {
 		assert.Empty(t, expect, "Must have seen all expected fields")
 		assert.NoError(t, errs, "Must not have any errors")
 	})
+
+	t.Run("embedded model", func(t *testing.T) {
+		t.Parallel()
+
+		type embedded struct {
+			ID   types.String `tfsdk:"id"`
+			Name types.String `tfsdk:"name"`
+		}
+		type model struct {
+			embedded
+			Enabled types.Bool `tfsdk:"enabled"`
+		}
+
+		var paths []string
+		for walked := range WalkStruct(model{}) {
+			assert.NoError(t, walked.Err())
+			paths = append(paths, walked.Path().String())
+		}
+
+		assert.ElementsMatch(t, []string{"id", "name", "enabled"}, paths)
+	})
 }
