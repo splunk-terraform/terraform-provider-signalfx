@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/stretchr/testify/assert"
@@ -123,7 +124,18 @@ func TestProviderResource(t *testing.T) {
 
 	p := NewProvider("1.0.0")
 
-	assert.Len(t, p.Resources(context.Background()), 1, "Must return the registered framework resources")
+	expect := map[string]struct{}{
+		"signalfx_alert_muting_rule":     {},
+		"signalfx_big_panda_integration": {},
+	}
+
+	actual := p.Resources(context.Background())
+	assert.Len(t, actual, len(expect), "Must return expected number of resources")
+	for _, res := range actual {
+		resp := &resource.MetadataResponse{}
+		res().Metadata(context.Background(), resource.MetadataRequest{ProviderTypeName: "signalfx"}, resp)
+		assert.Contains(t, expect, resp.TypeName, "Resource %s must be expected", resp.TypeName)
+	}
 }
 
 func TestProviderFunctions(t *testing.T) {

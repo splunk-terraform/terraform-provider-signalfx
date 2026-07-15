@@ -146,7 +146,6 @@ func Provider() *schema.Provider {
 			organization.DataSourceName:      organization.NewDataSource(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"signalfx_alert_muting_rule":                alertMutingRuleResource(),
 			"signalfx_automated_archival_settings":      autoarchivesettings.NewResource(),
 			"signalfx_automated_archival_exempt_metric": autoarchiveexemptmetric.NewResource(),
 			"signalfx_aws_external_integration":         integrationAWSExternalResource(),

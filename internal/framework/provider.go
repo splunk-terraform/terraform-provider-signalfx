@@ -24,6 +24,7 @@ import (
 	"github.com/signalfx/signalfx-go"
 
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/feature"
+	fwalert "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/alert"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/builtincontent"
 	internalfunction "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/function"
 	fwintegration "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/integration"
@@ -281,6 +282,7 @@ func (op *ollyProvider) DataSources(ctx context.Context) []func() datasource.Dat
 
 func (op *ollyProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
+		fwalert.NewResourceAlertMutingRule,
 		fwintegration.NewResourceBigPanda,
 	}
 }
