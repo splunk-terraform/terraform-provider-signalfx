@@ -3,7 +3,7 @@
 set -eu
 
 root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-manifest="$root/templates/migrated-schema-docs.txt"
+manifest="$root/scripts/migrated-schema-docs.txt"
 
 while read -r kind name; do
 	case "$kind" in

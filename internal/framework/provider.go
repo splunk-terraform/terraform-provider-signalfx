@@ -284,6 +284,7 @@ func (op *ollyProvider) DataSources(ctx context.Context) []func() datasource.Dat
 
 func (op *ollyProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
+		fwintegration.NewResourceOpsgenie,
 		fwintegration.NewResourceSplunkOncall,
 		fwdashify.NewResourceDashifyTemplate,
 		fwdetector.NewAutoDetectorResource,
