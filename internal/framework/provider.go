@@ -279,6 +279,7 @@ func (op *ollyProvider) DataSources(ctx context.Context) []func() datasource.Dat
 		apm.NewDatasourceTopology,
 		builtincontent.NewDashboardGroupsDataSource,
 		builtincontent.NewAutoDetectorDataSource,
+		fwintegration.NewDataSourcePagerDuty,
 	}
 }
 

@@ -142,7 +142,6 @@ func Provider() *schema.Provider {
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"signalfx_dimension_values":      dataSourceDimensionValues(),
-			"signalfx_pagerduty_integration": dataSourcePagerDutyIntegration(),
 			organization.DataSourceName:      organization.NewDataSource(),
 		},
 		ResourcesMap: map[string]*schema.Resource{

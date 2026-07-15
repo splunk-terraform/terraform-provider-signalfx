@@ -2,3 +2,4 @@
 # Format: resource|data-source <documentation short name>
 resource opsgenie_integration
 resource pagerduty_integration
+data-source pagerduty_integration

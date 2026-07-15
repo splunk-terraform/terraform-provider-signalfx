@@ -1,12 +1,12 @@
 ---
 page_title: "Splunk Observability Cloud - signalfx_pagerduty_integration"
 description: |-
-    Use this data source to fetch the PagerDuty integration details.
+    Fetches a PagerDuty integration by its configured name.
 ---
 
 # Data Source: signalfx_pagerduty_integration
 
-Use this data source to fetch the PagerDuty integration details.
+Fetches a PagerDuty integration by its configured name.
 
 # Examples Usage
 
@@ -21,10 +21,10 @@ data "signalfx_pagerduty_integration" "pd_integration" {
 
 ### Required
 
-- `name` (String) This is the configured name of the PagerDuty integration.
+- `name` (String) Configured name of the PagerDuty integration.
 
 ### Read-Only
 
-- `enabled` (Boolean) Whether the integration is currently enabled.
-- `id` (String) The ID of this resource.
+- `enabled` (Boolean) Whether the PagerDuty integration is enabled.
+- `id` (String) Unique identifier of the PagerDuty integration.
 
