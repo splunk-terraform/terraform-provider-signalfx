@@ -11,3 +11,4 @@ resource jira_integration
 resource azure_integration
 resource gcp_integration
 resource aws_external_integration
+resource aws_token_integration

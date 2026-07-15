@@ -296,6 +296,7 @@ func (op *ollyProvider) Resources(ctx context.Context) []func() resource.Resourc
 		fwintegration.NewResourceAzure,
 		fwintegration.NewResourceGCP,
 		fwintegration.NewResourceAWSExternal,
+		fwintegration.NewResourceAWSToken,
 		fwdashify.NewResourceDashifyTemplate,
 		fwdetector.NewAutoDetectorResource,
 		fwintegration.NewResourceBigPanda,
