@@ -13,7 +13,6 @@ import (
 
 	fwembed "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/embed"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/fwerr"
-	fwshared "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/shared"
 )
 
 type ResourceOpsgenie struct {
@@ -22,11 +21,9 @@ type ResourceOpsgenie struct {
 }
 
 type resourceOpsgenieModel struct {
-	ID      types.String `tfsdk:"id"`
-	Name    types.String `tfsdk:"name"`
-	Enabled types.Bool   `tfsdk:"enabled"`
-	APIKey  types.String `tfsdk:"api_key"`
-	APIURL  types.String `tfsdk:"api_url"`
+	integrationModel
+	APIKey types.String `tfsdk:"api_key"`
+	APIURL types.String `tfsdk:"api_url"`
 }
 
 var (
@@ -44,28 +41,20 @@ func (opsgenie *ResourceOpsgenie) Metadata(_ context.Context, req resource.Metad
 }
 
 func (opsgenie *ResourceOpsgenie) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+	attributes := integrationAttributes()
+	attributes["api_key"] = schema.StringAttribute{
+		Required:    true,
+		Sensitive:   true,
+		Description: "Opsgenie API key used to send alerts.",
+	}
+	attributes["api_url"] = schema.StringAttribute{
+		Optional:    true,
+		Description: "Opsgenie API URL. Use the regional URL required by your Opsgenie account.",
+	}
+
 	resp.Schema = schema.Schema{
 		Description: "Manages an Opsgenie notification integration in Splunk Observability Cloud.",
-		Attributes: map[string]schema.Attribute{
-			"id": fwshared.ResourceIDAttribute(),
-			"name": schema.StringAttribute{
-				Required:    true,
-				Description: "Human-readable name of the Opsgenie integration.",
-			},
-			"enabled": schema.BoolAttribute{
-				Required:    true,
-				Description: "Whether the Opsgenie integration is enabled.",
-			},
-			"api_key": schema.StringAttribute{
-				Required:    true,
-				Sensitive:   true,
-				Description: "Opsgenie API key used to send alerts.",
-			},
-			"api_url": schema.StringAttribute{
-				Optional:    true,
-				Description: "Opsgenie API URL. Use the regional URL required by your Opsgenie account.",
-			},
-		},
+		Attributes:  attributes,
 	}
 }
 
@@ -81,7 +70,7 @@ func (opsgenie *ResourceOpsgenie) Create(ctx context.Context, req resource.Creat
 		return
 	}
 
-	model.updateFromAPI(details)
+	model.updateFromAPI(details, true)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &model)...)
 }
 
@@ -101,7 +90,7 @@ func (opsgenie *ResourceOpsgenie) Read(ctx context.Context, req resource.ReadReq
 		return
 	}
 
-	model.updateFromAPI(details)
+	model.updateFromAPI(details, false)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &model)...)
 }
 
@@ -125,7 +114,7 @@ func (opsgenie *ResourceOpsgenie) Update(ctx context.Context, req resource.Updat
 		return
 	}
 
-	model.updateFromAPI(details)
+	model.updateFromAPI(details, true)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &model)...)
 }
 
@@ -150,14 +139,16 @@ func (model resourceOpsgenieModel) opsgenieIntegration() *integration.OpsgenieIn
 	}
 }
 
-func (model *resourceOpsgenieModel) updateFromAPI(details *integration.OpsgenieIntegration) {
+func (model *resourceOpsgenieModel) updateFromAPI(details *integration.OpsgenieIntegration, updateID bool) {
 	if details == nil {
 		return
 	}
 
-	model.ID = types.StringValue(details.Id)
-	model.Name = types.StringValue(details.Name)
-	model.Enabled = types.BoolValue(details.Enabled)
+	if updateID {
+		model.updateWithID(details.Id, details.Name, details.Enabled)
+	} else {
+		model.update(details.Name, details.Enabled)
+	}
 	// The API intentionally omits api_key and api_url. Retain their configured
 	// values so every refresh remains stable.
 }

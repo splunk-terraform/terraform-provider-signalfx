@@ -44,11 +44,13 @@ func TestResourceOpsgenieModel(t *testing.T) {
 	t.Parallel()
 
 	model := resourceOpsgenieModel{
-		ID:      types.StringValue("integration-id"),
-		Name:    types.StringValue("Opsgenie"),
-		Enabled: types.BoolValue(true),
-		APIKey:  types.StringValue("secret-key"),
-		APIURL:  types.StringValue("https://api.opsgenie.com"),
+		integrationModel: integrationModel{
+			ID:      types.StringValue("integration-id"),
+			Name:    types.StringValue("Opsgenie"),
+			Enabled: types.BoolValue(true),
+		},
+		APIKey: types.StringValue("secret-key"),
+		APIURL: types.StringValue("https://api.opsgenie.com"),
 	}
 
 	assert.Equal(t, &integration.OpsgenieIntegration{
@@ -59,14 +61,14 @@ func TestResourceOpsgenieModel(t *testing.T) {
 		ApiUrl:  "https://api.opsgenie.com",
 	}, model.opsgenieIntegration())
 
-	model.updateFromAPI(nil)
+	model.updateFromAPI(nil, true)
 	assert.Equal(t, types.StringValue("integration-id"), model.ID)
 
 	model.updateFromAPI(&integration.OpsgenieIntegration{
 		Id:      "updated-id",
 		Name:    "Updated Opsgenie",
 		Enabled: false,
-	})
+	}, true)
 	assert.Equal(t, types.StringValue("updated-id"), model.ID)
 	assert.Equal(t, types.StringValue("Updated Opsgenie"), model.Name)
 	assert.Equal(t, types.BoolValue(false), model.Enabled)

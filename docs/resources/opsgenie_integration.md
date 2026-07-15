@@ -27,8 +27,8 @@ resource "signalfx_opsgenie_integration" "opgenie_myteam" {
 ### Required
 
 - `api_key` (String, Sensitive) Opsgenie API key used to send alerts.
-- `enabled` (Boolean) Whether the Opsgenie integration is enabled.
-- `name` (String) Human-readable name of the Opsgenie integration.
+- `enabled` (Boolean) Whether the integration is enabled.
+- `name` (String) Human-readable name of the integration.
 
 ### Optional
 
