@@ -1,5 +1,5 @@
 ---
-page_tile: "Splunk Observability Cloud - signalfx_auto_detector
+page_title: "Splunk Observability Cloud - signalfx_auto_detector"
 description: |-
     This data source is used to fetch the existing auto detectors in the organization.
 ---

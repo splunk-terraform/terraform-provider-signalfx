@@ -1,5 +1,5 @@
 ---
-page_tile: "Splunk Observability Cloud - signalfx_organization_members
+page_title: "Splunk Observability Cloud - signalfx_organization_members"
 description: |-
     Allows for members to be queried and used as part of other resources. Requires the supplied token to have Admin priviledges.
 ---
