@@ -10,3 +10,4 @@ resource service_now_integration
 resource jira_integration
 resource azure_integration
 resource gcp_integration
+resource aws_external_integration

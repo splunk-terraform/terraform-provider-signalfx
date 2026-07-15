@@ -152,6 +152,7 @@ func TestProviderResource(t *testing.T) {
 		"signalfx_jira_integration":          {},
 		"signalfx_azure_integration":         {},
 		"signalfx_gcp_integration":           {},
+		"signalfx_aws_external_integration":  {},
 		"signalfx_dashify_template":          {},
 		"signalfx_customized_auto_detector":  {},
 		"signalfx_big_panda_integration":     {},
