@@ -279,12 +279,19 @@ func (op *ollyProvider) DataSources(ctx context.Context) []func() datasource.Dat
 		apm.NewDatasourceTopology,
 		builtincontent.NewDashboardGroupsDataSource,
 		builtincontent.NewAutoDetectorDataSource,
+		fwintegration.NewDataSourcePagerDuty,
 	}
 }
 
 func (op *ollyProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
+		fwintegration.NewResourceOpsgenie,
+		fwintegration.NewResourcePagerDuty,
+		fwintegration.NewResourceSlack,
 		fwintegration.NewResourceSplunkOncall,
+		fwintegration.NewResourceVictorOps,
+		fwintegration.NewResourceWebhook,
+		fwintegration.NewResourceServiceNow,
 		fwdashify.NewResourceDashifyTemplate,
 		fwdetector.NewAutoDetectorResource,
 		fwintegration.NewResourceBigPanda,
