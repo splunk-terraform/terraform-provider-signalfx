@@ -1,0 +1,14 @@
+# Add one entry when its SDK registration is migrated to Framework.
+# Format: resource|data-source <documentation short name>
+resource opsgenie_integration
+resource pagerduty_integration
+data-source pagerduty_integration
+resource slack_integration
+resource victor_ops_integration
+resource webhook_integration
+resource service_now_integration
+resource jira_integration
+resource azure_integration
+resource gcp_integration
+resource aws_external_integration
+resource aws_token_integration
