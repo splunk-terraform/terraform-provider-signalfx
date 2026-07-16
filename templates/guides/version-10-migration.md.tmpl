@@ -56,3 +56,9 @@ terraform plan
 ```
 
 Removing the state entry does not delete the integration. Review the final plan before applying it.
+
+## AWS integration: token is sensitive and empty regions are rejected during planning
+
+The `token` argument on `signalfx_aws_integration` is now marked sensitive. If an output or another value exposes it, Terraform might require that destination to be marked `sensitive = true`.
+
+The resource now rejects an empty `regions` set during planning instead of waiting until apply. Update invalid configurations before upgrading; valid external-ID and security-token configurations do not need state migration.

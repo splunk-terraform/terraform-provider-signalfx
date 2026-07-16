@@ -141,7 +141,6 @@ func Provider() *schema.Provider {
 			"signalfx_alert_muting_rule":                alertMutingRuleResource(),
 			"signalfx_automated_archival_settings":      autoarchivesettings.NewResource(),
 			"signalfx_automated_archival_exempt_metric": autoarchiveexemptmetric.NewResource(),
-			"signalfx_aws_integration":                  integrationAWSResource(),
 			"signalfx_dashboard":                        dashboardResource(),
 			"signalfx_dashboard_group":                  dashboardGroupResource(),
 			"signalfx_data_link":                        dataLinkResource(),
