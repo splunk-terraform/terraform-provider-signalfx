@@ -244,3 +244,103 @@ func TestNotificationModel(t *testing.T) {
 		})
 	}
 }
+
+func TestNewNotificationModelFromAPI(t *testing.T) {
+	t.Parallel()
+	opsgenieID := "opsgenie-id"
+	pagerDutyID := "pagerduty-id"
+
+	for _, tt := range []struct {
+		name     string
+		value    *notification.Notification
+		expected NotificationModel
+	}{
+		{name: "nil", expected: NotificationModel{}},
+		{
+			name:     "AmazonEventBridge",
+			value:    &notification.Notification{Value: &notification.AmazonEventBrigeNotification{CredentialId: "cred-amazon"}},
+			expected: NotificationModel{Type: types.StringValue("AmazonEventBridge"), CredentialID: types.StringValue("cred-amazon")},
+		},
+		{
+			name:     "BigPanda",
+			value:    &notification.Notification{Value: &notification.BigPandaNotification{CredentialId: "cred-bigpanda"}},
+			expected: NotificationModel{Type: types.StringValue("BigPanda"), CredentialID: types.StringValue("cred-bigpanda")},
+		},
+		{
+			name:     "Email",
+			value:    &notification.Notification{Value: &notification.EmailNotification{Email: "alerts@example.com"}},
+			expected: NotificationModel{Type: types.StringValue("Email"), Email: types.StringValue("alerts@example.com")},
+		},
+		{
+			name:     "Jira",
+			value:    &notification.Notification{Value: &notification.JiraNotification{CredentialId: "cred-jira"}},
+			expected: NotificationModel{Type: types.StringValue("Jira"), CredentialID: types.StringValue("cred-jira")},
+		},
+		{
+			name:  "Opsgenie",
+			value: &notification.Notification{Value: &notification.OpsgenieNotification{CredentialId: opsgenieID, ResponderId: "responder-id"}},
+			expected: NotificationModel{
+				Type: types.StringValue("Opsgenie"), CredentialID: types.StringValue(opsgenieID),
+				ResponderID: types.StringValue("responder-id"), ResponderName: types.StringNull(), ResponderType: types.StringNull(),
+			},
+		},
+		{
+			name:     "Office365",
+			value:    &notification.Notification{Value: &notification.Office365Notification{CredentialId: "cred-office"}},
+			expected: NotificationModel{Type: types.StringValue("Office365"), CredentialID: types.StringValue("cred-office")},
+		},
+		{
+			name:     "PagerDuty",
+			value:    &notification.Notification{Value: &notification.PagerDutyNotification{CredentialId: pagerDutyID}},
+			expected: NotificationModel{Type: types.StringValue("PagerDuty"), CredentialID: types.StringValue(pagerDutyID)},
+		},
+		{
+			name:     "ServiceNow",
+			value:    &notification.Notification{Value: &notification.ServiceNowNotification{CredentialId: "cred-service-now"}},
+			expected: NotificationModel{Type: types.StringValue("ServiceNow"), CredentialID: types.StringValue("cred-service-now")},
+		},
+		{
+			name:  "Slack",
+			value: &notification.Notification{Value: &notification.SlackNotification{CredentialId: "cred-slack", Channel: "alerts"}},
+			expected: NotificationModel{
+				Type: types.StringValue("Slack"), CredentialID: types.StringValue("cred-slack"), Channel: types.StringValue("alerts"),
+			},
+		},
+		{
+			name:     "TeamEmail",
+			value:    &notification.Notification{Value: &notification.TeamEmailNotification{Team: "team-email"}},
+			expected: NotificationModel{Type: types.StringValue("TeamEmail"), Team: types.StringValue("team-email")},
+		},
+		{
+			name:     "Team",
+			value:    &notification.Notification{Value: &notification.TeamNotification{Team: "team"}},
+			expected: NotificationModel{Type: types.StringValue("Team"), Team: types.StringValue("team")},
+		},
+		{
+			name:  "VictorOps",
+			value: &notification.Notification{Value: &notification.VictorOpsNotification{CredentialId: "cred-oncall", RoutingKey: "route"}},
+			expected: NotificationModel{
+				Type: types.StringValue("VictorOps"), CredentialID: types.StringValue("cred-oncall"), RoutingKey: types.StringValue("route"),
+			},
+		},
+		{
+			name:  "Webhook",
+			value: &notification.Notification{Value: &notification.WebhookNotification{Url: "https://example.com/hook"}},
+			expected: NotificationModel{
+				Type: types.StringValue("Webhook"), CredentialID: types.StringNull(), Secret: types.StringNull(),
+				URL: types.StringValue("https://example.com/hook"),
+			},
+		},
+		{
+			name:     "XMatters",
+			value:    &notification.Notification{Value: &notification.XMattersNotification{CredentialId: "cred-xmatters"}},
+			expected: NotificationModel{Type: types.StringValue("XMatters"), CredentialID: types.StringValue("cred-xmatters")},
+		},
+		{name: "unknown", value: &notification.Notification{Value: struct{}{}}, expected: NotificationModel{}},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, tt.expected, NewNotificationModelFromAPI(tt.value))
+		})
+	}
+}

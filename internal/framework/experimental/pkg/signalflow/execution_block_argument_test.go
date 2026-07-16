@@ -96,3 +96,26 @@ func TestExecutionBlockArguments(t *testing.T) {
 		})
 	}
 }
+
+func TestExecutionBlockArgumentExpressions(t *testing.T) {
+	t.Parallel()
+
+	stringLiteral := &ExecutionBlockArgumentLiteral{Value: "value"}
+	numberLiteral := &ExecutionBlockArgumentLiteral{Value: 42}
+	assert.Equal(t, "'value'", stringLiteral.Expression())
+	assert.Equal(t, "42", numberLiteral.Expression())
+
+	filter := &ExecutionBlockArgumentFilter{
+		Field:  ExecutionBlockArgumentLiteral{Value: "service.name"},
+		Value:  &ExecutionBlockArgumentLiteral{Value: "api"},
+		Values: []ExecutionBlockArgumentLiteral{{Value: "worker"}},
+	}
+	assert.Equal(t, `filter("service.name",'api' , 'worker')`, filter.Expression())
+
+	operation := &ExecutionBlockArgumentOperation{Left: numberLiteral, Operation: ">", Right: &ExecutionBlockArgumentLiteral{Value: 10}}
+	assert.Equal(t, "(42 > 10)", operation.Expression())
+
+	for _, value := range []ExecutionBlockArgumentValue{stringLiteral, filter, operation} {
+		value.isArgumentValue()
+	}
+}

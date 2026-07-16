@@ -173,3 +173,9 @@ Provider-level default tags and teams are still added to detector API requests. 
 The Framework implementation now validates target-dependent fields before calling the API. A **RollingWindow** target requires **compliance_period** and cannot configure calendar fields. A **CalendarWindow** target requires **cycle_type** and cannot configure **compliance_period**. Alert-rule types must be unique, every alert-rule group must contain a rule, and every SLO must include a **BREACH** group. Negative reminder intervals and timeouts are also rejected during planning.
 
 The API can supply default values for SLO alert parameters. Those defaults now materialize in Terraform state only when the corresponding **parameters** block is present in configuration, or when the SLO is imported. Omitting the block still uses API defaults remotely but keeps the configured state null, preventing default-only state churn. Review the first plan after upgrading if downstream expressions read unconfigured parameter defaults from state.
+
+## Charts and dashboards remain on SDKv2
+
+Version 10 continues to serve chart and dashboard product types through the muxed SDKv2 provider. This boundary includes dashboard, dashboard group, data link, event feed chart, heatmap chart, list chart, log timeline, log view, single value chart, SLO chart, table chart, text chart, and time chart resources. Their Terraform type names, state, import behavior, and configuration remain unchanged by the Framework migration.
+
+Deprecations belonging exclusively to these deferred products are retained in version 10: dashboard and dashboard-group legacy permission fields, list/time-chart **legend_fields_to_hide**, and time-chart **tags**. They will require their own documented breaking cleanup when the chart and dashboard migration resumes. No action is required for them as part of the current migration.

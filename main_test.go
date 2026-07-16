@@ -43,3 +43,28 @@ func TestMuxProviderTypeOwnership(t *testing.T) {
 		dataSourceNames[resp.TypeName] = struct{}{}
 	}
 }
+
+func TestLegacyProviderRetainsOnlyExcludedProductTypes(t *testing.T) {
+	legacy := signalfx.Provider()
+	resourceNames := make([]string, 0, len(legacy.ResourcesMap))
+	for name := range legacy.ResourcesMap {
+		resourceNames = append(resourceNames, name)
+	}
+
+	assert.ElementsMatch(t, []string{
+		"signalfx_dashboard",
+		"signalfx_dashboard_group",
+		"signalfx_data_link",
+		"signalfx_event_feed_chart",
+		"signalfx_heatmap_chart",
+		"signalfx_list_chart",
+		"signalfx_log_timeline",
+		"signalfx_log_view",
+		"signalfx_single_value_chart",
+		"signalfx_slo_chart",
+		"signalfx_table_chart",
+		"signalfx_text_chart",
+		"signalfx_time_chart",
+	}, resourceNames)
+	assert.Empty(t, legacy.DataSourcesMap)
+}
