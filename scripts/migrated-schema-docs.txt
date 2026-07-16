@@ -2,6 +2,7 @@
 # Format: resource|data-source <documentation short name>
 resource alert_muting_rule
 resource detector
+resource slo
 resource opsgenie_integration
 resource pagerduty_integration
 data-source pagerduty_integration

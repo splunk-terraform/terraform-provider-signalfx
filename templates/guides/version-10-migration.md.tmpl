@@ -165,3 +165,11 @@ Removing the state entry does not delete the detector. Absolute `end_time` now r
 `detector_origin` and `parent_detector_id` are creation-time API properties. Changing either now plans replacement instead of sending an update that the API cannot reliably honor. An `AutoDetectCustomization` detector must provide `parent_detector_id`.
 
 Provider-level default tags and teams are still added to detector API requests. Terraform state retains the detector-specific configured values so provider defaults do not create perpetual plans. An imported detector has no configuration from which to distinguish provider defaults, so its initial imported state contains every tag and team returned by the API; remove unwanted entries from configuration after import and review the resulting plan.
+
+## SLOs: target and alert-rule constraints are validated during planning
+
+**signalfx_slo** keeps its existing ordered block syntax for **input**, **target**, **alert_rule**, **rule**, **parameters**, and **reminder_notification**. Existing valid configurations do not need an HCL rewrite.
+
+The Framework implementation now validates target-dependent fields before calling the API. A **RollingWindow** target requires **compliance_period** and cannot configure calendar fields. A **CalendarWindow** target requires **cycle_type** and cannot configure **compliance_period**. Alert-rule types must be unique, every alert-rule group must contain a rule, and every SLO must include a **BREACH** group. Negative reminder intervals and timeouts are also rejected during planning.
+
+The API can supply default values for SLO alert parameters. Those defaults now materialize in Terraform state only when the corresponding **parameters** block is present in configuration, or when the SLO is imported. Omitting the block still uses API defaults remotely but keeps the configured state null, preventing default-only state churn. Review the first plan after upgrading if downstream expressions read unconfigured parameter defaults from state.
