@@ -28,6 +28,8 @@ var (
 	ErrMetaNotProvided = errors.New("expected to implement type Meta")
 )
 
+const DefaultAppURL = "https://app.signalfx.com"
+
 // Meta is the result of `resource.Provider` being correctly configured
 // and is returned as part of `provider.Meta()`.
 //
