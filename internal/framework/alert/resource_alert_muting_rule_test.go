@@ -138,6 +138,7 @@ func TestAlertMutingRuleRejectsArrayFilterValues(t *testing.T) {
 	model := alertMutingRuleModel{StartTime: types.Int64Value(1)}
 
 	diags := model.updateFromRule(context.Background(), &alertmuting.AlertMutingRule{
+		Id: "rule-1",
 		Filters: []*alertmuting.AlertMutingRuleFilter{{
 			Property: "host", PropertyValue: alertmuting.StringOrArray{Values: []string{"one", "two"}},
 		}},
@@ -145,6 +146,23 @@ func TestAlertMutingRuleRejectsArrayFilterValues(t *testing.T) {
 
 	require.True(t, diags.HasError())
 	assert.Contains(t, diags.Errors()[0].Detail(), "does not support arrays")
+}
+
+func TestAlertMutingRuleRejectsMalformedResponses(t *testing.T) {
+	t.Parallel()
+	model := alertMutingRuleModel{}
+
+	diags := model.updateFromRule(context.Background(), nil)
+	require.True(t, diags.HasError())
+	assert.Contains(t, diags.Errors()[0].Detail(), "no resource data")
+
+	diags = model.updateFromRule(context.Background(), &alertmuting.AlertMutingRule{})
+	require.True(t, diags.HasError())
+	assert.Contains(t, diags.Errors()[0].Detail(), "no resource identifier")
+
+	diags = model.updateFromRule(context.Background(), &alertmuting.AlertMutingRule{Id: "rule-1", Filters: []*alertmuting.AlertMutingRuleFilter{nil}})
+	require.True(t, diags.HasError())
+	assert.Contains(t, diags.Errors()[0].Detail(), "empty filter")
 }
 
 func TestResourceAlertMutingRuleMockedLifecycle(t *testing.T) {

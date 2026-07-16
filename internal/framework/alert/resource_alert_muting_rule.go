@@ -5,6 +5,7 @@ package fwalert
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"strings"
 	"time"
@@ -308,6 +309,14 @@ func (model alertMutingRuleModel) toRequest(ctx context.Context, update bool, no
 
 func (model *alertMutingRuleModel) updateFromRule(ctx context.Context, details *alertmuting.AlertMutingRule) diag.Diagnostics {
 	var diags diag.Diagnostics
+	if details == nil {
+		diags.AddError("Invalid alert muting rule response", "The alert muting rule API returned no resource data.")
+		return diags
+	}
+	if details.Id == "" {
+		diags.AddError("Invalid alert muting rule response", "The alert muting rule API returned no resource identifier.")
+		return diags
+	}
 	model.ID = types.StringValue(details.Id)
 	model.Description = types.StringValue(details.Description)
 	model.EffectiveStartTime = types.Int64Value(details.StartTime)
@@ -318,7 +327,11 @@ func (model *alertMutingRuleModel) updateFromRule(ctx context.Context, details *
 
 	filters := make([]alertMutingRuleFilterModel, 0, len(details.Filters))
 	detectors := make([]string, 0, len(details.Filters))
-	for _, filter := range details.Filters {
+	for index, filter := range details.Filters {
+		if filter == nil {
+			diags.AddError("Invalid alert muting rule response", fmt.Sprintf("The alert muting rule API returned an empty filter at index %d.", index))
+			continue
+		}
 		if filter.Property == alertMutingDetectorIDProperty {
 			detectors = append(detectors, filter.PropertyValue.Values...)
 			continue

@@ -133,3 +133,17 @@ terraform plan
 ```
 
 Removing the state entry does not delete the metric ruleset. Start-only restoration jobs are now retained in state, invalid timestamps return plan diagnostics instead of panicking, and `last_updated_by_name` is now populated when returned by the API.
+
+## Alert muting rules: recurrence values are validated during planning
+
+`signalfx_alert_muting_rule` keeps the existing `filter` and `recurrence` block syntax. The `recurrence.value` field now accepts only the positive signed 32-bit range required by the Splunk Observability Cloud API (`1` through `2147483647`). Earlier provider versions could silently overflow larger values during apply; update an out-of-range value before upgrading.
+
+The Framework implementation retains set semantics for `filter` and `recurrence` so it remains compatible with the protocol-5 mux required by the chart and dashboard resources that remain on SDKv2. Terraform normally reconciles the existing set state automatically. If Terraform reports an incompatible state representation, preserve the API ID and reimport the muting rule:
+
+```shell
+terraform state rm signalfx_alert_muting_rule.example
+terraform import signalfx_alert_muting_rule.example <muting-rule-id>
+terraform plan
+```
+
+Removing the state entry does not delete the alert muting rule. The configured `start_time` and `stop_time` remain seconds, while the read-only `effective_start_time` remains the API timestamp in milliseconds.

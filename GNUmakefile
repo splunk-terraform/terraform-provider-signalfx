@@ -5,6 +5,7 @@ PKG_NAME=signalfx
 COVERAGE_MIN ?= 90.0
 COVERAGE_BASELINE ?= 34.7
 MIGRATED_PRODUCT_PACKAGES := \
+	./internal/framework/alert \
 	./internal/framework/integration \
 	./internal/framework/organization \
 	./internal/framework/metrics
