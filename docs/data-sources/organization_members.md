@@ -1,12 +1,12 @@
 ---
-page_tile: "Splunk Observability Cloud - signalfx_organization_members
+page_title: "Splunk Observability Cloud - signalfx_organization_members"
 description: |-
-    Allows for members to be queried and used as part of other resources. Requires the supplied token to have Admin priviledges.
+    Queries organization members by email address for use in other resources. The provider token must have administrator privileges.
 ---
 
 # Data Source: signalfx_organization_members
 
-Allows for members to be queried and used as part of other resources. Requires the supplied token to have Admin priviledges.
+Queries organization members by email address for use in other resources. The provider token must have administrator privileges.
 
 
 
@@ -15,10 +15,10 @@ Allows for members to be queried and used as part of other resources. Requires t
 
 ### Required
 
-- `emails` (List of String)
+- `emails` (List of String) Email addresses of organization members to query.
 
 ### Read-Only
 
-- `id` (String) The ID of this resource.
-- `users` (List of String)
+- `id` (String) The unique identifier for the resource.
+- `users` (List of String) Organization member IDs matching the configured email addresses.
 

@@ -1,5 +1,5 @@
 ---
-page_tile: "Splunk Observability Cloud - signalfx_integration_splunk_oncall
+page_title: "Splunk Observability Cloud - signalfx_integration_splunk_oncall"
 description: |-
     Use this resource to manage a Splunk Oncall Integration
 ---
