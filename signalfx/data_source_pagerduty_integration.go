@@ -42,5 +42,8 @@ func dataSourcePagerDutyIntegrationRead(d *schema.ResourceData, meta interface{}
 	}
 
 	d.SetId(int.Id)
-	return pagerDutyIntegrationAPIToTF(d, int)
+	if err := d.Set("name", int.Name); err != nil {
+		return err
+	}
+	return d.Set("enabled", int.Enabled)
 }
