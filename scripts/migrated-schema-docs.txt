@@ -15,3 +15,4 @@ resource aws_token_integration
 resource aws_integration
 data-source organization_members
 resource team
+resource org_token

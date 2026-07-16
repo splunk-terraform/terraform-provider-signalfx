@@ -146,7 +146,6 @@ func Provider() *schema.Provider {
 			"signalfx_event_feed_chart":                 eventFeedChartResource(),
 			"signalfx_heatmap_chart":                    heatmapChartResource(),
 			"signalfx_list_chart":                       listChartResource(),
-			"signalfx_org_token":                        orgTokenResource(),
 			"signalfx_single_value_chart":               singleValueChartResource(),
 			"signalfx_slo_chart":                        sloChartResource(),
 			"signalfx_time_chart":                       timeChartResource(),

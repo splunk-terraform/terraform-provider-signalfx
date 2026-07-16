@@ -296,6 +296,7 @@ func (op *ollyProvider) Resources(ctx context.Context) []func() resource.Resourc
 		fwdetector.NewAutoDetectorResource,
 		fwintegration.NewResourceBigPanda,
 		fworganization.NewResourceTeam,
+		fworganization.NewResourceOrgToken,
 	}
 }
 

@@ -62,3 +62,27 @@ Removing the state entry does not delete the integration. Review the final plan 
 The `token` argument on `signalfx_aws_integration` is now marked sensitive. If an output or another value exposes it, Terraform might require that destination to be marked `sensitive = true`.
 
 The resource now rejects an empty `regions` set during planning instead of waiting until apply. Update invalid configurations before upgrading; valid external-ID and security-token configurations do not need state migration.
+
+## Organization token: remove the preview flag and validate DPM limits during planning
+
+The `signalfx_org_token` behavior previously available through the `vnext.org-token` feature preview is now the only implementation. Remove that preview entry before upgrading:
+
+```terraform
+provider "signalfx" {
+  feature_preview = {
+    # Remove: "vnext.org-token" = true
+  }
+}
+```
+
+The `dpm_limit` and `dpm_notification_threshold` values now use the signed 32-bit range required by the Splunk Observability Cloud API. Values outside `-2147483648` through `2147483647` are rejected during planning instead of being truncated during apply.
+
+The limit blocks are represented as single nested blocks instead of SDK set values. Configuration syntax does not change. Terraform normally reconciles the existing state automatically; if an existing token with `host_or_usage_limits` or `dpm_limits` reports an incompatible state representation, preserve the token name and reimport it:
+
+```shell
+terraform state rm signalfx_org_token.example
+terraform import signalfx_org_token.example <token-name>
+terraform plan
+```
+
+Removing the state entry does not delete the organization token. Tokens without either limit block require no state migration.
