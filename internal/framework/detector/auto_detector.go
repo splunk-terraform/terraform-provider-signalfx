@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"sort"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -542,8 +543,15 @@ func (r *AutoDetectorResource) syncModelFromDetector(ctx context.Context, model 
 		"values": types.ListType{ElemType: types.StringType},
 	}
 
-	var filterModels []autoDetectorFilterModel
-	for key, values := range filters {
+	var (
+		filterModels []autoDetectorFilterModel
+		currentOrder []autoDetectorFilterModel
+	)
+	if !model.Filters.IsNull() && !model.Filters.IsUnknown() {
+		diags.Append(model.Filters.ElementsAs(ctx, &currentOrder, false)...)
+	}
+
+	appendFilter := func(key string, values []string) {
 		var vals []attr.Value
 		for _, value := range values {
 			vals = append(vals, types.StringValue(value))
@@ -552,6 +560,23 @@ func (r *AutoDetectorResource) syncModelFromDetector(ctx context.Context, model 
 			Key:    types.StringValue(key),
 			Values: types.ListValueMust(types.StringType, vals),
 		})
+	}
+
+	for _, existing := range currentOrder {
+		key := existing.Key.ValueString()
+		if values, ok := filters[key]; ok {
+			appendFilter(key, values)
+			delete(filters, key)
+		}
+	}
+
+	keys := make([]string, 0, len(filters))
+	for key := range filters {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		appendFilter(key, filters[key])
 	}
 
 	if values, d := types.ListValueFrom(ctx, types.ObjectType{AttrTypes: filterDefinition}, filterModels); d.HasError() {
