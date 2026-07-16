@@ -14,3 +14,4 @@ resource aws_external_integration
 resource aws_token_integration
 resource aws_integration
 data-source organization_members
+resource team

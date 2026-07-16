@@ -32,7 +32,6 @@ func TestProviderHasResource(t *testing.T) {
 	p := New()
 
 	expected := []string{
-		"signalfx_team",
 		"signalfx_detector",
 		"signalfx_automated_archival_settings",
 		"signalfx_automated_archival_exempt_metric",
