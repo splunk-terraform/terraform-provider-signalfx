@@ -1,5 +1,5 @@
 ---
-page_tile: "Splunk Observability Cloud - signalfx_customized_auto_detector
+page_title: "Splunk Observability Cloud - signalfx_customized_auto_detector"
 description: |-
     This resources allows for users to customize existing auto detectors by providing various inputs.
 ---

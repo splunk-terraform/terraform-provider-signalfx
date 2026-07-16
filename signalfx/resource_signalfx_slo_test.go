@@ -35,6 +35,12 @@ const (
 
 var sloName = "test slo " + time.Now().String() // we are checking the uniqueness of the slo name, so we need some randomness here
 
+func waitBeforeTestStepPlanRefresh(_ *terraform.State) error {
+	// The backend needs time to make SLO updates visible to the following refresh.
+	time.Sleep(30 * time.Second)
+	return nil
+}
+
 var newSloConfig = fmt.Sprintf(`
 resource "signalfx_slo" "test_slo" {
     name = "%s"

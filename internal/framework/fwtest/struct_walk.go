@@ -90,6 +90,13 @@ func WalkStruct(orig any) iter.Seq[WalkedValue] {
 						field = v.Type().Field(i)
 						named = v.Type().Field(i).Tag.Get("tfsdk")
 					)
+					if field.Anonymous {
+						// Framework promotes fields from embedded value structs. Walk a
+						// zero value so schema validation mirrors that behavior even when
+						// the embedded type is unexported by the caller's package.
+						queue.PushBack(NewWalkedValue(elem.Path(), reflect.Zero(field.Type).Interface()))
+						continue
+					}
 					if named == "" {
 						continue
 					}

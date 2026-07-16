@@ -44,6 +44,12 @@ func WithMockDataSources(datasources ...func() datasource.DataSource) func(*Mock
 	}
 }
 
+func WithMockProviderMeta(update func(*pmeta.Meta)) func(*MockProvider) {
+	return func(mp *MockProvider) {
+		update(mp.data)
+	}
+}
+
 func NewMockProto5Server(tb testing.TB, endpoints map[string]http.Handler, opts ...func(*MockProvider)) map[string]func() (tfprotov5.ProviderServer, error) {
 	return map[string]func() (tfprotov5.ProviderServer, error){
 		"signalfx": providerserver.NewProtocol5WithError(NewMock(tb, endpoints, opts...)),
