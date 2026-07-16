@@ -21,7 +21,9 @@ import (
 func TestProviderValidation(t *testing.T) {
 	t.Parallel()
 
-	assert.NoError(t, New().InternalValidate(), "Must not error loading provider")
+	provider := New()
+	assert.NoError(t, provider.InternalValidate(), "Must not error loading provider")
+	assert.NotContains(t, provider.Schema, "custom_app_url")
 }
 
 func TestProviderHasResource(t *testing.T) {
@@ -30,9 +32,7 @@ func TestProviderHasResource(t *testing.T) {
 	p := New()
 
 	expected := []string{
-		"signalfx_team",
 		"signalfx_detector",
-		"signalfx_automated_archival_settings",
 		"signalfx_automated_archival_exempt_metric",
 	}
 
@@ -143,6 +143,13 @@ func TestProviderTracking(t *testing.T) {
 	t.Parallel()
 
 	// Moved to a separate unit test since the tracking results are branch dependant
+	registry := feature.GetGlobalRegistry()
+	for _, name := range []string{feature.PreviewProviderTags, feature.PreviewProviderTracking} {
+		preview, ok := registry.Get(name)
+		require.True(t, ok, "Must have preview %q registered", name)
+		original := preview.Enabled()
+		t.Cleanup(func() { preview.SetEnabled(original) })
+	}
 
 	rc := terraform.NewResourceConfigRaw(map[string]any{
 		"auth_token": "hunter2",

@@ -12,7 +12,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/definition/detector"
-	"github.com/splunk-terraform/terraform-provider-signalfx/internal/definition/team"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/tftest"
 )
 
@@ -46,7 +45,7 @@ func TestAcceptance(t *testing.T) {
 						resource.TestCheckResourceAttr("signalfx_detector.my_detector", "tags.#", "2"),
 						resource.TestCheckResourceAttr("signalfx_detector.my_detector", "tags.0", "tag-1"),
 						resource.TestCheckResourceAttr("signalfx_detector.my_detector", "tags.1", "tag-2"),
-						resource.TestCheckResourceAttr("signalfx_detector.my_detector", "teams.#", "1"),
+						resource.TestCheckResourceAttr("signalfx_detector.my_detector", "teams.#", "0"),
 						resource.TestCheckResourceAttr("signalfx_detector.my_detector", "max_delay", "30"),
 						resource.TestCheckResourceAttr("signalfx_detector.my_detector", "min_delay", "15"),
 						resource.TestCheckResourceAttr("signalfx_detector.my_detector", "program_text", "signal = data('app.delay').max().publish('app delay')\ndetect(when(signal > 60, '5m')).publish('Processing old messages 5m')\ndetect(when(signal > 60, '30m')).publish('Processing old messages 30m')\n"),
@@ -221,7 +220,6 @@ func TestAcceptance(t *testing.T) {
 			tftest.NewAcceptanceHandler(
 				tftest.WithAcceptanceResources(map[string]*schema.Resource{
 					detector.ResourceName: detector.NewResource(),
-					team.ResourceName:     team.NewResource(),
 				}),
 			).
 				Test(t, tc.steps)

@@ -20,11 +20,7 @@ import (
 
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/convert"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/definition/autoarchiveexemptmetric"
-	"github.com/splunk-terraform/terraform-provider-signalfx/internal/definition/autoarchivesettings"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/definition/detector"
-	"github.com/splunk-terraform/terraform-provider-signalfx/internal/definition/dimension"
-	"github.com/splunk-terraform/terraform-provider-signalfx/internal/definition/organization"
-	"github.com/splunk-terraform/terraform-provider-signalfx/internal/definition/team"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/feature"
 	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
 	tfext "github.com/splunk-terraform/terraform-provider-signalfx/internal/tfextension"
@@ -47,12 +43,6 @@ func New() *schema.Provider {
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("SFX_API_URL", "https://api.signalfx.com"),
 				Description: "API URL for your Splunk Observability Cloud org, may include a realm",
-			},
-			"custom_app_url": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("SFX_CUSTOM_APP_URL", "https://app.signalfx.com"),
-				Description: "Application URL for your Splunk Observability Cloud org, often customized for organizations using SSO",
 			},
 			"timeout_seconds": {
 				Type:        schema.TypeInt,
@@ -124,14 +114,8 @@ func New() *schema.Provider {
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			team.ResourceName:                    team.NewResource(),
 			detector.ResourceName:                detector.NewResource(),
-			autoarchivesettings.ResourceName:     autoarchivesettings.NewResource(),
 			autoarchiveexemptmetric.ResourceName: autoarchiveexemptmetric.NewResource(),
-		},
-		DataSourcesMap: map[string]*schema.Resource{
-			dimension.DataSourceName:    dimension.NewDataSource(),
-			organization.DataSourceName: organization.NewDataSource(),
 		},
 		ConfigureContextFunc: configureProvider,
 	}
@@ -142,6 +126,7 @@ func configureProvider(ctx context.Context, data *schema.ResourceData) (any, dia
 		Email:          data.Get("email").(string),
 		Password:       data.Get("password").(string),
 		OrganizationID: data.Get("organization_id").(string),
+		CustomAppURL:   pmeta.DefaultAppURL,
 		Tags:           convert.SliceAll(data.Get("tags").([]any), convert.ToString),
 		Teams:          convert.SliceAll(data.Get("teams").([]any), convert.ToString),
 	}
@@ -162,10 +147,6 @@ func configureProvider(ctx context.Context, data *schema.ResourceData) (any, dia
 	if url, ok := data.GetOk("api_url"); ok {
 		meta.APIURL = url.(string)
 	}
-	if url, ok := data.GetOk("custom_app_url"); ok {
-		meta.CustomAppURL = url.(string)
-	}
-
 	err := meta.Validate()
 	if err != nil {
 		return nil, tfext.AsErrorDiagnostics(err)

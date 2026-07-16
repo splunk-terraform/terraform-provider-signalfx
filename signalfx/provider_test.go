@@ -15,6 +15,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	sfx "github.com/signalfx/signalfx-go"
 	"github.com/stretchr/testify/assert"
+
+	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
 )
 
 var OldSystemConfigPath = SystemConfigPath
@@ -59,9 +61,11 @@ func newTestClient() *sfx.Client {
 }
 
 func TestProvider(t *testing.T) {
-	if err := Provider().InternalValidate(); err != nil {
+	provider := Provider()
+	if err := provider.InternalValidate(); err != nil {
 		t.Fatal(err.Error())
 	}
+	assert.NotContains(t, provider.Schema, "custom_app_url")
 }
 
 func TestProviderConfigureFromNothing(t *testing.T) {
@@ -110,9 +114,8 @@ func TestProviderConfigureFromTerraform(t *testing.T) {
 	defer os.Setenv("SFX_CUSTOM_APP_URL", old)
 
 	raw := map[string]interface{}{
-		"auth_token":     "XXX",
-		"api_url":        "https://api.eu0.signalfx.com",
-		"custom_app_url": "https://myotherdomain.signalfx.com",
+		"auth_token": "XXX",
+		"api_url":    "https://api.eu0.signalfx.com",
 	}
 
 	rp := Provider()
@@ -124,7 +127,7 @@ func TestProviderConfigureFromTerraform(t *testing.T) {
 	configuration := meta.(*signalfxConfig)
 	assert.Equal(t, "XXX", configuration.AuthToken)
 	assert.Equal(t, "https://api.eu0.signalfx.com", configuration.APIURL)
-	assert.Equal(t, "https://myotherdomain.signalfx.com", configuration.CustomAppURL)
+	assert.Equal(t, pmeta.DefaultAppURL, configuration.CustomAppURL)
 }
 
 func TestProviderConfigureFromTerraformOnly(t *testing.T) {
@@ -132,9 +135,8 @@ func TestProviderConfigureFromTerraformOnly(t *testing.T) {
 	SystemConfigPath = "filedoesnotexist"
 	HomeConfigPath = "filedoesnotexist"
 	raw := map[string]interface{}{
-		"auth_token":     "XXX",
-		"api_url":        "https://api.eu0.signalfx.com",
-		"custom_app_url": "https://myotherdomain.signalfx.com",
+		"auth_token": "XXX",
+		"api_url":    "https://api.eu0.signalfx.com",
 	}
 
 	rp := Provider()
@@ -146,7 +148,7 @@ func TestProviderConfigureFromTerraformOnly(t *testing.T) {
 	configuration := meta.(*signalfxConfig)
 	assert.Equal(t, "XXX", configuration.AuthToken)
 	assert.Equal(t, "https://api.eu0.signalfx.com", configuration.APIURL)
-	assert.Equal(t, "https://myotherdomain.signalfx.com", configuration.CustomAppURL)
+	assert.Equal(t, pmeta.DefaultAppURL, configuration.CustomAppURL)
 }
 
 func TestProviderConfigureFromEnvironment(t *testing.T) {
@@ -186,7 +188,7 @@ func TestProviderConfigureFromEnvironment(t *testing.T) {
 	configuration := meta.(*signalfxConfig)
 	assert.Equal(t, "YYY", configuration.AuthToken)
 	assert.Equal(t, "https://api.eu0.signalfx.com", configuration.APIURL)
-	assert.Equal(t, "https://mydomain.signalfx.com", configuration.CustomAppURL)
+	assert.Equal(t, pmeta.DefaultAppURL, configuration.CustomAppURL)
 }
 
 func TestProviderConfigureFromEnvironmentOnly(t *testing.T) {
@@ -217,7 +219,7 @@ func TestProviderConfigureFromEnvironmentOnly(t *testing.T) {
 	configuration := meta.(*signalfxConfig)
 	assert.Equal(t, "YYY", configuration.AuthToken)
 	assert.Equal(t, "https://api.eu0.signalfx.com", configuration.APIURL)
-	assert.Equal(t, "https://mydomain.signalfx.com", configuration.CustomAppURL)
+	assert.Equal(t, pmeta.DefaultAppURL, configuration.CustomAppURL)
 }
 
 func TestSignalFxConfigureFromHomeFile(t *testing.T) {
