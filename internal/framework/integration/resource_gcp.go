@@ -48,7 +48,6 @@ type resourceGCPModel struct {
 	CustomMetricTypeDomains        types.Set    `tfsdk:"custom_metric_type_domains"`
 	AuthMethod                     types.String `tfsdk:"auth_method"`
 	ProjectServiceKeys             types.Set    `tfsdk:"project_service_keys"`
-	ProjectWIFConfigs              types.Set    `tfsdk:"project_wif_configs"`
 	WorkloadIdentityConfig         types.String `tfsdk:"workload_identity_federation_config"`
 	Projects                       types.List   `tfsdk:"projects"`
 	WIFSplunkIdentity              types.Map    `tfsdk:"wif_splunk_identity"`
@@ -62,11 +61,6 @@ type resourceGCPModel struct {
 type gcpProjectServiceKeyModel struct {
 	ProjectID  types.String `tfsdk:"project_id"`
 	ProjectKey types.String `tfsdk:"project_key"`
-}
-
-type gcpProjectWIFConfigModel struct {
-	ProjectID types.String `tfsdk:"project_id"`
-	WIFConfig types.String `tfsdk:"wif_config"`
 }
 
 type gcpProjectsModel struct {
@@ -83,11 +77,7 @@ var (
 		"project_id": types.StringType, "project_key": types.StringType,
 	}
 	gcpProjectServiceKeyObjectType = types.ObjectType{AttrTypes: gcpProjectServiceKeyAttributeTypes}
-	gcpProjectWIFAttributeTypes    = map[string]attr.Type{
-		"project_id": types.StringType, "wif_config": types.StringType,
-	}
-	gcpProjectWIFObjectType   = types.ObjectType{AttrTypes: gcpProjectWIFAttributeTypes}
-	gcpProjectsAttributeTypes = map[string]attr.Type{
+	gcpProjectsAttributeTypes      = map[string]attr.Type{
 		"sync_mode": types.StringType, "selected_project_ids": types.SetType{ElemType: types.StringType},
 	}
 	gcpProjectsObjectType = types.ObjectType{AttrTypes: gcpProjectsAttributeTypes}
@@ -125,7 +115,7 @@ func (gcp *ResourceGCP) Schema(_ context.Context, _ resource.SchemaRequest, resp
 		Optional:    true,
 		Description: "Workload Identity Federation configuration JSON.",
 		Validators: []validator.String{stringvalidator.ConflictsWith(
-			path.MatchRoot("project_service_keys"), path.MatchRoot("project_wif_configs"),
+			path.MatchRoot("project_service_keys"),
 		)},
 	}
 	attributes["wif_splunk_identity"] = schema.MapAttribute{
@@ -163,7 +153,7 @@ func (gcp *ResourceGCP) Schema(_ context.Context, _ resource.SchemaRequest, resp
 			"project_service_keys": schema.SetNestedBlock{
 				Description: "GCP projects authenticated with service account keys.",
 				Validators: []validator.Set{setvalidator.ConflictsWith(
-					path.MatchRoot("project_wif_configs"), path.MatchRoot("workload_identity_federation_config"),
+					path.MatchRoot("workload_identity_federation_config"),
 				)},
 				NestedObject: schema.NestedBlockObject{Attributes: map[string]schema.Attribute{
 					"project_id": schema.StringAttribute{
@@ -172,17 +162,6 @@ func (gcp *ResourceGCP) Schema(_ context.Context, _ resource.SchemaRequest, resp
 					"project_key": schema.StringAttribute{
 						Required: true, Sensitive: true, Description: "Google service account key JSON for the project.",
 					},
-				}},
-			},
-			"project_wif_configs": schema.SetNestedBlock{
-				Description:        "Deprecated per-project GCP Workload Identity Federation configurations.",
-				DeprecationMessage: "Use workload_identity_federation_config with projects instead.",
-				Validators: []validator.Set{setvalidator.ConflictsWith(
-					path.MatchRoot("project_service_keys"), path.MatchRoot("workload_identity_federation_config"),
-				)},
-				NestedObject: schema.NestedBlockObject{Attributes: map[string]schema.Attribute{
-					"project_id": schema.StringAttribute{Required: true, Description: "GCP project ID."},
-					"wif_config": schema.StringAttribute{Required: true, Description: "Workload Identity Federation configuration JSON for the project."},
 				}},
 			},
 			"projects": schema.ListNestedBlock{
@@ -311,15 +290,6 @@ func (model resourceGCPModel) gcpIntegration(ctx context.Context) (*integration.
 			})
 		}
 	}
-	if !model.ProjectWIFConfigs.IsNull() && !model.ProjectWIFConfigs.IsUnknown() {
-		var configured []gcpProjectWIFConfigModel
-		diags.Append(model.ProjectWIFConfigs.ElementsAs(ctx, &configured, false)...)
-		for _, item := range configured {
-			payload.WifConfigs = append(payload.WifConfigs, &integration.GCPProjectWIFConfig{
-				ProjectId: item.ProjectID.ValueString(), WIFConfig: item.WIFConfig.ValueString(),
-			})
-		}
-	}
 	if !model.Projects.IsNull() && !model.Projects.IsUnknown() {
 		var configured []gcpProjectsModel
 		diags.Append(model.Projects.ElementsAs(ctx, &configured, false)...)
@@ -375,25 +345,6 @@ func (model *resourceGCPModel) updateFromAPI(ctx context.Context, details *integ
 	diags.Append(updateStringSet(ctx, &model.CustomMetricTypeDomains, details.CustomMetricTypeDomains, true)...)
 	diags.Append(updateStringSet(ctx, &model.IncludeList, details.IncludeList, true)...)
 	diags.Append(updateStringSet(ctx, &model.ExcludeGCEInstancesWithLabels, details.ExcludeGCEInstancesWithLabels, true)...)
-
-	if len(details.WifConfigs) > 0 {
-		configured := make([]gcpProjectWIFConfigModel, 0, len(details.WifConfigs))
-		for _, item := range details.WifConfigs {
-			if item == nil {
-				continue
-			}
-			configured = append(configured, gcpProjectWIFConfigModel{
-				ProjectID: types.StringValue(item.ProjectId), WIFConfig: types.StringValue(item.WIFConfig),
-			})
-		}
-		value, valueDiags := types.SetValueFrom(ctx, gcpProjectWIFObjectType, configured)
-		diags.Append(valueDiags...)
-		if !valueDiags.HasError() {
-			model.ProjectWIFConfigs = value
-		}
-	} else if !model.ProjectWIFConfigs.IsNull() && !model.ProjectWIFConfigs.IsUnknown() {
-		model.ProjectWIFConfigs = types.SetValueMust(gcpProjectWIFObjectType, nil)
-	}
 
 	if details.WorkloadIdentityFederationConfig != "" {
 		model.WorkloadIdentityConfig = types.StringValue(details.WorkloadIdentityFederationConfig)

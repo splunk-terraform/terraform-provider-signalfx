@@ -12,8 +12,10 @@ resource "signalfx_gcp_integration" "test" {
   use_metric_source_project_for_quota = true
   import_gcp_metrics                  = false
 
-  project_wif_configs {
-    project_id = "project-a"
-    wif_config = "{\"audience\":\"legacy\"}"
+  workload_identity_federation_config = "{\"type\":\"external_account\"}"
+
+  projects {
+    sync_mode            = "SELECTED"
+    selected_project_ids = ["project-a"]
   }
 }

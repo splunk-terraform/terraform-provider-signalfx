@@ -49,7 +49,6 @@ resource "signalfx_gcp_integration" "gcp_myteam" {
 - `named_token` (String) Named organization token used for data ingestion. Changing this value replaces the integration.
 - `poll_rate` (Number) GCP polling interval in seconds. Must be between 60 and 600. Defaults to 300.
 - `project_service_keys` (Block Set) GCP projects authenticated with service account keys. (see [below for nested schema](#nestedblock--project_service_keys))
-- `project_wif_configs` (Block Set, Deprecated) Deprecated per-project GCP Workload Identity Federation configurations. (see [below for nested schema](#nestedblock--project_wif_configs))
 - `projects` (Block List) Project discovery and selection configuration for Workload Identity Federation. (see [below for nested schema](#nestedblock--projects))
 - `services` (Set of String) GCP services whose metrics are imported. Omit or use an empty set to import all supported services.
 - `use_metric_source_project_for_quota` (Boolean) Whether to consume quota from the metric source project. Defaults to false.
@@ -67,15 +66,6 @@ Required:
 
 - `project_id` (String, Sensitive) GCP project ID.
 - `project_key` (String, Sensitive) Google service account key JSON for the project.
-
-
-<a id="nestedblock--project_wif_configs"></a>
-### Nested Schema for `project_wif_configs`
-
-Required:
-
-- `project_id` (String) GCP project ID.
-- `wif_config` (String) Workload Identity Federation configuration JSON for the project.
 
 
 <a id="nestedblock--projects"></a>

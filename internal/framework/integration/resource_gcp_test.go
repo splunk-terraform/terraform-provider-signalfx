@@ -65,8 +65,8 @@ func TestResourceGCPMetadataAndSchema(t *testing.T) {
 	assert.Len(t, serviceKeys.Validators, 1)
 	assert.True(t, serviceKeys.NestedObject.Attributes["project_id"].IsSensitive())
 	assert.True(t, serviceKeys.NestedObject.Attributes["project_key"].IsSensitive())
-	wifConfigs := resp.Schema.Blocks["project_wif_configs"].(schema.SetNestedBlock)
-	assert.NotEmpty(t, wifConfigs.DeprecationMessage)
+	_, hasDeprecatedWIFConfigs := resp.Schema.Blocks["project_wif_configs"]
+	assert.False(t, hasDeprecatedWIFConfigs)
 	projects := resp.Schema.Blocks["projects"].(schema.ListNestedBlock)
 	assert.Len(t, projects.Validators, 1)
 	assert.Len(t, projects.NestedObject.Attributes["sync_mode"].(schema.StringAttribute).Validators, 1)
@@ -79,15 +79,12 @@ func TestResourceGCPModel(t *testing.T) {
 		{ProjectID: types.StringValue("project-a"), ProjectKey: types.StringValue("secret-a")},
 		{ProjectID: types.StringValue("project-b"), ProjectKey: types.StringValue("secret-b")},
 	})
-	wifConfigs := gcpProjectWIFConfigs(t, []gcpProjectWIFConfigModel{{
-		ProjectID: types.StringValue("project-wif"), WIFConfig: types.StringValue("wif-json"),
-	}})
 	projects := gcpProjects(t, gcpSyncSelected, []string{"project-b", "project-a"})
 	model := resourceGCPModel{
 		integrationModel: integrationModel{ID: types.StringValue("gcp-id"), Name: types.StringValue("GCP"), Enabled: types.BoolValue(true)},
 		PollRate:         types.Int64Value(300), Services: gcpStrings(t, "storage", "compute"),
 		CustomMetricTypeDomains: gcpStrings(t, "custom.googleapis.com"), AuthMethod: types.StringValue("workload_identity_federation"),
-		ProjectServiceKeys: serviceKeys, ProjectWIFConfigs: wifConfigs,
+		ProjectServiceKeys:     serviceKeys,
 		WorkloadIdentityConfig: types.StringValue("federation-json"), Projects: projects,
 		WIFSplunkIdentity: types.MapNull(types.StringType), UseMetricSourceProjectForQuota: types.BoolValue(true),
 		IncludeList: gcpStrings(t, "labels"), NamedToken: types.StringValue("token"), ImportGCPMetrics: types.BoolValue(false),
@@ -101,7 +98,7 @@ func TestResourceGCPModel(t *testing.T) {
 	assert.ElementsMatch(t, []integration.GcpService{"compute", "storage"}, payload.Services)
 	assert.Len(t, payload.ProjectServiceKeys, 2)
 	assert.Equal(t, "secret-a", payload.ProjectServiceKeys[0].ProjectKey)
-	assert.Equal(t, "wif-json", payload.WifConfigs[0].WIFConfig)
+	assert.Empty(t, payload.WifConfigs)
 	assert.ElementsMatch(t, []string{"project-a", "project-b"}, payload.Projects.SelectedProjectIds)
 	assert.False(t, *payload.ImportGCPMetrics)
 
@@ -110,7 +107,6 @@ func TestResourceGCPModel(t *testing.T) {
 	readDiags := model.updateFromAPI(ctx, &integration.GCPIntegration{
 		Id: "ignored", Name: "Read", Enabled: false, PollRateMs: 60000, AuthMethod: integration.WORKLOAD_IDENTITY_FEDERATION,
 		Services: []integration.GcpService{"compute"}, CustomMetricTypeDomains: []string{"read.googleapis.com"},
-		WifConfigs:                       []*integration.GCPProjectWIFConfig{{ProjectId: "read-project", WIFConfig: "read-wif"}, nil},
 		WorkloadIdentityFederationConfig: "read-federation", Projects: &integration.GCPProjects{SyncMode: integration.ALL_REACHABLE},
 		WifSplunkIdentity: map[string]string{"account_id": "account"}, UseMetricSourceProjectForQuota: false,
 		IncludeList: []string{"metadata"}, ImportGCPMetrics: &importMetrics,
@@ -123,13 +119,11 @@ func TestResourceGCPModel(t *testing.T) {
 	assert.Equal(t, types.StringValue("workload_identity_federation"), model.AuthMethod, "case-insensitive configuration must remain stable")
 	assert.Equal(t, "account", model.WIFSplunkIdentity.Elements()["account_id"].(types.String).ValueString())
 
-	model.ProjectWIFConfigs = gcpProjectWIFConfigs(t, []gcpProjectWIFConfigModel{{ProjectID: types.StringValue("old"), WIFConfig: types.StringValue("old")}})
 	model.WorkloadIdentityConfig = types.StringValue("old")
 	model.WIFSplunkIdentity = types.MapValueMust(types.StringType, map[string]attr.Value{"old": types.StringValue("old")})
 	clearDiags := model.updateFromAPI(ctx, &integration.GCPIntegration{Id: "updated", Name: "Updated", Enabled: true}, true)
 	require.False(t, clearDiags.HasError())
 	assert.Equal(t, types.StringValue("updated"), model.ID)
-	assert.Empty(t, model.ProjectWIFConfigs.Elements())
 	assert.True(t, model.WorkloadIdentityConfig.IsNull())
 	assert.True(t, model.WIFSplunkIdentity.IsNull())
 }
@@ -241,7 +235,7 @@ func TestResourceGCPMockedLifecycle(t *testing.T) {
 			)},
 			{ConfigFile: config.StaticFile("testdata/gcp_update.tf"), Check: testresource.ComposeAggregateTestCheckFunc(
 				testresource.TestCheckResourceAttr("signalfx_gcp_integration.test", "name", "Updated GCP"),
-				testresource.TestCheckResourceAttr("signalfx_gcp_integration.test", "project_wif_configs.#", "1"),
+				testresource.TestCheckResourceAttr("signalfx_gcp_integration.test", "projects.#", "1"),
 				testresource.TestCheckResourceAttr("signalfx_gcp_integration.test", "import_gcp_metrics", "false"),
 			)},
 			{ConfigFile: config.StaticFile("testdata/gcp_modern_wif.tf"), Check: testresource.ComposeAggregateTestCheckFunc(
@@ -354,13 +348,6 @@ func gcpStrings(t *testing.T, values ...string) types.Set {
 func gcpProjectServiceKeys(t *testing.T, values []gcpProjectServiceKeyModel) types.Set {
 	t.Helper()
 	value, diags := types.SetValueFrom(context.Background(), gcpProjectServiceKeyObjectType, values)
-	require.False(t, diags.HasError())
-	return value
-}
-
-func gcpProjectWIFConfigs(t *testing.T, values []gcpProjectWIFConfigModel) types.Set {
-	t.Helper()
-	value, diags := types.SetValueFrom(context.Background(), gcpProjectWIFObjectType, values)
 	require.False(t, diags.HasError())
 	return value
 }
