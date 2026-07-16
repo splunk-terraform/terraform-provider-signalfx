@@ -19,7 +19,6 @@ import (
 	"github.com/signalfx/signalfx-go"
 
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/convert"
-	"github.com/splunk-terraform/terraform-provider-signalfx/internal/definition/autoarchiveexemptmetric"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/definition/detector"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/feature"
 	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
@@ -114,8 +113,7 @@ func New() *schema.Provider {
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			detector.ResourceName:                detector.NewResource(),
-			autoarchiveexemptmetric.ResourceName: autoarchiveexemptmetric.NewResource(),
+			detector.ResourceName: detector.NewResource(),
 		},
 		ConfigureContextFunc: configureProvider,
 	}

@@ -25,7 +25,6 @@ import (
 	sfx "github.com/signalfx/signalfx-go"
 
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/convert"
-	"github.com/splunk-terraform/terraform-provider-signalfx/internal/definition/autoarchiveexemptmetric"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/feature"
 	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
 	tfext "github.com/splunk-terraform/terraform-provider-signalfx/internal/tfextension"
@@ -133,24 +132,23 @@ func Provider() *schema.Provider {
 		},
 		DataSourcesMap: map[string]*schema.Resource{},
 		ResourcesMap: map[string]*schema.Resource{
-			"signalfx_alert_muting_rule":                alertMutingRuleResource(),
-			"signalfx_automated_archival_exempt_metric": autoarchiveexemptmetric.NewResource(),
-			"signalfx_dashboard":                        dashboardResource(),
-			"signalfx_dashboard_group":                  dashboardGroupResource(),
-			"signalfx_data_link":                        dataLinkResource(),
-			"signalfx_detector":                         detectorResource(),
-			"signalfx_event_feed_chart":                 eventFeedChartResource(),
-			"signalfx_heatmap_chart":                    heatmapChartResource(),
-			"signalfx_list_chart":                       listChartResource(),
-			"signalfx_single_value_chart":               singleValueChartResource(),
-			"signalfx_slo_chart":                        sloChartResource(),
-			"signalfx_time_chart":                       timeChartResource(),
-			"signalfx_text_chart":                       textChartResource(),
-			"signalfx_log_view":                         logViewResource(),
-			"signalfx_log_timeline":                     logTimelineResource(),
-			"signalfx_table_chart":                      tableChartResource(),
-			"signalfx_metric_ruleset":                   metricRulesetResource(),
-			"signalfx_slo":                              sloResource(),
+			"signalfx_alert_muting_rule":  alertMutingRuleResource(),
+			"signalfx_dashboard":          dashboardResource(),
+			"signalfx_dashboard_group":    dashboardGroupResource(),
+			"signalfx_data_link":          dataLinkResource(),
+			"signalfx_detector":           detectorResource(),
+			"signalfx_event_feed_chart":   eventFeedChartResource(),
+			"signalfx_heatmap_chart":      heatmapChartResource(),
+			"signalfx_list_chart":         listChartResource(),
+			"signalfx_single_value_chart": singleValueChartResource(),
+			"signalfx_slo_chart":          sloChartResource(),
+			"signalfx_time_chart":         timeChartResource(),
+			"signalfx_text_chart":         textChartResource(),
+			"signalfx_log_view":           logViewResource(),
+			"signalfx_log_timeline":       logTimelineResource(),
+			"signalfx_table_chart":        tableChartResource(),
+			"signalfx_metric_ruleset":     metricRulesetResource(),
+			"signalfx_slo":                sloResource(),
 		},
 		ConfigureFunc: signalfxConfigure,
 	}

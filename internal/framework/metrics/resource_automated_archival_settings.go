@@ -232,10 +232,10 @@ func (model *resourceAutomatedArchivalSettingsModel) updateFromAPI(details *auto
 		model.GracePeriod = types.StringValue(details.GracePeriod)
 	}
 	model.Version = types.StringValue(strconv.FormatInt(details.Version, 10))
-	model.Creator = optionalStringValue(model.Creator, details.Creator)
-	model.LastUpdatedBy = optionalStringValue(model.LastUpdatedBy, details.LastUpdatedBy)
-	model.Created = optionalInt64Value(model.Created, details.Created)
-	model.LastUpdated = optionalInt64Value(model.LastUpdated, details.LastUpdated)
+	model.Creator = automatedArchivalOptionalStringValue(model.Creator, details.Creator)
+	model.LastUpdatedBy = automatedArchivalOptionalStringValue(model.LastUpdatedBy, details.LastUpdatedBy)
+	model.Created = automatedArchivalOptionalInt64Value(model.Created, details.Created)
+	model.LastUpdated = automatedArchivalOptionalInt64Value(model.LastUpdated, details.LastUpdated)
 	if details.RulesetLimit != nil && (!preservePlanned || model.RulesetLimit.IsNull() || model.RulesetLimit.IsUnknown()) {
 		model.RulesetLimit = types.Int32Value(*details.RulesetLimit)
 	} else if details.RulesetLimit == nil && model.RulesetLimit.IsUnknown() {
@@ -265,24 +265,4 @@ func (model resourceAutomatedArchivalSettingsModel) latestVersion() (int64, erro
 		return 0, fmt.Errorf("version %q is not a valid integer: %w", value, err)
 	}
 	return version, nil
-}
-
-func optionalStringValue(current types.String, value *string) types.String {
-	if value != nil {
-		return types.StringValue(*value)
-	}
-	if current.IsUnknown() {
-		return types.StringNull()
-	}
-	return current
-}
-
-func optionalInt64Value(current types.Int64, value *int64) types.Int64 {
-	if value != nil {
-		return types.Int64Value(*value)
-	}
-	if current.IsUnknown() {
-		return types.Int64Null()
-	}
-	return current
 }

@@ -96,3 +96,17 @@ If downstream resources use the returned `values` with `for_each`, upgrading can
 ## Automated archival settings: ruleset limits are validated during planning
 
 The `ruleset_limit` argument on `signalfx_automated_archival_settings` now uses the signed 32-bit range required by the Splunk Observability Cloud API. Values outside `-2147483648` through `2147483647` are rejected during planning instead of during apply. Valid settings require no configuration or state migration.
+
+## Automated archival exemptions: each resource now reads only its managed metrics
+
+`signalfx_automated_archival_exempt_metric` now filters the organization-wide exemption list using the comma-delimited metric IDs stored for that Terraform resource. Earlier provider versions assigned every organization exemption to every instance of the resource, so multiple resources and imported subsets could absorb metrics they did not manage.
+
+The configuration block shape is unchanged. Existing resources whose state contains only their own metrics require no migration. If a plan removes unrelated `exempt_metrics` entries that were previously absorbed into state, review the plan and apply it; the provider will retain only the IDs owned by that resource. If the state ID is missing or does not identify the intended metrics, reimport the intended comma-delimited API IDs before applying:
+
+```shell
+terraform state rm signalfx_automated_archival_exempt_metric.example
+terraform import signalfx_automated_archival_exempt_metric.example <metric-id-1>,<metric-id-2>
+terraform plan
+```
+
+Removing the state entry does not delete the exempt metrics. Changes to the `exempt_metrics` blocks continue to replace the resource.
