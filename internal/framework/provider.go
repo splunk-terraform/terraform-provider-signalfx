@@ -299,6 +299,7 @@ func (op *ollyProvider) Resources(ctx context.Context) []func() resource.Resourc
 		fwintegration.NewResourceBigPanda,
 		fworganization.NewResourceTeam,
 		fworganization.NewResourceOrgToken,
+		fwmetrics.NewResourceAutomatedArchivalSettings,
 	}
 }
 

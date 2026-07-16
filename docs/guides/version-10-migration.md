@@ -92,3 +92,7 @@ Removing the state entry does not delete the organization token. Tokens without 
 `signalfx_dimension_values` now retrieves multiple API pages when `limit` is greater than 1,000. Earlier provider versions accepted values through 10,000 but accidentally returned at most 1,000 results.
 
 If downstream resources use the returned `values` with `for_each`, upgrading can add instances when more than 1,000 dimensions match. Set `limit = 1000` before upgrading to retain the previous effective cap, or review the expanded plan before applying it.
+
+## Automated archival settings: ruleset limits are validated during planning
+
+The `ruleset_limit` argument on `signalfx_automated_archival_settings` now uses the signed 32-bit range required by the Splunk Observability Cloud API. Values outside `-2147483648` through `2147483647` are rejected during planning instead of during apply. Valid settings require no configuration or state migration.
