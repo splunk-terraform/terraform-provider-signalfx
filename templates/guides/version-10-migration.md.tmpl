@@ -147,3 +147,21 @@ terraform plan
 ```
 
 Removing the state entry does not delete the alert muting rule. The configured `start_time` and `stop_time` remain seconds, while the read-only `effective_start_time` remains the API timestamp in milliseconds.
+
+## Detectors: absolute times are normalized and immutable ancestry replaces the resource
+
+`signalfx_detector` keeps the existing HCL block shapes: `rule` and `viz_options` remain sets, `reminder_notification` remains a maximum-one list block, notification destinations remain ordered strings, and `skip_clear_notification_states` remains a set.
+
+The Framework implementation now consistently treats `start_time`, `end_time`, and `time_range` as seconds. Earlier SDKv2 reads accidentally wrote absolute API timestamps in milliseconds into `start_time` and `end_time`. The first refresh after upgrading can therefore correct those state values by a factor of 1,000 without changing the remote detector. Review the first plan. If legacy state cannot be reconciled, preserve the detector ID and reimport it:
+
+```shell
+terraform state rm signalfx_detector.example
+terraform import signalfx_detector.example <detector-id>
+terraform plan
+```
+
+Removing the state entry does not delete the detector. Absolute `end_time` now requires `start_time`; absolute and relative time fields remain mutually exclusive. Time values are limited to the range that can be safely converted to API milliseconds, detector delays remain limited to 0–900 seconds, and reminder intervals/timeouts reject negative values during planning.
+
+`detector_origin` and `parent_detector_id` are creation-time API properties. Changing either now plans replacement instead of sending an update that the API cannot reliably honor. An `AutoDetectCustomization` detector must provide `parent_detector_id`.
+
+Provider-level default tags and teams are still added to detector API requests. Terraform state retains the detector-specific configured values so provider defaults do not create perpetual plans. An imported detector has no configuration from which to distinguish provider defaults, so its initial imported state contains every tag and team returned by the API; remove unwanted entries from configuration after import and review the resulting plan.

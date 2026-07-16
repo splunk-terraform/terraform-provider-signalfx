@@ -135,7 +135,6 @@ func Provider() *schema.Provider {
 			"signalfx_dashboard":          dashboardResource(),
 			"signalfx_dashboard_group":    dashboardGroupResource(),
 			"signalfx_data_link":          dataLinkResource(),
-			"signalfx_detector":           detectorResource(),
 			"signalfx_event_feed_chart":   eventFeedChartResource(),
 			"signalfx_heatmap_chart":      heatmapChartResource(),
 			"signalfx_list_chart":         listChartResource(),
