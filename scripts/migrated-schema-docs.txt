@@ -19,3 +19,4 @@ resource org_token
 data-source dimension_values
 resource automated_archival_settings
 resource automated_archival_exempt_metric
+resource metric_ruleset

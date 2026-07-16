@@ -301,6 +301,7 @@ func (op *ollyProvider) Resources(ctx context.Context) []func() resource.Resourc
 		fworganization.NewResourceOrgToken,
 		fwmetrics.NewResourceAutomatedArchivalSettings,
 		fwmetrics.NewResourceAutomatedArchivalExemptMetric,
+		fwmetrics.NewResourceMetricRuleset,
 	}
 }
 

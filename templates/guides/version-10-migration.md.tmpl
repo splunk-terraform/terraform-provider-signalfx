@@ -110,3 +110,26 @@ terraform plan
 ```
 
 Removing the state entry does not delete the exempt metrics. Changes to the `exempt_metrics` blocks continue to replace the resource.
+
+## Metric rulesets: singleton blocks and timestamps use native Framework types
+
+`signalfx_metric_ruleset` now represents `matcher`, `aggregator`, `restoration`, and `routing_rule` as single nested blocks. Their HCL block syntax is unchanged, but configurations that supplied more than one of these blocks must retain only the block that was intended; earlier versions silently used the first set element.
+
+The `created`, `last_updated`, `restoration.start_time`, and `restoration.stop_time` fields now use native 64-bit numbers. Numeric literals and numeric string literals are normally coerced automatically. If a restoration timestamp comes from a string-typed variable or expression and Terraform reports a type error, convert it explicitly:
+
+```terraform
+restoration {
+  start_time = tonumber(var.restoration_start_time)
+  stop_time  = tonumber(var.restoration_stop_time)
+}
+```
+
+Framework normally reconciles the singleton state representation automatically. If an existing ruleset reports an incompatible state shape, preserve its API ID and reimport it:
+
+```shell
+terraform state rm signalfx_metric_ruleset.example
+terraform import signalfx_metric_ruleset.example <ruleset-id>
+terraform plan
+```
+
+Removing the state entry does not delete the metric ruleset. Start-only restoration jobs are now retained in state, invalid timestamps return plan diagnostics instead of panicking, and `last_updated_by_name` is now populated when returned by the API.

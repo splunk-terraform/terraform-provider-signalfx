@@ -232,10 +232,10 @@ func (model *resourceAutomatedArchivalSettingsModel) updateFromAPI(details *auto
 		model.GracePeriod = types.StringValue(details.GracePeriod)
 	}
 	model.Version = types.StringValue(strconv.FormatInt(details.Version, 10))
-	model.Creator = automatedArchivalOptionalStringValue(model.Creator, details.Creator)
-	model.LastUpdatedBy = automatedArchivalOptionalStringValue(model.LastUpdatedBy, details.LastUpdatedBy)
-	model.Created = automatedArchivalOptionalInt64Value(model.Created, details.Created)
-	model.LastUpdated = automatedArchivalOptionalInt64Value(model.LastUpdated, details.LastUpdated)
+	model.Creator = optionalStringValue(model.Creator, details.Creator)
+	model.LastUpdatedBy = optionalStringValue(model.LastUpdatedBy, details.LastUpdatedBy)
+	model.Created = optionalInt64Value(model.Created, details.Created)
+	model.LastUpdated = optionalInt64Value(model.LastUpdated, details.LastUpdated)
 	if details.RulesetLimit != nil && (!preservePlanned || model.RulesetLimit.IsNull() || model.RulesetLimit.IsUnknown()) {
 		model.RulesetLimit = types.Int32Value(*details.RulesetLimit)
 	} else if details.RulesetLimit == nil && model.RulesetLimit.IsUnknown() {

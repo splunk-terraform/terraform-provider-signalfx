@@ -271,10 +271,10 @@ func (model *resourceAutomatedArchivalExemptMetricModel) updateFromAPI(ctx conte
 			prior = current[i]
 		}
 		values = append(values, automatedArchivalExemptMetricModel{
-			Creator:       automatedArchivalOptionalStringValue(prior.Creator, detail.Creator),
-			LastUpdatedBy: automatedArchivalOptionalStringValue(prior.LastUpdatedBy, detail.LastUpdatedBy),
-			Created:       automatedArchivalOptionalInt64Value(prior.Created, detail.Created),
-			LastUpdated:   automatedArchivalOptionalInt64Value(prior.LastUpdated, detail.LastUpdated),
+			Creator:       optionalStringValue(prior.Creator, detail.Creator),
+			LastUpdatedBy: optionalStringValue(prior.LastUpdatedBy, detail.LastUpdatedBy),
+			Created:       optionalInt64Value(prior.Created, detail.Created),
+			LastUpdated:   optionalInt64Value(prior.LastUpdated, detail.LastUpdated),
 			Name:          types.StringValue(detail.Name),
 		})
 	}

@@ -162,6 +162,7 @@ func TestProviderResource(t *testing.T) {
 		"signalfx_org_token":                        {},
 		"signalfx_automated_archival_settings":      {},
 		"signalfx_automated_archival_exempt_metric": {},
+		"signalfx_metric_ruleset":                   {},
 	}
 
 	actual := p.Resources(context.Background())
