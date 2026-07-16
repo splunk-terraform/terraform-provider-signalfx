@@ -30,7 +30,6 @@ func NewTestConfig(p provider.Provider, values map[string]tftypes.Value) tfsdk.C
 	data := map[string]tftypes.Value{
 		"auth_token":             tftypes.NewValue(tftypes.String, nil),
 		"api_url":                tftypes.NewValue(tftypes.String, nil),
-		"custom_app_url":         tftypes.NewValue(tftypes.String, nil),
 		"timeout_seconds":        tftypes.NewValue(tftypes.Number, nil),
 		"retry_max_attempts":     tftypes.NewValue(tftypes.Number, nil),
 		"retry_wait_min_seconds": tftypes.NewValue(tftypes.Number, nil),
@@ -50,7 +49,6 @@ func NewTestConfig(p provider.Provider, values map[string]tftypes.Value) tfsdk.C
 				AttributeTypes: map[string]tftypes.Type{
 					"auth_token":             tftypes.String,
 					"api_url":                tftypes.String,
-					"custom_app_url":         tftypes.String,
 					"timeout_seconds":        tftypes.Number,
 					"retry_max_attempts":     tftypes.Number,
 					"retry_wait_min_seconds": tftypes.Number,
@@ -65,7 +63,6 @@ func NewTestConfig(p provider.Provider, values map[string]tftypes.Value) tfsdk.C
 				OptionalAttributes: map[string]struct{}{
 					"auth_token":             {},
 					"api_url":                {},
-					"custom_app_url":         {},
 					"timeout_seconds":        {},
 					"retry_max_attempts":     {},
 					"retry_wait_min_seconds": {},
@@ -110,6 +107,7 @@ func TestProviderSchema(t *testing.T) {
 	p.Schema(context.Background(), provider.SchemaRequest{}, resp)
 
 	assert.NotNil(t, resp.Schema, "Schema should not be nil")
+	assert.NotContains(t, resp.Schema.Attributes, "custom_app_url")
 }
 
 func TestProviderDataSources(t *testing.T) {
@@ -118,9 +116,12 @@ func TestProviderDataSources(t *testing.T) {
 	p := NewProvider("1.0.0")
 
 	expect := map[string]struct{}{
-		"signalfx_apm_service_topology": {},
-		"signalfx_auto_detector":        {},
-		"signalfx_builtin_dashboards":   {},
+		"signalfx_apm_service_topology":  {},
+		"signalfx_auto_detector":         {},
+		"signalfx_builtin_dashboards":    {},
+		"signalfx_pagerduty_integration": {},
+		"signalfx_organization_members":  {},
+		"signalfx_dimension_values":      {},
 	}
 
 	actual := p.DataSources(context.Background())
@@ -141,10 +142,27 @@ func TestProviderResource(t *testing.T) {
 	p := NewProvider("1.0.0")
 
 	expect := map[string]struct{}{
-		"signalfx_integration_splunk_oncall": {},
-		"signalfx_dashify_template":          {},
-		"signalfx_customized_auto_detector":  {},
-		"signalfx_big_panda_integration":     {},
+		"signalfx_integration_splunk_oncall":        {},
+		"signalfx_opsgenie_integration":             {},
+		"signalfx_pagerduty_integration":            {},
+		"signalfx_slack_integration":                {},
+		"signalfx_victor_ops_integration":           {},
+		"signalfx_webhook_integration":              {},
+		"signalfx_service_now_integration":          {},
+		"signalfx_jira_integration":                 {},
+		"signalfx_azure_integration":                {},
+		"signalfx_gcp_integration":                  {},
+		"signalfx_aws_external_integration":         {},
+		"signalfx_aws_token_integration":            {},
+		"signalfx_aws_integration":                  {},
+		"signalfx_dashify_template":                 {},
+		"signalfx_customized_auto_detector":         {},
+		"signalfx_big_panda_integration":            {},
+		"signalfx_team":                             {},
+		"signalfx_org_token":                        {},
+		"signalfx_automated_archival_settings":      {},
+		"signalfx_automated_archival_exempt_metric": {},
+		"signalfx_metric_ruleset":                   {},
 	}
 
 	actual := p.Resources(context.Background())
@@ -195,7 +213,6 @@ func TestProviderConfigure(t *testing.T) {
 				return map[string]tftypes.Value{
 					"api_url":                tftypes.NewValue(tftypes.String, "http://localhost"),
 					"auth_token":             tftypes.NewValue(tftypes.String, "my-secret-token"),
-					"custom_app_url":         tftypes.NewValue(tftypes.String, nil),
 					"timeout_seconds":        tftypes.NewValue(tftypes.Number, nil),
 					"retry_max_attempts":     tftypes.NewValue(tftypes.Number, nil),
 					"retry_wait_min_seconds": tftypes.NewValue(tftypes.Number, nil),
@@ -210,8 +227,9 @@ func TestProviderConfigure(t *testing.T) {
 			},
 			issues: nil,
 			expect: &pmeta.Meta{
-				APIURL:    "http://localhost",
-				AuthToken: "my-secret-token",
+				APIURL:       "http://localhost",
+				AuthToken:    "my-secret-token",
+				CustomAppURL: pmeta.DefaultAppURL,
 			},
 		},
 		{
@@ -232,11 +250,12 @@ func TestProviderConfigure(t *testing.T) {
 				}
 			},
 			expect: &pmeta.Meta{
-				Registry:  feature.GetGlobalRegistry(),
-				APIURL:    "http://localhost",
-				AuthToken: "my-secret-token",
-				Tags:      []string{"tag1", "tag2"},
-				Teams:     []string{"team1", "team2"},
+				Registry:     feature.GetGlobalRegistry(),
+				APIURL:       "http://localhost",
+				AuthToken:    "my-secret-token",
+				CustomAppURL: pmeta.DefaultAppURL,
+				Tags:         []string{"tag1", "tag2"},
+				Teams:        []string{"team1", "team2"},
 			},
 		},
 		{
@@ -265,11 +284,12 @@ func TestProviderConfigure(t *testing.T) {
 				),
 			},
 			expect: &pmeta.Meta{
-				Registry:  feature.GetGlobalRegistry(),
-				APIURL:    "http://localhost",
-				AuthToken: "my-secret-token",
-				Tags:      []string{"tag1", "tag2"},
-				Teams:     []string{"team1", "team2"},
+				Registry:     feature.GetGlobalRegistry(),
+				APIURL:       "http://localhost",
+				AuthToken:    "my-secret-token",
+				CustomAppURL: pmeta.DefaultAppURL,
+				Tags:         []string{"tag1", "tag2"},
+				Teams:        []string{"team1", "team2"},
 			},
 		},
 		{
@@ -304,34 +324,6 @@ func TestProviderConfigure(t *testing.T) {
 				APIURL:       "http://localhost",
 				AuthToken:    "my-secret-token",
 				CustomAppURL: "https://custom-domain.example.com",
-				Tags:         []string{"tag1", "tag2"},
-				Teams:        []string{"team1", "team2"},
-			},
-		},
-		{
-			name: "Custom Domain is provided from user config",
-			data: func(_ *testing.T) map[string]tftypes.Value {
-				return map[string]tftypes.Value{
-					"api_url":         tftypes.NewValue(tftypes.String, "http://localhost"),
-					"auth_token":      tftypes.NewValue(tftypes.String, "my-secret-token"),
-					"custom_app_url":  tftypes.NewValue(tftypes.String, "https://my-provided.domain.signalfx.com"),
-					"feature_preview": tftypes.NewValue(tftypes.Map{ElementType: tftypes.Bool}, nil),
-					"tags": tftypes.NewValue(tftypes.List{ElementType: tftypes.String}, []tftypes.Value{
-						tftypes.NewValue(tftypes.String, "tag1"),
-						tftypes.NewValue(tftypes.String, "tag2"),
-					}),
-					"teams": tftypes.NewValue(tftypes.List{ElementType: tftypes.String}, []tftypes.Value{
-						tftypes.NewValue(tftypes.String, "team1"),
-						tftypes.NewValue(tftypes.String, "team2"),
-					}),
-				}
-			},
-			issues: nil,
-			expect: &pmeta.Meta{
-				Registry:     feature.GetGlobalRegistry(),
-				APIURL:       "http://localhost",
-				AuthToken:    "my-secret-token",
-				CustomAppURL: "https://my-provided.domain.signalfx.com",
 				Tags:         []string{"tag1", "tag2"},
 				Teams:        []string{"team1", "team2"},
 			},

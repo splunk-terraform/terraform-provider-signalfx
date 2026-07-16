@@ -4,10 +4,6 @@ description: |-
   Allows Terraform to create and manage PagerDuty Integrations for Splunk Observability Cloud
 ---
 
-{{/* This template serves as a starting point for documentation generation, and can be customized with hardcoded values and/or doc gen templates.
-
-For example, the {{ .SchemaMarkdown }} template can be used to replace manual schema documentation if descriptions of schema attributes are added in the provider source code. */ -}}
-
 # Resource: signalfx_pagerduty_integration
 
 Splunk Observability Cloud PagerDuty integrations.
@@ -18,14 +14,4 @@ Splunk Observability Cloud PagerDuty integrations.
 
 {{tffile "examples/resources/pagerduty_integration/example_1.tf"}}
 
-## Arguments
-
-* `name` - (Required) Name of the integration.
-* `enabled` - (Required) Whether the integration is enabled.
-* `api_key` - (Required) PagerDuty API key.
-
-## Attributes
-
-In a addition to all arguments above, the following attributes are exported:
-
-* `id` - The ID of the integration.
+{{ .SchemaMarkdown | trimspace }}
