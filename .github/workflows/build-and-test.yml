@@ -54,8 +54,8 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
       - name: Test
         run: make check-coverage-no-regression
-      - name: Check non-deferred Framework coverage
-        run: make test-framework-cover
+      - name: Check migrated product coverage
+        run: make test-migrated-product-cover
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v7
         with:

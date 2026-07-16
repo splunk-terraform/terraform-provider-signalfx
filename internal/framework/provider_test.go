@@ -143,6 +143,7 @@ func TestProviderResource(t *testing.T) {
 	expect := map[string]struct{}{
 		"signalfx_integration_splunk_oncall": {},
 		"signalfx_opsgenie_integration":      {},
+		"signalfx_pagerduty_integration":     {},
 		"signalfx_dashify_template":          {},
 		"signalfx_customized_auto_detector":  {},
 		"signalfx_big_panda_integration":     {},
