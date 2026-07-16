@@ -21,7 +21,9 @@ import (
 func TestProviderValidation(t *testing.T) {
 	t.Parallel()
 
-	assert.NoError(t, New().InternalValidate(), "Must not error loading provider")
+	provider := New()
+	assert.NoError(t, provider.InternalValidate(), "Must not error loading provider")
+	assert.NotContains(t, provider.Schema, "custom_app_url")
 }
 
 func TestProviderHasResource(t *testing.T) {

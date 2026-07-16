@@ -12,7 +12,6 @@ import (
 type OllyProviderModel struct {
 	APIURL              types.String `tfsdk:"api_url"`
 	AuthToken           types.String `tfsdk:"auth_token"`
-	CustomAppURL        types.String `tfsdk:"custom_app_url"`
 	TimeoutSeconds      types.Int64  `tfsdk:"timeout_seconds"`
 	RetryMaxAttempts    types.Int32  `tfsdk:"retry_max_attempts"`
 	RetryWaitMinSeconds types.Int64  `tfsdk:"retry_wait_min_seconds"`
@@ -29,7 +28,6 @@ func newDefaultOllyProviderModel() *OllyProviderModel {
 	return &OllyProviderModel{
 		AuthToken:           types.StringNull(),
 		APIURL:              types.StringNull(),
-		CustomAppURL:        types.StringNull(),
 		TimeoutSeconds:      types.Int64Value(60),
 		RetryMaxAttempts:    types.Int32Value(5),
 		RetryWaitMinSeconds: types.Int64Value(1),

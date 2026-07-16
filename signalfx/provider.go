@@ -58,13 +58,6 @@ func Provider() *schema.Provider {
 				DefaultFunc: schema.EnvDefaultFunc("SFX_API_URL", "https://api.signalfx.com"),
 				Description: "API URL for your Splunk Observability Cloud org, may include a realm",
 			},
-			"custom_app_url": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Deprecated:  "Remove the definition, the provider will automatically populate the custom app URL as needed",
-				DefaultFunc: schema.EnvDefaultFunc("SFX_CUSTOM_APP_URL", "https://app.signalfx.com"),
-				Description: "Application URL for your Splunk Observability Cloud org, often customized for organizations using SSO",
-			},
 			"timeout_seconds": {
 				Type:        schema.TypeInt,
 				Optional:    true,
@@ -187,6 +180,7 @@ func signalfxConfigure(data *schema.ResourceData) (interface{}, error) {
 		Email:          data.Get("email").(string),
 		Password:       data.Get("password").(string),
 		OrganizationID: data.Get("organization_id").(string),
+		CustomAppURL:   pmeta.DefaultAppURL,
 		Tags:           convert.SliceAll(data.Get("tags").([]any), convert.ToString),
 		Teams:          convert.SliceAll(data.Get("teams").([]any), convert.ToString),
 	}
@@ -234,11 +228,7 @@ func signalfxConfigure(data *schema.ResourceData) (interface{}, error) {
 		return nil, err
 	}
 
-	if site, err := config.DetectCustomAPPURL(context.TODO()); err != nil {
-		if app, ok := data.GetOk("custom_app_url"); ok {
-			config.CustomAppURL = app.(string)
-		}
-	} else {
+	if site, err := config.DetectCustomAPPURL(context.TODO()); err == nil {
 		config.CustomAppURL = site
 	}
 

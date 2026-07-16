@@ -10,6 +10,19 @@ Version 10 migrates provider resources and data sources to Terraform Plugin Fram
 
 Each breaking-change section will include old and replacement configuration, automatic state-upgrade behavior, and any required state, import, or recreation commands. Resource and data-source field reference remains generated from the provider schema in the corresponding reference page.
 
+## Provider: remove `custom_app_url`
+
+The deprecated `custom_app_url` provider argument has been removed. Delete it from the provider configuration before upgrading:
+
+```terraform
+provider "signalfx" {
+  auth_token = var.signalfx_auth_token
+  api_url    = "https://api.<realm>.signalfx.com"
+}
+```
+
+The provider discovers the application URL from the organization API. No resource state changes or import commands are required.
+
 ## GCP integration: replace `project_wif_configs`
 
 The deprecated `project_wif_configs` block has been removed from `signalfx_gcp_integration`. Configure Workload Identity Federation with the top-level `workload_identity_federation_config` argument and the `projects` block instead.
