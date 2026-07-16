@@ -2,6 +2,21 @@ TEST?=$$(go list ./... |grep -v 'vendor')
 GOFMT_FILES?=$$(find . -name '*.go' |grep -v vendor)
 WEBSITE_REPO=github.com/hashicorp/terraform-website
 PKG_NAME=signalfx
+COVERAGE_MIN ?= 90.0
+COVERAGE_BASELINE ?= 34.7
+MIGRATED_PRODUCT_PACKAGES := \
+	./internal/framework/integration \
+	./internal/framework/organization \
+	./internal/framework/metrics
+FRAMEWORK_SCOPE_PACKAGES := \
+	./internal/check \
+	./internal/common \
+	./internal/convert \
+	./internal/feature \
+	./internal/framework/... \
+	./internal/providermeta \
+	./internal/track \
+	./internal/visual
 
 SRC_ROOT        := $(shell git rev-parse --show-toplevel)
 SRC_GO_FILES    := $(shell find $(SRC_ROOT) -name '*.go')
@@ -60,12 +75,43 @@ build:
 test:
 	go test --cover --race -v --timeout 30s ./...
 
+# Framework Protocol 6 lifecycle tests start local Terraform/provider processes.
+# The cumulative integration package exceeds five minutes on shared CI runners.
 test-with-cover:
-	mkdir -p $(PWD)/coverage/unit || true
-	go test --race --timeout 300s --cover ./... \
+	go test --race --timeout 600s ./... \
 		-covermode=atomic \
-		-args -test.gocoverdir="$(PWD)/coverage/unit"
-	go tool covdata textfmt -i=./coverage/unit -o ./coverage.txt
+		-coverprofile=$(PWD)/coverage.txt
+
+test-migrated-product-cover:
+	mkdir -p $(PWD)/coverage/products
+	@set -eu; \
+		for package in $(MIGRATED_PRODUCT_PACKAGES); do \
+			name=$${package##*/}; \
+			profile=$(PWD)/coverage/products/$$name.txt; \
+			go test --timeout 300s $$package \
+				-covermode=atomic \
+				-coverprofile=$$profile; \
+			total=$$(go tool cover -func=$$profile | awk '/^total:/ { gsub(/%/, "", $$3); print $$3 }'); \
+			echo "Migrated product package $$package coverage: $$total% (minimum $(COVERAGE_MIN)%)"; \
+			awk -v actual="$$total" -v minimum="$(COVERAGE_MIN)" 'BEGIN { exit !(actual + 0 >= minimum + 0) }'; \
+		done
+
+# This aggregate target is the final migration gate. Incremental checkpoints use
+# test-migrated-product-cover so existing Framework packages do not make every
+# one-resource review branch fail before their planned coverage closure.
+test-framework-cover:
+	mkdir -p $(PWD)/coverage
+	go test --timeout 300s $(FRAMEWORK_SCOPE_PACKAGES) \
+		-covermode=atomic \
+		-coverprofile=$(PWD)/coverage/framework.txt
+	@total=$$(go tool cover -func=$(PWD)/coverage/framework.txt | awk '/^total:/ { gsub(/%/, "", $$3); print $$3 }'); \
+		echo "Non-deferred Framework/core coverage: $$total% (minimum $(COVERAGE_MIN)%)"; \
+		awk -v actual="$$total" -v minimum="$(COVERAGE_MIN)" 'BEGIN { exit !(actual + 0 >= minimum + 0) }'
+
+check-coverage-no-regression: test-with-cover
+	@total=$$(go tool cover -func=$(PWD)/coverage.txt | awk '/^total:/ { gsub(/%/, "", $$3); print $$3 }'); \
+		echo "Full-module coverage: $$total% (baseline $(COVERAGE_BASELINE)%)"; \
+		awk -v actual="$$total" -v minimum="$(COVERAGE_BASELINE)" 'BEGIN { exit !(actual + 0 >= minimum + 0) }'
 
 
 testacc:
@@ -98,4 +144,7 @@ gen-docs:
 test-docs:
 	$(WEBSITE_PLUGIN) validate 
 
-.PHONY: build test testacc vet fmt fmtcheck errcheck gen-docs check-docs
+check-schema-docs:
+	./scripts/check-schema-docs.sh
+
+.PHONY: build test test-with-cover test-migrated-product-cover test-framework-cover check-coverage-no-regression testacc vet fmt fmtcheck errcheck gen-docs check-docs test-docs check-schema-docs
