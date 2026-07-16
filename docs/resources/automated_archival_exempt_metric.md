@@ -1,5 +1,5 @@
 ---
-page_tile: "Splunk Observability Cloud - signalfx_automated_archival_exempt_metric
+page_title: "Splunk Observability Cloud - signalfx_automated_archival_exempt_metric"
 description: |-
     
 ---

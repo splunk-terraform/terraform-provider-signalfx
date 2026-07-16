@@ -4,10 +4,6 @@ description: |-
   Allows Terraform to create and manage Splunk On-Call Integrations
 ---
 
-{{/* This template serves as a starting point for documentation generation, and can be customized with hardcoded values and/or doc gen templates.
-
-For example, the {{ .SchemaMarkdown }} template can be used to replace manual schema documentation if descriptions of schema attributes are added in the provider source code. */ -}}
-
 # Resource: signalfx_victor_ops_integration
 
 Splunk On-Call integrations.
@@ -18,14 +14,4 @@ Splunk On-Call integrations.
 
 {{tffile "examples/resources/victor_ops_integration/example_1.tf"}}
 
-## Arguments
-
-* `name` - (Required) Name of the integration.
-* `enabled` - (Required) Whether the integration is enabled.
-* `post_url` - (Optional) Splunk On-Call REST API URL.
-
-## Attributes
-
-In a addition to all arguments above, the following attributes are exported:
-
-* `id` - The ID of the integration.
+{{ .SchemaMarkdown | trimspace }}
