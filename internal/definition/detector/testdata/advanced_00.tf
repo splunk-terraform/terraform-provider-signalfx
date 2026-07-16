@@ -1,19 +1,11 @@
 provider "signalfx" {}
 
-resource "signalfx_team" "my_detector_team" {
-  name        = "example team"
-  description = "A team made from terraform"
-
-  notifications_default = ["Email,test@example.com"]
-}
-
 resource "signalfx_detector" "my_detector" {
   name            = "example detector"
   description     = "A detector made from terraform"
   max_delay       = 30
   min_delay       = 15
   tags            = ["tag-1", "tag-2"]
-  teams           = [signalfx_team.my_detector_team.id]
   timezone        = "Europe/Paris"
   detector_origin = "Standard"
 
