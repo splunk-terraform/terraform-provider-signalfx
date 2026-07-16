@@ -23,7 +23,6 @@ import (
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/definition/autoarchivesettings"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/definition/detector"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/definition/dimension"
-	"github.com/splunk-terraform/terraform-provider-signalfx/internal/definition/organization"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/definition/team"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/feature"
 	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
@@ -124,8 +123,7 @@ func New() *schema.Provider {
 			autoarchiveexemptmetric.ResourceName: autoarchiveexemptmetric.NewResource(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
-			dimension.DataSourceName:    dimension.NewDataSource(),
-			organization.DataSourceName: organization.NewDataSource(),
+			dimension.DataSourceName: dimension.NewDataSource(),
 		},
 		ConfigureContextFunc: configureProvider,
 	}

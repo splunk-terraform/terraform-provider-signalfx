@@ -27,7 +27,6 @@ import (
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/convert"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/definition/autoarchiveexemptmetric"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/definition/autoarchivesettings"
-	"github.com/splunk-terraform/terraform-provider-signalfx/internal/definition/organization"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/feature"
 	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
 	tfext "github.com/splunk-terraform/terraform-provider-signalfx/internal/tfextension"
@@ -135,7 +134,6 @@ func Provider() *schema.Provider {
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"signalfx_dimension_values": dataSourceDimensionValues(),
-			organization.DataSourceName: organization.NewDataSource(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"signalfx_alert_muting_rule":                alertMutingRuleResource(),

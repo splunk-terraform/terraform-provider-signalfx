@@ -30,6 +30,7 @@ import (
 	fwdetector "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/detector"
 	internalfunction "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/function"
 	fwintegration "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/integration"
+	fworganization "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/organization"
 	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
 	tfext "github.com/splunk-terraform/terraform-provider-signalfx/internal/tfextension"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/track"
@@ -272,6 +273,7 @@ func (op *ollyProvider) DataSources(ctx context.Context) []func() datasource.Dat
 		builtincontent.NewDashboardGroupsDataSource,
 		builtincontent.NewAutoDetectorDataSource,
 		fwintegration.NewDataSourcePagerDuty,
+		fworganization.NewDataSourceMembers,
 	}
 }
 
