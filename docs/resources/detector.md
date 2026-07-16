@@ -1,16 +1,16 @@
 ---
 page_title: "Splunk Observability Cloud: signalfx_detector"
 description: |-
-  Allows Terraform to create and manage dashboards in Splunk Observability Cloud
+  Creates and manages a detector in Splunk Observability Cloud
 ---
 
 # Resource: signalfx_detector
 
-Provides a Splunk Observability Cloud detector resource. This can be used to create and manage detectors.
+Provides a Splunk Observability Cloud detector resource.
 
-If you're interested in using Splunk Observability Cloud detector features such as Historical Anomaly, Resource Running Out, or others, consider building them in the UI first and then use the "Show SignalFlow" feature to extract the value for `program_text`. You can also see the [documentation for detector functions in signalflow-library](https://github.com/signalfx/signalflow-library/tree/master/library/signalfx/detectors).
+If you want to use detector features such as Historical Anomaly or Resource Running Out, build the detector in the UI first and use **Show SignalFlow** to obtain its `program_text`. You can also review the [SignalFlow detector library](https://github.com/signalfx/signalflow-library/tree/master/library/signalfx/detectors).
 
-~> **NOTE** When you want to change or remove write permissions for a user other than yourself regarding detectors, use a session token of an administrator to authenticate the Splunk Observability Cloud provider. See [Operations that require a session token for an administrator](https://dev.splunk.com/observability/docs/administration/authtokens#Operations-that-require-a-session-token-for-an-administrator).
+~> **NOTE** To change or remove detector write permissions for another user, authenticate the provider with an administrator's session token. See [Operations that require an administrator session token](https://dev.splunk.com/observability/docs/administration/authtokens#Operations-that-require-a-session-token-for-an-administrator).
 
 ## Example
 
@@ -57,7 +57,7 @@ variable "clusters" {
 
 ## Enhanced multi-condition detector example
 
-Use `program_text` to configure enhanced detector logic that combines historical anomaly conditions with threshold conditions. Each `rule.detect_label` must match the label published by a `detect(...).publish('<label>')` statement in `program_text`.
+Each `rule.detect_label` must match a label published by a `detect(...).publish('<label>')` statement in `program_text`.
 
 ```terraform
 resource "signalfx_detector" "enhanced_multi_condition" {
@@ -105,160 +105,122 @@ provider "signalfx" {}
 
 ## Notification format
 
-As Splunk Observability Cloud supports different notification mechanisms, use a comma-delimited string to provide inputs. If you want to specify multiple notifications, each must be a member in the list, like so:
+Notifications use the provider's comma-delimited string representation. Multiple destinations are separate list elements:
 
-```
+```terraform
 notifications = ["Email,foo-alerts@example.com", "Slack,credentialId,channel"]
 ```
 
-See [Splunk Observability Cloud Docs](https://dev.splunk.com/observability/reference/api/detectors/latest) for more information.
+Supported forms include:
 
-Here are some example of how to configure each notification type:
-
-### Email
-
-```
-notifications = ["Email,foo-alerts@bar.com"]
-```
-
-Optional **Cc** and **Bcc** use a fourth comma-separated field. Separate multiple addresses within Cc or Bcc with `|`:
-
-```
-notifications = ["Email,foo-alerts@bar.com,oncall@example.com|ops@example.com,audit@example.com"]
-```
-
-Cc/Bcc require the org feature `emailNotificationCcBccEnabled` on the Observability backend. Without it, the API rejects configurations that include Cc or Bcc.
-
-### Jira
-
-Note that the `credentialId` is the Splunk-provided ID shown after setting up your Jira integration. See also `signalfx_jira_integration`.
-
-```
-notifications = ["Jira,credentialId"]
+```text
+Email,address
+Email,address,cc1|cc2,bcc1|bcc2
+Jira,credentialId
+Opsgenie,credentialId,responderName,responderId,Team
+PagerDuty,credentialId
+Slack,credentialId,channel
+Team,teamId
+TeamEmail,teamId
+VictorOps,credentialId,routingKey
+Webhook,credentialId,,
+Webhook,,secret,url
 ```
 
-### OpsGenie
+Email Cc/Bcc requires the Observability Cloud `emailNotificationCcBccEnabled` organization feature. See the [detector API reference](https://dev.splunk.com/observability/reference/api/detectors/latest) for destination details.
 
-Note that the `credentialId` is the Splunk-provided ID shown after setting up your Opsgenie integration. `Team` here is hardcoded as the `responderType` as that is the only acceptable type as per the API docs.
+## Delayed datapoints
 
-```
-notifications = ["Opsgenie,credentialId,responderName,responderId,Team"]
-```
+Use both `max_delay` and an extrapolation policy in `program_text` to reduce false positives and false negatives. `max_delay` allows computation to wait for late datapoints, while extrapolation defines how an individual signal handles missing data. See [Delayed Datapoints](https://docs.splunk.com/observability/en/data-visualization/charts/chart-builder.html#delayed-datapoints).
 
-### PagerDuty
+<!-- schema generated by tfplugindocs -->
+## Schema
 
-```
-notifications = ["PagerDuty,credentialId"]
-```
+### Required
 
-### Slack
+- `name` (String) Name of the detector.
+- `program_text` (String) SignalFlow program text for the detector.
 
-Exclude the `#` on the channel name:
+### Optional
 
-```
-notifications = ["Slack,credentialId,channel"]
-```
+- `authorized_writer_teams` (Set of String) Team IDs with write access to the detector.
+- `authorized_writer_users` (Set of String) User IDs with write access to the detector.
+- `description` (String) Description of the detector.
+- `detector_origin` (String) How the detector was created: `Standard` or `AutoDetectCustomization`. Changes replace the resource.
+- `disable_sampling` (Boolean) Whether to display all datapoints instead of sampling them.
+- `end_time` (Number) End of the absolute visualization range in Unix seconds.
+- `max_delay` (Number) Maximum time in seconds to wait for late datapoints.
+- `min_delay` (Number) Minimum time in seconds to wait even when datapoints arrive on time.
+- `parent_detector_id` (String) Parent AutoDetect detector ID for an AutoDetect customization. Changes replace the resource.
+- `rule` (Block Set) Required set of alert rules. (see [below for nested schema](#nestedblock--rule))
+- `show_data_markers` (Boolean) Whether to draw markers for datapoints in the visualization.
+- `show_event_lines` (Boolean) Whether to draw a vertical line for each triggered event.
+- `start_time` (Number) Start of the absolute visualization range in Unix seconds.
+- `tags` (Set of String) Tags associated with the detector.
+- `teams` (Set of String) Team IDs associated with the detector.
+- `time_range` (Number) Relative visualization range in seconds. Defaults to 3600 when absolute times are not configured.
+- `timezone` (String) Geographic time zone associated with the detector, for example `Australia/Sydney`.
+- `viz_options` (Block Set) Per-publish-label visualization options. (see [below for nested schema](#nestedblock--viz_options))
 
-### Team
+### Read-Only
 
-Sends [notifications to a team](https://help.splunk.com/en/splunk-observability-cloud/administer/user-and-team-management/manage-teams/manage-team-notifications).
+- `id` (String) The unique identifier for the resource.
+- `label_resolutions` (Map of Number) Resolution in milliseconds for each published detector label.
+- `url` (String) URL of the detector in Splunk Observability Cloud.
 
-```
-notifications = ["Team,teamId"]
-```
+<a id="nestedblock--rule"></a>
+### Nested Schema for `rule`
 
-### TeamEmail
+Required:
 
-Sends an email to every member of a team.
+- `detect_label` (String) Publish label associated with this alert rule.
+- `severity` (String) Severity of the rule.
 
-```
-notifications = ["TeamEmail,teamId"]
-```
+Optional:
 
-### Splunk On-Call (formerly VictorOps)
+- `description` (String) Description of the rule.
+- `disabled` (Boolean) Whether this alert rule is disabled.
+- `notifications` (List of String) Ordered comma-delimited notification destinations.
+- `parameterized_body` (String) Custom notification body.
+- `parameterized_subject` (String) Custom notification subject.
+- `reminder_notification` (Block List) Optional repeated-notification settings. (see [below for nested schema](#nestedblock--rule--reminder_notification))
+- `runbook_url` (String) Runbook URL for the alert rule.
+- `skip_clear_notification_states` (Set of String) Alert clear states that do not send clear notifications.
+- `tip` (String) Suggested first course of action.
 
-```
-notifications = ["VictorOps,credentialId,routingKey"]
-```
+<a id="nestedblock--rule--reminder_notification"></a>
+### Nested Schema for `rule.reminder_notification`
 
-### Webhooks
+Required:
 
-You need to include all the commas even if you only use a credential id.
+- `interval_ms` (Number) Notification interval in milliseconds.
+- `type` (String) Reminder type. Must be `TIMEOUT`.
 
-You can either configure a Webhook to use an existing integration's credential id:
+Optional:
 
-```
-notifications = ["Webhook,credentialId,,"]
-```
+- `timeout_ms` (Number) Notification timeout in milliseconds.
 
-Or configure one inline:
 
-```
-notifications = ["Webhook,,secret,url"]
-```
 
-## Arguments
+<a id="nestedblock--viz_options"></a>
+### Nested Schema for `viz_options`
 
-* `name` - (Required) Name of the detector.
-* `program_text` - (Required) Signalflow program text for the detector. More info [in the Splunk Observability Cloud docs](https://dev.splunk.com/observability/docs/signalflow/).
-* `description` - (Optional) Description of the detector.
-* `authorized_writer_teams` - (Optional) Team IDs that have write access to this detector. Remember to use an admin's token if using this feature and to include that admin's team id (or user id in `authorized_writer_users`).
-* `authorized_writer_users` - (Optional) User IDs that have write access to this detector. Remember to use an admin's token if using this feature and to include that admin's user id (or team id in `authorized_writer_teams`).
-* `max_delay` - (Optional) How long (in seconds) to wait for late datapoints. See [Delayed Datapoints](https://docs.splunk.com/observability/en/data-visualization/charts/chart-builder.html#delayed-datapoints) for more info. Max value is `900` seconds (15 minutes). `Auto` (as little as possible) by default.
-* `min_delay` - (Optional) How long (in seconds) to wait even if the datapoints are arriving in a timely fashion. Max value is 900 (15m).
-* `show_data_markers` - (Optional) When `true`, markers will be drawn for each datapoint within the visualization. `true` by default.
-* `show_event_lines` - (Optional) When `true`, the visualization will display a vertical line for each event trigger. `false` by default.
-* `disable_sampling` - (Optional) When `false`, the visualization may sample the output timeseries rather than displaying them all. `false` by default.
-* `time_range` - (Optional) Seconds to display in the visualization. This is a rolling range from the current time. Example: `3600` corresponds to `-1h` in web UI. `3600` by default.
-* `start_time` - (Optional) Seconds since epoch. Used for visualization. Conflicts with `time_range`.
-* `end_time` - (Optional) Seconds since epoch. Used for visualization. Conflicts with `time_range`.
-* `tags` - (Optional) Tags associated with the detector.
-* `teams` - (Optional) Team IDs to associate the detector to.
-* `detector_origin` - (Optional) Indicates how a detector was created. The possible values are: Standard and AutoDetectCustomization. The value can only be set when creating the detector and cannot be modified later.
-* `parent_detector_id` - (Optional) ID of the AutoDetect parent detector from which this detector is customized and created. This property is required for detectors with detectorOrigin of type AutoDetectCustomization. The value can only be set when creating the detector and cannot be modified later.
-* `rule` - (Required) Set of rules used for alerting.
-  * `detect_label` - (Required) A detect label which matches a detect label within `program_text`.
-  * `severity` - (Required) The severity of the rule, must be one of: `"Critical"`, `"Major"`, `"Minor"`, `"Warning"`, `"Info"`.
-  * `description` - (Optional) Description for the rule. Displays as the alert condition in the Alert Rules tab of the detector editor in the web UI.
-  * `disabled` - (Optional) When true, notifications and events will not be generated for the detect label. `false` by default.
-  * `notifications` - (Optional) List of strings specifying where notifications will be sent when an incident occurs. See [Create A Single Detector](https://dev.splunk.com/observability/reference/api/detectors/latest) for more info.
-  * `parameterized_body` - (Optional) Custom notification message body when an alert is triggered. See [Set Up Detectors to Trigger Alerts](https://docs.splunk.com/observability/en/alerts-detectors-notifications/create-detectors-for-alerts.html) for more info.
-  * `parameterized_subject` - (Optional) Custom notification message subject when an alert is triggered. See [Set Up Detectors to Trigger Alerts](https://docs.splunk.com/observability/en/alerts-detectors-notifications/create-detectors-for-alerts.html) for more info.
-  * `runbook_url` - (Optional) URL of page to consult when an alert is triggered. This can be used with custom notification messages.
-  * `tip` - (Optional) Plain text suggested first course of action, such as a command line to execute. This can be used with custom notification messages.
-  * `reminder_notification` - (Optional) Reminder notification in a detector rule lets you send multiple notifications for active alerts over a defined period of time. **Note:** This feature is not present in all accounts. Please contact support if you are unsure.
-    * `interval_ms` - (Required) The interval at which you want to receive the notifications, in milliseconds.
-    * `timeout_ms` - (Optional) The duration during which repeat notifications are sent, in milliseconds.
-    * `type` - (Required) Type of reminder notification. Currently, the only supported value is TIMEOUT.
-  * `skip_clear_notification_states` - (Optional) Set of alert clear states for which clear notifications are not sent. Valid values: `OK`, `AUTO_RESOLVED`, `STOPPED`, `MANUALLY_RESOLVED`. **Note:** This feature is not present in all accounts. Please contact support if you are unsure.
-* `viz_options` - (Optional) Plot-level customization options, associated with a publish statement.
-  * `label` - (Required) Label used in the publish statement that displays the plot (metric time series data) you want to customize.
-  * `display_name` - (Optional) Specifies an alternate value for the Plot Name column of the Data Table associated with the chart.
-  * `color` - (Optional) Color to use : gray, blue, azure, navy, brown, orange, yellow, iris, magenta, pink, purple, violet, lilac, emerald, green, aquamarine.
-  * `value_unit` - (Optional) A unit to attach to this plot. Units support automatic scaling (eg thousands of bytes will be displayed as kilobytes). Values values are `Bit, Kilobit, Megabit, Gigabit, Terabit, Petabit, Exabit, Zettabit, Yottabit, Byte, Kibibyte, Mebibyte, Gibibyte (note: this was previously typoed as Gigibyte), Tebibyte, Pebibyte, Exbibyte, Zebibyte, Yobibyte, Nanosecond, Microsecond, Millisecond, Second, Minute, Hour, Day, Week`.
-  * `value_prefix`, `value_suffix` - (Optional) Arbitrary prefix/suffix to display with the value of this plot.
+Required:
 
-**Notes**
+- `label` (String) SignalFlow publish label.
 
-Use both `max_delay` in your detector configuration and an `extrapolation` policy in your program text to reduce false positives and false negatives.
+Optional:
 
-- `max_delay` allows Splunk Observability Cloud to continue with computation if there is a lag in receiving data points.
-- `extrapolation` allows you to specify how to handle missing data. An extrapolation policy can be added to individual signals by updating the data block in your `program_text`.
-
-See [Delayed Datapoints](https://docs.splunk.com/observability/en/data-visualization/charts/chart-builder.html#delayed-datapoints) for more info.
-
-## Attributes
-
-In a addition to all arguments above, the following attributes are exported:
-
-* `id` - The ID of the detector.
-* `label_resolutions` - The resolutions of the detector alerts in milliseconds that indicate how often data is analyzed to determine if an alert should be triggered.
-* `url` - The URL of the detector.
+- `color` (String) Color name.
+- `display_name` (String) Alternate display name.
+- `value_prefix` (String) Prefix displayed with plot values.
+- `value_suffix` (String) Suffix displayed with plot values.
+- `value_unit` (String) Unit attached to the plot values.
 
 ## Import
 
-Detectors can be imported using their string ID (recoverable from URL: `/#/detector/v2/abc123/edit`, e.g.
+Import a detector using its string ID, which is also present in detector URLs such as `/#/detector/v2/abc123/edit`:
 
-```
-$ terraform import signalfx_detector.application_delay abc123
+```shell
+terraform import signalfx_detector.application_delay abc123
 ```

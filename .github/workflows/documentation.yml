@@ -30,4 +30,4 @@ jobs:
             key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
   
         - name: Validate docs
-          run: make check-docs
+          run: make check-docs test-docs check-schema-docs

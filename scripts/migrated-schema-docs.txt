@@ -1,0 +1,25 @@
+# Add one entry when its SDK registration is migrated to Framework.
+# Format: resource|data-source <documentation short name>
+resource alert_muting_rule
+resource detector
+resource slo
+resource opsgenie_integration
+resource pagerduty_integration
+data-source pagerduty_integration
+resource slack_integration
+resource victor_ops_integration
+resource webhook_integration
+resource service_now_integration
+resource jira_integration
+resource azure_integration
+resource gcp_integration
+resource aws_external_integration
+resource aws_token_integration
+resource aws_integration
+data-source organization_members
+resource team
+resource org_token
+data-source dimension_values
+resource automated_archival_settings
+resource automated_archival_exempt_metric
+resource metric_ruleset
