@@ -1,14 +1,14 @@
 ---
-page_title: "Splunk Observability Cloud - signalfx_dimension_values"
+page_title: "Splunk Observability Cloud: signalfx_dimension_values"
 description: |-
-    This data sources allows for obtaining a list of dimension values by on query provided.
+  Queries metric dimension values in Splunk Observability Cloud.
 ---
 
 # Data Source: signalfx_dimension_values
 
-This data sources allows for obtaining a list of dimension values by on query provided.
+Queries ordered metric dimension values for use in other Terraform resources.
 
-# Examples Usage
+## Example
 
 ```terraform
 resource "signalfx_dashboard_group" "mydashboardgroup0" {
@@ -53,15 +53,14 @@ resource "signalfx_dashboard" "mydashboard1" {
 
 ### Required
 
-- `query` (String) Acepts a query string that allows for defining a key value deintion, wild card matching on values, or where the dimension value exists. Refer to https://dev.splunk.com/observability/reference/api/metrics_metadata/latest#endpoint-retrieve-dimensions-query for more details
+- `query` (String) Metric metadata query used to select dimension values.
 
 ### Optional
 
-- `limit` (Number) This allows you to define how many dimensions are returned as the values output.
-- `order_by` (String)
+- `limit` (Number) Maximum number of matching dimension values to return.
+- `order_by` (String) API field and direction used to order matching dimension values.
 
 ### Read-Only
 
-- `id` (String) The ID of this resource.
-- `values` (List of String) List of all the match dimension values that the provided query, ordered by order_by field
-
+- `id` (String) The unique identifier for the resource.
+- `values` (List of String) Ordered dimension values matching the configured query.

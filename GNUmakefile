@@ -6,7 +6,8 @@ COVERAGE_MIN ?= 90.0
 COVERAGE_BASELINE ?= 34.7
 MIGRATED_PRODUCT_PACKAGES := \
 	./internal/framework/integration \
-	./internal/framework/organization
+	./internal/framework/organization \
+	./internal/framework/metrics
 FRAMEWORK_SCOPE_PACKAGES := \
 	./internal/check \
 	./internal/common \

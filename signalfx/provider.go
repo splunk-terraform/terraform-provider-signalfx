@@ -132,9 +132,7 @@ func Provider() *schema.Provider {
 				Description: "Allows for teams to be defined at a provider level, and apply to all applicable resources created.",
 			},
 		},
-		DataSourcesMap: map[string]*schema.Resource{
-			"signalfx_dimension_values": dataSourceDimensionValues(),
-		},
+		DataSourcesMap: map[string]*schema.Resource{},
 		ResourcesMap: map[string]*schema.Resource{
 			"signalfx_alert_muting_rule":                alertMutingRuleResource(),
 			"signalfx_automated_archival_settings":      autoarchivesettings.NewResource(),

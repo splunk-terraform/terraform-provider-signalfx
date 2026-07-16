@@ -121,6 +121,7 @@ func TestProviderDataSources(t *testing.T) {
 		"signalfx_builtin_dashboards":    {},
 		"signalfx_pagerduty_integration": {},
 		"signalfx_organization_members":  {},
+		"signalfx_dimension_values":      {},
 	}
 
 	actual := p.DataSources(context.Background())

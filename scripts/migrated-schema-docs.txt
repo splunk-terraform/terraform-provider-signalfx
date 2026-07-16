@@ -16,3 +16,4 @@ resource aws_integration
 data-source organization_members
 resource team
 resource org_token
+data-source dimension_values

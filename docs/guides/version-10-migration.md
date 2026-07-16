@@ -86,3 +86,9 @@ terraform plan
 ```
 
 Removing the state entry does not delete the organization token. Tokens without either limit block require no state migration.
+
+## Dimension values: limits above 1,000 are now honored
+
+`signalfx_dimension_values` now retrieves multiple API pages when `limit` is greater than 1,000. Earlier provider versions accepted values through 10,000 but accidentally returned at most 1,000 results.
+
+If downstream resources use the returned `values` with `for_each`, upgrading can add instances when more than 1,000 dimensions match. Set `limit = 1000` before upgrading to retain the previous effective cap, or review the expanded plan before applying it.
