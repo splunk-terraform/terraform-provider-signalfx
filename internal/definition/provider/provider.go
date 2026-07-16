@@ -48,12 +48,6 @@ func New() *schema.Provider {
 				DefaultFunc: schema.EnvDefaultFunc("SFX_API_URL", "https://api.signalfx.com"),
 				Description: "API URL for your Splunk Observability Cloud org, may include a realm",
 			},
-			"custom_app_url": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("SFX_CUSTOM_APP_URL", "https://app.signalfx.com"),
-				Description: "Application URL for your Splunk Observability Cloud org, often customized for organizations using SSO",
-			},
 			"timeout_seconds": {
 				Type:        schema.TypeInt,
 				Optional:    true,
@@ -142,6 +136,7 @@ func configureProvider(ctx context.Context, data *schema.ResourceData) (any, dia
 		Email:          data.Get("email").(string),
 		Password:       data.Get("password").(string),
 		OrganizationID: data.Get("organization_id").(string),
+		CustomAppURL:   pmeta.DefaultAppURL,
 		Tags:           convert.SliceAll(data.Get("tags").([]any), convert.ToString),
 		Teams:          convert.SliceAll(data.Get("teams").([]any), convert.ToString),
 	}
@@ -162,10 +157,6 @@ func configureProvider(ctx context.Context, data *schema.ResourceData) (any, dia
 	if url, ok := data.GetOk("api_url"); ok {
 		meta.APIURL = url.(string)
 	}
-	if url, ok := data.GetOk("custom_app_url"); ok {
-		meta.CustomAppURL = url.(string)
-	}
-
 	err := meta.Validate()
 	if err != nil {
 		return nil, tfext.AsErrorDiagnostics(err)

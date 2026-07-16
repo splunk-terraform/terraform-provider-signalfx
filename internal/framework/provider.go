@@ -74,11 +74,6 @@ func (op *ollyProvider) Schema(ctx context.Context, req provider.SchemaRequest, 
 				Optional:    true,
 				Description: "API URL for your Splunk Observability Cloud org, may include a realm",
 			},
-			"custom_app_url": schema.StringAttribute{
-				Optional:           true,
-				DeprecationMessage: "Remove the definition, the provider will automatically populate the custom app URL as needed",
-				Description:        "Application URL for your Splunk Observability Cloud org, often customized for organizations using SSO",
-			},
 			"timeout_seconds": schema.Int64Attribute{
 				Optional:    true,
 				Description: "Timeout duration for a single HTTP call in seconds. Defaults to 120",
@@ -156,6 +151,7 @@ func (op *ollyProvider) Configure(ctx context.Context, req provider.ConfigureReq
 
 	meta := &pmeta.Meta{
 		Registry:       op.features,
+		CustomAppURL:   pmeta.DefaultAppURL,
 		Email:          model.Email.ValueString(),
 		Password:       model.Password.ValueString(),
 		OrganizationID: model.OrganizationID.ValueString(),
@@ -240,11 +236,7 @@ func (op *ollyProvider) Configure(ctx context.Context, req provider.ConfigureReq
 		Duration("wait_max", waitmax),
 	)
 
-	if site, err := meta.DetectCustomAPPURL(ctx); err != nil {
-		if !model.CustomAppURL.IsNull() {
-			meta.CustomAppURL = model.CustomAppURL.ValueString()
-		}
-	} else {
+	if site, err := meta.DetectCustomAPPURL(ctx); err == nil {
 		meta.CustomAppURL = site
 	}
 
@@ -279,12 +271,25 @@ func (op *ollyProvider) DataSources(ctx context.Context) []func() datasource.Dat
 		apm.NewDatasourceTopology,
 		builtincontent.NewDashboardGroupsDataSource,
 		builtincontent.NewAutoDetectorDataSource,
+		fwintegration.NewDataSourcePagerDuty,
 	}
 }
 
 func (op *ollyProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
+		fwintegration.NewResourceOpsgenie,
+		fwintegration.NewResourcePagerDuty,
+		fwintegration.NewResourceSlack,
 		fwintegration.NewResourceSplunkOncall,
+		fwintegration.NewResourceVictorOps,
+		fwintegration.NewResourceWebhook,
+		fwintegration.NewResourceServiceNow,
+		fwintegration.NewResourceJira,
+		fwintegration.NewResourceAzure,
+		fwintegration.NewResourceGCP,
+		fwintegration.NewResourceAWSExternal,
+		fwintegration.NewResourceAWSToken,
+		fwintegration.NewResourceAWS,
 		fwdashify.NewResourceDashifyTemplate,
 		fwdetector.NewAutoDetectorResource,
 		fwintegration.NewResourceBigPanda,

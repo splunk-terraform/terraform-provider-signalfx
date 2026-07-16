@@ -1,5 +1,5 @@
 ---
-page_tile: "Splunk Observability Cloud - signalfx_apm_service_topology
+page_title: "Splunk Observability Cloud - signalfx_apm_service_topology"
 description: |-
     Service Topology allows you to gather data about the service dependencies based on their APM tracing data.
 ---

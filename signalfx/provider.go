@@ -58,13 +58,6 @@ func Provider() *schema.Provider {
 				DefaultFunc: schema.EnvDefaultFunc("SFX_API_URL", "https://api.signalfx.com"),
 				Description: "API URL for your Splunk Observability Cloud org, may include a realm",
 			},
-			"custom_app_url": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Deprecated:  "Remove the definition, the provider will automatically populate the custom app URL as needed",
-				DefaultFunc: schema.EnvDefaultFunc("SFX_CUSTOM_APP_URL", "https://app.signalfx.com"),
-				Description: "Application URL for your Splunk Observability Cloud org, often customized for organizations using SSO",
-			},
 			"timeout_seconds": {
 				Type:        schema.TypeInt,
 				Optional:    true,
@@ -141,39 +134,26 @@ func Provider() *schema.Provider {
 			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
-			"signalfx_dimension_values":      dataSourceDimensionValues(),
-			"signalfx_pagerduty_integration": dataSourcePagerDutyIntegration(),
-			organization.DataSourceName:      organization.NewDataSource(),
+			"signalfx_dimension_values": dataSourceDimensionValues(),
+			organization.DataSourceName: organization.NewDataSource(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"signalfx_alert_muting_rule":                alertMutingRuleResource(),
 			"signalfx_automated_archival_settings":      autoarchivesettings.NewResource(),
 			"signalfx_automated_archival_exempt_metric": autoarchiveexemptmetric.NewResource(),
-			"signalfx_aws_external_integration":         integrationAWSExternalResource(),
-			"signalfx_aws_token_integration":            integrationAWSTokenResource(),
-			"signalfx_aws_integration":                  integrationAWSResource(),
-			"signalfx_azure_integration":                integrationAzureResource(),
 			"signalfx_dashboard":                        dashboardResource(),
 			"signalfx_dashboard_group":                  dashboardGroupResource(),
 			"signalfx_data_link":                        dataLinkResource(),
 			"signalfx_detector":                         detectorResource(),
 			"signalfx_event_feed_chart":                 eventFeedChartResource(),
-			"signalfx_gcp_integration":                  integrationGCPResource(),
 			"signalfx_heatmap_chart":                    heatmapChartResource(),
-			"signalfx_jira_integration":                 integrationJiraResource(),
 			"signalfx_list_chart":                       listChartResource(),
 			"signalfx_org_token":                        orgTokenResource(),
-			"signalfx_opsgenie_integration":             integrationOpsgenieResource(),
-			"signalfx_pagerduty_integration":            integrationPagerDutyResource(),
-			"signalfx_service_now_integration":          integrationServiceNowResource(),
-			"signalfx_slack_integration":                integrationSlackResource(),
 			"signalfx_single_value_chart":               singleValueChartResource(),
 			"signalfx_slo_chart":                        sloChartResource(),
 			"signalfx_team":                             teamResource(),
 			"signalfx_time_chart":                       timeChartResource(),
 			"signalfx_text_chart":                       textChartResource(),
-			"signalfx_victor_ops_integration":           integrationVictorOpsResource(),
-			"signalfx_webhook_integration":              integrationWebhookResource(),
 			"signalfx_log_view":                         logViewResource(),
 			"signalfx_log_timeline":                     logTimelineResource(),
 			"signalfx_table_chart":                      tableChartResource(),
@@ -199,6 +179,7 @@ func signalfxConfigure(data *schema.ResourceData) (interface{}, error) {
 		Email:          data.Get("email").(string),
 		Password:       data.Get("password").(string),
 		OrganizationID: data.Get("organization_id").(string),
+		CustomAppURL:   pmeta.DefaultAppURL,
 		Tags:           convert.SliceAll(data.Get("tags").([]any), convert.ToString),
 		Teams:          convert.SliceAll(data.Get("teams").([]any), convert.ToString),
 	}
@@ -246,11 +227,7 @@ func signalfxConfigure(data *schema.ResourceData) (interface{}, error) {
 		return nil, err
 	}
 
-	if site, err := config.DetectCustomAPPURL(context.TODO()); err != nil {
-		if app, ok := data.GetOk("custom_app_url"); ok {
-			config.CustomAppURL = app.(string)
-		}
-	} else {
+	if site, err := config.DetectCustomAPPURL(context.TODO()); err == nil {
 		config.CustomAppURL = site
 	}
 
