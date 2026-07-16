@@ -1,5 +1,5 @@
 ---
-page_tile: "Splunk Observability Cloud - signalfx_automated_archival_settings
+page_title: "Splunk Observability Cloud - signalfx_automated_archival_settings"
 description: |-
     
 ---

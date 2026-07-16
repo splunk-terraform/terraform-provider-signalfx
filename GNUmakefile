@@ -98,4 +98,7 @@ gen-docs:
 test-docs:
 	$(WEBSITE_PLUGIN) validate 
 
-.PHONY: build test testacc vet fmt fmtcheck errcheck gen-docs check-docs
+check-schema-docs:
+	./scripts/check-schema-docs.sh
+
+.PHONY: build test testacc vet fmt fmtcheck errcheck gen-docs check-docs test-docs check-schema-docs

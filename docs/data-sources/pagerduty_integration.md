@@ -1,5 +1,5 @@
 ---
-page_tile: "Splunk Observability Cloud - signalfx_pagerduty_integration
+page_title: "Splunk Observability Cloud - signalfx_pagerduty_integration"
 description: |-
     Use this data source to fetch the PagerDuty integration details.
 ---
