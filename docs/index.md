@@ -43,14 +43,8 @@ The following example shows how to configure the Splunk Observability Cloud prov
 
 ```terraform
 # Configure the Splunk Observability Cloud provider
-
-variable "o11y_cloud_auth_token" {
-  type        = string
-  description = "Auth token to access the Splunk Observability API"
-}
-
 provider "signalfx" {
-  auth_token = "${var.o11y_cloud_auth_token}"
+  auth_token = "${var.signalfx_auth_token}"
   # If your organization uses a different realm
   # api_url = "https://api.<realm>.observability.splunkcloud.com"
 }
@@ -68,17 +62,6 @@ resource "signalfx_dashboard" "default" {
 
 ```terraform
 # An example configuration with a service account.
-
-variable "service_account_password" {
-  type        = string
-  description = "Service account password"
-}
-
-variable "service_account_org_id" {
-  type        = string
-  description = "Service account Organization ID"
-}
-
 provider "signalfx" {
   email           = "service.account@example"
   password        = "${var.service_account_password}"
