@@ -34,6 +34,7 @@ func TestModelEnsureDefaults(t *testing.T) {
 		{
 			name:  "environment variables set, no defaults set",
 			model: &OllyProviderModel{},
+			//nolint:gosec // G101: The token is synthetic test data, not a credential.
 			env: map[string]string{
 				"SFX_AUTH_TOKEN": "test-auth-token",
 				"SFX_API_URL":    "https://example.com",
@@ -57,6 +58,7 @@ func TestModelEnsureDefaults(t *testing.T) {
 				RetryWaitMinSeconds: types.Int64Value(2),
 				RetryWaitMaxSeconds: types.Int64Value(20),
 			},
+			//nolint:gosec // G101: The token is synthetic test data, not a credential.
 			env: map[string]string{
 				"SFX_AUTH_TOKEN": "test-auth-token",
 				"SFX_API_URL":    "https://example.com/v2",

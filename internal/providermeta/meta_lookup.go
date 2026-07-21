@@ -87,6 +87,7 @@ func NetrcMetaLookupFunc(path string) MetaLookupFunc {
 				return err
 			}
 		}
+		//nolint:gosec // G703: NETRC intentionally lets the caller select a credentials file readable by this process.
 		st, err := os.Stat(path)
 		if err != nil {
 			if errors.Is(err, os.ErrNotExist) {
