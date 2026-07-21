@@ -61,9 +61,11 @@ test:
 	go test --cover --race -v --timeout 30s ./...
 
 test-with-cover:
-	go test --race --timeout 300s ./... \
+	mkdir -p $(PWD)/coverage/unit || true
+	go test --race --timeout 300s --cover ./... \
 		-covermode=atomic \
-		-coverprofile=$(PWD)/coverage.txt
+		-args -test.gocoverdir="$(PWD)/coverage/unit"
+	go tool covdata textfmt -i=./coverage/unit -o ./coverage.txt
 
 
 testacc:
@@ -99,4 +101,4 @@ test-docs:
 check-schema-docs:
 	./scripts/check-schema-docs.sh
 
-.PHONY: build test test-with-cover testacc vet fmt fmtcheck errcheck gen-docs check-docs test-docs check-schema-docs
+.PHONY: build test testacc vet fmt fmtcheck errcheck gen-docs check-docs test-docs check-schema-docs
