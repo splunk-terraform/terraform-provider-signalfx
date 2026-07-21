@@ -66,6 +66,7 @@ func TestResourceCreate(t *testing.T) {
 					_, _ = io.Copy(io.Discard, r.Body)
 					_ = r.Body.Close()
 
+					//nolint:gosec // G117: This mock response uses the API token type but does not set its Secret field.
 					err := json.NewEncoder(w).Encode(&orgtoken.Token{
 						Name: "simple-token",
 					})
@@ -138,6 +139,7 @@ func TestResourceRead(t *testing.T) {
 					_, _ = io.Copy(io.Discard, r.Body)
 					_ = r.Body.Close()
 
+					//nolint:gosec // G117: This mock response uses the API token type but does not set its Secret field.
 					err := json.NewEncoder(w).Encode(&orgtoken.Token{
 						Name:        "my-token",
 						Description: "This is my token, no other will do",
@@ -217,6 +219,7 @@ func TestResourceUpdate(t *testing.T) {
 					_, _ = io.Copy(io.Discard, r.Body)
 					_ = r.Body.Close()
 
+					//nolint:gosec // G117: This mock response uses the API token type but does not set its Secret field.
 					err := json.NewEncoder(w).Encode(&orgtoken.Token{
 						Name:        "my-token",
 						Description: "Everyone's token",

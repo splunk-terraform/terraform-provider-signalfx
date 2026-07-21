@@ -231,6 +231,7 @@ func TestMetaToken(t *testing.T) {
 				_, _ = io.Copy(io.Discard, r.Body)
 				_ = r.Body.Close()
 
+				//nolint:gosec // G117: The access token is synthetic data returned by this test-only HTTP server.
 				_ = json.NewEncoder(w).Encode(&sessiontoken.Token{AccessToken: "secret"})
 			},
 			email:    "user@example",
