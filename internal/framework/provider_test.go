@@ -121,6 +121,7 @@ func TestProviderDataSources(t *testing.T) {
 		"signalfx_apm_service_topology": {},
 		"signalfx_auto_detector":        {},
 		"signalfx_builtin_dashboards":   {},
+		"signalfx_timestamp":            {},
 	}
 
 	actual := p.DataSources(context.Background())
