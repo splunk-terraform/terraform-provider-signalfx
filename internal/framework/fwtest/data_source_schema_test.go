@@ -15,7 +15,13 @@ func TestWalkDataSourceSchema(t *testing.T) {
 
 	input := map[string]schema.Attribute{
 		"name": schema.StringAttribute{},
+		"mappings": schema.MapNestedAttribute{NestedObject: schema.NestedAttributeObject{
+			Attributes: map[string]schema.Attribute{"value": schema.StringAttribute{}},
+		}},
 		"items": schema.ListNestedAttribute{NestedObject: schema.NestedAttributeObject{
+			Attributes: map[string]schema.Attribute{"value": schema.StringAttribute{}},
+		}},
+		"members": schema.SetNestedAttribute{NestedObject: schema.NestedAttributeObject{
 			Attributes: map[string]schema.Attribute{"value": schema.StringAttribute{}},
 		}},
 		"settings": schema.SingleNestedAttribute{Attributes: map[string]schema.Attribute{
@@ -29,8 +35,19 @@ func TestWalkDataSourceSchema(t *testing.T) {
 	}
 
 	assert.Contains(t, actual, "name")
+	assert.Contains(t, actual, "mappings")
+	assert.Contains(t, actual, `["mappings"].value`)
 	assert.Contains(t, actual, "items")
 	assert.Contains(t, actual, "items[0].value")
+	assert.Contains(t, actual, "members")
+	assert.Contains(t, actual, "members.value")
 	assert.Contains(t, actual, "settings")
 	assert.Contains(t, actual, "settings.enabled")
+
+	visited := 0
+	for range WalkDataSourceSchema(input) {
+		visited++
+		break
+	}
+	assert.Equal(t, 1, visited, "Must stop walking when the iterator stops yielding")
 }
