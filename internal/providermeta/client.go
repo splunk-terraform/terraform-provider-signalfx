@@ -39,7 +39,6 @@ type Client interface {
 	UpdateDashboard(ctx context.Context, id string, dashboardRequest *dashboard.CreateUpdateDashboardRequest) (*dashboard.Dashboard, error)
 	ValidateDashboard(ctx context.Context, dashboardRequest *dashboard.CreateUpdateDashboardRequest) error
 	ValidateDashboardWithMode(ctx context.Context, dashboardRequest *dashboard.CreateUpdateDashboardRequest, validationMode signalfx.VisualizationObjectsValidation) error
-	SearchDashboard(ctx context.Context, limit int, name string, offset int, tags string) (*dashboard.SearchResult, error)
 	CreateGCPIntegration(ctx context.Context, gcpi *integration.GCPIntegration) (*integration.GCPIntegration, error)
 	GetGCPIntegration(ctx context.Context, id string) (*integration.GCPIntegration, error)
 	UpdateGCPIntegration(ctx context.Context, id string, gcpi *integration.GCPIntegration) (*integration.GCPIntegration, error)

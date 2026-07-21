@@ -20,7 +20,6 @@ import (
 	"github.com/signalfx/signalfx-go/detector"
 	"github.com/signalfx/signalfx-go/integration"
 	"github.com/signalfx/signalfx-go/metric_ruleset"
-	"github.com/signalfx/signalfx-go/metrics_metadata"
 	"github.com/signalfx/signalfx-go/orgtoken"
 	"github.com/signalfx/signalfx-go/sessiontoken"
 	"github.com/signalfx/signalfx-go/slo"
@@ -37,7 +36,7 @@ func (f *FileClient) CreateSessionToken(_ context.Context, _ *sessiontoken.Creat
 	return &sessiontoken.Token{}, nil
 }
 
-func (f *FileClient) DeleteSessionToken(ctx context.Context, token string) error {
+func (f *FileClient) DeleteSessionToken(context.Context, string) error {
 	panic("unsupported")
 }
 
@@ -99,11 +98,11 @@ func (f *FileClient) UpdateChart(_ context.Context, id string, chartRequest *cha
 	return c, nil
 }
 
-func (f *FileClient) UpdateSloChart(ctx context.Context, id string, chartRequest *chart.CreateUpdateSloChartRequest) (*chart.Chart, error) {
+func (f *FileClient) UpdateSloChart(context.Context, string, *chart.CreateUpdateSloChartRequest) (*chart.Chart, error) {
 	panic("unsupported")
 }
 
-func (f *FileClient) ValidateChart(ctx context.Context, chartRequest *chart.CreateUpdateChartRequest) error {
+func (f *FileClient) ValidateChart(context.Context, *chart.CreateUpdateChartRequest) error {
 	return nil
 }
 
@@ -112,7 +111,7 @@ func (f *FileClient) CreateWebhookIntegration(ctx context.Context, oi *integrati
 	return f.UpdateWebhookIntegration(ctx, id, oi)
 }
 
-func (f *FileClient) GetWebhookIntegration(ctx context.Context, id string) (*integration.WebhookIntegration, error) {
+func (f *FileClient) GetWebhookIntegration(_ context.Context, id string) (*integration.WebhookIntegration, error) {
 	path := filepath.Join(f.BaseDir, "webhook_integrations", fmt.Sprintf("%s.json", id))
 	b, err := os.ReadFile(path)
 	if err != nil {
@@ -123,7 +122,7 @@ func (f *FileClient) GetWebhookIntegration(ctx context.Context, id string) (*int
 	return &i, err
 }
 
-func (f *FileClient) UpdateWebhookIntegration(ctx context.Context, id string, oi *integration.WebhookIntegration) (*integration.WebhookIntegration, error) {
+func (f *FileClient) UpdateWebhookIntegration(_ context.Context, id string, oi *integration.WebhookIntegration) (*integration.WebhookIntegration, error) {
 	path := filepath.Join(f.BaseDir, "webhook_integrations", fmt.Sprintf("%s.json", id))
 	oi.Id = id
 	b, err := json.Marshal(oi)
@@ -146,12 +145,12 @@ func (f *FileClient) CreateDashboard(ctx context.Context, dashboardRequest *dash
 	return f.UpdateDashboard(ctx, id, dashboardRequest)
 }
 
-func (f *FileClient) DeleteDashboard(ctx context.Context, id string) error {
+func (f *FileClient) DeleteDashboard(_ context.Context, id string) error {
 	path := filepath.Join(f.BaseDir, "dashboards", fmt.Sprintf("%s.json", id))
 	return os.Remove(path)
 }
 
-func (f FileClient) GetDashboard(ctx context.Context, id string) (*dashboard.Dashboard, error) {
+func (f *FileClient) GetDashboard(_ context.Context, id string) (*dashboard.Dashboard, error) {
 	path := filepath.Join(f.BaseDir, "dashboards", fmt.Sprintf("%s.json", id))
 	b, err := os.ReadFile(path)
 	if err != nil {
@@ -162,7 +161,7 @@ func (f FileClient) GetDashboard(ctx context.Context, id string) (*dashboard.Das
 	return &d, err
 }
 
-func (f *FileClient) UpdateDashboard(ctx context.Context, id string, dashboardRequest *dashboard.CreateUpdateDashboardRequest) (*dashboard.Dashboard, error) {
+func (f *FileClient) UpdateDashboard(_ context.Context, id string, dashboardRequest *dashboard.CreateUpdateDashboardRequest) (*dashboard.Dashboard, error) {
 	path := filepath.Join(f.BaseDir, "dashboards", fmt.Sprintf("%s.json", id))
 	d := &dashboard.Dashboard{
 		AuthorizedWriters:     dashboardRequest.AuthorizedWriters,
@@ -196,32 +195,12 @@ func (f *FileClient) UpdateDashboard(ctx context.Context, id string, dashboardRe
 	return d, nil
 }
 
-func (f *FileClient) ValidateDashboard(ctx context.Context, dashboardRequest *dashboard.CreateUpdateDashboardRequest) error {
+func (f *FileClient) ValidateDashboard(context.Context, *dashboard.CreateUpdateDashboardRequest) error {
 	panic("unsupported")
 }
 
-func (f *FileClient) ValidateDashboardWithMode(ctx context.Context, dashboardRequest *dashboard.CreateUpdateDashboardRequest, validationMode signalfx.VisualizationObjectsValidation) error {
+func (f *FileClient) ValidateDashboardWithMode(context.Context, *dashboard.CreateUpdateDashboardRequest, signalfx.VisualizationObjectsValidation) error {
 	panic("unsupported")
-}
-
-func (f *FileClient) SearchDashboard(ctx context.Context, limit int, name string, offset int, tags string) (*dashboard.SearchResult, error) {
-	panic("unsupported")
-}
-
-func (f *FileClient) CreateGCPIntegration(ctx context.Context, gcpi *integration.GCPIntegration) (*integration.GCPIntegration, error) {
-	panic("implement me")
-}
-
-func (f *FileClient) GetGCPIntegration(ctx context.Context, id string) (*integration.GCPIntegration, error) {
-	panic("implement me")
-}
-
-func (f *FileClient) UpdateGCPIntegration(ctx context.Context, id string, gcpi *integration.GCPIntegration) (*integration.GCPIntegration, error) {
-	panic("implement me")
-}
-
-func (f *FileClient) DeleteGCPIntegration(_ context.Context, _ string) error {
-	panic("implement me")
 }
 
 func (f *FileClient) CreateDashboardGroup(ctx context.Context, dashboardGroupRequest *dashboard_group.CreateUpdateDashboardGroupRequest, skipImplicitDashboard bool) (*dashboard_group.DashboardGroup, error) {
@@ -272,27 +251,327 @@ func (f *FileClient) UpdateDashboardGroup(_ context.Context, id string, dashboar
 	return d, nil
 }
 
-func (f *FileClient) ListBuiltInDashboardGroups(_ context.Context, _ int, _ int) (*dashboard_group.SearchResult, error) {
+func (f *FileClient) GetBigPandaIntegration(ctx context.Context, id string) (*integration.BigPandaIntegration, error) {
 	panic("unsupported")
 }
 
-func (f *FileClient) CreateJiraIntegration(_ context.Context, _ *integration.JiraIntegration) (*integration.JiraIntegration, error) {
+func (f *FileClient) UpdateBigPandaIntegration(ctx context.Context, id string, in *integration.BigPandaIntegration) (*integration.BigPandaIntegration, error) {
 	panic("unsupported")
 }
 
-func (f *FileClient) GetJiraIntegration(_ context.Context, _ string) (*integration.JiraIntegration, error) {
+func (f *FileClient) DeleteBigPandaIntegration(ctx context.Context, id string) error {
 	panic("unsupported")
 }
 
-func (f *FileClient) UpdateJiraIntegration(_ context.Context, _ string, _ *integration.JiraIntegration) (*integration.JiraIntegration, error) {
+func (f *FileClient) CreateServiceNowIntegration(ctx context.Context, in *integration.ServiceNowIntegration) (*integration.ServiceNowIntegration, error) {
 	panic("unsupported")
 }
 
-func (f *FileClient) DeleteJiraIntegration(_ context.Context, _ string) error {
+func (f *FileClient) GetServiceNowIntegration(ctx context.Context, id string) (*integration.ServiceNowIntegration, error) {
 	panic("unsupported")
 }
 
-func (f FileClient) GetSlo(ctx context.Context, id string) (*slo.SloObject, error) {
+func (f *FileClient) UpdateServiceNowIntegration(ctx context.Context, id string, in *integration.ServiceNowIntegration) (*integration.ServiceNowIntegration, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) DeleteServiceNowIntegration(ctx context.Context, id string) error {
+	panic("unsupported")
+}
+
+func (f *FileClient) CreateOpsgenieIntegration(ctx context.Context, oi *integration.OpsgenieIntegration) (*integration.OpsgenieIntegration, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) GetOpsgenieIntegration(ctx context.Context, id string) (*integration.OpsgenieIntegration, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) UpdateOpsgenieIntegration(ctx context.Context, id string, oi *integration.OpsgenieIntegration) (*integration.OpsgenieIntegration, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) DeleteOpsgenieIntegration(ctx context.Context, id string) error {
+	panic("unsupported")
+}
+
+func (f *FileClient) CreateAWSCloudWatchIntegration(ctx context.Context, acwi *integration.AwsCloudWatchIntegration) (*integration.AwsCloudWatchIntegration, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) GetAWSCloudWatchIntegration(ctx context.Context, id string) (*integration.AwsCloudWatchIntegration, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) UpdateAWSCloudWatchIntegration(ctx context.Context, id string, acwi *integration.AwsCloudWatchIntegration) (*integration.AwsCloudWatchIntegration, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) DeleteAWSCloudWatchIntegration(ctx context.Context, id string) error {
+	panic("unsupported")
+}
+
+func (f *FileClient) CreateAlertMutingRule(ctx context.Context, muteRequest *alertmuting.CreateUpdateAlertMutingRuleRequest) (*alertmuting.AlertMutingRule, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) DeleteAlertMutingRule(ctx context.Context, name string) error {
+	panic("unsupported")
+}
+
+func (f *FileClient) GetAlertMutingRule(ctx context.Context, id string) (*alertmuting.AlertMutingRule, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) UpdateAlertMutingRule(ctx context.Context, id string, muteRequest *alertmuting.CreateUpdateAlertMutingRuleRequest) (*alertmuting.AlertMutingRule, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) CreatePagerDutyIntegration(ctx context.Context, pdi *integration.PagerDutyIntegration) (*integration.PagerDutyIntegration, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) GetPagerDutyIntegration(ctx context.Context, id string) (*integration.PagerDutyIntegration, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) GetPagerDutyIntegrationByName(ctx context.Context, name string) (*integration.PagerDutyIntegration, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) UpdatePagerDutyIntegration(ctx context.Context, id string, pdi *integration.PagerDutyIntegration) (*integration.PagerDutyIntegration, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) DeletePagerDutyIntegration(ctx context.Context, id string) error {
+	panic("unsupported")
+}
+
+func (f *FileClient) CreateDetector(ctx context.Context, detectorRequest *detector.CreateUpdateDetectorRequest) (*detector.Detector, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) DeleteDetector(ctx context.Context, id string) error {
+	panic("unsupported")
+}
+
+func (f *FileClient) GetDetector(ctx context.Context, id string) (*detector.Detector, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) GetDetectors(ctx context.Context, limit int, name string, offset int) ([]*detector.Detector, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) UpdateDetector(ctx context.Context, id string, detectorRequest *detector.CreateUpdateDetectorRequest) (*detector.Detector, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) SearchDetectors(ctx context.Context, limit int, name string, offset int, tags string) (*detector.SearchResults, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) GetDetectorEvents(ctx context.Context, id string, from int, to int, offset int, limit int) ([]*detector.Event, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) GetDetectorIncidents(ctx context.Context, id string, offset int, limit int) ([]*detector.Incident, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) ValidateDetector(ctx context.Context, detectorRequest *detector.ValidateDetectorRequestModel) error {
+	panic("unsupported")
+}
+
+func (f *FileClient) CreateTeam(ctx context.Context, t *team.CreateUpdateTeamRequest) (*team.Team, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) DeleteTeam(ctx context.Context, id string) error {
+	panic("unsupported")
+}
+
+func (f *FileClient) GetTeam(ctx context.Context, id string) (*team.Team, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) UpdateTeam(ctx context.Context, id string, t *team.CreateUpdateTeamRequest) (*team.Team, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) GetMetricRuleset(ctx context.Context, id string) (*metric_ruleset.GetMetricRulesetResponse, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) CreateMetricRuleset(ctx context.Context, metricRuleset *metric_ruleset.CreateMetricRulesetRequest) (*metric_ruleset.CreateMetricRulesetResponse, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) UpdateMetricRuleset(ctx context.Context, id string, metricRuleset *metric_ruleset.UpdateMetricRulesetRequest) (*metric_ruleset.UpdateMetricRulesetResponse, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) DeleteMetricRuleset(ctx context.Context, id string) error {
+	panic("unsupported")
+}
+
+func (f *FileClient) GenerateAggregationMetricName(ctx context.Context, generateAggregationNameRequest metric_ruleset.GenerateAggregationNameRequest) (string, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) CreateDataLink(ctx context.Context, dataLinkRequest *datalink.CreateUpdateDataLinkRequest) (*datalink.DataLink, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) DeleteDataLink(ctx context.Context, id string) error {
+	panic("unsupported")
+}
+
+func (f *FileClient) GetDataLink(ctx context.Context, id string) (*datalink.DataLink, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) UpdateDataLink(ctx context.Context, id string, dataLinkRequest *datalink.CreateUpdateDataLinkRequest) (*datalink.DataLink, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) SearchDataLinks(ctx context.Context, limit int, context string, offset int) (*datalink.SearchResults, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) GetIntegration(ctx context.Context, id string) (map[string]interface{}, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) DeleteIntegration(ctx context.Context, id string) error {
+	panic("unsupported")
+}
+
+func (f *FileClient) CreateVictorOpsIntegration(ctx context.Context, oi *integration.VictorOpsIntegration) (*integration.VictorOpsIntegration, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) GetVictorOpsIntegration(ctx context.Context, id string) (*integration.VictorOpsIntegration, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) UpdateVictorOpsIntegration(ctx context.Context, id string, oi *integration.VictorOpsIntegration) (*integration.VictorOpsIntegration, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) DeleteVictorOpsIntegration(ctx context.Context, id string) error {
+	panic("unsupported")
+}
+
+func (f *FileClient) GetSettings(ctx context.Context) (*automated_archival.AutomatedArchivalSettings, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) CreateSettings(ctx context.Context, settings *automated_archival.AutomatedArchivalSettings) (*automated_archival.AutomatedArchivalSettings, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) UpdateSettings(ctx context.Context, settings *automated_archival.AutomatedArchivalSettings) (*automated_archival.AutomatedArchivalSettings, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) DeleteSettings(ctx context.Context, deleteSettingsRequest *automated_archival.AutomatedArchivalSettingsDeleteRequest) error {
+	panic("unsupported")
+}
+
+func (f *FileClient) GetExemptMetrics(ctx context.Context) (*[]automated_archival.ExemptMetric, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) CreateExemptMetrics(ctx context.Context, exemptMetrics *[]automated_archival.ExemptMetric) (*[]automated_archival.ExemptMetric, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) DeleteExemptMetrics(ctx context.Context, deleteExemptMetricsRequest *automated_archival.ExemptMetricDeleteRequest) error {
+	panic("unsupported")
+}
+
+func (f *FileClient) CreateAzureIntegration(context.Context, *integration.AzureIntegration) (*integration.AzureIntegration, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) GetAzureIntegration(context.Context, string) (*integration.AzureIntegration, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) UpdateAzureIntegration(context.Context, string, *integration.AzureIntegration) (*integration.AzureIntegration, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) DeleteAzureIntegration(context.Context, string) error {
+	panic("unsupported")
+}
+
+func (f *FileClient) CreateSlackIntegration(context.Context, *integration.SlackIntegration) (*integration.SlackIntegration, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) GetSlackIntegration(context.Context, string) (*integration.SlackIntegration, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) UpdateSlackIntegration(context.Context, string, *integration.SlackIntegration) (*integration.SlackIntegration, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) DeleteSlackIntegration(context.Context, string) error {
+	panic("unsupported")
+}
+
+func (f *FileClient) CreateOrgToken(context.Context, *orgtoken.CreateUpdateTokenRequest) (*orgtoken.Token, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) DeleteOrgToken(ctx context.Context, name string) error {
+	panic("unsupported")
+}
+
+func (f *FileClient) GetOrgToken(ctx context.Context, id string) (*orgtoken.Token, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) CreateGCPIntegration(ctx context.Context, gcpi *integration.GCPIntegration) (*integration.GCPIntegration, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) GetGCPIntegration(ctx context.Context, id string) (*integration.GCPIntegration, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) UpdateGCPIntegration(ctx context.Context, id string, gcpi *integration.GCPIntegration) (*integration.GCPIntegration, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) DeleteGCPIntegration(ctx context.Context, id string) error {
+	panic("unsupported")
+}
+
+func (f *FileClient) ListBuiltInDashboardGroups(ctx context.Context, limit int, offset int) (*dashboard_group.SearchResult, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) CreateJiraIntegration(ctx context.Context, ji *integration.JiraIntegration) (*integration.JiraIntegration, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) GetJiraIntegration(ctx context.Context, id string) (*integration.JiraIntegration, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) UpdateJiraIntegration(ctx context.Context, id string, ji *integration.JiraIntegration) (*integration.JiraIntegration, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) DeleteJiraIntegration(ctx context.Context, id string) error {
+	panic("unsupported")
+}
+
+func (f *FileClient) GetSlo(ctx context.Context, id string) (*slo.SloObject, error) {
 	panic("unsupported")
 }
 
@@ -300,319 +579,18 @@ func (f *FileClient) CreateSlo(ctx context.Context, sloRequest *slo.SloObject) (
 	panic("unsupported")
 }
 
-func (f FileClient) ValidateSlo(ctx context.Context, sloRequest *slo.SloObject) error {
+func (f *FileClient) ValidateSlo(ctx context.Context, sloRequest *slo.SloObject) error {
 	panic("unsupported")
 }
 
-func (f FileClient) UpdateSlo(ctx context.Context, id string, sloRequest *slo.SloObject) (*slo.SloObject, error) {
+func (f *FileClient) UpdateSlo(ctx context.Context, id string, sloRequest *slo.SloObject) (*slo.SloObject, error) {
 	panic("unsupported")
 }
 
-func (f FileClient) DeleteSlo(ctx context.Context, id string) error {
+func (f *FileClient) DeleteSlo(ctx context.Context, id string) error {
 	panic("unsupported")
 }
 
-func (f FileClient) CreateBigPandaIntegration(ctx context.Context, in *integration.BigPandaIntegration) (*integration.BigPandaIntegration, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) GetBigPandaIntegration(ctx context.Context, id string) (*integration.BigPandaIntegration, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) UpdateBigPandaIntegration(ctx context.Context, id string, in *integration.BigPandaIntegration) (*integration.BigPandaIntegration, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) DeleteBigPandaIntegration(ctx context.Context, id string) error {
-	panic("unsupported")
-}
-
-func (f FileClient) CreateServiceNowIntegration(ctx context.Context, in *integration.ServiceNowIntegration) (*integration.ServiceNowIntegration, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) GetServiceNowIntegration(ctx context.Context, id string) (*integration.ServiceNowIntegration, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) UpdateServiceNowIntegration(ctx context.Context, id string, in *integration.ServiceNowIntegration) (*integration.ServiceNowIntegration, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) DeleteServiceNowIntegration(ctx context.Context, id string) error {
-	panic("unsupported")
-}
-
-func (f FileClient) CreateOpsgenieIntegration(ctx context.Context, oi *integration.OpsgenieIntegration) (*integration.OpsgenieIntegration, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) GetOpsgenieIntegration(ctx context.Context, id string) (*integration.OpsgenieIntegration, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) UpdateOpsgenieIntegration(ctx context.Context, id string, oi *integration.OpsgenieIntegration) (*integration.OpsgenieIntegration, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) DeleteOpsgenieIntegration(ctx context.Context, id string) error {
-	panic("unsupported")
-}
-
-func (f FileClient) CreateAWSCloudWatchIntegration(ctx context.Context, acwi *integration.AwsCloudWatchIntegration) (*integration.AwsCloudWatchIntegration, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) GetAWSCloudWatchIntegration(ctx context.Context, id string) (*integration.AwsCloudWatchIntegration, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) UpdateAWSCloudWatchIntegration(ctx context.Context, id string, acwi *integration.AwsCloudWatchIntegration) (*integration.AwsCloudWatchIntegration, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) DeleteAWSCloudWatchIntegration(ctx context.Context, id string) error {
-	panic("unsupported")
-}
-
-func (f FileClient) CreateAlertMutingRule(ctx context.Context, muteRequest *alertmuting.CreateUpdateAlertMutingRuleRequest) (*alertmuting.AlertMutingRule, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) DeleteAlertMutingRule(ctx context.Context, name string) error {
-	panic("unsupported")
-}
-
-func (f FileClient) GetAlertMutingRule(ctx context.Context, id string) (*alertmuting.AlertMutingRule, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) UpdateAlertMutingRule(ctx context.Context, id string, muteRequest *alertmuting.CreateUpdateAlertMutingRuleRequest) (*alertmuting.AlertMutingRule, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) CreatePagerDutyIntegration(ctx context.Context, pdi *integration.PagerDutyIntegration) (*integration.PagerDutyIntegration, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (f FileClient) GetPagerDutyIntegration(ctx context.Context, id string) (*integration.PagerDutyIntegration, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) GetPagerDutyIntegrationByName(ctx context.Context, name string) (*integration.PagerDutyIntegration, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) UpdatePagerDutyIntegration(ctx context.Context, id string, pdi *integration.PagerDutyIntegration) (*integration.PagerDutyIntegration, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) DeletePagerDutyIntegration(ctx context.Context, id string) error {
-	panic("unsupported")
-}
-
-func (f FileClient) CreateDetector(ctx context.Context, detectorRequest *detector.CreateUpdateDetectorRequest) (*detector.Detector, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) DeleteDetector(ctx context.Context, id string) error {
-	panic("unsupported")
-}
-
-func (f FileClient) GetDetector(ctx context.Context, id string) (*detector.Detector, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) GetDetectors(ctx context.Context, limit int, name string, offset int) ([]*detector.Detector, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) UpdateDetector(ctx context.Context, id string, detectorRequest *detector.CreateUpdateDetectorRequest) (*detector.Detector, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) SearchDetectors(ctx context.Context, limit int, name string, offset int, tags string) (*detector.SearchResults, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) GetDetectorEvents(ctx context.Context, id string, from int, to int, offset int, limit int) ([]*detector.Event, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) GetDetectorIncidents(ctx context.Context, id string, offset int, limit int) ([]*detector.Incident, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) ValidateDetector(ctx context.Context, detectorRequest *detector.ValidateDetectorRequestModel) error {
-	panic("unsupported")
-}
-
-func (f FileClient) CreateTeam(ctx context.Context, t *team.CreateUpdateTeamRequest) (*team.Team, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) DeleteTeam(ctx context.Context, id string) error {
-	panic("unsupported")
-}
-
-func (f FileClient) GetTeam(ctx context.Context, id string) (*team.Team, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) UpdateTeam(ctx context.Context, id string, t *team.CreateUpdateTeamRequest) (*team.Team, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) GetMetricRuleset(ctx context.Context, id string) (*metric_ruleset.GetMetricRulesetResponse, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) CreateMetricRuleset(ctx context.Context, metricRuleset *metric_ruleset.CreateMetricRulesetRequest) (*metric_ruleset.CreateMetricRulesetResponse, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) UpdateMetricRuleset(ctx context.Context, id string, metricRuleset *metric_ruleset.UpdateMetricRulesetRequest) (*metric_ruleset.UpdateMetricRulesetResponse, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) DeleteMetricRuleset(ctx context.Context, id string) error {
-	panic("unsupported")
-}
-
-func (f FileClient) GenerateAggregationMetricName(ctx context.Context, generateAggregationNameRequest metric_ruleset.GenerateAggregationNameRequest) (string, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) CreateDataLink(ctx context.Context, dataLinkRequest *datalink.CreateUpdateDataLinkRequest) (*datalink.DataLink, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) DeleteDataLink(ctx context.Context, id string) error {
-	panic("unsupported")
-}
-
-func (f FileClient) GetDataLink(ctx context.Context, id string) (*datalink.DataLink, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) UpdateDataLink(ctx context.Context, id string, dataLinkRequest *datalink.CreateUpdateDataLinkRequest) (*datalink.DataLink, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) SearchDataLinks(ctx context.Context, limit int, context string, offset int) (*datalink.SearchResults, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) GetIntegration(ctx context.Context, id string) (map[string]interface{}, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) DeleteIntegration(ctx context.Context, id string) error {
-	panic("unsupported")
-}
-
-func (f FileClient) CreateVictorOpsIntegration(ctx context.Context, oi *integration.VictorOpsIntegration) (*integration.VictorOpsIntegration, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) GetVictorOpsIntegration(ctx context.Context, id string) (*integration.VictorOpsIntegration, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) UpdateVictorOpsIntegration(ctx context.Context, id string, oi *integration.VictorOpsIntegration) (*integration.VictorOpsIntegration, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) DeleteVictorOpsIntegration(ctx context.Context, id string) error {
-	panic("unsupported")
-}
-
-func (f FileClient) GetSettings(ctx context.Context) (*automated_archival.AutomatedArchivalSettings, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) CreateSettings(ctx context.Context, settings *automated_archival.AutomatedArchivalSettings) (*automated_archival.AutomatedArchivalSettings, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) UpdateSettings(ctx context.Context, settings *automated_archival.AutomatedArchivalSettings) (*automated_archival.AutomatedArchivalSettings, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) DeleteSettings(ctx context.Context, deleteSettingsRequest *automated_archival.AutomatedArchivalSettingsDeleteRequest) error {
-	panic("unsupported")
-}
-
-func (f FileClient) GetExemptMetrics(ctx context.Context) (*[]automated_archival.ExemptMetric, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) CreateExemptMetrics(ctx context.Context, exemptMetrics *[]automated_archival.ExemptMetric) (*[]automated_archival.ExemptMetric, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) DeleteExemptMetrics(ctx context.Context, deleteExemptMetricsRequest *automated_archival.ExemptMetricDeleteRequest) error {
-	panic("unsupported")
-}
-
-func (f FileClient) GetDimension(ctx context.Context, key string, value string) (*metrics_metadata.Dimension, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) UpdateDimension(ctx context.Context, key string, value string, dim *metrics_metadata.Dimension) (*metrics_metadata.Dimension, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) SearchDimension(ctx context.Context, query string, orderBy string, limit int, offset int) (*metrics_metadata.DimensionQueryResponseModel, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) SearchMetric(ctx context.Context, query string, orderBy string, limit int, offset int) (*metrics_metadata.RetrieveMetricMetadataResponseModel, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) CreateAzureIntegration(ctx context.Context, acwi *integration.AzureIntegration) (*integration.AzureIntegration, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) GetAzureIntegration(ctx context.Context, id string) (*integration.AzureIntegration, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) UpdateAzureIntegration(ctx context.Context, id string, acwi *integration.AzureIntegration) (*integration.AzureIntegration, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) DeleteAzureIntegration(ctx context.Context, id string) error {
-	panic("unsupported")
-}
-
-func (f FileClient) CreateSlackIntegration(ctx context.Context, si *integration.SlackIntegration) (*integration.SlackIntegration, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) GetSlackIntegration(ctx context.Context, id string) (*integration.SlackIntegration, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) UpdateSlackIntegration(ctx context.Context, id string, si *integration.SlackIntegration) (*integration.SlackIntegration, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) DeleteSlackIntegration(ctx context.Context, id string) error {
-	panic("unsupported")
-}
-
-func (f FileClient) CreateOrgToken(ctx context.Context, tokenRequest *orgtoken.CreateUpdateTokenRequest) (*orgtoken.Token, error) {
-	panic("unsupported")
-}
-
-func (f FileClient) DeleteOrgToken(ctx context.Context, name string) error {
-	panic("unsupported")
-}
-
-func (f FileClient) GetOrgToken(ctx context.Context, id string) (*orgtoken.Token, error) {
+func (f *FileClient) CreateBigPandaIntegration(ctx context.Context, in *integration.BigPandaIntegration) (*integration.BigPandaIntegration, error) {
 	panic("unsupported")
 }
