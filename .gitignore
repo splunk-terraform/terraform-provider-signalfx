@@ -14,5 +14,4 @@ dist
 
 # Generated files/directories as a result of CI/tooling actions
 /coverage
-/coverage.txt
 /.tools
