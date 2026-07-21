@@ -18,13 +18,7 @@ func TestExistingResourcesRejectInvalidFrameworkData(t *testing.T) {
 
 	for _, test := range []struct {
 		name           string
-		implementation interface {
-			Schema(context.Context, resource.SchemaRequest, *resource.SchemaResponse)
-			Create(context.Context, resource.CreateRequest, *resource.CreateResponse)
-			Read(context.Context, resource.ReadRequest, *resource.ReadResponse)
-			Update(context.Context, resource.UpdateRequest, *resource.UpdateResponse)
-			Delete(context.Context, resource.DeleteRequest, *resource.DeleteResponse)
-		}
+		implementation resource.Resource
 	}{
 		{name: "BigPanda", implementation: &ResourceBigPanda{}},
 		{name: "Splunk On-Call", implementation: &ResourceSplunkOncall{}},
