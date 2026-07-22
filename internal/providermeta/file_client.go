@@ -55,7 +55,7 @@ func (f *FileClient) DeleteSessionToken(context.Context, string) error {
 }
 
 func createID() string {
-	var b []byte
+	b := make([]byte, 12)
 	for i := range 12 {
 		randomInt := rand.IntN(63)
 		b[i] = byte(randomInt)
@@ -90,6 +90,9 @@ func (f *FileClient) GetChart(_ context.Context, id string) (*chart.Chart, error
 
 func (f *FileClient) UpdateChart(_ context.Context, id string, chartRequest *chart.CreateUpdateChartRequest) (*chart.Chart, error) {
 	path := filepath.Join(f.BaseDir, "charts", fmt.Sprintf("%s.json", id))
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		return nil, err
+	}
 	c := &chart.Chart{
 		Description:           chartRequest.Description,
 		Id:                    id,
@@ -102,7 +105,7 @@ func (f *FileClient) UpdateChart(_ context.Context, id string, chartRequest *cha
 		Tags:                  chartRequest.Tags,
 		SloId:                 "",
 	}
-	b, err := json.Marshal(chartRequest)
+	b, err := json.MarshalIndent(chartRequest, "", "  ")
 	if err != nil {
 		return nil, err
 	}
@@ -138,8 +141,11 @@ func (f *FileClient) GetWebhookIntegration(_ context.Context, id string) (*integ
 
 func (f *FileClient) UpdateWebhookIntegration(_ context.Context, id string, oi *integration.WebhookIntegration) (*integration.WebhookIntegration, error) {
 	path := filepath.Join(f.BaseDir, "webhook_integrations", fmt.Sprintf("%s.json", id))
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		return nil, err
+	}
 	oi.Id = id
-	b, err := json.Marshal(oi)
+	b, err := json.MarshalIndent(oi, "", "  ")
 	if err != nil {
 		return nil, err
 	}
@@ -177,6 +183,9 @@ func (f *FileClient) GetDashboard(_ context.Context, id string) (*dashboard.Dash
 
 func (f *FileClient) UpdateDashboard(_ context.Context, id string, dashboardRequest *dashboard.CreateUpdateDashboardRequest) (*dashboard.Dashboard, error) {
 	path := filepath.Join(f.BaseDir, "dashboards", fmt.Sprintf("%s.json", id))
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		return nil, err
+	}
 	d := &dashboard.Dashboard{
 		AuthorizedWriters:     dashboardRequest.AuthorizedWriters,
 		Permissions:           dashboardRequest.Permissions,
@@ -199,7 +208,7 @@ func (f *FileClient) UpdateDashboard(_ context.Context, id string, dashboardRequ
 		SelectedEventOverlays: dashboardRequest.SelectedEventOverlays,
 		Tags:                  dashboardRequest.Tags,
 	}
-	b, err := json.Marshal(d)
+	b, err := json.MarshalIndent(d, "", "  ")
 	if err != nil {
 		return nil, err
 	}
@@ -240,6 +249,9 @@ func (f *FileClient) GetDashboardGroup(_ context.Context, id string) (*dashboard
 
 func (f *FileClient) UpdateDashboardGroup(_ context.Context, id string, dashboardGroupRequest *dashboard_group.CreateUpdateDashboardGroupRequest) (*dashboard_group.DashboardGroup, error) {
 	path := filepath.Join(f.BaseDir, "dashboard_groups", fmt.Sprintf("%s.json", id))
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		return nil, err
+	}
 	d := &dashboard_group.DashboardGroup{
 		AuthorizedWriters: dashboardGroupRequest.AuthorizedWriters,
 		Permissions:       dashboardGroupRequest.Permissions,
@@ -255,7 +267,7 @@ func (f *FileClient) UpdateDashboardGroup(_ context.Context, id string, dashboar
 		Name:              dashboardGroupRequest.Name,
 		Teams:             dashboardGroupRequest.Teams,
 	}
-	b, err := json.Marshal(d)
+	b, err := json.MarshalIndent(d, "", "  ")
 	if err != nil {
 		return nil, err
 	}
