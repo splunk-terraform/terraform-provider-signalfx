@@ -20,6 +20,8 @@ import (
 	"github.com/signalfx/signalfx-go/detector"
 	"github.com/signalfx/signalfx-go/integration"
 	"github.com/signalfx/signalfx-go/metric_ruleset"
+	"github.com/signalfx/signalfx-go/metrics_metadata"
+	"github.com/signalfx/signalfx-go/organization"
 	"github.com/signalfx/signalfx-go/orgtoken"
 	"github.com/signalfx/signalfx-go/sessiontoken"
 	"github.com/signalfx/signalfx-go/slo"
@@ -30,6 +32,18 @@ var _ Client = &FileClient{}
 
 type FileClient struct {
 	BaseDir string
+}
+
+func (f *FileClient) GetOrganizationMembers(ctx context.Context, limit int, query string, offset int, orderBy string) (*organization.MemberSearchResults, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) SearchDimension(context.Context, string, string, int, int) (*metrics_metadata.DimensionQueryResponseModel, error) {
+	panic("unsupported")
+}
+
+func (f *FileClient) UpdateOrgToken(context.Context, string, *orgtoken.CreateUpdateTokenRequest) (*orgtoken.Token, error) {
+	panic("unsupported")
 }
 
 func (f *FileClient) CreateSessionToken(_ context.Context, _ *sessiontoken.CreateTokenRequest) (*sessiontoken.Token, error) {

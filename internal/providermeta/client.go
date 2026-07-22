@@ -13,6 +13,8 @@ import (
 	"github.com/signalfx/signalfx-go/detector"
 	"github.com/signalfx/signalfx-go/integration"
 	"github.com/signalfx/signalfx-go/metric_ruleset"
+	"github.com/signalfx/signalfx-go/metrics_metadata"
+	"github.com/signalfx/signalfx-go/organization"
 	"github.com/signalfx/signalfx-go/orgtoken"
 	"github.com/signalfx/signalfx-go/sessiontoken"
 	"github.com/signalfx/signalfx-go/slo"
@@ -129,4 +131,7 @@ type Client interface {
 	CreateOrgToken(ctx context.Context, tokenRequest *orgtoken.CreateUpdateTokenRequest) (*orgtoken.Token, error)
 	DeleteOrgToken(ctx context.Context, name string) error
 	GetOrgToken(ctx context.Context, id string) (*orgtoken.Token, error)
+	UpdateOrgToken(ctx context.Context, id string, tokenRequest *orgtoken.CreateUpdateTokenRequest) (*orgtoken.Token, error)
+	SearchDimension(ctx context.Context, query string, orderBy string, limit int, offset int) (*metrics_metadata.DimensionQueryResponseModel, error)
+	GetOrganizationMembers(ctx context.Context, limit int, query string, offset int, orderBy string) (*organization.MemberSearchResults, error)
 }
