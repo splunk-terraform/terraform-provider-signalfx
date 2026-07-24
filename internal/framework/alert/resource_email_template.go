@@ -167,6 +167,13 @@ func (et *ResourceEmailTemplate) Update(ctx context.Context, req resource.Update
 		return
 	}
 
+	var prior emailTemplateModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &prior)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	model.ID = prior.ID
+
 	payload, diags := model.toEmailTemplate(ctx)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
