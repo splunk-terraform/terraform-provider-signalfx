@@ -127,6 +127,7 @@ func TestProviderResource(t *testing.T) {
 	expect := map[string]struct{}{
 		"signalfx_alert_muting_rule":     {},
 		"signalfx_big_panda_integration": {},
+		"signalfx_email_template":        {},
 	}
 
 	actual := p.Resources(context.Background())
