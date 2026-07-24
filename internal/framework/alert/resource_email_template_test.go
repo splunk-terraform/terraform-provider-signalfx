@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"sync"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -45,6 +46,11 @@ func TestResourceEmailTemplateSchema(t *testing.T) {
 func TestResourceEmailTemplateUnitTest(t *testing.T) {
 	t.Parallel()
 
+	var (
+		current emailtemplate.EmailTemplate
+		mu      sync.Mutex
+	)
+
 	endpoints := map[string]http.Handler{
 		"POST /v2/alert/emailtemplate": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			var data emailtemplate.EmailTemplate
@@ -68,28 +74,21 @@ func TestResourceEmailTemplateUnitTest(t *testing.T) {
 			data.CreatedBy = "creator@example.com"
 			data.UpdatedOnMs = 1720000000000
 			data.UpdatedBy = "creator@example.com"
+
+			mu.Lock()
+			current = data
+			mu.Unlock()
+
 			w.WriteHeader(http.StatusCreated)
 			if err := json.NewEncoder(w).Encode(data); err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
 		}),
 		"GET /v2/alert/emailtemplate/template-id": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			data := emailtemplate.EmailTemplate{
-				Id:              "template-id",
-				Name:            "Detector Alert Email",
-				TriggerSubject:  "Triggered: {{{detectorName}}}",
-				TriggerBody:     "Alert body {{{messageTitle}}}",
-				ResolvedSubject: "Resolved: {{{detectorName}}}",
-				ResolvedBody:    "Resolved body {{{messageTitle}}}",
-				To:              []string{"primary@example.com"},
-				Cc:              []string{"team@example.com"},
-				Bcc:             []string{"audit@example.com"},
-				CustomHeaders:   map[string]string{"X-SFX-Template": "detector"},
-				CreatedOnMs:     1720000000000,
-				CreatedBy:       "creator@example.com",
-				UpdatedOnMs:     1720000000000,
-				UpdatedBy:       "creator@example.com",
-			}
+			mu.Lock()
+			data := current
+			mu.Unlock()
+
 			if err := json.NewEncoder(w).Encode(data); err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
@@ -112,6 +111,11 @@ func TestResourceEmailTemplateUnitTest(t *testing.T) {
 			data.CreatedBy = "creator@example.com"
 			data.UpdatedOnMs = 1720000001000
 			data.UpdatedBy = "updater@example.com"
+
+			mu.Lock()
+			current = data
+			mu.Unlock()
+
 			if err := json.NewEncoder(w).Encode(data); err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
