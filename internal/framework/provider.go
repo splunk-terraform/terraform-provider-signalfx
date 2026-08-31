@@ -121,6 +121,10 @@ func (op *ollyProvider) Schema(ctx context.Context, req provider.SchemaRequest, 
 				Optional:    true,
 				Description: "Allows for teams to be defined at a provider level, and apply to all applicable resources created.",
 			},
+			"file_output": schema.StringAttribute{
+				Optional:    true,
+				Description: "Instead of sending data to the API, write the output to disk",
+			},
 		},
 	}
 }

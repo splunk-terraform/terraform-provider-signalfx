@@ -139,6 +139,14 @@ func Provider() *schema.Provider {
 				Optional:    true,
 				Description: "Allows for teams to be defined at a provider level, and apply to all applicable resources created.",
 			},
+			"file_output": {
+				Type: schema.TypeString,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+				Optional:    true,
+				Description: "Instead of sending data to the API, write the output to disk",
+			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"signalfx_dimension_values":      dataSourceDimensionValues(),
@@ -266,39 +274,47 @@ func signalfxConfigure(data *schema.ResourceData) (interface{}, error) {
 	pv := version.ProviderVersion
 	providerUserAgent := fmt.Sprintf("Terraform/%s terraform-provider-signalfx/%s", sfxProvider.TerraformVersion, pv)
 
-	totalTimeoutSeconds := data.Get("timeout_seconds").(int)
-	retryMaxAttempts := data.Get("retry_max_attempts").(int)
-	retryWaitMinSeconds := data.Get("retry_wait_min_seconds").(int)
-	retryWaitMaxSeconds := data.Get("retry_wait_max_seconds").(int)
-	log.Printf("[DEBUG] SignalFx: HTTP Timeout is %d seconds", totalTimeoutSeconds)
-	log.Printf("[DEBUG] SignalFx: HTTP max retry attempts: %d", retryMaxAttempts)
-	log.Printf("[DEBUG] SignalFx: HTTP retry wait min is %d seconds", retryWaitMinSeconds)
-	log.Printf("[DEBUG] SignalFx: HTTP retry wait max is %d seconds", retryWaitMaxSeconds)
+	baseDir := data.Get("file_output").(string)
+	if baseDir != "" {
+		config.Client = &pmeta.FileClient{
+			BaseDir: baseDir,
+		}
+	} else {
 
-	retryClient := retryablehttp.NewClient()
-	retryClient.RetryMax = retryMaxAttempts
-	retryClient.RetryWaitMin = time.Second * time.Duration(int64(retryWaitMinSeconds))
-	retryClient.RetryWaitMax = time.Second * time.Duration(int64(retryWaitMaxSeconds))
-	retryClient.HTTPClient.Timeout = time.Second * time.Duration(int64(totalTimeoutSeconds))
-	retryClient.HTTPClient.Transport = netTransport
-	standardClient := retryClient.StandardClient()
+		totalTimeoutSeconds := data.Get("timeout_seconds").(int)
+		retryMaxAttempts := data.Get("retry_max_attempts").(int)
+		retryWaitMinSeconds := data.Get("retry_wait_min_seconds").(int)
+		retryWaitMaxSeconds := data.Get("retry_wait_max_seconds").(int)
+		log.Printf("[DEBUG] SignalFx: HTTP Timeout is %d seconds", totalTimeoutSeconds)
+		log.Printf("[DEBUG] SignalFx: HTTP max retry attempts: %d", retryMaxAttempts)
+		log.Printf("[DEBUG] SignalFx: HTTP retry wait min is %d seconds", retryWaitMinSeconds)
+		log.Printf("[DEBUG] SignalFx: HTTP retry wait max is %d seconds", retryWaitMaxSeconds)
 
-	token, err := config.LoadSessionToken(context.Background())
-	if err != nil {
-		return nil, err
+		retryClient := retryablehttp.NewClient()
+		retryClient.RetryMax = retryMaxAttempts
+		retryClient.RetryWaitMin = time.Second * time.Duration(int64(retryWaitMinSeconds))
+		retryClient.RetryWaitMax = time.Second * time.Duration(int64(retryWaitMaxSeconds))
+		retryClient.HTTPClient.Timeout = time.Second * time.Duration(int64(totalTimeoutSeconds))
+		retryClient.HTTPClient.Transport = netTransport
+		standardClient := retryClient.StandardClient()
+
+		token, err := config.LoadSessionToken(context.Background())
+		if err != nil {
+			return nil, err
+		}
+
+		client, err := sfx.NewClient(
+			token,
+			sfx.APIUrl(config.APIURL),
+			sfx.HTTPClient(standardClient),
+			sfx.UserAgent(providerUserAgent),
+		)
+		if err != nil {
+			return &config, err
+		}
+
+		config.Client = client
 	}
-
-	client, err := sfx.NewClient(
-		token,
-		sfx.APIUrl(config.APIURL),
-		sfx.HTTPClient(standardClient),
-		sfx.UserAgent(providerUserAgent),
-	)
-	if err != nil {
-		return &config, err
-	}
-
-	config.Client = client
 
 	for feat, val := range data.Get("feature_preview").(map[string]any) {
 		err = pmeta.LoadPreviewRegistry(
