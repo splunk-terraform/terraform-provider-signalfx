@@ -120,6 +120,30 @@ func TestNewNotificationFromString(t *testing.T) {
 			errVal: "invalid Email notification string, please consult the documentation (too many parts)",
 		},
 		{
+			name: "email template",
+			str:  "EmailTemplate,template-id",
+			expect: &notification.Notification{
+				Type: EmailTemplateNotificationType,
+				Value: &notification.EmailTemplateNotification{
+					Type:       EmailTemplateNotificationType,
+					TemplateId: "template-id",
+				},
+			},
+			errVal: "",
+		},
+		{
+			name:   "email template missing template id",
+			str:    "EmailTemplate,",
+			expect: nil,
+			errVal: "invalid EmailTemplate notification string, please consult the documentation (expected EmailTemplate,templateId)",
+		},
+		{
+			name:   "email template too many parts",
+			str:    "EmailTemplate,template-id,extra",
+			expect: nil,
+			errVal: "invalid EmailTemplate notification string, please consult the documentation (expected EmailTemplate,templateId)",
+		},
+		{
 			name: "email empty cc field",
 			str:  "Email,alerts@example.com,",
 			expect: &notification.Notification{
@@ -391,6 +415,18 @@ func TestEmailNotificationRoundTrip(t *testing.T) {
 	t.Parallel()
 
 	str := "Email,alerts@example.com,oncall@example.com|ops@example.com,audit@example.com"
+	parsed, err := NewNotificationFromString(str)
+	require.NoError(t, err)
+
+	serialized, err := NewNotificationStringFromAPI(parsed)
+	require.NoError(t, err)
+	assert.Equal(t, str, serialized)
+}
+
+func TestEmailTemplateNotificationRoundTrip(t *testing.T) {
+	t.Parallel()
+
+	str := "EmailTemplate,template-id"
 	parsed, err := NewNotificationFromString(str)
 	require.NoError(t, err)
 

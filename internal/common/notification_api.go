@@ -20,6 +20,8 @@ func NewNotificationStringFromAPI(n *notification.Notification) (string, error) 
 		return fmt.Sprintf("%s,%s", n.Type, v.CredentialId), nil
 	case *notification.EmailNotification:
 		return formatEmailNotificationString(v), nil
+	case *notification.EmailTemplateNotification:
+		return fmt.Sprintf("%s,%s", n.Type, v.TemplateId), nil
 	case *notification.JiraNotification:
 		return fmt.Sprintf("%s,%s", n.Type, v.CredentialId), nil
 	case *notification.Office365Notification:
