@@ -166,7 +166,7 @@ const updatedIntegrationAWSConfigMetricStreams = `
 	regions                 = ["us-east-1"]
 	services                = ["AWS/Lambda"]
 	poll_rate               = 300
-	import_cloud_watch      = true
+	import_cloud_watch      = false
 	use_metric_streams_sync = %s
   }
 `

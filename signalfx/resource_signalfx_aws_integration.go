@@ -28,6 +28,28 @@ func metricStreamsStateSupplier(int *integration.AwsCloudWatchIntegration) strin
 	return int.MetricStreamsSyncState
 }
 
+func validateAWSMetricImportModes(importCloudWatch, useMetricStreamsSync bool) error {
+	if importCloudWatch && useMetricStreamsSync {
+		return errors.New("`import_cloud_watch` and `use_metric_streams_sync` cannot both be true; set one of them to false")
+	}
+
+	return nil
+}
+
+func validateAWSIntegrationDiff(_ context.Context, d *schema.ResourceDiff, _ interface{}) error {
+	importCloudWatch, importCloudWatchSet := d.GetOkExists("import_cloud_watch")
+	useMetricStreamsSync, useMetricStreamsSyncSet := d.GetOkExists("use_metric_streams_sync")
+
+	importCloudWatchEnabled, importCloudWatchIsBool := importCloudWatch.(bool)
+	useMetricStreamsSyncEnabled, useMetricStreamsSyncIsBool := useMetricStreamsSync.(bool)
+	if !importCloudWatchSet || !importCloudWatchIsBool ||
+		!useMetricStreamsSyncSet || !useMetricStreamsSyncIsBool {
+		return nil
+	}
+
+	return validateAWSMetricImportModes(importCloudWatchEnabled, useMetricStreamsSyncEnabled)
+}
+
 func integrationAWSResource() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
@@ -268,6 +290,8 @@ func integrationAWSResource() *schema.Resource {
 		Read:   integrationAWSRead,
 		Update: integrationAWSUpdate,
 		Delete: integrationAWSDelete,
+
+		CustomizeDiff: validateAWSIntegrationDiff,
 	}
 }
 
@@ -433,20 +457,25 @@ func awsIntegrationAPIToTF(d *schema.ResourceData, aws *integration.AwsCloudWatc
 }
 
 func getPayloadAWSIntegration(d *schema.ResourceData) (*integration.AwsCloudWatchIntegration, error) {
+	importCloudWatch := d.Get("import_cloud_watch").(bool)
+	useMetricStreamsSync := d.Get("use_metric_streams_sync").(bool)
+	if err := validateAWSMetricImportModes(importCloudWatch, useMetricStreamsSync); err != nil {
+		return nil, err
+	}
 
 	aws := &integration.AwsCloudWatchIntegration{
 		Name:                           d.Get("name").(string),
 		Type:                           "AWSCloudWatch",
 		Enabled:                        d.Get("enabled").(bool),
 		EnableAwsUsage:                 d.Get("enable_aws_usage").(bool),
-		ImportCloudWatch:               d.Get("import_cloud_watch").(bool),
+		ImportCloudWatch:               importCloudWatch,
 		EnableCheckLargeVolume:         d.Get("enable_check_large_volume").(bool),
 		SyncCustomNamespacesOnly:       d.Get("sync_custom_namespaces_only").(bool),
 		CollectOnlyRecommendedStats:    d.Get("collect_only_recommended_stats").(bool),
 		MetricStreamsManagedExternally: d.Get("metric_streams_managed_externally").(bool),
 	}
 
-	if d.Get("use_metric_streams_sync").(bool) {
+	if useMetricStreamsSync {
 		aws.MetricStreamsSyncState = "ENABLED"
 	} else if d.HasChange("use_metric_streams_sync") {
 		aws.MetricStreamsSyncState = "CANCELLING" // use_metric_streams_sync is false, and it has changed, meaning it was ENABLED before
