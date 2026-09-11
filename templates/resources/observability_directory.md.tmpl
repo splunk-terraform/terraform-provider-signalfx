@@ -1,0 +1,22 @@
+---
+page_title: "Splunk Observability Cloud: signalfx_observability_directory"
+description: |-
+  Manages a safe, path-only Observability Directory entry.
+---
+
+# Resource: signalfx_observability_directory
+
+Directory membership and dashboard placement are not managed. Deletion is refused unless the entry is safely empty and provider-manageable.
+
+## Example
+
+{{tffile "examples/resources/observability_directory/example_1.tf"}}
+
+## Arguments
+
+* `path` - (Required) Decoded logical Directory path.
+* `pinned` - (Optional) Whether the Directory entry is pinned. Defaults to `false`.
+
+## Attributes
+
+* `id` - The decoded logical Directory path.

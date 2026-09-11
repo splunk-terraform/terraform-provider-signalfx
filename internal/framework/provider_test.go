@@ -146,6 +146,9 @@ func TestProviderResource(t *testing.T) {
 		"signalfx_dashify_template":          {},
 		"signalfx_customized_auto_detector":  {},
 		"signalfx_big_panda_integration":     {},
+		"signalfx_observability_dashboard":   {},
+		"signalfx_observability_directory":   {},
+		"signalfx_observability_template":    {},
 	}
 
 	actual := p.Resources(context.Background())
