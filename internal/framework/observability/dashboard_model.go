@@ -15,6 +15,55 @@ type observabilityDashboardModel struct {
 	Container  []observabilityDashboardContainerModel `tfsdk:"container"`
 }
 
+type observabilityControlBarModel struct {
+	TimeRange    *observabilityTimeRangeControlModel     `tfsdk:"time_range"`
+	Density      *observabilityDensityControlModel       `tfsdk:"density"`
+	PinnedFilter []observabilityPinnedFilterControlModel `tfsdk:"pinned_filter"`
+	FilterSet    *observabilityFilterSetControlModel     `tfsdk:"filter_set"`
+}
+
+type observabilityTimeRangeControlModel struct {
+	Label                types.String `tfsdk:"label"`
+	Description          types.String `tfsdk:"description"`
+	Hidden               types.Bool   `tfsdk:"hidden"`
+	DefaultVariableValue types.String `tfsdk:"default_variable_value"`
+}
+
+type observabilityDensityControlModel struct {
+	Label                types.String `tfsdk:"label"`
+	Description          types.String `tfsdk:"description"`
+	Hidden               types.Bool   `tfsdk:"hidden"`
+	DefaultVariableValue types.Int64  `tfsdk:"default_variable_value"`
+}
+
+type observabilityPinnedFilterControlModel struct {
+	VariableName               types.String   `tfsdk:"variable_name"`
+	Label                      types.String   `tfsdk:"label"`
+	Description                types.String   `tfsdk:"description"`
+	Hidden                     types.Bool     `tfsdk:"hidden"`
+	Key                        types.String   `tfsdk:"key"`
+	DefaultVariableValue       []types.String `tfsdk:"default_variable_value"`
+	SuggestedValues            []types.String `tfsdk:"suggested_values"`
+	OnlySuggestPreferredValues types.Bool     `tfsdk:"only_suggest_preferred_values"`
+	MatchMissing               types.Bool     `tfsdk:"match_missing"`
+	Required                   types.Bool     `tfsdk:"required"`
+	ApplicationMode            types.String   `tfsdk:"application_mode"`
+}
+
+type observabilityFilterSetControlModel struct {
+	Label       types.String                       `tfsdk:"label"`
+	Description types.String                       `tfsdk:"description"`
+	Hidden      types.Bool                         `tfsdk:"hidden"`
+	Filter      []observabilityFilterSetEntryModel `tfsdk:"filter"`
+}
+
+type observabilityFilterSetEntryModel struct {
+	Key      types.String   `tfsdk:"key"`
+	Values   []types.String `tfsdk:"values"`
+	Negated  types.Bool     `tfsdk:"negated"`
+	Disabled types.Bool     `tfsdk:"disabled"`
+}
+
 type observabilityLayoutModel struct {
 	Absolute  types.Bool   `tfsdk:"absolute"`
 	Width     types.String `tfsdk:"width"`

@@ -85,19 +85,36 @@ func TestResourceObservabilityDashboardMetadataAndSchema(t *testing.T) {
 	assert.NotContains(t, groupContainer.NestedObject.Blocks, "group")
 }
 
-func TestResourceObservabilityDashboardCompleteLayoutConfig(t *testing.T) {
+func TestResourceObservabilityDashboardGeneratedConfig(t *testing.T) {
+	store := newTemplateAPIStore()
+
 	testresource.UnitTest(t, testresource.TestCase{
 		IsUnitTest: true,
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_5_0),
+		},
 		ProtoV5ProviderFactories: fwtest.NewMockProto5Server(
 			t,
-			nil,
+			store.handlers(),
 			fwtest.WithMockResources(NewResourceObservabilityDashboard, NewResourceObservabilityTemplate),
 		),
-		Steps: []testresource.TestStep{{
-			ConfigFile:         config.StaticFile("testdata/observability_dashboard_layout.tf"),
-			PlanOnly:           true,
-			ExpectNonEmptyPlan: true,
-		}},
+		Steps: []testresource.TestStep{
+			{
+				ConfigFile: config.StaticFile("testdata/observability_dashboard_layout.tf"),
+				Check: testresource.ComposeAggregateTestCheckFunc(
+					testresource.TestCheckResourceAttr("signalfx_observability_dashboard.dashboard_layout", "title", "Complete layout"),
+					testresource.TestCheckResourceAttr("signalfx_observability_dashboard.dashboard_layout", "control_bar.time_range.default_variable_value", "-PT15M"),
+					testresource.TestCheckResourceAttr("signalfx_observability_dashboard.dashboard_layout", "control_bar.pinned_filter.#", "2"),
+					testresource.TestCheckResourceAttr("signalfx_observability_dashboard.dashboard_layout", "container.0.section.container.0.group.container.0.layout.x", `["1/4",8]`),
+				),
+			},
+			{
+				ResourceName:    "signalfx_observability_dashboard.dashboard_layout",
+				ImportState:     true,
+				ImportStateKind: testresource.ImportBlockWithID,
+				GenerateConfig:  true,
+			},
+		},
 	})
 }
 
@@ -157,6 +174,29 @@ func TestObservabilityContainerContentErrorsDescribeOneContainer(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			assert.Equal(t, test.want, observabilityContainerContentError(test.level))
+		})
+	}
+}
+
+func TestValidateObservabilityTitle(t *testing.T) {
+	t.Parallel()
+
+	for name, test := range map[string]struct {
+		value       types.String
+		expectError bool
+	}{
+		"value":      {value: types.StringValue(" Service health ")},
+		"empty":      {value: types.StringValue(""), expectError: true},
+		"spaces":     {value: types.StringValue("   "), expectError: true},
+		"whitespace": {value: types.StringValue("\t\n"), expectError: true},
+		"null":       {value: types.StringNull(), expectError: true},
+		"unknown":    {value: types.StringUnknown()},
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			var response resource.ValidateConfigResponse
+			validateObservabilityTitle(&response, path.Root("title"), test.value)
+			assert.Equal(t, test.expectError, response.Diagnostics.HasError())
 		})
 	}
 }

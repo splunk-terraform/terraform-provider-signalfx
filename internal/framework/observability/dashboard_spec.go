@@ -25,6 +25,8 @@ const (
 	observabilityLeftoverLimit    = 10
 )
 
+// buildDashboardSpec converts the Terraform dashboard model into the complete
+// Dashify document stored in a Template record and returns its direct imports.
 func buildDashboardSpec(model observabilityDashboardModel) (json.RawMessage, []string, error) {
 	spec := map[string]any{"title": model.Title.ValueString()}
 	if model.ControlBar != nil {
@@ -53,6 +55,8 @@ func buildDashboardSpec(model observabilityDashboardModel) (json.RawMessage, []s
 	return raw, imports, nil
 }
 
+// buildObservabilityContainerList recursively builds one Dashify container
+// level together with the positional layout entries for that level.
 func buildObservabilityContainerList(spec map[string]any, containers []observabilityContainer, listKey string, metadata map[string]any) ([]any, map[string]any, []string, error) {
 	children := make([]any, len(containers))
 	items := make([]any, len(containers))
@@ -122,6 +126,8 @@ func buildObservabilityContainerList(spec map[string]any, containers []observabi
 	return children, saved, imports, nil
 }
 
+// buildObservabilityPanelChild represents a reusable Template as a Panel child
+// and adds the corresponding top-level Dashify import declaration.
 func buildObservabilityPanelChild(spec map[string]any, ref *observabilityTemplateReferenceModel, id string) (map[string]any, string, bool) {
 	if ref == nil {
 		return nil, "", false
@@ -136,6 +142,8 @@ func buildObservabilityPanelChild(spec map[string]any, ref *observabilityTemplat
 	}, reference, true
 }
 
+// observabilityImportAlias derives a stable import name from the container's
+// positional layout ID so the element and declaration can be paired on read.
 func observabilityImportAlias(id string) string {
 	return "widget" + strings.ReplaceAll(strings.TrimPrefix(id, "_."), ".", "_")
 }
@@ -216,6 +224,8 @@ func parseDashboardTemplate(record *template.Template) (observabilityDashboardMo
 	return model, diags
 }
 
+// parseObservabilityContainerList decodes one container level and joins each
+// content element with its separately stored positional layout entry.
 func parseObservabilityContainerList(spec map[string]any, used map[string]bool, listKey, path string, children []any, level observabilityContainerLevel) ([]observabilityContainer, map[string]any, []string, error) {
 	layouts, metadata, leftovers, err := parseObservabilityLayouts(spec, listKey, len(children))
 	if err != nil {
@@ -236,6 +246,8 @@ func parseObservabilityContainerList(spec map[string]any, used map[string]bool, 
 	return containers, metadata, leftovers, nil
 }
 
+// parseObservabilityContainer dispatches one Dashify element according to the
+// content types allowed at its dashboard, section, or group nesting level.
 func parseObservabilityContainer(spec map[string]any, used map[string]bool, id, path string, raw any, level observabilityContainerLevel) (observabilityContainer, []string, error) {
 	var container observabilityContainer
 	node, ok := raw.(map[string]any)
@@ -306,6 +318,8 @@ func parseObservabilityContainer(spec map[string]any, used map[string]bool, id, 
 	}
 }
 
+// observabilityUnexpectedContainerElement describes the legal children at a
+// nesting level when a stored Dashify document cannot map to Terraform state.
 func observabilityUnexpectedContainerElement(tag string, level observabilityContainerLevel) error {
 	supported := "panels"
 	switch level {
@@ -317,6 +331,8 @@ func observabilityUnexpectedContainerElement(tag string, level observabilityCont
 	return fmt.Errorf("is a %s element; only %s are supported at this level", tag, supported)
 }
 
+// parseObservabilityPanel resolves the Panel's import element to a Template ID.
+// It also accepts the optional Chart wrapper emitted by some stored documents.
 func parseObservabilityPanel(spec map[string]any, used map[string]bool, id, path string, raw any) (*observabilityTemplateReferenceModel, []string, error) {
 	items, ok := raw.([]any)
 	if !ok {
@@ -379,6 +395,8 @@ func parseObservabilityPanel(spec map[string]any, used map[string]bool, id, path
 	return &observabilityTemplateReferenceModel{TemplateID: types.StringValue(idValue)}, leftovers, nil
 }
 
+// oneObservabilityElement finds the single angle-bracket Dashify element in an
+// object while allowing ordinary sibling properties to be handled separately.
 func oneObservabilityElement(node map[string]any) (string, any, error) {
 	var tag string
 	var value any
@@ -422,6 +440,8 @@ func observabilityLeftovers(prefix string, node map[string]any) []string {
 	return leftovers
 }
 
+// truncateObservabilityLeftovers bounds warning output while retaining the
+// number of additional unmodeled paths that were omitted from the message.
 func truncateObservabilityLeftovers(leftovers []string, limit int) []string {
 	if len(leftovers) <= limit {
 		return leftovers

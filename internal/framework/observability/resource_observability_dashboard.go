@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/float64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -45,12 +46,15 @@ func (r *observabilityDashboardResource) Configure(ctx context.Context, req reso
 
 func (r *observabilityDashboardResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Manages an Observability dashboard Template using reusable Template references. Typed inline charts and Directory placement are not included.",
+		Description: "Manages an Observability dashboard Template using reusable Template references. Typed inline charts and Directory placement are coming soon.",
 		Attributes: map[string]schema.Attribute{
 			"id": fwshared.ResourceIDAttribute(),
 			"title": schema.StringAttribute{
 				Required:    true,
 				Description: "Dashboard title.",
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(1),
+				},
 			},
 		},
 		Blocks: map[string]schema.Block{
@@ -181,6 +185,7 @@ func (r *observabilityDashboardResource) ValidateConfig(ctx context.Context, req
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	validateObservabilityTitle(resp, path.Root("title"), model.Title)
 	validateObservabilityControlBar(resp, path.Root("control_bar"), model.ControlBar)
 	validateObservabilityLayoutOptions(resp, path.Root("layout"), model.Layout)
 	validateObservabilityContainers(
@@ -219,9 +224,7 @@ func validateObservabilityContainers(resp *resource.ValidateConfigResponse, base
 		if container.Section != nil {
 			sectionPath := containerPath.AtName("section")
 			validateObservabilityLayoutOptions(resp, sectionPath.AtName("layout"), container.Section.Layout)
-			if container.Section.Title.IsNull() || (!container.Section.Title.IsUnknown() && container.Section.Title.ValueString() == "") {
-				resp.Diagnostics.AddAttributeError(sectionPath.AtName("title"), "Missing required value", "title must be set when section is used")
-			}
+			validateObservabilityTitle(resp, sectionPath.AtName("title"), container.Section.Title)
 			if len(container.Section.Container) == 0 {
 				resp.Diagnostics.AddAttributeError(sectionPath, "Empty section", "section must contain at least one container")
 			}
@@ -230,9 +233,7 @@ func validateObservabilityContainers(resp *resource.ValidateConfigResponse, base
 		if container.Group != nil {
 			groupPath := containerPath.AtName("group")
 			validateObservabilityLayoutOptions(resp, groupPath.AtName("layout"), container.Group.Layout)
-			if container.Group.Title.IsNull() || (!container.Group.Title.IsUnknown() && container.Group.Title.ValueString() == "") {
-				resp.Diagnostics.AddAttributeError(groupPath.AtName("title"), "Missing required value", "title must be set when group is used")
-			}
+			validateObservabilityTitle(resp, groupPath.AtName("title"), container.Group.Title)
 			if len(container.Group.Container) == 0 {
 				resp.Diagnostics.AddAttributeError(groupPath, "Empty group", "group must contain at least one container")
 			}

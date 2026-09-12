@@ -164,7 +164,7 @@ func TestObservabilityTemplateSpecValidation(t *testing.T) {
 	assert.Error(t, validateObservabilityTemplateSpec(`[]`))
 }
 
-func TestResourceObservabilityTemplateUnitTest(t *testing.T) {
+func TestResourceObservabilityTemplateLifecycleAndGeneratedConfig(t *testing.T) {
 	store := newTemplateAPIStore()
 
 	testresource.UnitTest(
@@ -172,7 +172,7 @@ func TestResourceObservabilityTemplateUnitTest(t *testing.T) {
 		testresource.TestCase{
 			IsUnitTest: true,
 			TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-				tfversion.RequireAbove(tfversion.Version0_12_26),
+				tfversion.SkipBelow(tfversion.Version1_5_0),
 			},
 			ProtoV5ProviderFactories: fwtest.NewMockProto5Server(
 				t,
@@ -188,6 +188,12 @@ func TestResourceObservabilityTemplateUnitTest(t *testing.T) {
 						testresource.TestCheckResourceAttr("signalfx_observability_template.test", "root_element", "Chart"),
 						testresource.TestCheckNoResourceAttr("signalfx_observability_template.test", "metadata"),
 					),
+				},
+				{
+					ResourceName:    "signalfx_observability_template.test",
+					ImportState:     true,
+					ImportStateKind: testresource.ImportBlockWithID,
+					GenerateConfig:  true,
 				},
 				{
 					ConfigFile: config.StaticFile("testdata/01_observability_template_updated.tf"),

@@ -136,6 +136,7 @@ func (r *observabilityTemplateResource) ValidateConfig(ctx context.Context, req 
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	validateObservabilityTitle(resp, path.Root("title"), model.Title)
 	if !model.Spec.IsNull() && !model.Spec.IsUnknown() {
 		if err := validateObservabilityTemplateSpec(model.Spec.ValueString()); err != nil {
 			resp.Diagnostics.AddAttributeError(path.Root("spec"), "Invalid template specification", err.Error())

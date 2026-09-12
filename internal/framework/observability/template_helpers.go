@@ -13,8 +13,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/signalfx/signalfx-go/template"
-
-	fwshared "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/shared"
 )
 
 func observabilityTemplateFromResult(result *template.Result) (*template.Template, error) {
@@ -38,11 +36,11 @@ func observabilityTemplateWrite(ctx context.Context, model observabilityTemplate
 	var imports []string
 	var datasource *template.Datasource
 	if model.Metadata != nil {
-		var importDiags diag.Diagnostics
-		imports, importDiags = fwshared.StringSliceFromList(ctx, model.Metadata.Imports)
-		diags.Append(importDiags...)
-		if diags.HasError() {
-			return nil, diags
+		if !model.Metadata.Imports.IsNull() && !model.Metadata.Imports.IsUnknown() {
+			diags.Append(model.Metadata.Imports.ElementsAs(ctx, &imports, false)...)
+			if diags.HasError() {
+				return nil, diags
+			}
 		}
 
 		if model.Metadata.Datasource != nil {
