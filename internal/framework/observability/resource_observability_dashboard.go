@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/signalfx/signalfx-go/template"
@@ -46,7 +47,7 @@ func (r *observabilityDashboardResource) Configure(ctx context.Context, req reso
 
 func (r *observabilityDashboardResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Manages an Observability dashboard Template using reusable Template references. Typed inline charts and Directory placement are coming soon.",
+		Description: "Manages an Observability dashboard Template using reusable Template references or raw inline Dashify content. Typed chart blocks and Directory placement are coming soon.",
 		Attributes: map[string]schema.Attribute{
 			"id": fwshared.ResourceIDAttribute(),
 			"title": schema.StringAttribute{
@@ -76,9 +77,16 @@ func observabilityContainerBlocks(level observabilityContainerLevel) map[string]
 	blocks := map[string]schema.Block{
 		"layout": observabilityItemLayoutBlock(),
 		"template": schema.SingleNestedBlock{
-			Description: "Reference to a reusable Observability Template rendered in this container.",
+			Description: "Dashboard content supplied by either a reusable Observability Template reference or a raw inline Dashify JSON object.",
 			Attributes: map[string]schema.Attribute{
 				"template_id": schema.StringAttribute{Optional: true, Description: "ID of the referenced Template."},
+				"content": schema.StringAttribute{
+					Optional:    true,
+					Description: "Self-contained Dashify JSON object rendered inline. Exactly one of content or template_id must be set.",
+					PlanModifiers: []planmodifier.String{
+						observabilityJSONSemanticEqualityModifier{},
+					},
+				},
 			},
 		},
 	}
@@ -219,7 +227,7 @@ func validateObservabilityContainers(resp *resource.ValidateConfigResponse, base
 		}
 
 		if container.Template != nil {
-			validateObservabilityTemplateReference(resp, containerPath, container.Template)
+			validateObservabilityDashboardTemplate(resp, containerPath, container.Template)
 		}
 		if container.Section != nil {
 			sectionPath := containerPath.AtName("section")
@@ -346,9 +354,24 @@ func observabilityLayoutDefaultsAreEmpty(defaults *observabilityLayoutDefaultsMo
 		defaults.MinHeight.IsNull() && defaults.MaxHeight.IsNull()
 }
 
-func validateObservabilityTemplateReference(resp *resource.ValidateConfigResponse, containerPath path.Path, ref *observabilityTemplateReferenceModel) {
-	if !ref.TemplateID.IsUnknown() && (ref.TemplateID.IsNull() || ref.TemplateID.ValueString() == "") {
-		resp.Diagnostics.AddAttributeError(containerPath.AtName("template").AtName("template_id"), "Missing required value", "template_id must be set when template is used")
+func validateObservabilityDashboardTemplate(resp *resource.ValidateConfigResponse, containerPath path.Path, model *observabilityDashboardTemplateModel) {
+	templatePath := containerPath.AtName("template")
+	idKnown := !model.TemplateID.IsUnknown()
+	contentKnown := !model.Content.IsUnknown()
+	idSet := idKnown && !model.TemplateID.IsNull()
+	contentSet := contentKnown && !model.Content.IsNull()
+
+	if idKnown && contentKnown && idSet == contentSet {
+		resp.Diagnostics.AddAttributeError(templatePath, "Invalid template content", "template must set exactly one of template_id or content")
+		return
+	}
+	if idSet && model.TemplateID.ValueString() == "" {
+		resp.Diagnostics.AddAttributeError(templatePath.AtName("template_id"), "Missing required value", "template_id must be non-empty when set")
+	}
+	if contentSet {
+		if _, err := decodeObservabilityDashboardContent(model.Content.ValueString()); err != nil {
+			resp.Diagnostics.AddAttributeError(templatePath.AtName("content"), "Invalid inline content", err.Error())
+		}
 	}
 }
 

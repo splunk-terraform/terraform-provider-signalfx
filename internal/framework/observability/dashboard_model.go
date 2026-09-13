@@ -92,8 +92,9 @@ type observabilityLayoutDefaultsModel struct {
 	MaxHeight types.String `tfsdk:"max_height"`
 }
 
-type observabilityTemplateReferenceModel struct {
+type observabilityDashboardTemplateModel struct {
 	TemplateID types.String `tfsdk:"template_id"`
+	Content    types.String `tfsdk:"content"`
 }
 
 // TODO(charts): Generate the level-specific container chart fields from the
@@ -101,7 +102,7 @@ type observabilityTemplateReferenceModel struct {
 // such as metrics_single_value and metrics_timeseries at every container level.
 type observabilityDashboardContainerModel struct {
 	Layout   *observabilityLayoutModel            `tfsdk:"layout"`
-	Template *observabilityTemplateReferenceModel `tfsdk:"template"`
+	Template *observabilityDashboardTemplateModel `tfsdk:"template"`
 	Section  *observabilitySectionModel           `tfsdk:"section"`
 	Group    *observabilityGroupModel             `tfsdk:"group"`
 }
@@ -116,7 +117,7 @@ type observabilitySectionModel struct {
 
 type observabilitySectionContainerModel struct {
 	Layout   *observabilityLayoutModel            `tfsdk:"layout"`
-	Template *observabilityTemplateReferenceModel `tfsdk:"template"`
+	Template *observabilityDashboardTemplateModel `tfsdk:"template"`
 	Group    *observabilityGroupModel             `tfsdk:"group"`
 }
 
@@ -129,14 +130,14 @@ type observabilityGroupModel struct {
 
 type observabilityGroupContainerModel struct {
 	Layout   *observabilityLayoutModel            `tfsdk:"layout"`
-	Template *observabilityTemplateReferenceModel `tfsdk:"template"`
+	Template *observabilityDashboardTemplateModel `tfsdk:"template"`
 }
 
 // observabilityContainer is the shared semantic model used after decoding and
 // before encoding the level-specific Terraform transport models.
 type observabilityContainer struct {
 	Layout   *observabilityLayoutModel
-	Template *observabilityTemplateReferenceModel
+	Template *observabilityDashboardTemplateModel
 	Section  *observabilitySection
 	Group    *observabilityGroup
 	// TODO(charts): Carry the generated chart-content abstraction through this

@@ -6,6 +6,8 @@ package fwobservability
 import (
 	"context"
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -57,6 +59,12 @@ func TestResourceObservabilityDashboardMetadataAndSchema(t *testing.T) {
 	assert.Contains(t, rootContainer.NestedObject.Blocks, "template")
 	assert.Contains(t, rootContainer.NestedObject.Blocks, "section")
 	assert.Contains(t, rootContainer.NestedObject.Blocks, "group")
+	templateBlock, ok := rootContainer.NestedObject.Blocks["template"].(schema.SingleNestedBlock)
+	require.True(t, ok)
+	assert.Contains(t, templateBlock.Attributes, "template_id")
+	contentAttribute, ok := templateBlock.Attributes["content"].(schema.StringAttribute)
+	require.True(t, ok)
+	require.Len(t, contentAttribute.PlanModifiers, 1)
 	itemLayout, ok := rootContainer.NestedObject.Blocks["layout"].(schema.SingleNestedBlock)
 	require.True(t, ok)
 	for _, name := range []string{"absolute", "width", "height", "min_width", "max_width", "min_height", "max_height", "x", "y"} {
@@ -110,6 +118,39 @@ func TestResourceObservabilityDashboardGeneratedConfig(t *testing.T) {
 			},
 			{
 				ResourceName:    "signalfx_observability_dashboard.dashboard_layout",
+				ImportState:     true,
+				ImportStateKind: testresource.ImportBlockWithID,
+				GenerateConfig:  true,
+			},
+		},
+	})
+}
+
+func TestResourceObservabilityDashboardInlineContentLifecycleAndGeneratedConfig(t *testing.T) {
+	store := newTemplateAPIStore()
+
+	testresource.UnitTest(t, testresource.TestCase{
+		IsUnitTest: true,
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_5_0),
+		},
+		ProtoV5ProviderFactories: fwtest.NewMockProto5Server(
+			t,
+			store.handlers(),
+			fwtest.WithMockResources(NewResourceObservabilityDashboard),
+		),
+		Steps: []testresource.TestStep{
+			{
+				ConfigFile: config.StaticFile("testdata/observability_dashboard_inline_content.tf"),
+				Check: testresource.ComposeAggregateTestCheckFunc(
+					testresource.TestCheckResourceAttrSet("signalfx_observability_dashboard.inline_content", "id"),
+					testresource.TestCheckResourceAttr("signalfx_observability_dashboard.inline_content", "title", "Inline dashboard content"),
+					testresource.TestCheckResourceAttrSet("signalfx_observability_dashboard.inline_content", "container.0.template.content"),
+					testresource.TestCheckNoResourceAttr("signalfx_observability_dashboard.inline_content", "container.0.template.template_id"),
+				),
+			},
+			{
+				ResourceName:    "signalfx_observability_dashboard.inline_content",
 				ImportState:     true,
 				ImportStateKind: testresource.ImportBlockWithID,
 				GenerateConfig:  true,
@@ -178,6 +219,97 @@ func TestObservabilityContainerContentErrorsDescribeOneContainer(t *testing.T) {
 	}
 }
 
+func TestValidateObservabilityDashboardTemplate(t *testing.T) {
+	t.Parallel()
+
+	tests := map[string]struct {
+		model       observabilityDashboardTemplateModel
+		wantError   bool
+		wantMessage string
+	}{
+		"template id": {
+			model: observabilityDashboardTemplateModel{
+				TemplateID: types.StringValue("chart-id"),
+				Content:    types.StringNull(),
+			},
+		},
+		"direct content": {
+			model: observabilityDashboardTemplateModel{
+				TemplateID: types.StringNull(),
+				Content:    types.StringValue(`{"<o11y:SingleValue>":[],"chart":{}}`),
+			},
+		},
+		"chart wrapped content": {
+			model: observabilityDashboardTemplateModel{
+				TemplateID: types.StringNull(),
+				Content:    types.StringValue(`{"<Chart>":[{"<o11y:SingleValue>":[]}]}`),
+			},
+		},
+		"neither": {
+			model:       observabilityDashboardTemplateModel{TemplateID: types.StringNull(), Content: types.StringNull()},
+			wantError:   true,
+			wantMessage: "exactly one",
+		},
+		"both": {
+			model: observabilityDashboardTemplateModel{
+				TemplateID: types.StringValue("chart-id"),
+				Content:    types.StringValue(`{"<o11y:SingleValue>":[]}`),
+			},
+			wantError:   true,
+			wantMessage: "exactly one",
+		},
+		"empty template id": {
+			model:       observabilityDashboardTemplateModel{TemplateID: types.StringValue(""), Content: types.StringNull()},
+			wantError:   true,
+			wantMessage: "non-empty",
+		},
+		"malformed content": {
+			model:       observabilityDashboardTemplateModel{TemplateID: types.StringNull(), Content: types.StringValue(`{"<Chart>":`)},
+			wantError:   true,
+			wantMessage: "valid JSON",
+		},
+		"non-object content": {
+			model:       observabilityDashboardTemplateModel{TemplateID: types.StringNull(), Content: types.StringValue(`[]`)},
+			wantError:   true,
+			wantMessage: "JSON object",
+		},
+		"content without element": {
+			model:       observabilityDashboardTemplateModel{TemplateID: types.StringNull(), Content: types.StringValue(`{"chart":{}}`)},
+			wantError:   true,
+			wantMessage: "no Dashify element key",
+		},
+		"content with multiple elements": {
+			model:       observabilityDashboardTemplateModel{TemplateID: types.StringNull(), Content: types.StringValue(`{"<Chart>":[],"<Dashboard>":[]}`)},
+			wantError:   true,
+			wantMessage: "multiple Dashify element keys",
+		},
+		"content import element": {
+			model:       observabilityDashboardTemplateModel{TemplateID: types.StringNull(), Content: types.StringValue(`{"<$import.widget0>":[]}`)},
+			wantError:   true,
+			wantMessage: "use template_id",
+		},
+		"unknown template id": {
+			model: observabilityDashboardTemplateModel{TemplateID: types.StringUnknown(), Content: types.StringNull()},
+		},
+		"known id with unknown content": {
+			model: observabilityDashboardTemplateModel{TemplateID: types.StringValue("chart-id"), Content: types.StringUnknown()},
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			var response resource.ValidateConfigResponse
+			validateObservabilityDashboardTemplate(&response, path.Root("container").AtListIndex(0), &test.model)
+			assert.Equal(t, test.wantError, response.Diagnostics.HasError(), response.Diagnostics)
+			if test.wantMessage != "" {
+				require.NotEmpty(t, response.Diagnostics.Errors())
+				assert.Contains(t, response.Diagnostics.Errors()[0].Detail(), test.wantMessage)
+			}
+		})
+	}
+}
+
 func TestValidateObservabilityTitle(t *testing.T) {
 	t.Parallel()
 
@@ -239,6 +371,65 @@ func TestValidateObservabilityLayoutBlocks(t *testing.T) {
 	})
 }
 
+func TestObservabilityDashboardRealUIGoldens(t *testing.T) {
+	t.Parallel()
+
+	goldens := []struct {
+		name           string
+		filename       string
+		unmodeledPaths []string
+	}{
+		// TODO(dashify-goldens): Add one entry per sanitized, complete
+		// GET /v2/template/{id} response captured after creating and saving a
+		// dashboard in the UI. Store payloads under testdata/ui_dashboards and
+		// list every path that is intentionally reported as unmodeled.
+	}
+	if len(goldens) == 0 {
+		t.Skip("TODO(dashify-goldens): add sanitized real UI dashboard fixtures")
+	}
+
+	for _, golden := range goldens {
+		t.Run(golden.name, func(t *testing.T) {
+			raw, err := os.ReadFile(filepath.Join("testdata", "ui_dashboards", golden.filename))
+			require.NoError(t, err)
+
+			var result template.Result
+			require.NoError(t, json.Unmarshal(raw, &result))
+			require.NotNil(t, result.Data, "golden response must contain data")
+
+			model, diags := parseDashboardTemplate(result.Data)
+			require.False(t, diags.HasError(), diags)
+			warnings := diags.Warnings()
+			if len(golden.unmodeledPaths) == 0 {
+				require.Empty(t, warnings)
+			} else {
+				require.Len(t, warnings, 1)
+				for _, expected := range golden.unmodeledPaths {
+					assert.Contains(t, warnings[0].Detail(), expected)
+				}
+			}
+
+			rebuiltSpec, imports, err := buildDashboardSpec(model)
+			require.NoError(t, err)
+			root := template.RootElementDashboard
+			rebuiltRecord := &template.Template{
+				Type:     template.RecordType,
+				Title:    result.Data.Title,
+				Spec:     rebuiltSpec,
+				Metadata: &template.Metadata{RootElement: &root, Imports: imports},
+			}
+			rebuiltModel, rebuiltDiags := parseDashboardTemplate(rebuiltRecord)
+			require.Empty(t, rebuiltDiags, rebuiltDiags)
+			assert.Equal(t, model, rebuiltModel)
+
+			secondSpec, secondImports, err := buildDashboardSpec(rebuiltModel)
+			require.NoError(t, err)
+			assert.JSONEq(t, string(rebuiltSpec), string(secondSpec))
+			assert.Equal(t, imports, secondImports)
+		})
+	}
+}
+
 func TestObservabilityDashboardSpecRoundTrip(t *testing.T) {
 	t.Parallel()
 
@@ -266,7 +457,7 @@ func TestObservabilityDashboardSpecRoundTrip(t *testing.T) {
 					X:         types.StringValue(`["1/4",8]`),
 					Y:         types.StringValue("12"),
 				},
-				Template: &observabilityTemplateReferenceModel{TemplateID: types.StringValue("chart-a")},
+				Template: &observabilityDashboardTemplateModel{TemplateID: types.StringValue("chart-a")},
 			},
 			{
 				Section: &observabilitySectionModel{
@@ -285,7 +476,7 @@ func TestObservabilityDashboardSpecRoundTrip(t *testing.T) {
 								Layout: &observabilityLayoutOptionsModel{
 									Defaults: &observabilityLayoutDefaultsModel{Width: types.StringValue("1/2")},
 								},
-								Container: []observabilityGroupContainerModel{{Template: &observabilityTemplateReferenceModel{TemplateID: types.StringValue("chart-b")}}},
+								Container: []observabilityGroupContainerModel{{Template: &observabilityDashboardTemplateModel{TemplateID: types.StringValue("chart-b")}}},
 							},
 						},
 					},
@@ -298,7 +489,7 @@ func TestObservabilityDashboardSpecRoundTrip(t *testing.T) {
 					Container: []observabilityGroupContainerModel{
 						{
 							Layout:   &observabilityLayoutModel{Width: types.StringValue("1/2")},
-							Template: &observabilityTemplateReferenceModel{TemplateID: types.StringValue("chart-c")},
+							Template: &observabilityDashboardTemplateModel{TemplateID: types.StringValue("chart-c")},
 						},
 					},
 				},
@@ -340,12 +531,57 @@ func TestObservabilityDashboardSpecRoundTrip(t *testing.T) {
 	assert.Equal(t, model.Container, parsed.Container)
 }
 
-func TestObservabilityDashboardSpecRejectsInlineCharts(t *testing.T) {
-	root := template.RootElementDashboard
-	spec := json.RawMessage(`{"title":"Dashboard","<Dashboard>":[{"<Panel>":[{"<Chart>":[{"<o11y:SingleValue>":[]}] }]}],"layout":{"saved":{"_":{"items":[{"id":"_.0","order":0}]}}}}`)
-	_, diags := parseDashboardTemplate(&template.Template{Title: "Dashboard", Spec: spec, Metadata: &template.Metadata{RootElement: &root}})
-	require.True(t, diags.HasError())
-	assert.Contains(t, diags[0].Detail(), "typed inline charts are not supported")
+func TestObservabilityDashboardInlineContentRoundTrip(t *testing.T) {
+	t.Parallel()
+
+	for name, content := range map[string]string{
+		"direct element": `{"<o11y:SingleValue>":[],"chart":{"color":"blue"},"widget":{"title":"Requests"}}`,
+		"chart wrapper":  `{"<Chart>":[{"<o11y:SingleValue>":[],"chart":{},"future":{"preserved":true}}]}`,
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			model := observabilityDashboardModel{
+				Title: types.StringValue("Dashboard"),
+				Container: []observabilityDashboardContainerModel{{
+					Template: &observabilityDashboardTemplateModel{
+						TemplateID: types.StringNull(),
+						Content:    types.StringValue(content),
+					},
+				}},
+			}
+
+			spec, imports, err := buildDashboardSpec(model)
+			require.NoError(t, err)
+			assert.Empty(t, imports)
+
+			var document map[string]any
+			require.NoError(t, json.Unmarshal(spec, &document))
+			assert.NotContains(t, document, "$import:widget0")
+			children := document[observabilityDashboardElement].([]any)
+			panel := children[0].(map[string]any)[observabilityPanelElement].([]any)
+			encodedPanelContent, err := json.Marshal(panel[0])
+			require.NoError(t, err)
+			assert.JSONEq(t, content, string(encodedPanelContent))
+
+			root := template.RootElementDashboard
+			parsed, diags := parseDashboardTemplate(&template.Template{
+				Type:     template.RecordType,
+				Title:    "Dashboard",
+				Spec:     spec,
+				Metadata: &template.Metadata{RootElement: &root},
+			})
+			require.Empty(t, diags, diags)
+			require.Len(t, parsed.Container, 1)
+			require.NotNil(t, parsed.Container[0].Template)
+			assert.True(t, parsed.Container[0].Template.TemplateID.IsNull())
+			assert.JSONEq(t, content, parsed.Container[0].Template.Content.ValueString())
+
+			rebuilt, rebuiltImports, err := buildDashboardSpec(parsed)
+			require.NoError(t, err)
+			assert.Empty(t, rebuiltImports)
+			assert.JSONEq(t, string(spec), string(rebuilt))
+		})
+	}
 }
 
 func TestObservabilityDashboardSpecWarnsAboutUnmodeledFields(t *testing.T) {

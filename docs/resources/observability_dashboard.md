@@ -1,12 +1,12 @@
 ---
 page_title: "Splunk Observability Cloud: signalfx_observability_dashboard"
 description: |-
-  Manages an Observability dashboard Template using reusable Template references and dashboard controls.
+  Manages an Observability dashboard Template using reusable Template references, raw inline Dashify content, and dashboard controls.
 ---
 
 # Resource: signalfx_observability_dashboard
 
-The initial dashboard supports reusable Template references, complete persisted layout options, sections, and groups; typed inline charts are not supported.
+The dashboard supports reusable Template references, raw inline Dashify JSON, complete persisted layout options, sections, and groups; typed chart blocks are not supported yet.
 Terraform owns the complete dashboard Template document. Directory membership and dashboard placement are not managed.
 
 ## Example
@@ -48,6 +48,44 @@ resource "signalfx_observability_dashboard" "service" {
     }
     template {
       template_id = signalfx_observability_template.chart.id
+    }
+  }
+}
+```
+
+## Inline content example
+
+```terraform
+terraform {
+  required_providers {
+    signalfx = {
+      source = "splunk-terraform/signalfx"
+    }
+  }
+}
+
+resource "signalfx_observability_dashboard" "inline_content" {
+  title = "Inline dashboard content"
+
+  container {
+    layout {
+      width  = "6/12"
+      height = "2"
+    }
+
+    template {
+      content = jsonencode({
+        "<o11y:SingleValue>" = []
+        chart = {
+          color = "blue"
+        }
+        datasource = {
+          program = "A = data('requests.count').sum().publish('A')"
+        }
+        widget = {
+          title = "Request rate"
+        }
+      })
     }
   }
 }
@@ -220,16 +258,18 @@ resource "signalfx_observability_dashboard" "controls" {
   * `defaults` - (Optional) Default `absolute`, width, height, and min/max constraints inherited by root containers.
 * `container` - (Optional) Ordered dashboard containers. Each container contains exactly one `template`, `section`, or `group` block.
   * `layout` - (Optional) Placement of this container in its parent layout. Supports `absolute`, `width`, `height`, `min_width`, `max_width`, `min_height`, `max_height`, `x`, and `y`.
-  * `template` - (Optional) Reusable Template reference with `template_id`.
-  * `section` - (Optional) Section with `title`, `collapse`, `collapsible`, an optional child `layout`, and ordered `container` blocks. Section containers may contain a Template reference or a group.
-  * `group` - (Optional) Group with `title`, `headerless`, an optional child `layout`, and ordered `container` blocks. Groups may be placed directly on a dashboard or inside a section. Group containers contain a Template reference.
-* `control_bar` - (Optional) Dashboard controls applied to referenced Templates and future inline charts. Only configured controls are stored; the UI may add runtime defaults.
+  * `template` - (Optional) Dashboard panel content. Set exactly one of `template_id`, which imports a reusable Template by ID, or `content`, which accepts a self-contained Dashify JSON object rendered inline.
+  * `section` - (Optional) Section with `title`, `collapse`, `collapsible`, an optional child `layout`, and ordered `container` blocks. Section containers may contain a `template` block or a group.
+  * `group` - (Optional) Group with `title`, `headerless`, an optional child `layout`, and ordered `container` blocks. Groups may be placed directly on a dashboard or inside a section. Group containers contain a `template` block.
+* `control_bar` - (Optional) Dashboard controls applied to imported or inline panel content. Only configured controls are stored; the UI may add runtime defaults.
   * `time_range` - (Optional) The dashboard time-range control, always serialized as `TIME`. Its `default_variable_value` accepts values such as `-15m`, `-PT15M`, or an absolute time range.
   * `density` - (Optional) The chart density control, always serialized as `DENSITY`. `default_variable_value` must be `30`, `60`, `120`, or `240`.
   * `pinned_filter` - (Optional, Repeatable) An ordered filter control. `variable_name` is required and must be unique; `key` defaults to `variable_name`. `default_variable_value` and `suggested_values` are optional string lists. `application_mode` accepts `add`, `override`, or `ignore`; `override` only applies when a chart query already filters on the key.
   * `filter_set` - (Optional) The ad-hoc filter picker, always serialized as `FILTERS`. Its optional ordered `filter` blocks contain required `key` and `values`; an empty values list is a no-op. Each filter can also set `negated` or `disabled`.
 
 All control blocks support optional `label`, `description`, and `hidden` fields. Pinned filters also support `only_suggest_preferred_values`, `match_missing`, and `required`. Controls are serialized in the canonical order `TIME`, `DENSITY`, pinned filters, `FILTERS`. Preferred suggestions are stored but are not currently consumed by the rendered filter descriptor. UI saves can add default singleton controls; complete-document ownership means a later Terraform update can remove controls not configured here.
+
+Within a `template` block, `template_id` and `content` are mutually exclusive and one is required. `content` is an opaque JSON escape hatch: it must be an object containing exactly one Dashify element key and is stored as the sole child of the panel. Both a direct element such as `<o11y:SingleValue>` and a standalone-style `<Chart>` wrapper are accepted. Use `template_id` rather than an inline `<$import.*>` element. Formatting and object-key ordering differences in `content` do not produce a Terraform change.
 
 Root, section, and group `layout` blocks configure the layout that arranges their immediate child containers. A `container.layout` block instead configures that single container's placement inside its parent.
 

@@ -195,52 +195,31 @@ func observabilityLayoutFromItem(item map[string]any) (*observabilityLayoutModel
 	if err != nil {
 		return nil, err
 	}
-	width, err := observabilityLayoutString(item, "w", false)
-	if err != nil {
-		return nil, err
+	model := &observabilityLayoutModel{Absolute: absolute}
+	for _, field := range []struct {
+		key        string
+		coordinate bool
+		target     *types.String
+	}{
+		{key: "w", target: &model.Width},
+		{key: "h", target: &model.Height},
+		{key: "minW", target: &model.MinWidth},
+		{key: "maxW", target: &model.MaxWidth},
+		{key: "minH", target: &model.MinHeight},
+		{key: "maxH", target: &model.MaxHeight},
+		{key: "x", coordinate: true, target: &model.X},
+		{key: "y", coordinate: true, target: &model.Y},
+	} {
+		value, err := observabilityLayoutString(item, field.key, field.coordinate)
+		if err != nil {
+			return nil, err
+		}
+		*field.target = value
 	}
-	height, err := observabilityLayoutString(item, "h", false)
-	if err != nil {
-		return nil, err
-	}
-	minWidth, err := observabilityLayoutString(item, "minW", false)
-	if err != nil {
-		return nil, err
-	}
-	maxWidth, err := observabilityLayoutString(item, "maxW", false)
-	if err != nil {
-		return nil, err
-	}
-	minHeight, err := observabilityLayoutString(item, "minH", false)
-	if err != nil {
-		return nil, err
-	}
-	maxHeight, err := observabilityLayoutString(item, "maxH", false)
-	if err != nil {
-		return nil, err
-	}
-	x, err := observabilityLayoutString(item, "x", true)
-	if err != nil {
-		return nil, err
-	}
-	y, err := observabilityLayoutString(item, "y", true)
-	if err != nil {
-		return nil, err
-	}
-	if absolute.IsNull() && width.IsNull() && height.IsNull() && minWidth.IsNull() && maxWidth.IsNull() && minHeight.IsNull() && maxHeight.IsNull() && x.IsNull() && y.IsNull() {
+	if model.Absolute.IsNull() && model.Width.IsNull() && model.Height.IsNull() && model.MinWidth.IsNull() && model.MaxWidth.IsNull() && model.MinHeight.IsNull() && model.MaxHeight.IsNull() && model.X.IsNull() && model.Y.IsNull() {
 		return nil, nil
 	}
-	return &observabilityLayoutModel{
-		Absolute:  absolute,
-		Width:     width,
-		Height:    height,
-		MinWidth:  minWidth,
-		MaxWidth:  maxWidth,
-		MinHeight: minHeight,
-		MaxHeight: maxHeight,
-		X:         x,
-		Y:         y,
-	}, nil
+	return model, nil
 }
 
 func parseObservabilityLayoutOptions(parent map[string]any) (*observabilityLayoutOptionsModel, error) {
@@ -287,45 +266,31 @@ func parseObservabilityLayoutDefaults(layout map[string]any) (*observabilityLayo
 	if err != nil {
 		return nil, fmt.Errorf("layout.defaults: %w", err)
 	}
-	width, err := observabilityLayoutString(defaults, "w", false)
-	if err != nil {
-		return nil, fmt.Errorf("layout.defaults: %w", err)
-	}
-	height, err := observabilityLayoutString(defaults, "h", false)
-	if err != nil {
-		return nil, fmt.Errorf("layout.defaults: %w", err)
-	}
-	minWidth, err := observabilityLayoutString(defaults, "minW", false)
-	if err != nil {
-		return nil, fmt.Errorf("layout.defaults: %w", err)
-	}
-	maxWidth, err := observabilityLayoutString(defaults, "maxW", false)
-	if err != nil {
-		return nil, fmt.Errorf("layout.defaults: %w", err)
-	}
-	minHeight, err := observabilityLayoutString(defaults, "minH", false)
-	if err != nil {
-		return nil, fmt.Errorf("layout.defaults: %w", err)
-	}
-	maxHeight, err := observabilityLayoutString(defaults, "maxH", false)
-	if err != nil {
-		return nil, fmt.Errorf("layout.defaults: %w", err)
+	model := &observabilityLayoutDefaultsModel{Absolute: absolute}
+	for _, field := range []struct {
+		key    string
+		target *types.String
+	}{
+		{key: "w", target: &model.Width},
+		{key: "h", target: &model.Height},
+		{key: "minW", target: &model.MinWidth},
+		{key: "maxW", target: &model.MaxWidth},
+		{key: "minH", target: &model.MinHeight},
+		{key: "maxH", target: &model.MaxHeight},
+	} {
+		value, err := observabilityLayoutString(defaults, field.key, false)
+		if err != nil {
+			return nil, fmt.Errorf("layout.defaults: %w", err)
+		}
+		*field.target = value
 	}
 	if len(defaults) == 0 {
 		delete(layout, "defaults")
 	}
-	if absolute.IsNull() && width.IsNull() && height.IsNull() && minWidth.IsNull() && maxWidth.IsNull() && minHeight.IsNull() && maxHeight.IsNull() {
+	if model.Absolute.IsNull() && model.Width.IsNull() && model.Height.IsNull() && model.MinWidth.IsNull() && model.MaxWidth.IsNull() && model.MinHeight.IsNull() && model.MaxHeight.IsNull() {
 		return nil, nil
 	}
-	return &observabilityLayoutDefaultsModel{
-		Absolute:  absolute,
-		Width:     width,
-		Height:    height,
-		MinWidth:  minWidth,
-		MaxWidth:  maxWidth,
-		MinHeight: minHeight,
-		MaxHeight: maxHeight,
-	}, nil
+	return model, nil
 }
 
 func observabilityLayoutFloat(object map[string]any, key string) (types.Float64, bool, error) {

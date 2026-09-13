@@ -204,9 +204,6 @@ func observabilityDirectoryModelFromEntry(entry *directory.Entry) observabilityD
 
 func observabilityReservedDirectoryPath(value string) string {
 	segments := strings.Split(value, "/")
-	if len(segments) == 0 {
-		return ""
-	}
 	for _, base := range []string{"~demo", "~local", "~signalview", "~templates"} {
 		if segments[0] == base {
 			return value

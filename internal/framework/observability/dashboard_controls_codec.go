@@ -4,10 +4,8 @@
 package fwobservability
 
 import (
-	"encoding/json"
 	"fmt"
 	"math"
-	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
@@ -321,12 +319,6 @@ func takeObservabilityControlInt64(object map[string]any, key, path string) (typ
 			return types.Int64Null(), fmt.Errorf("%s.%s is %v rather than an integer", path, key, raw)
 		}
 		value = int64(number)
-	case json.Number:
-		parsed, err := strconv.ParseInt(string(number), 10, 64)
-		if err != nil {
-			return types.Int64Null(), fmt.Errorf("%s.%s is %v rather than an integer", path, key, raw)
-		}
-		value = parsed
 	default:
 		return types.Int64Null(), fmt.Errorf("%s.%s is %v (%T) rather than an integer", path, key, raw, raw)
 	}

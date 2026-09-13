@@ -105,7 +105,10 @@ func buildObservabilityContainerList(spec map[string]any, containers []observabi
 			}
 			imports = append(imports, groupImports...)
 		default:
-			child, reference, ok := buildObservabilityPanelChild(spec, container.Template, id)
+			child, reference, ok, err := buildObservabilityPanelChild(spec, container.Template, id)
+			if err != nil {
+				return nil, nil, nil, fmt.Errorf("container %s template: %w", id, err)
+			}
 			children[i] = child
 			if ok {
 				imports = append(imports, reference)
@@ -126,20 +129,59 @@ func buildObservabilityContainerList(spec map[string]any, containers []observabi
 	return children, saved, imports, nil
 }
 
-// buildObservabilityPanelChild represents a reusable Template as a Panel child
-// and adds the corresponding top-level Dashify import declaration.
-func buildObservabilityPanelChild(spec map[string]any, ref *observabilityTemplateReferenceModel, id string) (map[string]any, string, bool) {
-	if ref == nil {
-		return nil, "", false
+// buildObservabilityPanelChild places either an imported Template or opaque
+// inline Dashify content inside a Panel. Only imports add API metadata.
+func buildObservabilityPanelChild(spec map[string]any, model *observabilityDashboardTemplateModel, id string) (map[string]any, string, bool, error) {
+	if model == nil {
+		return nil, "", false, fmt.Errorf("template block is missing")
+	}
+	if model.TemplateID.IsUnknown() || model.Content.IsUnknown() {
+		return nil, "", false, fmt.Errorf("template_id and content must be known before writing")
+	}
+	idSet := !model.TemplateID.IsNull()
+	contentSet := !model.Content.IsNull()
+	if idSet == contentSet {
+		return nil, "", false, fmt.Errorf("exactly one of template_id or content must be set")
+	}
+	if contentSet {
+		content, err := decodeObservabilityDashboardContent(model.Content.ValueString())
+		if err != nil {
+			return nil, "", false, err
+		}
+		return map[string]any{observabilityPanelElement: []any{content}}, "", false, nil
+	}
+	if model.TemplateID.ValueString() == "" {
+		return nil, "", false, fmt.Errorf("template_id must be non-empty when set")
 	}
 	alias := observabilityImportAlias(id)
-	reference := observabilityTemplatePrefix + ref.TemplateID.ValueString()
+	reference := observabilityTemplatePrefix + model.TemplateID.ValueString()
 	spec[observabilityImportPrefix+alias] = reference
 	return map[string]any{
 		observabilityPanelElement: []any{
 			map[string]any{observabilityImportElement + alias + ">": []any{}},
 		},
-	}, reference, true
+	}, reference, true, nil
+}
+
+// decodeObservabilityDashboardContent validates the opaque JSON object used as
+// a Panel child. Import elements remain reserved for the template_id form.
+func decodeObservabilityDashboardContent(raw string) (map[string]any, error) {
+	var value any
+	if err := json.Unmarshal([]byte(raw), &value); err != nil {
+		return nil, fmt.Errorf("content must be valid JSON: %w", err)
+	}
+	content, ok := value.(map[string]any)
+	if !ok {
+		return nil, fmt.Errorf("content must be a JSON object")
+	}
+	tag, _, err := oneObservabilityElement(content)
+	if err != nil {
+		return nil, fmt.Errorf("content %w", err)
+	}
+	if strings.HasPrefix(tag, observabilityImportElement) {
+		return nil, fmt.Errorf("content cannot be an import element; use template_id instead")
+	}
+	return content, nil
 }
 
 // observabilityImportAlias derives a stable import name from the container's
@@ -331,15 +373,15 @@ func observabilityUnexpectedContainerElement(tag string, level observabilityCont
 	return fmt.Errorf("is a %s element; only %s are supported at this level", tag, supported)
 }
 
-// parseObservabilityPanel resolves the Panel's import element to a Template ID.
-// It also accepts the optional Chart wrapper emitted by some stored documents.
-func parseObservabilityPanel(spec map[string]any, used map[string]bool, id, path string, raw any) (*observabilityTemplateReferenceModel, []string, error) {
+// parseObservabilityPanel resolves an import to a Template ID and preserves
+// every other single Dashify element object as opaque inline content.
+func parseObservabilityPanel(spec map[string]any, used map[string]bool, id, path string, raw any) (*observabilityDashboardTemplateModel, []string, error) {
 	items, ok := raw.([]any)
 	if !ok {
 		return nil, nil, fmt.Errorf("panel value is %T rather than a list", raw)
 	}
 	if len(items) != 1 {
-		return nil, nil, fmt.Errorf("panel contains %d elements; exactly one template reference is supported", len(items))
+		return nil, nil, fmt.Errorf("panel contains %d elements; exactly one template reference or inline content object is supported", len(items))
 	}
 	content, ok := items[0].(map[string]any)
 	if !ok {
@@ -349,29 +391,12 @@ func parseObservabilityPanel(spec map[string]any, used map[string]bool, id, path
 	if err != nil {
 		return nil, nil, err
 	}
-	elementContent := content
-	wrapped := false
-	if tag == "<Chart>" {
-		chartItems, valid := value.([]any)
-		if !valid || len(chartItems) != 1 {
-			return nil, nil, fmt.Errorf("container %s contains an invalid Chart wrapper; exactly one chart element is required", id)
-		}
-		chartContent, valid := chartItems[0].(map[string]any)
-		if !valid {
-			return nil, nil, fmt.Errorf("container %s contains a Chart value of type %T", id, chartItems[0])
-		}
-		delete(content, tag)
-		elementContent = chartContent
-		wrapped = true
-		tag, value, err = oneObservabilityElement(chartContent)
-		if err != nil {
-			return nil, nil, err
-		}
-	}
 	if !strings.HasPrefix(tag, observabilityImportElement) {
-		// TODO(charts): Dispatch the Dashify element tag through the generated chart
-		// parser and preserve its unsupported-field/leftover checks.
-		return nil, nil, fmt.Errorf("container %s contains unsupported inline element %s; typed inline charts are not supported by this resource; use an observability_template reference", id, tag)
+		encoded, err := json.Marshal(content)
+		if err != nil {
+			return nil, nil, fmt.Errorf("container %s encode inline content: %w", id, err)
+		}
+		return &observabilityDashboardTemplateModel{Content: types.StringValue(string(encoded))}, nil, nil
 	}
 	alias := strings.TrimSuffix(strings.TrimPrefix(tag, observabilityImportElement), ">")
 	reference, ok := spec[observabilityImportPrefix+alias].(string)
@@ -386,13 +411,9 @@ func parseObservabilityPanel(spec map[string]any, used map[string]bool, id, path
 	// Import elements normally carry an empty argument list. If they carry
 	// anything else, leave the tag behind so Read warns that an update drops it.
 	if args, ok := value.([]any); ok && len(args) == 0 {
-		delete(elementContent, tag)
+		delete(content, tag)
 	}
-	leftovers := observabilityLeftovers(path, content)
-	if wrapped {
-		leftovers = append(leftovers, observabilityLeftovers(path, elementContent)...)
-	}
-	return &observabilityTemplateReferenceModel{TemplateID: types.StringValue(idValue)}, leftovers, nil
+	return &observabilityDashboardTemplateModel{TemplateID: types.StringValue(idValue)}, observabilityLeftovers(path, content), nil
 }
 
 // oneObservabilityElement finds the single angle-bracket Dashify element in an
