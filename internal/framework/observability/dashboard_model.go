@@ -8,35 +8,35 @@ import "github.com/hashicorp/terraform-plugin-framework/types"
 // The transport models exactly match the schema available at each nesting
 // level. Terraform Plugin Framework requires this one-to-one correspondence.
 type observabilityDashboardModel struct {
-	ID         types.String                           `tfsdk:"id"`
-	Title      types.String                           `tfsdk:"title"`
-	ControlBar *observabilityControlBarModel          `tfsdk:"control_bar"`
-	Layout     *observabilityLayoutOptionsModel       `tfsdk:"layout"`
-	Container  []observabilityDashboardContainerModel `tfsdk:"container"`
+	ID         types.String                     `tfsdk:"id"`
+	Title      types.String                     `tfsdk:"title"`
+	ControlBar *dashifyControlBarModel          `tfsdk:"control_bar"`
+	Layout     *dashifyLayoutOptionsModel       `tfsdk:"layout"`
+	Container  []dashifyDashboardContainerModel `tfsdk:"container"`
 }
 
-type observabilityControlBarModel struct {
-	TimeRange    *observabilityTimeRangeControlModel     `tfsdk:"time_range"`
-	Density      *observabilityDensityControlModel       `tfsdk:"density"`
-	PinnedFilter []observabilityPinnedFilterControlModel `tfsdk:"pinned_filter"`
-	FilterSet    *observabilityFilterSetControlModel     `tfsdk:"filter_set"`
+type dashifyControlBarModel struct {
+	TimeRange    *dashifyTimeRangeControlModel     `tfsdk:"time_range"`
+	Density      *dashifyDensityControlModel       `tfsdk:"density"`
+	PinnedFilter []dashifyPinnedFilterControlModel `tfsdk:"pinned_filter"`
+	FilterSet    *dashifyFilterSetControlModel     `tfsdk:"filter_set"`
 }
 
-type observabilityTimeRangeControlModel struct {
+type dashifyTimeRangeControlModel struct {
 	Label                types.String `tfsdk:"label"`
 	Description          types.String `tfsdk:"description"`
 	Hidden               types.Bool   `tfsdk:"hidden"`
 	DefaultVariableValue types.String `tfsdk:"default_variable_value"`
 }
 
-type observabilityDensityControlModel struct {
+type dashifyDensityControlModel struct {
 	Label                types.String `tfsdk:"label"`
 	Description          types.String `tfsdk:"description"`
 	Hidden               types.Bool   `tfsdk:"hidden"`
 	DefaultVariableValue types.Int64  `tfsdk:"default_variable_value"`
 }
 
-type observabilityPinnedFilterControlModel struct {
+type dashifyPinnedFilterControlModel struct {
 	VariableName               types.String   `tfsdk:"variable_name"`
 	Label                      types.String   `tfsdk:"label"`
 	Description                types.String   `tfsdk:"description"`
@@ -50,21 +50,21 @@ type observabilityPinnedFilterControlModel struct {
 	ApplicationMode            types.String   `tfsdk:"application_mode"`
 }
 
-type observabilityFilterSetControlModel struct {
-	Label       types.String                       `tfsdk:"label"`
-	Description types.String                       `tfsdk:"description"`
-	Hidden      types.Bool                         `tfsdk:"hidden"`
-	Filter      []observabilityFilterSetEntryModel `tfsdk:"filter"`
+type dashifyFilterSetControlModel struct {
+	Label       types.String                 `tfsdk:"label"`
+	Description types.String                 `tfsdk:"description"`
+	Hidden      types.Bool                   `tfsdk:"hidden"`
+	Filter      []dashifyFilterSetEntryModel `tfsdk:"filter"`
 }
 
-type observabilityFilterSetEntryModel struct {
+type dashifyFilterSetEntryModel struct {
 	Key      types.String   `tfsdk:"key"`
 	Values   []types.String `tfsdk:"values"`
 	Negated  types.Bool     `tfsdk:"negated"`
 	Disabled types.Bool     `tfsdk:"disabled"`
 }
 
-type observabilityLayoutModel struct {
+type dashifyLayoutModel struct {
 	Absolute  types.Bool   `tfsdk:"absolute"`
 	Width     types.String `tfsdk:"width"`
 	Height    types.String `tfsdk:"height"`
@@ -76,13 +76,13 @@ type observabilityLayoutModel struct {
 	Y         types.String `tfsdk:"y"`
 }
 
-type observabilityLayoutOptionsModel struct {
-	Gap      types.Float64                     `tfsdk:"gap"`
-	Step     types.Float64                     `tfsdk:"step"`
-	Defaults *observabilityLayoutDefaultsModel `tfsdk:"defaults"`
+type dashifyLayoutOptionsModel struct {
+	Gap      types.Float64               `tfsdk:"gap"`
+	Step     types.Float64               `tfsdk:"step"`
+	Defaults *dashifyLayoutDefaultsModel `tfsdk:"defaults"`
 }
 
-type observabilityLayoutDefaultsModel struct {
+type dashifyLayoutDefaultsModel struct {
 	Absolute  types.Bool   `tfsdk:"absolute"`
 	Width     types.String `tfsdk:"width"`
 	Height    types.String `tfsdk:"height"`
@@ -92,7 +92,7 @@ type observabilityLayoutDefaultsModel struct {
 	MaxHeight types.String `tfsdk:"max_height"`
 }
 
-type observabilityDashboardTemplateModel struct {
+type dashifyTemplateModel struct {
 	TemplateID types.String `tfsdk:"template_id"`
 	Content    types.String `tfsdk:"content"`
 }
@@ -100,170 +100,170 @@ type observabilityDashboardTemplateModel struct {
 // TODO(charts): Generate the level-specific container chart fields from the
 // external Dashify schemas. The generated models should expose inline blocks
 // such as metrics_single_value and metrics_timeseries at every container level.
-type observabilityDashboardContainerModel struct {
-	Layout   *observabilityLayoutModel            `tfsdk:"layout"`
-	Template *observabilityDashboardTemplateModel `tfsdk:"template"`
-	Section  *observabilitySectionModel           `tfsdk:"section"`
-	Group    *observabilityGroupModel             `tfsdk:"group"`
+type dashifyDashboardContainerModel struct {
+	Layout   *dashifyLayoutModel   `tfsdk:"layout"`
+	Template *dashifyTemplateModel `tfsdk:"template"`
+	Section  *dashifySectionModel  `tfsdk:"section"`
+	Group    *dashifyGroupModel    `tfsdk:"group"`
 }
 
-type observabilitySectionModel struct {
-	Title       types.String                         `tfsdk:"title"`
-	Collapse    types.Bool                           `tfsdk:"collapse"`
-	Collapsible types.Bool                           `tfsdk:"collapsible"`
-	Layout      *observabilityLayoutOptionsModel     `tfsdk:"layout"`
-	Container   []observabilitySectionContainerModel `tfsdk:"container"`
+type dashifySectionModel struct {
+	Title       types.String                   `tfsdk:"title"`
+	Collapse    types.Bool                     `tfsdk:"collapse"`
+	Collapsible types.Bool                     `tfsdk:"collapsible"`
+	Layout      *dashifyLayoutOptionsModel     `tfsdk:"layout"`
+	Container   []dashifySectionContainerModel `tfsdk:"container"`
 }
 
-type observabilitySectionContainerModel struct {
-	Layout   *observabilityLayoutModel            `tfsdk:"layout"`
-	Template *observabilityDashboardTemplateModel `tfsdk:"template"`
-	Group    *observabilityGroupModel             `tfsdk:"group"`
+type dashifySectionContainerModel struct {
+	Layout   *dashifyLayoutModel   `tfsdk:"layout"`
+	Template *dashifyTemplateModel `tfsdk:"template"`
+	Group    *dashifyGroupModel    `tfsdk:"group"`
 }
 
-type observabilityGroupModel struct {
-	Title      types.String                       `tfsdk:"title"`
-	Headerless types.Bool                         `tfsdk:"headerless"`
-	Layout     *observabilityLayoutOptionsModel   `tfsdk:"layout"`
-	Container  []observabilityGroupContainerModel `tfsdk:"container"`
+type dashifyGroupModel struct {
+	Title      types.String                 `tfsdk:"title"`
+	Headerless types.Bool                   `tfsdk:"headerless"`
+	Layout     *dashifyLayoutOptionsModel   `tfsdk:"layout"`
+	Container  []dashifyGroupContainerModel `tfsdk:"container"`
 }
 
-type observabilityGroupContainerModel struct {
-	Layout   *observabilityLayoutModel            `tfsdk:"layout"`
-	Template *observabilityDashboardTemplateModel `tfsdk:"template"`
+type dashifyGroupContainerModel struct {
+	Layout   *dashifyLayoutModel   `tfsdk:"layout"`
+	Template *dashifyTemplateModel `tfsdk:"template"`
 }
 
-// observabilityContainer is the shared semantic model used after decoding and
+// dashifyContainer is the shared semantic model used after decoding and
 // before encoding the level-specific Terraform transport models.
-type observabilityContainer struct {
-	Layout   *observabilityLayoutModel
-	Template *observabilityDashboardTemplateModel
-	Section  *observabilitySection
-	Group    *observabilityGroup
+type dashifyContainer struct {
+	Layout   *dashifyLayoutModel
+	Template *dashifyTemplateModel
+	Section  *dashifySection
+	Group    *dashifyGroup
 	// TODO(charts): Carry the generated chart-content abstraction through this
 	// shared model so metrics_single_value, metrics_timeseries, and later schema
 	// additions do not require hand-written fields here.
 }
 
-type observabilitySection struct {
+type dashifySection struct {
 	Title       types.String
 	Collapse    types.Bool
 	Collapsible types.Bool
-	Layout      *observabilityLayoutOptionsModel
-	Container   []observabilityContainer
+	Layout      *dashifyLayoutOptionsModel
+	Container   []dashifyContainer
 }
 
-type observabilityGroup struct {
+type dashifyGroup struct {
 	Title      types.String
 	Headerless types.Bool
-	Layout     *observabilityLayoutOptionsModel
-	Container  []observabilityContainer
+	Layout     *dashifyLayoutOptionsModel
+	Container  []dashifyContainer
 }
 
-type observabilityContainerLevel uint8
+type dashifyContainerLevel uint8
 
 const (
-	observabilityDashboardContainerLevel observabilityContainerLevel = iota
-	observabilitySectionContainerLevel
-	observabilityGroupContainerLevel
+	dashifyDashboardContainerLevel dashifyContainerLevel = iota
+	dashifySectionContainerLevel
+	dashifyGroupContainerLevel
 )
 
-func observabilityContainersFromDashboardModels(models []observabilityDashboardContainerModel) []observabilityContainer {
-	containers := make([]observabilityContainer, len(models))
+func dashifyContainersFromDashboardModels(models []dashifyDashboardContainerModel) []dashifyContainer {
+	containers := make([]dashifyContainer, len(models))
 	for i, model := range models {
-		container := observabilityContainer{Layout: model.Layout, Template: model.Template}
+		container := dashifyContainer{Layout: model.Layout, Template: model.Template}
 		if model.Section != nil {
-			container.Section = &observabilitySection{
+			container.Section = &dashifySection{
 				Title:       model.Section.Title,
 				Collapse:    model.Section.Collapse,
 				Collapsible: model.Section.Collapsible,
 				Layout:      model.Section.Layout,
-				Container:   observabilityContainersFromSectionModels(model.Section.Container),
+				Container:   dashifyContainersFromSectionModels(model.Section.Container),
 			}
 		}
 		if model.Group != nil {
-			container.Group = observabilityGroupFromModel(model.Group)
+			container.Group = dashifyGroupFromModel(model.Group)
 		}
 		containers[i] = container
 	}
 	return containers
 }
 
-func observabilityContainersFromSectionModels(models []observabilitySectionContainerModel) []observabilityContainer {
-	containers := make([]observabilityContainer, len(models))
+func dashifyContainersFromSectionModels(models []dashifySectionContainerModel) []dashifyContainer {
+	containers := make([]dashifyContainer, len(models))
 	for i, model := range models {
-		container := observabilityContainer{Layout: model.Layout, Template: model.Template}
+		container := dashifyContainer{Layout: model.Layout, Template: model.Template}
 		if model.Group != nil {
-			container.Group = observabilityGroupFromModel(model.Group)
+			container.Group = dashifyGroupFromModel(model.Group)
 		}
 		containers[i] = container
 	}
 	return containers
 }
 
-func observabilityGroupFromModel(model *observabilityGroupModel) *observabilityGroup {
-	return &observabilityGroup{
+func dashifyGroupFromModel(model *dashifyGroupModel) *dashifyGroup {
+	return &dashifyGroup{
 		Title:      model.Title,
 		Headerless: model.Headerless,
 		Layout:     model.Layout,
-		Container:  observabilityContainersFromGroupModels(model.Container),
+		Container:  dashifyContainersFromGroupModels(model.Container),
 	}
 }
 
-func observabilityContainersFromGroupModels(models []observabilityGroupContainerModel) []observabilityContainer {
-	containers := make([]observabilityContainer, len(models))
+func dashifyContainersFromGroupModels(models []dashifyGroupContainerModel) []dashifyContainer {
+	containers := make([]dashifyContainer, len(models))
 	for i, model := range models {
-		containers[i] = observabilityContainer{Layout: model.Layout, Template: model.Template}
+		containers[i] = dashifyContainer{Layout: model.Layout, Template: model.Template}
 	}
 	return containers
 }
 
-func observabilityDashboardModelsFromContainers(containers []observabilityContainer) []observabilityDashboardContainerModel {
-	models := make([]observabilityDashboardContainerModel, len(containers))
+func dashifyDashboardModelsFromContainers(containers []dashifyContainer) []dashifyDashboardContainerModel {
+	models := make([]dashifyDashboardContainerModel, len(containers))
 	for i, container := range containers {
-		model := observabilityDashboardContainerModel{Layout: container.Layout, Template: container.Template}
+		model := dashifyDashboardContainerModel{Layout: container.Layout, Template: container.Template}
 		if container.Section != nil {
-			model.Section = &observabilitySectionModel{
+			model.Section = &dashifySectionModel{
 				Title:       container.Section.Title,
 				Collapse:    container.Section.Collapse,
 				Collapsible: container.Section.Collapsible,
 				Layout:      container.Section.Layout,
-				Container:   observabilitySectionModelsFromContainers(container.Section.Container),
+				Container:   dashifySectionModelsFromContainers(container.Section.Container),
 			}
 		}
 		if container.Group != nil {
-			model.Group = observabilityGroupModelFromGroup(container.Group)
+			model.Group = dashifyGroupModelFromGroup(container.Group)
 		}
 		models[i] = model
 	}
 	return models
 }
 
-func observabilitySectionModelsFromContainers(containers []observabilityContainer) []observabilitySectionContainerModel {
-	models := make([]observabilitySectionContainerModel, len(containers))
+func dashifySectionModelsFromContainers(containers []dashifyContainer) []dashifySectionContainerModel {
+	models := make([]dashifySectionContainerModel, len(containers))
 	for i, container := range containers {
-		model := observabilitySectionContainerModel{Layout: container.Layout, Template: container.Template}
+		model := dashifySectionContainerModel{Layout: container.Layout, Template: container.Template}
 		if container.Group != nil {
-			model.Group = observabilityGroupModelFromGroup(container.Group)
+			model.Group = dashifyGroupModelFromGroup(container.Group)
 		}
 		models[i] = model
 	}
 	return models
 }
 
-func observabilityGroupModelFromGroup(group *observabilityGroup) *observabilityGroupModel {
-	return &observabilityGroupModel{
+func dashifyGroupModelFromGroup(group *dashifyGroup) *dashifyGroupModel {
+	return &dashifyGroupModel{
 		Title:      group.Title,
 		Headerless: group.Headerless,
 		Layout:     group.Layout,
-		Container:  observabilityGroupModelsFromContainers(group.Container),
+		Container:  dashifyGroupModelsFromContainers(group.Container),
 	}
 }
 
-func observabilityGroupModelsFromContainers(containers []observabilityContainer) []observabilityGroupContainerModel {
-	models := make([]observabilityGroupContainerModel, len(containers))
+func dashifyGroupModelsFromContainers(containers []dashifyContainer) []dashifyGroupContainerModel {
+	models := make([]dashifyGroupContainerModel, len(containers))
 	for i, container := range containers {
-		models[i] = observabilityGroupContainerModel{Layout: container.Layout, Template: container.Template}
+		models[i] = dashifyGroupContainerModel{Layout: container.Layout, Template: container.Template}
 	}
 	return models
 }

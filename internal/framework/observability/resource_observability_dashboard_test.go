@@ -73,6 +73,11 @@ func TestResourceObservabilityDashboardMetadataAndSchema(t *testing.T) {
 
 	section, ok := rootContainer.NestedObject.Blocks["section"].(schema.SingleNestedBlock)
 	require.True(t, ok)
+	sectionTitle, ok := section.Attributes["title"].(schema.StringAttribute)
+	require.True(t, ok)
+	assert.True(t, sectionTitle.Optional)
+	assert.True(t, sectionTitle.Computed)
+	assert.NotNil(t, sectionTitle.Default)
 	assert.Contains(t, section.Attributes, "collapse")
 	assert.Contains(t, section.Attributes, "collapsible")
 	assert.Contains(t, section.Blocks, "layout")
@@ -84,6 +89,11 @@ func TestResourceObservabilityDashboardMetadataAndSchema(t *testing.T) {
 
 	group, ok := rootContainer.NestedObject.Blocks["group"].(schema.SingleNestedBlock)
 	require.True(t, ok)
+	groupTitle, ok := group.Attributes["title"].(schema.StringAttribute)
+	require.True(t, ok)
+	assert.True(t, groupTitle.Optional)
+	assert.True(t, groupTitle.Computed)
+	assert.NotNil(t, groupTitle.Default)
 	assert.Contains(t, group.Attributes, "headerless")
 	assert.Contains(t, group.Blocks, "layout")
 	groupContainer, ok := group.Blocks["container"].(schema.ListNestedBlock)
@@ -159,10 +169,51 @@ func TestResourceObservabilityDashboardInlineContentLifecycleAndGeneratedConfig(
 	})
 }
 
-func TestObservabilityLayoutOptionValidators(t *testing.T) {
+func TestResourceObservabilityDashboardUntitledContainers(t *testing.T) {
+	store := newTemplateAPIStore()
+
+	testresource.UnitTest(t, testresource.TestCase{
+		IsUnitTest: true,
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_5_0),
+		},
+		ProtoV5ProviderFactories: fwtest.NewMockProto5Server(
+			t,
+			store.handlers(),
+			fwtest.WithMockResources(NewResourceObservabilityDashboard),
+		),
+		Steps: []testresource.TestStep{{
+			Config: `
+resource "signalfx_observability_dashboard" "untitled" {
+  title = "Untitled containers"
+
+  container {
+    section {
+      container {
+        group {
+          container {
+            template {
+              content = jsonencode({ "<Chart>" = [] })
+            }
+          }
+        }
+      }
+    }
+  }
+}
+`,
+			Check: testresource.ComposeAggregateTestCheckFunc(
+				testresource.TestCheckResourceAttr("signalfx_observability_dashboard.untitled", "container.0.section.title", ""),
+				testresource.TestCheckResourceAttr("signalfx_observability_dashboard.untitled", "container.0.section.container.0.group.title", ""),
+			),
+		}},
+	})
+}
+
+func TestDashifyLayoutOptionValidators(t *testing.T) {
 	t.Parallel()
 
-	block := observabilityLayoutOptionsBlock()
+	block := dashifyLayoutOptionsBlock()
 	for name, test := range map[string]struct {
 		attribute   string
 		value       float64
@@ -190,23 +241,23 @@ func TestObservabilityLayoutOptionValidators(t *testing.T) {
 	}
 }
 
-func TestObservabilityContainerContentErrorsDescribeOneContainer(t *testing.T) {
+func TestDashifyContainerContentErrorsDescribeOneContainer(t *testing.T) {
 	t.Parallel()
 
 	tests := map[string]struct {
-		level observabilityContainerLevel
+		level dashifyContainerLevel
 		want  string
 	}{
 		"dashboard": {
-			level: observabilityDashboardContainerLevel,
+			level: dashifyDashboardContainerLevel,
 			want:  "each dashboard container must set exactly one content block: template, section, or group",
 		},
 		"section": {
-			level: observabilitySectionContainerLevel,
+			level: dashifySectionContainerLevel,
 			want:  "each container within a section must set exactly one content block: template or group",
 		},
 		"group": {
-			level: observabilityGroupContainerLevel,
+			level: dashifyGroupContainerLevel,
 			want:  "each container within a group must set exactly one template block",
 		},
 	}
@@ -214,44 +265,44 @@ func TestObservabilityContainerContentErrorsDescribeOneContainer(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			assert.Equal(t, test.want, observabilityContainerContentError(test.level))
+			assert.Equal(t, test.want, dashifyContainerContentError(test.level))
 		})
 	}
 }
 
-func TestValidateObservabilityDashboardTemplate(t *testing.T) {
+func TestValidateDashifyTemplate(t *testing.T) {
 	t.Parallel()
 
 	tests := map[string]struct {
-		model       observabilityDashboardTemplateModel
+		model       dashifyTemplateModel
 		wantError   bool
 		wantMessage string
 	}{
 		"template id": {
-			model: observabilityDashboardTemplateModel{
+			model: dashifyTemplateModel{
 				TemplateID: types.StringValue("chart-id"),
 				Content:    types.StringNull(),
 			},
 		},
 		"direct content": {
-			model: observabilityDashboardTemplateModel{
+			model: dashifyTemplateModel{
 				TemplateID: types.StringNull(),
 				Content:    types.StringValue(`{"<o11y:SingleValue>":[],"chart":{}}`),
 			},
 		},
 		"chart wrapped content": {
-			model: observabilityDashboardTemplateModel{
+			model: dashifyTemplateModel{
 				TemplateID: types.StringNull(),
 				Content:    types.StringValue(`{"<Chart>":[{"<o11y:SingleValue>":[]}]}`),
 			},
 		},
 		"neither": {
-			model:       observabilityDashboardTemplateModel{TemplateID: types.StringNull(), Content: types.StringNull()},
+			model:       dashifyTemplateModel{TemplateID: types.StringNull(), Content: types.StringNull()},
 			wantError:   true,
 			wantMessage: "exactly one",
 		},
 		"both": {
-			model: observabilityDashboardTemplateModel{
+			model: dashifyTemplateModel{
 				TemplateID: types.StringValue("chart-id"),
 				Content:    types.StringValue(`{"<o11y:SingleValue>":[]}`),
 			},
@@ -259,40 +310,40 @@ func TestValidateObservabilityDashboardTemplate(t *testing.T) {
 			wantMessage: "exactly one",
 		},
 		"empty template id": {
-			model:       observabilityDashboardTemplateModel{TemplateID: types.StringValue(""), Content: types.StringNull()},
+			model:       dashifyTemplateModel{TemplateID: types.StringValue(""), Content: types.StringNull()},
 			wantError:   true,
 			wantMessage: "non-empty",
 		},
 		"malformed content": {
-			model:       observabilityDashboardTemplateModel{TemplateID: types.StringNull(), Content: types.StringValue(`{"<Chart>":`)},
+			model:       dashifyTemplateModel{TemplateID: types.StringNull(), Content: types.StringValue(`{"<Chart>":`)},
 			wantError:   true,
 			wantMessage: "valid JSON",
 		},
 		"non-object content": {
-			model:       observabilityDashboardTemplateModel{TemplateID: types.StringNull(), Content: types.StringValue(`[]`)},
+			model:       dashifyTemplateModel{TemplateID: types.StringNull(), Content: types.StringValue(`[]`)},
 			wantError:   true,
 			wantMessage: "JSON object",
 		},
 		"content without element": {
-			model:       observabilityDashboardTemplateModel{TemplateID: types.StringNull(), Content: types.StringValue(`{"chart":{}}`)},
+			model:       dashifyTemplateModel{TemplateID: types.StringNull(), Content: types.StringValue(`{"chart":{}}`)},
 			wantError:   true,
-			wantMessage: "no Dashify element key",
+			wantMessage: "no dashboard element key",
 		},
 		"content with multiple elements": {
-			model:       observabilityDashboardTemplateModel{TemplateID: types.StringNull(), Content: types.StringValue(`{"<Chart>":[],"<Dashboard>":[]}`)},
+			model:       dashifyTemplateModel{TemplateID: types.StringNull(), Content: types.StringValue(`{"<Chart>":[],"<Dashboard>":[]}`)},
 			wantError:   true,
-			wantMessage: "multiple Dashify element keys",
+			wantMessage: "multiple dashboard element keys",
 		},
 		"content import element": {
-			model:       observabilityDashboardTemplateModel{TemplateID: types.StringNull(), Content: types.StringValue(`{"<$import.widget0>":[]}`)},
+			model:       dashifyTemplateModel{TemplateID: types.StringNull(), Content: types.StringValue(`{"<$import.widget0>":[]}`)},
 			wantError:   true,
 			wantMessage: "use template_id",
 		},
 		"unknown template id": {
-			model: observabilityDashboardTemplateModel{TemplateID: types.StringUnknown(), Content: types.StringNull()},
+			model: dashifyTemplateModel{TemplateID: types.StringUnknown(), Content: types.StringNull()},
 		},
 		"known id with unknown content": {
-			model: observabilityDashboardTemplateModel{TemplateID: types.StringValue("chart-id"), Content: types.StringUnknown()},
+			model: dashifyTemplateModel{TemplateID: types.StringValue("chart-id"), Content: types.StringUnknown()},
 		},
 	}
 
@@ -300,7 +351,7 @@ func TestValidateObservabilityDashboardTemplate(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			var response resource.ValidateConfigResponse
-			validateObservabilityDashboardTemplate(&response, path.Root("container").AtListIndex(0), &test.model)
+			validateDashifyTemplate(&response, path.Root("container").AtListIndex(0), &test.model)
 			assert.Equal(t, test.wantError, response.Diagnostics.HasError(), response.Diagnostics)
 			if test.wantMessage != "" {
 				require.NotEmpty(t, response.Diagnostics.Errors())
@@ -333,45 +384,70 @@ func TestValidateObservabilityTitle(t *testing.T) {
 	}
 }
 
-func TestValidateObservabilityLayoutBlocks(t *testing.T) {
+func TestValidateDashifyContainersAllowsUntitledSectionsAndGroups(t *testing.T) {
+	t.Parallel()
+
+	containers := []dashifyContainer{{
+		Section: &dashifySection{
+			Title: types.StringNull(),
+			Container: []dashifyContainer{{
+				Group: &dashifyGroup{
+					Title: types.StringValue(""),
+					Container: []dashifyContainer{{
+						Template: &dashifyTemplateModel{
+							TemplateID: types.StringValue("chart-id"),
+							Content:    types.StringNull(),
+						},
+					}},
+				},
+			}},
+		},
+	}}
+
+	var response resource.ValidateConfigResponse
+	validateDashifyContainers(&response, path.Root("container"), containers, dashifyDashboardContainerLevel)
+	assert.False(t, response.Diagnostics.HasError(), response.Diagnostics)
+}
+
+func TestValidateDashifyLayoutBlocks(t *testing.T) {
 	t.Parallel()
 
 	t.Run("empty item layout", func(t *testing.T) {
 		var resp resource.ValidateConfigResponse
-		validateObservabilityLayout(&resp, path.Root("layout"), &observabilityLayoutModel{})
+		validateDashifyLayout(&resp, path.Root("layout"), &dashifyLayoutModel{})
 		require.True(t, resp.Diagnostics.HasError())
 		assert.Contains(t, resp.Diagnostics.Errors()[0].Detail(), "at least one")
 	})
 
 	t.Run("malformed item value", func(t *testing.T) {
 		var resp resource.ValidateConfigResponse
-		validateObservabilityLayout(&resp, path.Root("layout"), &observabilityLayoutModel{Width: types.StringValue(`{"min":1}`)})
+		validateDashifyLayout(&resp, path.Root("layout"), &dashifyLayoutModel{Width: types.StringValue(`{"min":1}`)})
 		require.True(t, resp.Diagnostics.HasError())
 		assert.Contains(t, resp.Diagnostics.Errors()[0].Detail(), "must contain value")
 	})
 
 	t.Run("coordinate array", func(t *testing.T) {
 		var resp resource.ValidateConfigResponse
-		validateObservabilityLayout(&resp, path.Root("layout"), &observabilityLayoutModel{X: types.StringValue(`["1/4",8]`)})
+		validateDashifyLayout(&resp, path.Root("layout"), &dashifyLayoutModel{X: types.StringValue(`["1/4",8]`)})
 		assert.False(t, resp.Diagnostics.HasError(), resp.Diagnostics)
 	})
 
 	t.Run("empty layout options", func(t *testing.T) {
 		var resp resource.ValidateConfigResponse
-		validateObservabilityLayoutOptions(&resp, path.Root("layout"), &observabilityLayoutOptionsModel{})
+		validateDashifyLayoutOptions(&resp, path.Root("layout"), &dashifyLayoutOptionsModel{})
 		require.True(t, resp.Diagnostics.HasError())
 		assert.Contains(t, resp.Diagnostics.Errors()[0].Detail(), "gap, step, defaults")
 	})
 
 	t.Run("empty defaults", func(t *testing.T) {
 		var resp resource.ValidateConfigResponse
-		validateObservabilityLayoutOptions(&resp, path.Root("layout"), &observabilityLayoutOptionsModel{Defaults: &observabilityLayoutDefaultsModel{}})
+		validateDashifyLayoutOptions(&resp, path.Root("layout"), &dashifyLayoutOptionsModel{Defaults: &dashifyLayoutDefaultsModel{}})
 		require.True(t, resp.Diagnostics.HasError())
 		assert.Contains(t, resp.Diagnostics.Errors()[0].Detail(), "defaults must set")
 	})
 }
 
-func TestObservabilityDashboardRealUIGoldens(t *testing.T) {
+func TestDashifyDashboardRealUIGoldens(t *testing.T) {
 	t.Parallel()
 
 	goldens := []struct {
@@ -430,23 +506,23 @@ func TestObservabilityDashboardRealUIGoldens(t *testing.T) {
 	}
 }
 
-func TestObservabilityDashboardSpecRoundTrip(t *testing.T) {
+func TestDashifyDashboardSpecRoundTrip(t *testing.T) {
 	t.Parallel()
 
 	model := observabilityDashboardModel{
 		Title: types.StringValue("Service overview"),
-		Layout: &observabilityLayoutOptionsModel{
+		Layout: &dashifyLayoutOptionsModel{
 			Gap:  types.Float64Value(0),
 			Step: types.Float64Value(1),
-			Defaults: &observabilityLayoutDefaultsModel{
+			Defaults: &dashifyLayoutDefaultsModel{
 				Absolute:  types.BoolValue(false),
 				MinWidth:  types.StringValue("4"),
 				MinHeight: types.StringValue("2"),
 			},
 		},
-		Container: []observabilityDashboardContainerModel{
+		Container: []dashifyDashboardContainerModel{
 			{
-				Layout: &observabilityLayoutModel{
+				Layout: &dashifyLayoutModel{
 					Absolute:  types.BoolValue(true),
 					Width:     types.StringValue(`{"max":"100%","min":4,"value":"1/2"}`),
 					Height:    types.StringValue("20"),
@@ -457,39 +533,39 @@ func TestObservabilityDashboardSpecRoundTrip(t *testing.T) {
 					X:         types.StringValue(`["1/4",8]`),
 					Y:         types.StringValue("12"),
 				},
-				Template: &observabilityDashboardTemplateModel{TemplateID: types.StringValue("chart-a")},
+				Template: &dashifyTemplateModel{TemplateID: types.StringValue("chart-a")},
 			},
 			{
-				Section: &observabilitySectionModel{
+				Section: &dashifySectionModel{
 					Title:       types.StringValue("Latency"),
 					Collapse:    types.BoolValue(false),
 					Collapsible: types.BoolValue(true),
-					Layout: &observabilityLayoutOptionsModel{
+					Layout: &dashifyLayoutOptionsModel{
 						Gap:  types.Float64Value(8),
 						Step: types.Float64Value(8),
 					},
-					Container: []observabilitySectionContainerModel{
+					Container: []dashifySectionContainerModel{
 						{
-							Group: &observabilityGroupModel{
+							Group: &dashifyGroupModel{
 								Title:      types.StringValue("By service"),
 								Headerless: types.BoolValue(true),
-								Layout: &observabilityLayoutOptionsModel{
-									Defaults: &observabilityLayoutDefaultsModel{Width: types.StringValue("1/2")},
+								Layout: &dashifyLayoutOptionsModel{
+									Defaults: &dashifyLayoutDefaultsModel{Width: types.StringValue("1/2")},
 								},
-								Container: []observabilityGroupContainerModel{{Template: &observabilityDashboardTemplateModel{TemplateID: types.StringValue("chart-b")}}},
+								Container: []dashifyGroupContainerModel{{Template: &dashifyTemplateModel{TemplateID: types.StringValue("chart-b")}}},
 							},
 						},
 					},
 				},
 			},
 			{
-				Group: &observabilityGroupModel{
+				Group: &dashifyGroupModel{
 					Title:      types.StringValue("Root group"),
 					Headerless: types.BoolValue(false),
-					Container: []observabilityGroupContainerModel{
+					Container: []dashifyGroupContainerModel{
 						{
-							Layout:   &observabilityLayoutModel{Width: types.StringValue("1/2")},
-							Template: &observabilityDashboardTemplateModel{TemplateID: types.StringValue("chart-c")},
+							Layout:   &dashifyLayoutModel{Width: types.StringValue("1/2")},
+							Template: &dashifyTemplateModel{TemplateID: types.StringValue("chart-c")},
 						},
 					},
 				},
@@ -502,7 +578,7 @@ func TestObservabilityDashboardSpecRoundTrip(t *testing.T) {
 	assert.Equal(t, []string{"/v2/template/chart-a", "/v2/template/chart-b", "/v2/template/chart-c"}, imports)
 	var document map[string]any
 	require.NoError(t, json.Unmarshal(spec, &document))
-	assert.Len(t, document[observabilityDashboardElement], 3)
+	assert.Len(t, document[dashifyDashboardElement], 3)
 	assert.Contains(t, document, "$import:widget0")
 	assert.Contains(t, document, "$import:widget1_0_0")
 	assert.Contains(t, document, "$import:widget2_0")
@@ -519,7 +595,7 @@ func TestObservabilityDashboardSpecRoundTrip(t *testing.T) {
 	assert.Equal(t, true, sectionMetadata["collapsible"])
 	groupMetadata := saved["_.1.0"].(map[string]any)["group"].(map[string]any)
 	assert.Equal(t, true, groupMetadata["headerless"])
-	dashboardChildren := document[observabilityDashboardElement].([]any)
+	dashboardChildren := document[dashifyDashboardElement].([]any)
 	sectionElement := dashboardChildren[1].(map[string]any)
 	assert.Equal(t, float64(8), sectionElement["layout"].(map[string]any)["gap"])
 
@@ -531,7 +607,7 @@ func TestObservabilityDashboardSpecRoundTrip(t *testing.T) {
 	assert.Equal(t, model.Container, parsed.Container)
 }
 
-func TestObservabilityDashboardInlineContentRoundTrip(t *testing.T) {
+func TestDashifyDashboardInlineContentRoundTrip(t *testing.T) {
 	t.Parallel()
 
 	for name, content := range map[string]string{
@@ -542,8 +618,8 @@ func TestObservabilityDashboardInlineContentRoundTrip(t *testing.T) {
 			t.Parallel()
 			model := observabilityDashboardModel{
 				Title: types.StringValue("Dashboard"),
-				Container: []observabilityDashboardContainerModel{{
-					Template: &observabilityDashboardTemplateModel{
+				Container: []dashifyDashboardContainerModel{{
+					Template: &dashifyTemplateModel{
 						TemplateID: types.StringNull(),
 						Content:    types.StringValue(content),
 					},
@@ -557,8 +633,8 @@ func TestObservabilityDashboardInlineContentRoundTrip(t *testing.T) {
 			var document map[string]any
 			require.NoError(t, json.Unmarshal(spec, &document))
 			assert.NotContains(t, document, "$import:widget0")
-			children := document[observabilityDashboardElement].([]any)
-			panel := children[0].(map[string]any)[observabilityPanelElement].([]any)
+			children := document[dashifyDashboardElement].([]any)
+			panel := children[0].(map[string]any)[dashifyPanelElement].([]any)
 			encodedPanelContent, err := json.Marshal(panel[0])
 			require.NoError(t, err)
 			assert.JSONEq(t, content, string(encodedPanelContent))
@@ -584,7 +660,7 @@ func TestObservabilityDashboardInlineContentRoundTrip(t *testing.T) {
 	}
 }
 
-func TestObservabilityDashboardSpecWarnsAboutUnmodeledFields(t *testing.T) {
+func TestDashifyDashboardSpecWarnsAboutUnmodeledFields(t *testing.T) {
 	t.Parallel()
 
 	root := template.RootElementDashboard
@@ -634,7 +710,7 @@ func TestObservabilityDashboardSpecWarnsAboutUnmodeledFields(t *testing.T) {
 	assert.NotContains(t, warnings[0].Detail(), "layout._.0.0.0.minW")
 }
 
-func TestObservabilityDashboardSpecAllowsMissingLayout(t *testing.T) {
+func TestDashifyDashboardSpecAllowsMissingLayout(t *testing.T) {
 	t.Parallel()
 
 	root := template.RootElementDashboard
@@ -646,7 +722,41 @@ func TestObservabilityDashboardSpecAllowsMissingLayout(t *testing.T) {
 	assert.Equal(t, "chart-id", model.Container[0].Template.TemplateID.ValueString())
 }
 
-func TestObservabilityDashboardSpecRejectsAmbiguousLayouts(t *testing.T) {
+func TestDashifyDashboardSpecAllowsUntitledSectionsAndGroups(t *testing.T) {
+	t.Parallel()
+
+	for name, layout := range map[string]string{
+		"missing metadata": "",
+		"missing titles":   `,"layout":{"saved":{"_":{"items":[{"id":"_.0"}]},"_.0":{"items":[{"id":"_.0.0"}],"section":{}},"_.0.0":{"items":[{"id":"_.0.0.0"}],"group":{}}}}`,
+		"empty titles":     `,"layout":{"saved":{"_":{"items":[{"id":"_.0"}]},"_.0":{"items":[{"id":"_.0.0"}],"section":{"title":""}},"_.0.0":{"items":[{"id":"_.0.0.0"}],"group":{"title":""}}}}`,
+		"null titles":      `,"layout":{"saved":{"_":{"items":[{"id":"_.0"}]},"_.0":{"items":[{"id":"_.0.0"}],"section":{"title":null}},"_.0.0":{"items":[{"id":"_.0.0.0"}],"group":{"title":null}}}}`,
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			root := template.RootElementDashboard
+			spec := json.RawMessage(`{"title":"Dashboard","<Dashboard>":[{"<Section>":[{"<Group>":[{"<Panel>":[{"<$import.widget0>":[]}]}]}]}]` + layout + `,"$import:widget0":"/v2/template/chart-id"}`)
+			model, diags := parseDashboardTemplate(&template.Template{Title: "Dashboard", Spec: spec, Metadata: &template.Metadata{RootElement: &root}})
+			require.Empty(t, diags, diags)
+			require.Len(t, model.Container, 1)
+			require.NotNil(t, model.Container[0].Section)
+			assert.False(t, model.Container[0].Section.Title.IsNull())
+			assert.Equal(t, "", model.Container[0].Section.Title.ValueString())
+			require.Len(t, model.Container[0].Section.Container, 1)
+			require.NotNil(t, model.Container[0].Section.Container[0].Group)
+			assert.False(t, model.Container[0].Section.Container[0].Group.Title.IsNull())
+			assert.Equal(t, "", model.Container[0].Section.Container[0].Group.Title.ValueString())
+
+			rebuilt, _, err := buildDashboardSpec(model)
+			require.NoError(t, err)
+			reparsed, reparsedDiags := parseDashboardTemplate(&template.Template{Title: "Dashboard", Spec: rebuilt, Metadata: &template.Metadata{RootElement: &root}})
+			require.Empty(t, reparsedDiags, reparsedDiags)
+			assert.Equal(t, model.Container, reparsed.Container)
+		})
+	}
+}
+
+func TestDashifyDashboardSpecRejectsAmbiguousLayouts(t *testing.T) {
 	t.Parallel()
 
 	tests := map[string]struct {
@@ -687,7 +797,7 @@ func TestObservabilityDashboardSpecRejectsAmbiguousLayouts(t *testing.T) {
 	}
 }
 
-func TestObservabilityDashboardSpecRejectsInvalidLayoutValues(t *testing.T) {
+func TestDashifyDashboardSpecRejectsInvalidLayoutValues(t *testing.T) {
 	t.Parallel()
 
 	tests := map[string]struct {
@@ -728,7 +838,7 @@ func TestObservabilityDashboardSpecRejectsInvalidLayoutValues(t *testing.T) {
 	}
 }
 
-func TestObservabilityDashboardSpecRejectsInvalidGroupMetadata(t *testing.T) {
+func TestDashifyDashboardSpecRejectsInvalidGroupMetadata(t *testing.T) {
 	t.Parallel()
 
 	root := template.RootElementDashboard
@@ -747,7 +857,7 @@ func TestObservabilityDashboardSpecRejectsInvalidGroupMetadata(t *testing.T) {
 	assert.Contains(t, diags.Errors()[0].Detail(), "rather than a boolean")
 }
 
-func TestObservabilityDashboardSpecAcceptsAndDiscardsUIOrder(t *testing.T) {
+func TestDashifyDashboardSpecAcceptsAndDiscardsUIOrder(t *testing.T) {
 	t.Parallel()
 
 	root := template.RootElementDashboard

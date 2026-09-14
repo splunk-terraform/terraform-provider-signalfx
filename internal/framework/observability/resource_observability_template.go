@@ -77,7 +77,7 @@ func (r *observabilityTemplateResource) Schema(_ context.Context, _ resource.Sch
 			},
 			"root_element": schema.StringAttribute{
 				Required:    true,
-				Description: "Non-empty root Dashify element name represented by the template, such as Chart or Dashboard. Changing this value replaces the resource because the API does not permit root element updates.",
+				Description: "Non-empty root element name represented by the template, such as Chart or Dashboard. Changing this value replaces the resource because the API does not permit root element updates.",
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(1),
 				},
@@ -87,7 +87,7 @@ func (r *observabilityTemplateResource) Schema(_ context.Context, _ resource.Sch
 			},
 			"spec": schema.StringAttribute{
 				Required:    true,
-				Description: "JSON object containing the polymorphic Dashify template specification.",
+				Description: "JSON object containing the polymorphic template specification.",
 				PlanModifiers: []planmodifier.String{
 					observabilityJSONSemanticEqualityModifier{},
 				},

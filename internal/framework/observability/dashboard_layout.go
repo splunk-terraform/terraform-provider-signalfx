@@ -12,7 +12,87 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-func buildObservabilityLayoutItem(id string, layout *observabilityLayoutModel) (map[string]any, error) {
+// dashifyLayoutField describes one placement/size field shared by build,
+// parse, validate, and empty-check logic, so the field set (schema name,
+// Dashify key, coordinate handling) is declared once per model instance
+// instead of separately in each of those four places. value points directly
+// at the field on the caller's model, so no generics or get/set closures are
+// needed to share this across dashifyLayoutModel and dashifyLayoutDefaultsModel.
+type dashifyLayoutField struct {
+	name       string
+	key        string
+	coordinate bool
+	value      *types.String
+}
+
+// dashifyLayoutModelFields lists layout's placement/size fields, including
+// x/y which only exist on a container's own layout, never on inherited
+// defaults.
+func dashifyLayoutModelFields(layout *dashifyLayoutModel) []dashifyLayoutField {
+	return []dashifyLayoutField{
+		{name: "width", key: "w", value: &layout.Width},
+		{name: "height", key: "h", value: &layout.Height},
+		{name: "min_width", key: "minW", value: &layout.MinWidth},
+		{name: "max_width", key: "maxW", value: &layout.MaxWidth},
+		{name: "min_height", key: "minH", value: &layout.MinHeight},
+		{name: "max_height", key: "maxH", value: &layout.MaxHeight},
+		{name: "x", key: "x", coordinate: true, value: &layout.X},
+		{name: "y", key: "y", coordinate: true, value: &layout.Y},
+	}
+}
+
+// dashifyLayoutDefaultsModelFields lists the same placement/size fields as
+// dashifyLayoutModelFields, minus x/y.
+func dashifyLayoutDefaultsModelFields(defaults *dashifyLayoutDefaultsModel) []dashifyLayoutField {
+	return []dashifyLayoutField{
+		{name: "width", key: "w", value: &defaults.Width},
+		{name: "height", key: "h", value: &defaults.Height},
+		{name: "min_width", key: "minW", value: &defaults.MinWidth},
+		{name: "max_width", key: "maxW", value: &defaults.MaxWidth},
+		{name: "min_height", key: "minH", value: &defaults.MinHeight},
+		{name: "max_height", key: "maxH", value: &defaults.MaxHeight},
+	}
+}
+
+func dashifyLayoutFieldsEmpty(absolute types.Bool, fields []dashifyLayoutField) bool {
+	if !absolute.IsNull() {
+		return false
+	}
+	for _, field := range fields {
+		if !field.value.IsNull() {
+			return false
+		}
+	}
+	return true
+}
+
+// Writes shared layout fields into their Dashify representation.
+func buildDashifyLayoutFields(target map[string]any, fields []dashifyLayoutField, errPrefix string) error {
+	for _, field := range fields {
+		value, ok, err := dashifyLayoutValue(*field.value, field.coordinate)
+		if err != nil {
+			return fmt.Errorf("%s%s: %w", errPrefix, field.key, err)
+		}
+		if ok {
+			target[field.key] = value
+		}
+	}
+	return nil
+}
+
+// Reads shared Dashify layout fields into a Terraform model.
+func parseDashifyLayoutFields(source map[string]any, fields []dashifyLayoutField) error {
+	for _, field := range fields {
+		value, err := dashifyLayoutString(source, field.key, field.coordinate)
+		if err != nil {
+			return err
+		}
+		*field.value = value
+	}
+	return nil
+}
+
+func buildDashifyLayoutItem(id string, layout *dashifyLayoutModel) (map[string]any, error) {
 	item := map[string]any{"id": id}
 	if layout == nil {
 		return item, nil
@@ -20,32 +100,13 @@ func buildObservabilityLayoutItem(id string, layout *observabilityLayoutModel) (
 	if !layout.Absolute.IsNull() && !layout.Absolute.IsUnknown() {
 		item["absolute"] = layout.Absolute.ValueBool()
 	}
-	for _, field := range []struct {
-		key        string
-		value      types.String
-		coordinate bool
-	}{
-		{key: "w", value: layout.Width},
-		{key: "h", value: layout.Height},
-		{key: "minW", value: layout.MinWidth},
-		{key: "maxW", value: layout.MaxWidth},
-		{key: "minH", value: layout.MinHeight},
-		{key: "maxH", value: layout.MaxHeight},
-		{key: "x", value: layout.X, coordinate: true},
-		{key: "y", value: layout.Y, coordinate: true},
-	} {
-		value, ok, err := observabilityLayoutValue(field.value, field.coordinate)
-		if err != nil {
-			return nil, fmt.Errorf("%s: %w", field.key, err)
-		}
-		if ok {
-			item[field.key] = value
-		}
+	if err := buildDashifyLayoutFields(item, dashifyLayoutModelFields(layout), ""); err != nil {
+		return nil, err
 	}
 	return item, nil
 }
 
-func buildObservabilityLayoutOptions(options *observabilityLayoutOptionsModel) (map[string]any, error) {
+func buildDashifyLayoutOptions(options *dashifyLayoutOptionsModel) (map[string]any, error) {
 	layout := map[string]any{}
 	if options == nil {
 		return layout, nil
@@ -64,24 +125,8 @@ func buildObservabilityLayoutOptions(options *observabilityLayoutOptionsModel) (
 	if !options.Defaults.Absolute.IsNull() && !options.Defaults.Absolute.IsUnknown() {
 		defaults["absolute"] = options.Defaults.Absolute.ValueBool()
 	}
-	for _, field := range []struct {
-		key   string
-		value types.String
-	}{
-		{key: "w", value: options.Defaults.Width},
-		{key: "h", value: options.Defaults.Height},
-		{key: "minW", value: options.Defaults.MinWidth},
-		{key: "maxW", value: options.Defaults.MaxWidth},
-		{key: "minH", value: options.Defaults.MinHeight},
-		{key: "maxH", value: options.Defaults.MaxHeight},
-	} {
-		value, ok, err := observabilityLayoutValue(field.value, false)
-		if err != nil {
-			return nil, fmt.Errorf("defaults.%s: %w", field.key, err)
-		}
-		if ok {
-			defaults[field.key] = value
-		}
+	if err := buildDashifyLayoutFields(defaults, dashifyLayoutDefaultsModelFields(options.Defaults), "defaults."); err != nil {
+		return nil, err
 	}
 	if len(defaults) > 0 {
 		layout["defaults"] = defaults
@@ -89,11 +134,9 @@ func buildObservabilityLayoutOptions(options *observabilityLayoutOptionsModel) (
 	return layout, nil
 }
 
-// parseObservabilityLayouts matches positional layout IDs back to one
-// container list. Physical item order and the optional order field are UI
-// state; IDs are the stable association with Terraform's content order.
-func parseObservabilityLayouts(spec map[string]any, listKey string, count int) ([]*observabilityLayoutModel, map[string]any, []string, error) {
-	layouts := make([]*observabilityLayoutModel, count)
+// Matches positional layout IDs to Terraform container order, discarding UI-only order state.
+func parseDashifyLayouts(spec map[string]any, listKey string, count int) ([]*dashifyLayoutModel, map[string]any, []string, error) {
+	layouts := make([]*dashifyLayoutModel, count)
 	rawLayout, ok := spec["layout"]
 	if !ok {
 		return layouts, nil, nil, nil
@@ -118,7 +161,7 @@ func parseObservabilityLayouts(spec map[string]any, listKey string, count int) (
 	if !ok {
 		return nil, nil, nil, fmt.Errorf("layout.saved[%q] is %T rather than an object", listKey, rawContainer)
 	}
-	takeObservabilityLayoutBookkeeping(container)
+	takeDashifyLayoutBookkeeping(container)
 	rawItems, ok := container["items"]
 	if !ok {
 		return layouts, container, nil, nil
@@ -141,7 +184,7 @@ func parseObservabilityLayouts(spec map[string]any, listKey string, count int) (
 			return nil, nil, nil, fmt.Errorf("layout item %d has no string id", itemNumber)
 		}
 		delete(item, "id")
-		position, err := observabilityLayoutPosition(id, listKey, count)
+		position, err := dashifyLayoutPosition(id, listKey, count)
 		if err != nil {
 			return nil, nil, nil, err
 		}
@@ -149,18 +192,18 @@ func parseObservabilityLayouts(spec map[string]any, listKey string, count int) (
 			return nil, nil, nil, fmt.Errorf("layout items %s and %s both place container %d", previous, id, position)
 		}
 		claimed[position] = id
-		takeObservabilityLayoutOrder(item)
-		layoutModel, err := observabilityLayoutFromItem(item)
+		takeDashifyLayoutOrder(item)
+		layoutModel, err := dashifyLayoutFromItem(item)
 		if err != nil {
 			return nil, nil, nil, fmt.Errorf("layout %s: %w", id, err)
 		}
 		layouts[position] = layoutModel
-		leftovers = append(leftovers, observabilityLeftovers("layout."+id, item)...)
+		leftovers = append(leftovers, dashifyLeftovers("layout."+id, item)...)
 	}
 	return layouts, container, leftovers, nil
 }
 
-func takeObservabilityLayoutOrder(item map[string]any) {
+func takeDashifyLayoutOrder(item map[string]any) {
 	raw, ok := item["order"]
 	if !ok {
 		return
@@ -170,7 +213,7 @@ func takeObservabilityLayoutOrder(item map[string]any) {
 	}
 }
 
-func takeObservabilityLayoutBookkeeping(entry map[string]any) {
+func takeDashifyLayoutBookkeeping(entry map[string]any) {
 	for _, key := range []string{"parent", "at"} {
 		if _, ok := entry[key].(string); ok {
 			delete(entry, key)
@@ -178,7 +221,7 @@ func takeObservabilityLayoutBookkeeping(entry map[string]any) {
 	}
 }
 
-func observabilityLayoutPosition(id, listKey string, count int) (int, error) {
+func dashifyLayoutPosition(id, listKey string, count int) (int, error) {
 	position, ok := strings.CutPrefix(id, listKey+".")
 	if !ok {
 		return 0, fmt.Errorf("layout id %q is not a position under %q", id, listKey)
@@ -190,39 +233,22 @@ func observabilityLayoutPosition(id, listKey string, count int) (int, error) {
 	return index, nil
 }
 
-func observabilityLayoutFromItem(item map[string]any) (*observabilityLayoutModel, error) {
-	absolute, err := observabilityLayoutBool(item, "absolute")
+func dashifyLayoutFromItem(item map[string]any) (*dashifyLayoutModel, error) {
+	absolute, err := dashifyLayoutBool(item, "absolute")
 	if err != nil {
 		return nil, err
 	}
-	model := &observabilityLayoutModel{Absolute: absolute}
-	for _, field := range []struct {
-		key        string
-		coordinate bool
-		target     *types.String
-	}{
-		{key: "w", target: &model.Width},
-		{key: "h", target: &model.Height},
-		{key: "minW", target: &model.MinWidth},
-		{key: "maxW", target: &model.MaxWidth},
-		{key: "minH", target: &model.MinHeight},
-		{key: "maxH", target: &model.MaxHeight},
-		{key: "x", coordinate: true, target: &model.X},
-		{key: "y", coordinate: true, target: &model.Y},
-	} {
-		value, err := observabilityLayoutString(item, field.key, field.coordinate)
-		if err != nil {
-			return nil, err
-		}
-		*field.target = value
+	model := &dashifyLayoutModel{Absolute: absolute}
+	if err := parseDashifyLayoutFields(item, dashifyLayoutModelFields(model)); err != nil {
+		return nil, err
 	}
-	if model.Absolute.IsNull() && model.Width.IsNull() && model.Height.IsNull() && model.MinWidth.IsNull() && model.MaxWidth.IsNull() && model.MinHeight.IsNull() && model.MaxHeight.IsNull() && model.X.IsNull() && model.Y.IsNull() {
+	if dashifyLayoutIsEmpty(model) {
 		return nil, nil
 	}
 	return model, nil
 }
 
-func parseObservabilityLayoutOptions(parent map[string]any) (*observabilityLayoutOptionsModel, error) {
+func parseDashifyLayoutOptions(parent map[string]any) (*dashifyLayoutOptionsModel, error) {
 	raw, ok := parent["layout"]
 	if !ok {
 		return nil, nil
@@ -232,15 +258,15 @@ func parseObservabilityLayoutOptions(parent map[string]any) (*observabilityLayou
 		return nil, fmt.Errorf("layout is %T rather than an object", raw)
 	}
 
-	gap, hasGap, err := observabilityLayoutFloat(layout, "gap")
+	gap, hasGap, err := dashifyLayoutFloat(layout, "gap")
 	if err != nil {
 		return nil, err
 	}
-	step, hasStep, err := observabilityLayoutFloat(layout, "step")
+	step, hasStep, err := dashifyLayoutFloat(layout, "step")
 	if err != nil {
 		return nil, err
 	}
-	defaults, err := parseObservabilityLayoutDefaults(layout)
+	defaults, err := parseDashifyLayoutDefaults(layout)
 	if err != nil {
 		return nil, err
 	}
@@ -250,10 +276,10 @@ func parseObservabilityLayoutOptions(parent map[string]any) (*observabilityLayou
 	if !hasGap && !hasStep && defaults == nil {
 		return nil, nil
 	}
-	return &observabilityLayoutOptionsModel{Gap: gap, Step: step, Defaults: defaults}, nil
+	return &dashifyLayoutOptionsModel{Gap: gap, Step: step, Defaults: defaults}, nil
 }
 
-func parseObservabilityLayoutDefaults(layout map[string]any) (*observabilityLayoutDefaultsModel, error) {
+func parseDashifyLayoutDefaults(layout map[string]any) (*dashifyLayoutDefaultsModel, error) {
 	raw, ok := layout["defaults"]
 	if !ok {
 		return nil, nil
@@ -262,38 +288,24 @@ func parseObservabilityLayoutDefaults(layout map[string]any) (*observabilityLayo
 	if !ok {
 		return nil, fmt.Errorf("layout.defaults is %T rather than an object", raw)
 	}
-	absolute, err := observabilityLayoutBool(defaults, "absolute")
+	absolute, err := dashifyLayoutBool(defaults, "absolute")
 	if err != nil {
 		return nil, fmt.Errorf("layout.defaults: %w", err)
 	}
-	model := &observabilityLayoutDefaultsModel{Absolute: absolute}
-	for _, field := range []struct {
-		key    string
-		target *types.String
-	}{
-		{key: "w", target: &model.Width},
-		{key: "h", target: &model.Height},
-		{key: "minW", target: &model.MinWidth},
-		{key: "maxW", target: &model.MaxWidth},
-		{key: "minH", target: &model.MinHeight},
-		{key: "maxH", target: &model.MaxHeight},
-	} {
-		value, err := observabilityLayoutString(defaults, field.key, false)
-		if err != nil {
-			return nil, fmt.Errorf("layout.defaults: %w", err)
-		}
-		*field.target = value
+	model := &dashifyLayoutDefaultsModel{Absolute: absolute}
+	if err := parseDashifyLayoutFields(defaults, dashifyLayoutDefaultsModelFields(model)); err != nil {
+		return nil, fmt.Errorf("layout.defaults: %w", err)
 	}
 	if len(defaults) == 0 {
 		delete(layout, "defaults")
 	}
-	if model.Absolute.IsNull() && model.Width.IsNull() && model.Height.IsNull() && model.MinWidth.IsNull() && model.MaxWidth.IsNull() && model.MinHeight.IsNull() && model.MaxHeight.IsNull() {
+	if dashifyLayoutDefaultsAreEmpty(model) {
 		return nil, nil
 	}
 	return model, nil
 }
 
-func observabilityLayoutFloat(object map[string]any, key string) (types.Float64, bool, error) {
+func dashifyLayoutFloat(object map[string]any, key string) (types.Float64, bool, error) {
 	raw, ok := object[key]
 	if !ok {
 		return types.Float64Null(), false, nil
@@ -306,7 +318,7 @@ func observabilityLayoutFloat(object map[string]any, key string) (types.Float64,
 	return types.Float64Value(number), true, nil
 }
 
-func observabilityLayoutBool(object map[string]any, key string) (types.Bool, error) {
+func dashifyLayoutBool(object map[string]any, key string) (types.Bool, error) {
 	raw, ok := object[key]
 	if !ok {
 		return types.BoolNull(), nil
@@ -319,7 +331,7 @@ func observabilityLayoutBool(object map[string]any, key string) (types.Bool, err
 	return types.BoolValue(value), nil
 }
 
-func buildObservabilitySectionMetadata(section *observabilitySection) map[string]any {
+func buildDashifySectionMetadata(section *dashifySection) map[string]any {
 	metadata := map[string]any{"title": section.Title.ValueString()}
 	if !section.Collapse.IsNull() && !section.Collapse.IsUnknown() {
 		metadata["collapse"] = section.Collapse.ValueBool()
@@ -330,7 +342,7 @@ func buildObservabilitySectionMetadata(section *observabilitySection) map[string
 	return map[string]any{"section": metadata}
 }
 
-func buildObservabilityGroupMetadata(group *observabilityGroup) map[string]any {
+func buildDashifyGroupMetadata(group *dashifyGroup) map[string]any {
 	metadata := map[string]any{"title": group.Title.ValueString()}
 	if !group.Headerless.IsNull() && !group.Headerless.IsUnknown() {
 		metadata["headerless"] = group.Headerless.ValueBool()
@@ -338,16 +350,16 @@ func buildObservabilityGroupMetadata(group *observabilityGroup) map[string]any {
 	return map[string]any{"group": metadata}
 }
 
-func parseObservabilitySectionMetadata(entry map[string]any) (types.String, types.Bool, types.Bool, error) {
-	metadata, title, err := observabilityContainerMetadata(entry, "section")
+func parseDashifySectionMetadata(entry map[string]any) (types.String, types.Bool, types.Bool, error) {
+	metadata, title, err := dashifyContainerMetadata(entry, "section")
 	if err != nil {
 		return types.StringNull(), types.BoolNull(), types.BoolNull(), err
 	}
-	collapse, err := observabilityLayoutBool(metadata, "collapse")
+	collapse, err := dashifyLayoutBool(metadata, "collapse")
 	if err != nil {
 		return types.StringNull(), types.BoolNull(), types.BoolNull(), fmt.Errorf("layout.saved section metadata %w", err)
 	}
-	collapsible, err := observabilityLayoutBool(metadata, "collapsible")
+	collapsible, err := dashifyLayoutBool(metadata, "collapsible")
 	if err != nil {
 		return types.StringNull(), types.BoolNull(), types.BoolNull(), fmt.Errorf("layout.saved section metadata %w", err)
 	}
@@ -357,12 +369,12 @@ func parseObservabilitySectionMetadata(entry map[string]any) (types.String, type
 	return types.StringValue(title), collapse, collapsible, nil
 }
 
-func parseObservabilityGroupMetadata(entry map[string]any) (types.String, types.Bool, error) {
-	metadata, title, err := observabilityContainerMetadata(entry, "group")
+func parseDashifyGroupMetadata(entry map[string]any) (types.String, types.Bool, error) {
+	metadata, title, err := dashifyContainerMetadata(entry, "group")
 	if err != nil {
 		return types.StringNull(), types.BoolNull(), err
 	}
-	headerless, err := observabilityLayoutBool(metadata, "headerless")
+	headerless, err := dashifyLayoutBool(metadata, "headerless")
 	if err != nil {
 		return types.StringNull(), types.BoolNull(), fmt.Errorf("layout.saved group metadata %w", err)
 	}
@@ -372,20 +384,31 @@ func parseObservabilityGroupMetadata(entry map[string]any) (types.String, types.
 	return types.StringValue(title), headerless, nil
 }
 
-// Section and group display state lives in each nested layout.saved entry,
-// rather than beside the corresponding Dashify element.
-func observabilityContainerMetadata(entry map[string]any, name string) (map[string]any, string, error) {
+// Section and group display state lives in layout.saved, not beside its element.
+func dashifyContainerMetadata(entry map[string]any, name string) (map[string]any, string, error) {
 	raw, ok := entry[name]
 	if !ok {
-		return nil, "", fmt.Errorf("layout.saved entry has no %s metadata", name)
+		return nil, "", nil
+	}
+	if raw == nil {
+		delete(entry, name)
+		return nil, "", nil
 	}
 	metadata, ok := raw.(map[string]any)
 	if !ok {
 		return nil, "", fmt.Errorf("layout.saved %s metadata is %T rather than an object", name, raw)
 	}
-	title, ok := metadata["title"].(string)
-	if !ok || title == "" {
-		return nil, "", fmt.Errorf("layout.saved %s metadata has no non-empty title", name)
+	rawTitle, ok := metadata["title"]
+	if !ok {
+		return metadata, "", nil
+	}
+	if rawTitle == nil {
+		delete(metadata, "title")
+		return metadata, "", nil
+	}
+	title, ok := rawTitle.(string)
+	if !ok {
+		return nil, "", fmt.Errorf("layout.saved %s metadata has title %v (%T) rather than a string", name, rawTitle, rawTitle)
 	}
 	delete(metadata, "title")
 	return metadata, title, nil

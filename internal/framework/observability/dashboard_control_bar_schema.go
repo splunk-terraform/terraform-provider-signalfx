@@ -7,7 +7,6 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
-	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -16,14 +15,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-func observabilityControlBarBlock() schema.SingleNestedBlock {
+func dashifyControlBarBlock() schema.SingleNestedBlock {
 	return schema.SingleNestedBlock{
 		Description: "Optional controls applied to the dashboard and its charts.",
 		Blocks: map[string]schema.Block{
 			"time_range": schema.SingleNestedBlock{
-				Description: "The dashboard time-range control. Its Dashify variable name is always TIME.",
+				Description: "The dashboard time-range control. Its reserved variable name is always TIME.",
 				Attributes: func() map[string]schema.Attribute {
-					attributes := observabilityCommonControlAttributes("time-range")
+					attributes := dashifyCommonControlAttributes("time-range")
 					attributes["default_variable_value"] = schema.StringAttribute{
 						Optional:    true,
 						Description: "Default time-range value, such as -15m, -PT15M, or an absolute time range.",
@@ -33,9 +32,9 @@ func observabilityControlBarBlock() schema.SingleNestedBlock {
 				}(),
 			},
 			"density": schema.SingleNestedBlock{
-				Description: "The chart density control. Its Dashify variable name is always DENSITY.",
+				Description: "The chart density control. Its reserved variable name is always DENSITY.",
 				Attributes: func() map[string]schema.Attribute {
-					attributes := observabilityCommonControlAttributes("density")
+					attributes := dashifyCommonControlAttributes("density")
 					attributes["default_variable_value"] = schema.Int64Attribute{
 						Optional:    true,
 						Description: "Default chart resolution in seconds. Supported values are 30, 60, 120, and 240.",
@@ -53,16 +52,16 @@ func observabilityControlBarBlock() schema.SingleNestedBlock {
 							Description: "Unique control identity. TIME, DENSITY, and FILTERS are reserved.",
 							Validators:  []validator.String{stringvalidator.LengthAtLeast(1)},
 						},
-						"label":       observabilityOptionalControlString("Control label."),
-						"description": observabilityOptionalControlString("Control description."),
+						"label":       optionalControlString("Control label."),
+						"description": optionalControlString("Control description."),
 						"hidden":      schema.BoolAttribute{Optional: true, Description: "Whether to hide this control."},
 						"key": schema.StringAttribute{
 							Optional:    true,
 							Description: "Property to filter. Defaults to variable_name.",
 							Validators:  []validator.String{stringvalidator.LengthAtLeast(1)},
 						},
-						"default_variable_value": observabilityOptionalStringList("Default selected filter values."),
-						"suggested_values":       observabilityOptionalStringList("Preferred filter suggestions."),
+						"default_variable_value": optionalStringList("Default selected filter values."),
+						"suggested_values":       optionalStringList("Preferred filter suggestions."),
 						"only_suggest_preferred_values": schema.BoolAttribute{
 							Optional:    true,
 							Description: "Whether only preferred suggestions should be offered.",
@@ -84,8 +83,8 @@ func observabilityControlBarBlock() schema.SingleNestedBlock {
 				},
 			},
 			"filter_set": schema.SingleNestedBlock{
-				Description: "The ad-hoc filter picker and its optional default filters. Its Dashify variable name is always FILTERS.",
-				Attributes:  observabilityCommonControlAttributes("filter-set"),
+				Description: "The ad-hoc filter picker and its optional default filters. Its reserved variable name is always FILTERS.",
+				Attributes:  dashifyCommonControlAttributes("filter-set"),
 				Blocks: map[string]schema.Block{
 					"filter": schema.ListNestedBlock{
 						Description: "Ordered default filters for the filter-set control. Empty values are a no-op.",
@@ -100,7 +99,7 @@ func observabilityControlBarBlock() schema.SingleNestedBlock {
 									Required:    true,
 									ElementType: types.StringType,
 									Description: "Values for the filter. An empty list has no effect.",
-									Validators:  observabilityStringListValidators(),
+									Validators:  nonEmptyStringListValidators(),
 								},
 								"negated": schema.BoolAttribute{
 									Optional:    true,
@@ -119,15 +118,15 @@ func observabilityControlBarBlock() schema.SingleNestedBlock {
 	}
 }
 
-func observabilityCommonControlAttributes(controlName string) map[string]schema.Attribute {
+func dashifyCommonControlAttributes(controlName string) map[string]schema.Attribute {
 	return map[string]schema.Attribute{
-		"label":       observabilityOptionalControlString(fmt.Sprintf("The %s control label.", controlName)),
-		"description": observabilityOptionalControlString(fmt.Sprintf("The %s control description.", controlName)),
+		"label":       optionalControlString(fmt.Sprintf("The %s control label.", controlName)),
+		"description": optionalControlString(fmt.Sprintf("The %s control description.", controlName)),
 		"hidden":      schema.BoolAttribute{Optional: true, Description: fmt.Sprintf("Whether to hide the %s control.", controlName)},
 	}
 }
 
-func observabilityOptionalControlString(description string) schema.StringAttribute {
+func optionalControlString(description string) schema.StringAttribute {
 	return schema.StringAttribute{
 		Optional:    true,
 		Description: description,
@@ -135,23 +134,16 @@ func observabilityOptionalControlString(description string) schema.StringAttribu
 	}
 }
 
-func observabilityOptionalStringList(description string) schema.ListAttribute {
+func optionalStringList(description string) schema.ListAttribute {
 	return schema.ListAttribute{
 		Optional:    true,
 		ElementType: types.StringType,
 		Description: description,
-		Validators:  observabilityStringListValidators(),
+		Validators:  nonEmptyStringListValidators(),
 	}
 }
 
-func observabilityStringListValidators() []validator.List {
-	return []validator.List{
-		listvalidator.NoNullValues(),
-		listvalidator.ValueStringsAre(stringvalidator.LengthAtLeast(1)),
-	}
-}
-
-func validateObservabilityControlBar(resp *resource.ValidateConfigResponse, controlBarPath path.Path, model *observabilityControlBarModel) {
+func validateDashifyControlBar(resp *resource.ValidateConfigResponse, controlBarPath path.Path, model *dashifyControlBarModel) {
 	if model == nil {
 		return
 	}
@@ -167,7 +159,7 @@ func validateObservabilityControlBar(resp *resource.ValidateConfigResponse, cont
 			continue
 		}
 		name := pinned.VariableName.ValueString()
-		if name == observabilityTimeRangeVariableName || name == observabilityDensityVariableName || name == observabilityFilterSetVariableName {
+		if name == dashifyTimeRangeVariableName || name == dashifyDensityVariableName || name == dashifyFilterSetVariableName {
 			resp.Diagnostics.AddAttributeError(namePath, "Reserved control variable name", fmt.Sprintf("%q is reserved for the dashboard singleton controls", name))
 			continue
 		}

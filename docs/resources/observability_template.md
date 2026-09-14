@@ -44,8 +44,8 @@ resource "signalfx_observability_template" "chart" {
 
 ### Required
 
-- `root_element` (String) Non-empty root Dashify element name represented by the template, such as Chart or Dashboard. Changing this value replaces the resource because the API does not permit root element updates.
-- `spec` (String) JSON object containing the polymorphic Dashify template specification.
+- `root_element` (String) Non-empty root element name represented by the template, such as Chart or Dashboard. Changing this value replaces the resource because the API does not permit root element updates.
+- `spec` (String) JSON object containing the polymorphic template specification.
 - `title` (String) Template title.
 
 ### Optional

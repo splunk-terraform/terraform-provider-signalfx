@@ -8,10 +8,14 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -23,9 +27,10 @@ import (
 )
 
 type observabilityDirectoryModel struct {
-	ID     types.String `tfsdk:"id"`
-	Path   types.String `tfsdk:"path"`
-	Pinned types.Bool   `tfsdk:"pinned"`
+	ID        types.String `tfsdk:"id"`
+	Path      types.String `tfsdk:"path"`
+	Templates types.List   `tfsdk:"templates"`
+	Pinned    types.Bool   `tfsdk:"pinned"`
 }
 
 type observabilityDirectoryResource struct {
@@ -52,7 +57,7 @@ func (r *observabilityDirectoryResource) Configure(ctx context.Context, req reso
 
 func (r *observabilityDirectoryResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Manages a safe, path-only Observability Directory entry. Membership is intentionally not managed by this resource.",
+		Description: "Manages an Observability Directory entry and its complete ordered Template membership list.",
 		Attributes: map[string]schema.Attribute{
 			"id": fwshared.ResourceIDAttribute(),
 			"path": schema.StringAttribute{
@@ -61,6 +66,14 @@ func (r *observabilityDirectoryResource) Schema(_ context.Context, _ resource.Sc
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
+			},
+			"templates": schema.ListAttribute{
+				ElementType: types.StringType,
+				Optional:    true,
+				Computed:    true,
+				Default:     listdefault.StaticValue(types.ListValueMust(types.StringType, []attr.Value{})),
+				Description: "Complete ordered list of Template API references assigned to this Directory, such as /v2/template/<id>. Updating this attribute replaces the entire backend list; concurrent UI or API changes are last-write-wins.",
+				Validators:  append(nonEmptyStringListValidators(), listvalidator.UniqueValues()),
 			},
 			"pinned": schema.BoolAttribute{
 				Optional:    true,
@@ -82,7 +95,7 @@ func (r *observabilityDirectoryResource) ValidateConfig(ctx context.Context, req
 		resp.Diagnostics.AddAttributeError(
 			path.Root("path"),
 			"Reserved directory path",
-			fmt.Sprintf("%q is reserved by Dashify and cannot be managed by this resource", reserved),
+			fmt.Sprintf("%q is reserved by the dashboard service and cannot be managed by this resource", reserved),
 		)
 	}
 }
@@ -94,7 +107,13 @@ func (r *observabilityDirectoryResource) Create(ctx context.Context, req resourc
 		return
 	}
 
-	entry, err := r.Details().Client.PatchDirectoryEntry(ctx, model.Path.ValueString(), observabilityDirectoryPatch(model.Pinned))
+	patch, diags := observabilityDirectoryPatch(ctx, model.Pinned, model.Templates)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	entry, err := r.Details().Client.PatchDirectoryEntry(ctx, model.Path.ValueString(), patch)
 	if resp.Diagnostics.Append(fwerr.ErrorHandler(ctx, resp.State, err)...); resp.Diagnostics.HasError() || err != nil {
 		return
 	}
@@ -102,7 +121,12 @@ func (r *observabilityDirectoryResource) Create(ctx context.Context, req resourc
 		resp.Diagnostics.AddError("Error creating directory", "Directory API returned no directory entry")
 		return
 	}
-	resp.Diagnostics.Append(resp.State.Set(ctx, observabilityDirectoryModelFromEntry(entry.Data))...)
+	next, diags := observabilityDirectoryModelFromEntry(ctx, entry.Data)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	resp.Diagnostics.Append(resp.State.Set(ctx, next)...)
 }
 
 func (r *observabilityDirectoryResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
@@ -120,7 +144,12 @@ func (r *observabilityDirectoryResource) Read(ctx context.Context, req resource.
 		resp.Diagnostics.AddError("Error reading directory", "Directory API returned no directory entry")
 		return
 	}
-	resp.Diagnostics.Append(resp.State.Set(ctx, observabilityDirectoryModelFromEntry(result.Data))...)
+	next, diags := observabilityDirectoryModelFromEntry(ctx, result.Data)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	resp.Diagnostics.Append(resp.State.Set(ctx, next)...)
 }
 
 func (r *observabilityDirectoryResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -135,7 +164,13 @@ func (r *observabilityDirectoryResource) Update(ctx context.Context, req resourc
 		return
 	}
 
-	result, err := r.Details().Client.PatchDirectoryEntry(ctx, prior.Path.ValueString(), observabilityDirectoryPatch(model.Pinned))
+	patch, diags := observabilityDirectoryPatch(ctx, model.Pinned, model.Templates)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	result, err := r.Details().Client.PatchDirectoryEntry(ctx, prior.Path.ValueString(), patch)
 	if resp.Diagnostics.Append(fwerr.ErrorHandler(ctx, resp.State, err)...); resp.Diagnostics.HasError() || err != nil {
 		return
 	}
@@ -143,7 +178,12 @@ func (r *observabilityDirectoryResource) Update(ctx context.Context, req resourc
 		resp.Diagnostics.AddError("Error updating directory", "Directory API returned no directory entry")
 		return
 	}
-	resp.Diagnostics.Append(resp.State.Set(ctx, observabilityDirectoryModelFromEntry(result.Data))...)
+	next, diags := observabilityDirectoryModelFromEntry(ctx, result.Data)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	resp.Diagnostics.Append(resp.State.Set(ctx, next)...)
 }
 
 func (r *observabilityDirectoryResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
@@ -170,12 +210,18 @@ func (r *observabilityDirectoryResource) Delete(ctx context.Context, req resourc
 		resp.Diagnostics.AddError("Refusing to delete directory", fmt.Sprintf("%q is a reserved Directory path.", reserved))
 		return
 	}
-	if len(entry.Templates) > 0 || len(entry.Children) > 0 || entry.Identity || entry.Canonical {
+	if len(entry.Children) > 0 || entry.Identity || entry.Canonical {
 		resp.Diagnostics.AddError(
 			"Refusing to delete directory",
-			"The Directory entry is occupied or managed by the service (templates, children, identity, or canonical metadata are present). Remove those dependencies and retry.",
+			"The Directory entry is managed by the service or contains child directories (children, identity, or canonical metadata are present). Remove those dependencies and retry.",
 		)
 		return
+	}
+	if len(entry.Templates) > 0 {
+		resp.Diagnostics.AddWarning(
+			"Deleting directory with Template memberships",
+			fmt.Sprintf("The Directory entry still references %d Template(s); deleting it removes those membership links but does not delete the referenced Template records.", len(entry.Templates)),
+		)
 	}
 
 	resp.Diagnostics.Append(fwerr.ErrorHandler(ctx, resp.State, r.Details().Client.DeleteDirectoryEntry(ctx, entry.Path))...)
@@ -186,20 +232,38 @@ func (r *observabilityDirectoryResource) ImportState(ctx context.Context, req re
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("path"), req.ID)...)
 }
 
-func observabilityDirectoryPatch(pinned types.Bool) *directory.Patch {
+func observabilityDirectoryPatch(ctx context.Context, pinned types.Bool, templates types.List) (*directory.Patch, diag.Diagnostics) {
+	var diags diag.Diagnostics
 	value := false
 	if !pinned.IsNull() && !pinned.IsUnknown() {
 		value = pinned.ValueBool()
 	}
-	return &directory.Patch{Pinned: &value}
+	patch := &directory.Patch{Pinned: &value}
+
+	if templates.IsNull() || templates.IsUnknown() {
+		return patch, diags
+	}
+	var references []string
+	diags.Append(templates.ElementsAs(ctx, &references, false)...)
+	if diags.HasError() {
+		return nil, diags
+	}
+	patch.Templates = &references
+	return patch, diags
 }
 
-func observabilityDirectoryModelFromEntry(entry *directory.Entry) observabilityDirectoryModel {
-	return observabilityDirectoryModel{
-		ID:     types.StringValue(entry.Path),
-		Path:   types.StringValue(entry.Path),
-		Pinned: types.BoolValue(entry.Pinned),
+func observabilityDirectoryModelFromEntry(ctx context.Context, entry *directory.Entry) (observabilityDirectoryModel, diag.Diagnostics) {
+	references := entry.Templates
+	if references == nil {
+		references = []string{}
 	}
+	templates, diags := types.ListValueFrom(ctx, types.StringType, references)
+	return observabilityDirectoryModel{
+		ID:        types.StringValue(entry.Path),
+		Path:      types.StringValue(entry.Path),
+		Templates: templates,
+		Pinned:    types.BoolValue(entry.Pinned),
+	}, diags
 }
 
 func observabilityReservedDirectoryPath(value string) string {

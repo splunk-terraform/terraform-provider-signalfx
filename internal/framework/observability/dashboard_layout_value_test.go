@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestObservabilityLayoutValue(t *testing.T) {
+func TestDashifyLayoutValue(t *testing.T) {
 	t.Parallel()
 
 	tests := map[string]struct {
@@ -85,7 +85,7 @@ func TestObservabilityLayoutValue(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			got, set, err := observabilityLayoutValue(test.value, test.coordinate)
+			got, set, err := dashifyLayoutValue(test.value, test.coordinate)
 			if test.wantError != "" {
 				require.ErrorContains(t, err, test.wantError)
 				return
@@ -102,23 +102,23 @@ func TestObservabilityLayoutValue(t *testing.T) {
 	}
 }
 
-func TestObservabilityLayoutStringCanonicalizesAdvancedValues(t *testing.T) {
+func TestDashifyLayoutStringCanonicalizesAdvancedValues(t *testing.T) {
 	t.Parallel()
 
 	item := map[string]any{
 		"w": map[string]any{"value": "1/2", "max": "100%", "min": float64(4)},
 		"x": []any{"1/4", float64(8)},
 	}
-	width, err := observabilityLayoutString(item, "w", false)
+	width, err := dashifyLayoutString(item, "w", false)
 	require.NoError(t, err)
 	assert.JSONEq(t, `{"max":"100%","min":4,"value":"1/2"}`, width.ValueString())
-	x, err := observabilityLayoutString(item, "x", true)
+	x, err := dashifyLayoutString(item, "x", true)
 	require.NoError(t, err)
 	assert.Equal(t, `["1/4",8]`, x.ValueString())
 	assert.Empty(t, item)
 }
 
-func TestObservabilityLayoutStringRejectsUnsupportedShapes(t *testing.T) {
+func TestDashifyLayoutStringRejectsUnsupportedShapes(t *testing.T) {
 	t.Parallel()
 
 	tests := map[string]struct {
@@ -136,7 +136,7 @@ func TestObservabilityLayoutStringRejectsUnsupportedShapes(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			item := map[string]any{"value": test.value}
-			_, err := observabilityLayoutString(item, "value", test.coordinate)
+			_, err := dashifyLayoutString(item, "value", test.coordinate)
 			require.ErrorContains(t, err, test.want)
 		})
 	}

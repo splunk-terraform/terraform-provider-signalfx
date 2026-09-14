@@ -14,11 +14,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-// observabilityLayoutValue converts one Terraform string into the polymorphic
-// number/string/object form persisted by Dashify. Objects and coordinate
-// arrays are JSON-encoded in Terraform because DynamicAttribute cannot be
-// nested safely beneath this resource's ListNestedBlock containers.
-func observabilityLayoutValue(value types.String, coordinate bool) (any, bool, error) {
+// Converts Terraform strings to polymorphic layout values, using JSON for objects and coordinate arrays.
+func dashifyLayoutValue(value types.String, coordinate bool) (any, bool, error) {
 	if value.IsNull() || value.IsUnknown() {
 		return nil, false, nil
 	}
@@ -39,7 +36,7 @@ func observabilityLayoutValue(value types.String, coordinate bool) (any, bool, e
 			}
 			return nil, false, fmt.Errorf("must contain valid JSON: %w", err)
 		}
-		normalized, err := normalizeObservabilityAdvancedLayoutValue(decoded, coordinate)
+		normalized, err := normalizeDashifyAdvancedLayoutValue(decoded, coordinate)
 		if err != nil {
 			return nil, false, err
 		}
@@ -52,17 +49,17 @@ func observabilityLayoutValue(value types.String, coordinate bool) (any, bool, e
 	return text, true, nil
 }
 
-func normalizeObservabilityAdvancedLayoutValue(value any, coordinate bool) (any, error) {
+func normalizeDashifyAdvancedLayoutValue(value any, coordinate bool) (any, error) {
 	switch value := value.(type) {
 	case map[string]any:
-		return normalizeObservabilityClampedLength(value)
+		return normalizeDashifyClampedLength(value)
 	case []any:
 		if !coordinate {
 			return nil, fmt.Errorf("JSON arrays are supported only for x and y coordinates")
 		}
 		normalized := make([]any, len(value))
 		for i, part := range value {
-			length, err := normalizeObservabilityLength(part)
+			length, err := normalizeDashifyLength(part)
 			if err != nil {
 				return nil, fmt.Errorf("coordinate part %d: %w", i, err)
 			}
@@ -77,25 +74,25 @@ func normalizeObservabilityAdvancedLayoutValue(value any, coordinate bool) (any,
 	}
 }
 
-func normalizeObservabilityLength(value any) (any, error) {
+func normalizeDashifyLength(value any) (any, error) {
 	switch value := value.(type) {
 	case string:
 		return value, nil
 	case json.Number:
-		return normalizeObservabilityNumber(value)
+		return normalizeDashifyNumber(value)
 	case float64:
 		if math.IsNaN(value) || math.IsInf(value, 0) {
 			return nil, fmt.Errorf("length numbers must be finite")
 		}
 		return value, nil
 	case map[string]any:
-		return normalizeObservabilityClampedLength(value)
+		return normalizeDashifyClampedLength(value)
 	default:
 		return nil, fmt.Errorf("length must be a number, string, or clamped object, got %T", value)
 	}
 }
 
-func normalizeObservabilityClampedLength(value map[string]any) (map[string]any, error) {
+func normalizeDashifyClampedLength(value map[string]any) (map[string]any, error) {
 	if _, ok := value["value"]; !ok {
 		return nil, fmt.Errorf("clamped layout objects must contain value")
 	}
@@ -111,7 +108,7 @@ func normalizeObservabilityClampedLength(value map[string]any) (map[string]any, 
 		if !ok {
 			continue
 		}
-		length, err := normalizeObservabilitySimpleLength(raw)
+		length, err := normalizeDashifySimpleLength(raw)
 		if err != nil {
 			return nil, fmt.Errorf("clamped %s: %w", key, err)
 		}
@@ -120,12 +117,12 @@ func normalizeObservabilityClampedLength(value map[string]any) (map[string]any, 
 	return normalized, nil
 }
 
-func normalizeObservabilitySimpleLength(value any) (any, error) {
+func normalizeDashifySimpleLength(value any) (any, error) {
 	switch value := value.(type) {
 	case string:
 		return value, nil
 	case json.Number:
-		return normalizeObservabilityNumber(value)
+		return normalizeDashifyNumber(value)
 	case float64:
 		if math.IsNaN(value) || math.IsInf(value, 0) {
 			return nil, fmt.Errorf("length numbers must be finite")
@@ -136,7 +133,7 @@ func normalizeObservabilitySimpleLength(value any) (any, error) {
 	}
 }
 
-func normalizeObservabilityNumber(value json.Number) (float64, error) {
+func normalizeDashifyNumber(value json.Number) (float64, error) {
 	number, err := value.Float64()
 	if err != nil || math.IsNaN(number) || math.IsInf(number, 0) {
 		return 0, fmt.Errorf("length number %q is not finite", value)
@@ -144,7 +141,7 @@ func normalizeObservabilityNumber(value json.Number) (float64, error) {
 	return number, nil
 }
 
-func observabilityLayoutString(item map[string]any, key string, coordinate bool) (types.String, error) {
+func dashifyLayoutString(item map[string]any, key string, coordinate bool) (types.String, error) {
 	value, ok := item[key]
 	if !ok {
 		return types.StringNull(), nil
@@ -160,13 +157,13 @@ func observabilityLayoutString(item map[string]any, key string, coordinate bool)
 		}
 		return types.StringValue(strconv.FormatFloat(value, 'f', -1, 64)), nil
 	case json.Number:
-		number, err := normalizeObservabilityNumber(value)
+		number, err := normalizeDashifyNumber(value)
 		if err != nil {
 			return types.StringNull(), fmt.Errorf("has invalid %s: %w", key, err)
 		}
 		return types.StringValue(strconv.FormatFloat(number, 'f', -1, 64)), nil
 	case map[string]any, []any:
-		normalized, err := normalizeObservabilityAdvancedLayoutValue(value, coordinate)
+		normalized, err := normalizeDashifyAdvancedLayoutValue(value, coordinate)
 		if err != nil {
 			return types.StringNull(), fmt.Errorf("has invalid %s: %w", key, err)
 		}

@@ -1,12 +1,16 @@
 ---
 page_title: "Splunk Observability Cloud: signalfx_observability_directory"
 description: |-
-  Manages a safe, path-only Observability Directory entry.
+  Manages an Observability Directory entry and its Template memberships.
 ---
 
 # Resource: signalfx_observability_directory
 
-Directory membership and dashboard placement are not managed. Deletion is refused unless the entry is safely empty and provider-manageable.
+Terraform owns the complete ordered Template membership list for the Directory. A membership update replaces the backend's entire `templates` list; it is not an atomic add or remove operation. The Directory API provides no ETag or other stale-write precondition, so concurrent UI, API, or Terraform changes are last-write-wins and can be lost.
+
+The default is an empty membership list. After manually importing an existing Directory, add every membership that Terraform should retain to `templates` before applying; otherwise, the next apply removes them. Generated import configuration includes the memberships observed during import.
+
+Destroying the Directory removes its membership links but does not delete the referenced Template records. Deletion is refused when the path has child directories or is an identity, canonical, or reserved service-managed entry.
 
 ## Example
 
@@ -19,9 +23,16 @@ terraform {
   }
 }
 
+resource "signalfx_observability_dashboard" "service" {
+  title = "Service overview"
+}
+
 resource "signalfx_observability_directory" "dashboards" {
   path   = "teams/platform/dashboards"
   pinned = true
+  templates = [
+    "/v2/template/${signalfx_observability_dashboard.service.id}",
+  ]
 }
 ```
 
@@ -29,6 +40,7 @@ resource "signalfx_observability_directory" "dashboards" {
 
 * `path` - (Required) Decoded logical Directory path.
 * `pinned` - (Optional) Whether the Directory entry is pinned. Defaults to `false`.
+* `templates` - (Optional) Complete ordered list of Template API references assigned to the Directory, such as `/v2/template/<id>`. Defaults to an empty list. Use `/v2/template/${signalfx_observability_dashboard.service.id}` to place a managed dashboard. Reordering this list also reorders the entries in the UI.
 
 ## Attributes
 

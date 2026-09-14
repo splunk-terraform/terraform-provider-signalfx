@@ -22,10 +22,10 @@ import (
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/fwtest"
 )
 
-func TestObservabilityControlBarSchemaAndModel(t *testing.T) {
+func TestDashifyControlBarSchemaAndModel(t *testing.T) {
 	t.Parallel()
 
-	resourceSchema := observabilityControlBarBlock()
+	resourceSchema := dashifyControlBarBlock()
 	assert.NotEmpty(t, resourceSchema.Description)
 	for _, name := range []string{"time_range", "density", "pinned_filter", "filter_set"} {
 		assert.Contains(t, resourceSchema.Blocks, name)
@@ -40,23 +40,23 @@ func TestObservabilityControlBarSchemaAndModel(t *testing.T) {
 	assert.Contains(t, filter.NestedObject.Attributes, "values")
 }
 
-func TestBuildAndParseObservabilityControlBar(t *testing.T) {
+func TestBuildAndParseDashifyControlBar(t *testing.T) {
 	t.Parallel()
 
-	model := &observabilityControlBarModel{
-		TimeRange: &observabilityTimeRangeControlModel{
+	model := &dashifyControlBarModel{
+		TimeRange: &dashifyTimeRangeControlModel{
 			Label:                types.StringValue("Time Range"),
 			Description:          types.StringValue("Dashboard window"),
 			Hidden:               types.BoolValue(false),
 			DefaultVariableValue: types.StringValue("-PT15M"),
 		},
-		Density: &observabilityDensityControlModel{
+		Density: &dashifyDensityControlModel{
 			Label:                types.StringValue("Density"),
 			Description:          types.StringValue("Resolution"),
 			Hidden:               types.BoolValue(false),
 			DefaultVariableValue: types.Int64Value(60),
 		},
-		PinnedFilter: []observabilityPinnedFilterControlModel{
+		PinnedFilter: []dashifyPinnedFilterControlModel{
 			{
 				VariableName:               types.StringValue("service"),
 				Label:                      types.StringValue("Service"),
@@ -75,11 +75,11 @@ func TestBuildAndParseObservabilityControlBar(t *testing.T) {
 				DefaultVariableValue: []types.String{},
 			},
 		},
-		FilterSet: &observabilityFilterSetControlModel{
+		FilterSet: &dashifyFilterSetControlModel{
 			Label:       types.StringValue("Filters"),
 			Description: types.StringValue("Ad-hoc filters"),
 			Hidden:      types.BoolValue(false),
-			Filter: []observabilityFilterSetEntryModel{
+			Filter: []dashifyFilterSetEntryModel{
 				{
 					Key:      types.StringValue("deployment.environment"),
 					Values:   []types.String{types.StringValue("prod")},
@@ -91,7 +91,7 @@ func TestBuildAndParseObservabilityControlBar(t *testing.T) {
 		},
 	}
 
-	built := buildObservabilityControlBar(model)
+	built := buildDashifyControlBar(model)
 	controls, ok := built["controls"].([]any)
 	require.True(t, ok)
 	require.Len(t, controls, 5)
@@ -102,7 +102,7 @@ func TestBuildAndParseObservabilityControlBar(t *testing.T) {
 	require.NoError(t, err)
 	var decoded map[string]any
 	require.NoError(t, json.Unmarshal(raw, &decoded))
-	parsed, leftovers, err := parseObservabilityControlBar(map[string]any{"controlBar": decoded})
+	parsed, leftovers, err := parseDashifyControlBar(map[string]any{"controlBar": decoded})
 	require.NoError(t, err)
 	assert.Empty(t, leftovers)
 	require.NotNil(t, parsed)
@@ -116,7 +116,7 @@ func TestBuildAndParseObservabilityControlBar(t *testing.T) {
 	assert.Empty(t, parsed.FilterSet.Filter[1].Values)
 }
 
-func TestParseObservabilityControlBarIndependentJSON(t *testing.T) {
+func TestParseDashifyControlBarIndependentJSON(t *testing.T) {
 	t.Parallel()
 
 	spec := map[string]any{}
@@ -128,7 +128,7 @@ func TestParseObservabilityControlBarIndependentJSON(t *testing.T) {
 		]}
 	}`), &spec))
 
-	model, leftovers, err := parseObservabilityControlBar(spec)
+	model, leftovers, err := parseDashifyControlBar(spec)
 	require.NoError(t, err)
 	assert.Empty(t, leftovers)
 	require.NotNil(t, model)
@@ -139,10 +139,10 @@ func TestParseObservabilityControlBarIndependentJSON(t *testing.T) {
 	assert.Empty(t, spec)
 }
 
-func TestObservabilityControlBarCodecOmissionAndWarnings(t *testing.T) {
+func TestDashifyControlBarCodecOmissionAndWarnings(t *testing.T) {
 	t.Parallel()
 
-	model, leftovers, err := parseObservabilityControlBar(map[string]any{})
+	model, leftovers, err := parseDashifyControlBar(map[string]any{})
 	require.NoError(t, err)
 	assert.Nil(t, model)
 	assert.Empty(t, leftovers)
@@ -154,7 +154,7 @@ func TestObservabilityControlBarCodecOmissionAndWarnings(t *testing.T) {
 		{"type":"PinnedFilter","variableName":"FILTERS","future":true},
 		{"type":"TimeRange","variableName":"TIME","future":true,"label":"Time","nested":{"x":1}}
 	],"futureBar":true}}`), &spec))
-	parsed, leftovers, err := parseObservabilityControlBar(spec)
+	parsed, leftovers, err := parseDashifyControlBar(spec)
 	require.NoError(t, err)
 	require.NotNil(t, parsed)
 	assert.Contains(t, leftovers, "controlBar.controls.0")
@@ -167,12 +167,12 @@ func TestObservabilityControlBarCodecOmissionAndWarnings(t *testing.T) {
 	require.NoError(t, json.Unmarshal([]byte(`{"controlBar":{"controls":[
 		{"type":"FilterSet","variableName":"FILTERS","defaultVariableValue":[{"key":"env","values":[],"futureFilter":true}]}
 	]}}`), &filterSpec))
-	_, leftovers, err = parseObservabilityControlBar(filterSpec)
+	_, leftovers, err = parseDashifyControlBar(filterSpec)
 	require.NoError(t, err)
 	assert.Contains(t, leftovers, "controlBar.controls.0.defaultVariableValue.0.futureFilter")
 }
 
-func TestObservabilityControlBarCodecErrors(t *testing.T) {
+func TestDashifyControlBarCodecErrors(t *testing.T) {
 	t.Parallel()
 
 	tests := map[string]struct {
@@ -193,37 +193,37 @@ func TestObservabilityControlBarCodecErrors(t *testing.T) {
 			t.Parallel()
 			var spec map[string]any
 			require.NoError(t, json.Unmarshal([]byte(test.spec), &spec))
-			_, _, err := parseObservabilityControlBar(spec)
+			_, _, err := parseDashifyControlBar(spec)
 			require.ErrorContains(t, err, test.want)
 		})
 	}
 }
 
-func TestValidateObservabilityControlBar(t *testing.T) {
+func TestValidateDashifyControlBar(t *testing.T) {
 	t.Parallel()
 
 	tests := map[string]struct {
-		model *observabilityControlBarModel
+		model *dashifyControlBarModel
 		want  string
 	}{
-		"empty":     {model: &observabilityControlBarModel{}, want: "at least one"},
-		"reserved":  {model: &observabilityControlBarModel{PinnedFilter: []observabilityPinnedFilterControlModel{{VariableName: types.StringValue("TIME")}}}, want: "reserved"},
-		"duplicate": {model: &observabilityControlBarModel{PinnedFilter: []observabilityPinnedFilterControlModel{{VariableName: types.StringValue("env")}, {VariableName: types.StringValue("env")}}}, want: "already uses"},
+		"empty":     {model: &dashifyControlBarModel{}, want: "at least one"},
+		"reserved":  {model: &dashifyControlBarModel{PinnedFilter: []dashifyPinnedFilterControlModel{{VariableName: types.StringValue("TIME")}}}, want: "reserved"},
+		"duplicate": {model: &dashifyControlBarModel{PinnedFilter: []dashifyPinnedFilterControlModel{{VariableName: types.StringValue("env")}, {VariableName: types.StringValue("env")}}}, want: "already uses"},
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			var response resource.ValidateConfigResponse
-			validateObservabilityControlBar(&response, path.Root("control_bar"), test.model)
+			validateDashifyControlBar(&response, path.Root("control_bar"), test.model)
 			require.True(t, response.Diagnostics.HasError())
 			assert.Contains(t, response.Diagnostics.Errors()[0].Detail(), test.want)
 		})
 	}
 }
 
-func TestObservabilityControlBarAttributeValidators(t *testing.T) {
+func TestDashifyControlBarAttributeValidators(t *testing.T) {
 	t.Parallel()
 
-	bar := observabilityControlBarBlock()
+	bar := dashifyControlBarBlock()
 	density := bar.Blocks["density"].(schema.SingleNestedBlock).Attributes["default_variable_value"].(schema.Int64Attribute)
 	assertValidatorInt64(t, density.Validators, 60, false)
 	assertValidatorInt64(t, density.Validators, 45, true)
@@ -261,8 +261,8 @@ func TestBuildDashboardSpecOmitsAbsentControlBar(t *testing.T) {
 func TestDashboardSpecPlacesControlBarAtTopLevel(t *testing.T) {
 	t.Parallel()
 
-	controlBar := &observabilityControlBarModel{
-		TimeRange: &observabilityTimeRangeControlModel{DefaultVariableValue: types.StringValue("-15m")},
+	controlBar := &dashifyControlBarModel{
+		TimeRange: &dashifyTimeRangeControlModel{DefaultVariableValue: types.StringValue("-15m")},
 	}
 	raw, _, err := buildDashboardSpec(observabilityDashboardModel{
 		Title:      types.StringValue("Controls"),
