@@ -1,5 +1,9 @@
 ## Unreleased
 
+IMPROVEMENTS:
+
+* Added Observability Template, Directory, and reference-based Dashboard resources, including dashboard layout, control-bar configuration, and ordered Directory Template membership.
+
 ## 9.7.2
 
 BUGFIXES:

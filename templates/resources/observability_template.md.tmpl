@@ -1,0 +1,16 @@
+---
+page_title: "Splunk Observability Cloud: signalfx_observability_template"
+description: |-
+  Manages an Observability Template API record.
+---
+
+# Resource: signalfx_observability_template
+
+Terraform owns the Template API write fields, so an update replaces the title, metadata, and specification represented by this resource.
+The provider supplies the Template record schema `type` automatically. SignalView association metadata is not managed.
+
+## Example
+
+{{tffile "examples/resources/observability_template/example_1.tf"}}
+
+{{ .SchemaMarkdown | trimspace }}
