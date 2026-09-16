@@ -167,6 +167,7 @@ func integrationAWSResource() *schema.Resource {
 			"token": {
 				Type:          schema.TypeString,
 				Optional:      true,
+				Sensitive:     true,
 				ConflictsWith: []string{"role_arn", "external_id"},
 				Description:   "Used with `signalfx_aws_token_integration`. Use this property to specify the token.",
 			},
