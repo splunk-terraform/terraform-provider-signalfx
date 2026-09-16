@@ -96,6 +96,18 @@ func TestNotification(t *testing.T) {
 			expect: nil,
 		},
 		{
+			name:   "email template",
+			val:    "EmailTemplate,template-id",
+			expect: nil,
+		},
+		{
+			name: "email template missing template id",
+			val:  "EmailTemplate,",
+			expect: diag.Diagnostics{
+				{Severity: diag.Error, Summary: "invalid EmailTemplate notification string, please consult the documentation (expected EmailTemplate,templateId)"},
+			},
+		},
+		{
 			name:   "Opsgenie",
 			val:    "Opsgenie,,,,",
 			expect: nil,

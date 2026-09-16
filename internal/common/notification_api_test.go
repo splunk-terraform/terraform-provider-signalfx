@@ -98,6 +98,18 @@ func TestNewStringFromAPI(t *testing.T) {
 			errVal: "",
 		},
 		{
+			name: "email template",
+			nt: &notification.Notification{
+				Type: EmailTemplateNotificationType,
+				Value: &notification.EmailTemplateNotification{
+					Type:       EmailTemplateNotificationType,
+					TemplateId: "template-id",
+				},
+			},
+			expect: "EmailTemplate,template-id",
+			errVal: "",
+		},
+		{
 			name: "jira",
 			nt: &notification.Notification{
 				Type: JiraNotificationType,

@@ -20,6 +20,7 @@ const (
 	AmazonEventBrigeNotificationType string = "AmazonEventBridge"
 	BigPandaNotificationType         string = "BigPanda"
 	EmailNotificationType            string = "Email"
+	EmailTemplateNotificationType    string = "EmailTemplate"
 	JiraNotificationType             string = "Jira"
 	Office365NotificationType        string = "Office365"
 	OpsgenieNotificationType         string = "Opsgenie"
@@ -61,6 +62,14 @@ func NewNotificationFromString(str string) (*notification.Notification, error) {
 			return nil, err
 		}
 		value = email
+	case EmailTemplateNotificationType:
+		if count != 2 || strings.TrimSpace(values[1]) == "" {
+			return nil, fmt.Errorf("invalid EmailTemplate notification string, please consult the documentation (expected EmailTemplate,templateId)")
+		}
+		value = &notification.EmailTemplateNotification{
+			Type:       values[0],
+			TemplateId: values[1],
+		}
 	case JiraNotificationType:
 		value = &notification.JiraNotification{
 			Type:         values[0],

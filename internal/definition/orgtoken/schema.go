@@ -52,7 +52,7 @@ func newSchema() map[string]*schema.Schema {
 				Type:             schema.TypeString,
 				ValidateDiagFunc: check.Notification(),
 			},
-			Description: "List of strings specifying where notifications will be sent when an incident occurs. See https://developers.signalfx.com/v2/docs/detector-model#notifications-models for more info",
+			Description: "List of strings specifying where notifications will be sent when an alert occurs. See https://developers.signalfx.com/v2/docs/detector-model#notifications-models for more info",
 		},
 		"host_or_usage_limits": {
 			Type:          schema.TypeSet,
