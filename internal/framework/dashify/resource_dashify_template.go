@@ -61,7 +61,8 @@ func (r *ResourceDashifyTemplate) Metadata(_ context.Context, req resource.Metad
 
 func (r *ResourceDashifyTemplate) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Manage Dashify templates for modern dashboards in Splunk Observability Cloud",
+		Description:        "Manage Dashify templates for modern dashboards in Splunk Observability Cloud",
+		DeprecationMessage: "Use signalfx_observability_template instead. It manages the title, root_element, spec, and metadata as separate fields.",
 		Attributes: map[string]schema.Attribute{
 			"id": fwshared.ResourceIDAttribute(),
 			"template_contents": schema.StringAttribute{

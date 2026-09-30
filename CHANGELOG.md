@@ -1,5 +1,10 @@
 ## Unreleased
 
+IMPROVEMENTS:
+
+* Added `signalfx_observability_template` and `signalfx_observability_directory` resources for Template API records and Directory entries.
+* Deprecated `signalfx_dashify_template` in favor of `signalfx_observability_template`.
+
 ## 9.7.2
 
 BUGFIXES:
