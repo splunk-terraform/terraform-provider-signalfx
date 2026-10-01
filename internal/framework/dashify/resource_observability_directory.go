@@ -121,27 +121,17 @@ func (r *observabilityDirectoryResource) Create(ctx context.Context, req resourc
 	// PATCH is an upsert and replaces the complete Template membership list.
 	// A GET can also return a synthetic unoccupied entry for an absent path.
 	// Refuse to claim an occupied entry; users can import it instead.
-	existing, err := r.Details().Client.GetDirectoryEntry(ctx, model.Path.ValueString())
-	if err == nil {
-		if existing == nil || existing.Data == nil {
-			resp.Diagnostics.AddError("Error checking directory", "Directory API returned no directory entry")
-			return
-		}
-		if existing.Data.Path != model.Path.ValueString() {
-			resp.Diagnostics.AddError("Error checking directory", "Directory API returned a different logical path than the requested path")
-			return
-		}
-		if observabilityDirectoryEntryOccupied(existing.Data) {
-			resp.Diagnostics.AddAttributeError(
-				path.Root("path"),
-				"Directory already exists",
-				fmt.Sprintf("Directory %q already exists. Import it to manage the existing entry.", model.Path.ValueString()),
-			)
-			return
-		}
+	existing, diags := r.fetchDirectoryEntry(ctx, resp.State, model.Path.ValueString())
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
-	if err != nil {
-		resp.Diagnostics.Append(observabilityDirectoryRequestError(ctx, resp.State, "checking", err)...)
+	if observabilityDirectoryEntryOccupied(existing) {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("path"),
+			"Directory already exists",
+			fmt.Sprintf("Directory %q already exists. Import it to manage the existing entry.", model.Path.ValueString()),
+		)
 		return
 	}
 	if observabilityDirectoryPlanUnoccupied(model.Pinned, model.Templates) {
@@ -216,19 +206,12 @@ func (r *observabilityDirectoryResource) Update(ctx context.Context, req resourc
 		return
 	}
 	if observabilityDirectoryPlanUnoccupied(model.Pinned, model.Templates) {
-		current, err := r.Details().Client.GetDirectoryEntry(ctx, prior.Path.ValueString())
-		if resp.Diagnostics.Append(observabilityDirectoryRequestError(ctx, resp.State, "checking", err)...); resp.Diagnostics.HasError() || err != nil {
+		current, diags := r.fetchDirectoryEntry(ctx, resp.State, prior.Path.ValueString())
+		resp.Diagnostics.Append(diags...)
+		if resp.Diagnostics.HasError() {
 			return
 		}
-		if current == nil || current.Data == nil {
-			resp.Diagnostics.AddError("Error checking directory", "Directory API returned no directory entry")
-			return
-		}
-		if current.Data.Path != prior.Path.ValueString() {
-			resp.Diagnostics.AddError("Error checking directory", "Directory API returned a different logical path than the requested path")
-			return
-		}
-		if len(current.Data.Children) == 0 && !current.Data.Identity && !current.Data.Canonical {
+		if len(current.Children) == 0 && !current.Identity && !current.Canonical {
 			resp.Diagnostics.AddAttributeError(path.Root("pinned"), "Unoccupied directory", "Set pinned to true or provide at least one Template or child directory. An unpinned Directory without Templates or children is removed by the service.")
 			return
 		}
@@ -295,10 +278,35 @@ func (r *observabilityDirectoryResource) Delete(ctx context.Context, req resourc
 	resp.Diagnostics.Append(observabilityDirectoryRequestError(ctx, resp.State, "deleting", err)...)
 }
 
+// fetchDirectoryEntry fetches the live entry for path and validates it was
+// returned successfully and for the expected logical path.
+func (r *observabilityDirectoryResource) fetchDirectoryEntry(ctx context.Context, state tfsdk.State, path string) (*directory.Entry, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	result, err := r.Details().Client.GetDirectoryEntry(ctx, path)
+	if diags.Append(observabilityDirectoryRequestError(ctx, state, "checking", err)...); diags.HasError() || err != nil {
+		return nil, diags
+	}
+	if result == nil || result.Data == nil {
+		diags.AddError("Error checking directory", "Directory API returned no directory entry")
+		return nil, diags
+	}
+	if result.Data.Path != path {
+		diags.AddError("Error checking directory", "Directory API returned a different logical path than the requested path")
+		return nil, diags
+	}
+	return result.Data, diags
+}
+
 func observabilityDirectoryRequestError(ctx context.Context, state tfsdk.State, action string, err error) diag.Diagnostics {
 	if responseError, ok := signalfx.AsResponseError(err); ok && responseError.Code() == http.StatusNotFound {
 		var diags diag.Diagnostics
-		detail := fmt.Sprintf("Directory API returned HTTP 404 for %q. Empty Directory paths normally return an entry, so Terraform cannot conclude the entry is absent.", responseError.Route())
+		detail := fmt.Sprintf("Directory API returned HTTP 404 for %q.", responseError.Route())
+		switch action {
+		case "checking", "reading":
+			detail += " Empty Directory paths normally return an entry, so Terraform cannot conclude the entry is absent."
+		default:
+			detail += " The entry was confirmed to exist moments earlier; retry after checking the entry's current state."
+		}
 		if responseDetails := strings.TrimSpace(responseError.Details()); responseDetails != "" {
 			detail += " API response: " + responseDetails
 		}
