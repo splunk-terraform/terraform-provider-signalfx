@@ -101,7 +101,7 @@ func TestObservabilityReservedDirectoryPath(t *testing.T) {
 	assert.Empty(t, observabilityReservedDirectoryPath("~organization/platform/dashboards"))
 }
 
-func TestResourceObservabilityDirectoryRejectsUnoccupiedConfigAndPlans(t *testing.T) {
+func TestResourceObservabilityDirectoryRejectsUnoccupiedCreateAndUpdate(t *testing.T) {
 	store := newDirectoryAPIStore()
 	managed, resourceSchema := configuredObservabilityDirectoryResource(t, store)
 	pathValue := types.StringValue("~organization/platform/dashboards")
@@ -118,8 +118,7 @@ func TestResourceObservabilityDirectoryRejectsUnoccupiedConfigAndPlans(t *testin
 	managed.ValidateConfig(t.Context(), resource.ValidateConfigRequest{
 		Config: tfsdk.Config{Schema: resourceSchema, Raw: plan.Raw},
 	}, &validation)
-	require.True(t, validation.Diagnostics.HasError())
-	assert.Equal(t, "Unoccupied directory", validation.Diagnostics.Errors()[0].Summary())
+	require.False(t, validation.Diagnostics.HasError(), validation.Diagnostics)
 
 	create := resource.CreateResponse{State: tfsdk.State{Schema: resourceSchema}}
 	managed.Create(t.Context(), resource.CreateRequest{Plan: plan}, &create)
@@ -142,6 +141,46 @@ func TestResourceObservabilityDirectoryRejectsUnoccupiedConfigAndPlans(t *testin
 	entry := store.entries[pathValue.ValueString()]
 	store.mu.Unlock()
 	assert.True(t, entry.Pinned)
+}
+
+func TestResourceObservabilityDirectoryAllowsUnpinnedParentWithChild(t *testing.T) {
+	const directoryPath = "~organization/platform/dashboards"
+	store := newDirectoryAPIStore()
+	store.entries[directoryPath] = &directory.Entry{
+		Path:     directoryPath,
+		Pinned:   true,
+		Children: []string{"/v2/directory/~organization/platform/dashboards/team"},
+	}
+	managed, resourceSchema := configuredObservabilityDirectoryResource(t, store)
+	planModel := observabilityDirectoryModel{
+		ID:        types.StringValue(directoryPath),
+		Path:      types.StringValue(directoryPath),
+		Templates: types.ListValueMust(types.StringType, nil),
+		Pinned:    types.BoolValue(false),
+	}
+	plan := tfsdk.Plan{Schema: resourceSchema}
+	require.False(t, plan.Set(t.Context(), planModel).HasError())
+	var validation resource.ValidateConfigResponse
+	managed.ValidateConfig(t.Context(), resource.ValidateConfigRequest{
+		Config: tfsdk.Config{Schema: resourceSchema, Raw: plan.Raw},
+	}, &validation)
+	require.False(t, validation.Diagnostics.HasError(), validation.Diagnostics)
+
+	stateModel := planModel
+	stateModel.Pinned = types.BoolValue(true)
+	state := tfsdk.State{Schema: resourceSchema}
+	require.False(t, state.Set(t.Context(), stateModel).HasError())
+	update := resource.UpdateResponse{State: state}
+	managed.Update(t.Context(), resource.UpdateRequest{Plan: plan, State: state}, &update)
+	require.False(t, update.Diagnostics.HasError(), update.Diagnostics)
+
+	read := resource.ReadResponse{State: update.State}
+	managed.Read(t.Context(), resource.ReadRequest{State: update.State}, &read)
+	require.False(t, read.Diagnostics.HasError(), read.Diagnostics)
+	require.False(t, read.State.Raw.IsNull(), "parent with a child remains occupied")
+	var actual observabilityDirectoryModel
+	require.False(t, read.State.Get(t.Context(), &actual).HasError())
+	assert.False(t, actual.Pinned.ValueBool())
 }
 
 func TestResourceObservabilityDirectoryCreateRefusesExistingEntry(t *testing.T) {
@@ -184,7 +223,8 @@ func TestResourceObservabilityDirectoryCreateRejectsUnexpectedLookup(t *testing.
 			entry: &directory.Entry{Path: "~organization/platform/other", Pinned: true},
 			want:  "Directory API returned a different logical path",
 		},
-		"server error": {status: http.StatusInternalServerError},
+		"server error":         {status: http.StatusInternalServerError},
+		"unexpected not found": {status: http.StatusNotFound, want: "HTTP 404"},
 	} {
 		t.Run(name, func(t *testing.T) {
 			handlers := newDirectoryAPIStore().handlers()
@@ -257,7 +297,29 @@ func TestResourceObservabilityDirectoryReadRemovesMissingEntry(t *testing.T) {
 	assert.True(t, response.State.Raw.IsNull(), "missing directory must be removed from Terraform state")
 }
 
-func TestResourceObservabilityDirectoryUpdateReportsNotFound(t *testing.T) {
+func TestResourceObservabilityDirectoryReadReportsUnexpectedNotFound(t *testing.T) {
+	const directoryPath = "~organization/platform/dashboards"
+	handlers := newDirectoryAPIStore().handlers()
+	handlers["GET /v2/directory/{path...}"] = http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		http.Error(w, "directory endpoint unavailable", http.StatusNotFound)
+	})
+	managed, resourceSchema := configuredObservabilityDirectoryResourceWithHandlers(t, handlers)
+	state := tfsdk.State{Schema: resourceSchema}
+	require.False(t, state.Set(t.Context(), observabilityDirectoryModel{
+		ID:        types.StringValue(directoryPath),
+		Path:      types.StringValue(directoryPath),
+		Templates: types.ListValueMust(types.StringType, nil),
+		Pinned:    types.BoolValue(true),
+	}).HasError())
+	response := resource.ReadResponse{State: state}
+	managed.Read(t.Context(), resource.ReadRequest{State: state}, &response)
+
+	require.True(t, response.Diagnostics.HasError())
+	assert.Contains(t, response.Diagnostics.Errors()[0].Detail(), "HTTP 404")
+	assert.Equal(t, state.Raw, response.State.Raw)
+}
+
+func TestResourceObservabilityDirectoryUpdateReportsUnexpectedNotFound(t *testing.T) {
 	store := newDirectoryAPIStore()
 	handlers := store.handlers()
 	handlers["PATCH /v2/directory/{path...}"] = http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
@@ -280,6 +342,9 @@ func TestResourceObservabilityDirectoryUpdateReportsNotFound(t *testing.T) {
 
 	require.True(t, response.Diagnostics.HasError())
 	assert.Equal(t, "Error updating directory", response.Diagnostics.Errors()[0].Summary())
+	assert.Contains(t, response.Diagnostics.Errors()[0].Detail(), "HTTP 404")
+	assert.NotContains(t, response.Diagnostics.Errors()[0].Detail(), "retry after refreshing")
+	assert.Equal(t, state.Raw, response.State.Raw)
 }
 
 func TestResourceObservabilityDirectoryDeleteIgnoresMissingEntry(t *testing.T) {
@@ -297,6 +362,40 @@ func TestResourceObservabilityDirectoryDeleteIgnoresMissingEntry(t *testing.T) {
 	managed.Delete(t.Context(), resource.DeleteRequest{State: state}, &response)
 
 	assert.False(t, response.Diagnostics.HasError(), response.Diagnostics)
+}
+
+func TestResourceObservabilityDirectoryDeleteReportsUnexpectedNotFound(t *testing.T) {
+	const directoryPath = "~organization/platform/dashboards"
+	for name, failingMethod := range map[string]string{
+		"lookup": "GET /v2/directory/{path...}",
+		"delete": "DELETE /v2/directory/{path...}",
+	} {
+		t.Run(name, func(t *testing.T) {
+			store := newDirectoryAPIStore()
+			store.entries[directoryPath] = &directory.Entry{Path: directoryPath, Pinned: true}
+			handlers := store.handlers()
+			handlers[failingMethod] = http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				http.Error(w, "directory endpoint unavailable", http.StatusNotFound)
+			})
+			managed, resourceSchema := configuredObservabilityDirectoryResourceWithHandlers(t, handlers)
+			state := tfsdk.State{Schema: resourceSchema}
+			require.False(t, state.Set(t.Context(), observabilityDirectoryModel{
+				ID:        types.StringValue(directoryPath),
+				Path:      types.StringValue(directoryPath),
+				Templates: types.ListValueMust(types.StringType, nil),
+				Pinned:    types.BoolValue(true),
+			}).HasError())
+			response := resource.DeleteResponse{State: state}
+			managed.Delete(t.Context(), resource.DeleteRequest{State: state}, &response)
+
+			require.True(t, response.Diagnostics.HasError())
+			assert.Contains(t, response.Diagnostics.Errors()[0].Detail(), "HTTP 404")
+			store.mu.Lock()
+			_, exists := store.entries[directoryPath]
+			store.mu.Unlock()
+			assert.True(t, exists)
+		})
+	}
 }
 
 func TestResourceObservabilityDirectoryDeleteRejectsDifferentPath(t *testing.T) {

@@ -18,6 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/signalfx/signalfx-go"
 	"github.com/signalfx/signalfx-go/directory"
@@ -101,9 +102,6 @@ func (r *observabilityDirectoryResource) ValidateConfig(ctx context.Context, req
 			)
 		}
 	}
-	if observabilityDirectoryPlanUnoccupied(model.Pinned, model.Templates) {
-		resp.Diagnostics.AddAttributeError(path.Root("pinned"), "Unoccupied directory", "Set pinned to true or provide at least one Template. An unpinned Directory with no Templates is removed by the service.")
-	}
 }
 
 func (r *observabilityDirectoryResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -120,11 +118,6 @@ func (r *observabilityDirectoryResource) Create(ctx context.Context, req resourc
 		)
 		return
 	}
-	if observabilityDirectoryPlanUnoccupied(model.Pinned, model.Templates) {
-		resp.Diagnostics.AddAttributeError(path.Root("pinned"), "Unoccupied directory", "Set pinned to true or provide at least one Template. An unpinned Directory with no Templates is removed by the service.")
-		return
-	}
-
 	// PATCH is an upsert and replaces the complete Template membership list.
 	// A GET can also return a synthetic unoccupied entry for an absent path.
 	// Refuse to claim an occupied entry; users can import it instead.
@@ -148,10 +141,12 @@ func (r *observabilityDirectoryResource) Create(ctx context.Context, req resourc
 		}
 	}
 	if err != nil {
-		if responseError, ok := signalfx.AsResponseError(err); !ok || responseError.Code() != http.StatusNotFound {
-			resp.Diagnostics.Append(fwerr.ErrorHandler(ctx, resp.State, err)...)
-			return
-		}
+		resp.Diagnostics.Append(observabilityDirectoryRequestError(ctx, resp.State, "checking", err)...)
+		return
+	}
+	if observabilityDirectoryPlanUnoccupied(model.Pinned, model.Templates) {
+		resp.Diagnostics.AddAttributeError(path.Root("pinned"), "Unoccupied directory", "Set pinned to true or provide at least one Template or child directory. An unpinned Directory without Templates or children is removed by the service.")
+		return
 	}
 
 	patch, diags := observabilityDirectoryPatch(ctx, model.Pinned, model.Templates)
@@ -161,7 +156,7 @@ func (r *observabilityDirectoryResource) Create(ctx context.Context, req resourc
 	}
 
 	entry, err := r.Details().Client.PatchDirectoryEntry(ctx, model.Path.ValueString(), patch)
-	if resp.Diagnostics.Append(fwerr.ErrorHandler(ctx, resp.State, err)...); resp.Diagnostics.HasError() || err != nil {
+	if resp.Diagnostics.Append(observabilityDirectoryRequestError(ctx, resp.State, "creating", err)...); resp.Diagnostics.HasError() || err != nil {
 		return
 	}
 	if entry == nil || entry.Data == nil {
@@ -184,11 +179,7 @@ func (r *observabilityDirectoryResource) Read(ctx context.Context, req resource.
 	}
 
 	result, err := r.Details().Client.GetDirectoryEntry(ctx, state.Path.ValueString())
-	if responseError, ok := signalfx.AsResponseError(err); ok && responseError.Code() == http.StatusNotFound {
-		resp.State.RemoveResource(ctx)
-		return
-	}
-	if resp.Diagnostics.Append(fwerr.ErrorHandler(ctx, resp.State, err)...); resp.Diagnostics.HasError() || err != nil {
+	if resp.Diagnostics.Append(observabilityDirectoryRequestError(ctx, resp.State, "reading", err)...); resp.Diagnostics.HasError() || err != nil {
 		return
 	}
 	if result == nil || result.Data == nil {
@@ -213,10 +204,6 @@ func (r *observabilityDirectoryResource) Update(ctx context.Context, req resourc
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	if observabilityDirectoryPlanUnoccupied(model.Pinned, model.Templates) {
-		resp.Diagnostics.AddAttributeError(path.Root("pinned"), "Unoccupied directory", "Set pinned to true or provide at least one Template. An unpinned Directory with no Templates is removed by the service.")
-		return
-	}
 	var prior observabilityDirectoryModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &prior)...)
 	if resp.Diagnostics.HasError() {
@@ -228,16 +215,27 @@ func (r *observabilityDirectoryResource) Update(ctx context.Context, req resourc
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	if observabilityDirectoryPlanUnoccupied(model.Pinned, model.Templates) {
+		current, err := r.Details().Client.GetDirectoryEntry(ctx, prior.Path.ValueString())
+		if resp.Diagnostics.Append(observabilityDirectoryRequestError(ctx, resp.State, "checking", err)...); resp.Diagnostics.HasError() || err != nil {
+			return
+		}
+		if current == nil || current.Data == nil {
+			resp.Diagnostics.AddError("Error checking directory", "Directory API returned no directory entry")
+			return
+		}
+		if current.Data.Path != prior.Path.ValueString() {
+			resp.Diagnostics.AddError("Error checking directory", "Directory API returned a different logical path than the requested path")
+			return
+		}
+		if len(current.Data.Children) == 0 && !current.Data.Identity && !current.Data.Canonical {
+			resp.Diagnostics.AddAttributeError(path.Root("pinned"), "Unoccupied directory", "Set pinned to true or provide at least one Template or child directory. An unpinned Directory without Templates or children is removed by the service.")
+			return
+		}
+	}
 
 	result, err := r.Details().Client.PatchDirectoryEntry(ctx, prior.Path.ValueString(), patch)
-	if responseError, ok := signalfx.AsResponseError(err); ok && responseError.Code() == http.StatusNotFound {
-		resp.Diagnostics.AddError(
-			"Error updating directory",
-			fmt.Sprintf("Directory %q was not found during update; retry after refreshing the Terraform state.", prior.Path.ValueString()),
-		)
-		return
-	}
-	if resp.Diagnostics.Append(fwerr.ErrorHandler(ctx, resp.State, err)...); resp.Diagnostics.HasError() || err != nil {
+	if resp.Diagnostics.Append(observabilityDirectoryRequestError(ctx, resp.State, "updating", err)...); resp.Diagnostics.HasError() || err != nil {
 		return
 	}
 	if result == nil || result.Data == nil {
@@ -260,10 +258,7 @@ func (r *observabilityDirectoryResource) Delete(ctx context.Context, req resourc
 	}
 
 	result, err := r.Details().Client.GetDirectoryEntry(ctx, state.Path.ValueString())
-	if responseError, ok := signalfx.AsResponseError(err); ok && responseError.Code() == http.StatusNotFound {
-		return
-	}
-	if resp.Diagnostics.Append(fwerr.ErrorHandler(ctx, resp.State, err)...); resp.Diagnostics.HasError() || err != nil {
+	if resp.Diagnostics.Append(observabilityDirectoryRequestError(ctx, resp.State, "checking", err)...); resp.Diagnostics.HasError() || err != nil {
 		return
 	}
 	if result == nil || result.Data == nil {
@@ -297,10 +292,20 @@ func (r *observabilityDirectoryResource) Delete(ctx context.Context, req resourc
 	}
 
 	err = r.Details().Client.DeleteDirectoryEntry(ctx, entry.Path)
+	resp.Diagnostics.Append(observabilityDirectoryRequestError(ctx, resp.State, "deleting", err)...)
+}
+
+func observabilityDirectoryRequestError(ctx context.Context, state tfsdk.State, action string, err error) diag.Diagnostics {
 	if responseError, ok := signalfx.AsResponseError(err); ok && responseError.Code() == http.StatusNotFound {
-		return
+		var diags diag.Diagnostics
+		detail := fmt.Sprintf("Directory API returned HTTP 404 for %q. Empty Directory paths normally return an entry, so Terraform cannot conclude the entry is absent.", responseError.Route())
+		if responseDetails := strings.TrimSpace(responseError.Details()); responseDetails != "" {
+			detail += " API response: " + responseDetails
+		}
+		diags.AddError("Error "+action+" directory", detail)
+		return diags
 	}
-	resp.Diagnostics.Append(fwerr.ErrorHandler(ctx, resp.State, err)...)
+	return fwerr.ErrorHandler(ctx, state, err)
 }
 
 func (r *observabilityDirectoryResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
