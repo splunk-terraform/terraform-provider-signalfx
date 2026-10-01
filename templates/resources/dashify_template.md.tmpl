@@ -1,14 +1,10 @@
 ---
 page_title: "Splunk Observability Cloud: signalfx_dashify_template"
 description: |-
-  Deprecated. Use signalfx_observability_template to manage Template API records.
+  Allows Terraform to create and manage Dashify templates in Splunk Observability Cloud
 ---
 
 # Resource: signalfx_dashify_template
-
-~> **Deprecated** Use [signalfx_observability_template](https://registry.terraform.io/providers/splunk-terraform/signalfx/latest/docs/resources/observability_template) for new configurations.
-
-The replacement uses separate `title`, `root_element`, `spec`, and optional `metadata` fields instead of `template_contents`. To migrate an existing Template without deleting it, remove the legacy resource from Terraform state, then import the same Template ID into the new resource. Provide complete metadata before updating an imported Template because the API does not return all write metadata. Manage each Template ID with only one resource.
 
 A [Dashify template](https://dev.splunk.com/observability/docs/) represents a template configuration for creating modern dashboards in Splunk Observability Cloud. Templates can be used to define reusable dashboard structures with dynamic data sources and components.
 
