@@ -3,7 +3,10 @@
 
 package fwdashify
 
-import "github.com/hashicorp/terraform-plugin-framework/types"
+import (
+	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+)
 
 // The transport models exactly match the schema available at each nesting
 // level. Terraform Plugin Framework requires this one-to-one correspondence.
@@ -98,7 +101,7 @@ type dashifyLayoutDefaultsModel struct {
 // Terraform container attributes that can produce a Panel child.
 type dashifyTemplateModel struct {
 	TemplateID types.String
-	Content    types.String
+	Content    jsontypes.Normalized
 }
 
 // TODO(charts): Generate the level-specific container chart fields from the
@@ -107,7 +110,7 @@ type dashifyTemplateModel struct {
 type dashifyDashboardContainerModel struct {
 	Layout          *dashifyLayoutModel  `tfsdk:"layout"`
 	TemplateID      types.String         `tfsdk:"template_id"`
-	TemplateContent types.String         `tfsdk:"template_content"`
+	TemplateContent jsontypes.Normalized `tfsdk:"template_content"`
 	Section         *dashifySectionModel `tfsdk:"section"`
 	Group           *dashifyGroupModel   `tfsdk:"group"`
 }
@@ -121,10 +124,10 @@ type dashifySectionModel struct {
 }
 
 type dashifySectionContainerModel struct {
-	Layout          *dashifyLayoutModel `tfsdk:"layout"`
-	TemplateID      types.String        `tfsdk:"template_id"`
-	TemplateContent types.String        `tfsdk:"template_content"`
-	Group           *dashifyGroupModel  `tfsdk:"group"`
+	Layout          *dashifyLayoutModel  `tfsdk:"layout"`
+	TemplateID      types.String         `tfsdk:"template_id"`
+	TemplateContent jsontypes.Normalized `tfsdk:"template_content"`
+	Group           *dashifyGroupModel   `tfsdk:"group"`
 }
 
 type dashifyGroupModel struct {
@@ -135,9 +138,9 @@ type dashifyGroupModel struct {
 }
 
 type dashifyGroupContainerModel struct {
-	Layout          *dashifyLayoutModel `tfsdk:"layout"`
-	TemplateID      types.String        `tfsdk:"template_id"`
-	TemplateContent types.String        `tfsdk:"template_content"`
+	Layout          *dashifyLayoutModel  `tfsdk:"layout"`
+	TemplateID      types.String         `tfsdk:"template_id"`
+	TemplateContent jsontypes.Normalized `tfsdk:"template_content"`
 }
 
 // dashifyContainer is the shared semantic model used after decoding and
@@ -278,16 +281,16 @@ func dashifyGroupModelsFromContainers(containers []dashifyContainer) []dashifyGr
 	return models
 }
 
-func dashifyTemplateFromFields(templateID, templateContent types.String) *dashifyTemplateModel {
+func dashifyTemplateFromFields(templateID types.String, templateContent jsontypes.Normalized) *dashifyTemplateModel {
 	if templateID.IsNull() && templateContent.IsNull() {
 		return nil
 	}
 	return &dashifyTemplateModel{TemplateID: templateID, Content: templateContent}
 }
 
-func dashifyTemplateFields(model *dashifyTemplateModel) (types.String, types.String) {
+func dashifyTemplateFields(model *dashifyTemplateModel) (types.String, jsontypes.Normalized) {
 	if model == nil {
-		return types.StringNull(), types.StringNull()
+		return types.StringNull(), jsontypes.NewNormalizedNull()
 	}
 	return model.TemplateID, model.Content
 }
