@@ -11,11 +11,34 @@ import (
 	"io"
 	"math"
 	"math/big"
+	"strconv"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 )
 
 type dashboardJSONSemanticEqualityModifier struct{}
+
+type dashifyLayoutLengthSemanticEqualityModifier struct{}
+
+func (dashifyLayoutLengthSemanticEqualityModifier) Description(_ context.Context) string {
+	return "Treats finite numeric layout lengths as unchanged when their numeric values match."
+}
+
+func (modifier dashifyLayoutLengthSemanticEqualityModifier) MarkdownDescription(ctx context.Context) string {
+	return modifier.Description(ctx)
+}
+
+func (dashifyLayoutLengthSemanticEqualityModifier) PlanModifyString(_ context.Context, req planmodifier.StringRequest, resp *planmodifier.StringResponse) {
+	if req.StateValue.IsNull() || req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() {
+		return
+	}
+	stateNumber, stateErr := strconv.ParseFloat(strings.TrimSpace(req.StateValue.ValueString()), 64)
+	configNumber, configErr := strconv.ParseFloat(strings.TrimSpace(req.ConfigValue.ValueString()), 64)
+	if stateErr == nil && configErr == nil && !math.IsNaN(stateNumber) && !math.IsInf(stateNumber, 0) && stateNumber == configNumber {
+		resp.PlanValue = req.StateValue
+	}
+}
 
 func (dashboardJSONSemanticEqualityModifier) Description(_ context.Context) string {
 	return "Treats JSON content as unchanged when it is semantically equivalent to the prior value."

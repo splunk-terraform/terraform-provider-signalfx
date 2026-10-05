@@ -110,6 +110,10 @@ func dashifyControlBarBlock() schema.SingleNestedBlock {
 									Optional:    true,
 									Description: "Whether to disable this default filter.",
 								},
+								"match_missing": schema.BoolAttribute{
+									Optional:    true,
+									Description: "Whether values missing the property should match.",
+								},
 							},
 						},
 					},
