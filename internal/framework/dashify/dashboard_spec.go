@@ -386,7 +386,7 @@ func parseDashifyPanel(spec map[string]any, used map[string]bool, id, path strin
 		return nil, nil, err
 	}
 	if !isDashifyImportElement(tag) {
-		if nestedTag, ok := findDashifyImportElement(content); ok {
+		if nestedTag, found := findDashifyImportElement(content); found {
 			return nil, nil, fmt.Errorf("container %s contains unsupported nested import element %q", id, nestedTag)
 		}
 		encoded, err := json.Marshal(content)
