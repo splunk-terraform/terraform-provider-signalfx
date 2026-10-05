@@ -6,7 +6,6 @@ package fwdashify
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"math"
 	"strconv"
 	"strings"
@@ -24,16 +23,7 @@ func dashifyLayoutValue(value types.String, coordinate bool) (any, bool, error) 
 	trimmed := strings.TrimSpace(text)
 	if strings.HasPrefix(trimmed, "{") || strings.HasPrefix(trimmed, "[") {
 		var decoded any
-		decoder := json.NewDecoder(strings.NewReader(trimmed))
-		decoder.UseNumber()
-		if err := decoder.Decode(&decoded); err != nil {
-			return nil, false, fmt.Errorf("must contain valid JSON: %w", err)
-		}
-		var extra any
-		if err := decoder.Decode(&extra); err != io.EOF {
-			if err == nil {
-				return nil, false, fmt.Errorf("must contain exactly one JSON value")
-			}
+		if err := decodeDashifyJSON([]byte(trimmed), &decoded); err != nil {
 			return nil, false, fmt.Errorf("must contain valid JSON: %w", err)
 		}
 		normalized, err := normalizeDashifyAdvancedLayoutValue(decoded, coordinate)
@@ -75,21 +65,10 @@ func normalizeDashifyAdvancedLayoutValue(value any, coordinate bool) (any, error
 }
 
 func normalizeDashifyLength(value any) (any, error) {
-	switch value := value.(type) {
-	case string:
-		return value, nil
-	case json.Number:
-		return normalizeDashifyNumber(value)
-	case float64:
-		if math.IsNaN(value) || math.IsInf(value, 0) {
-			return nil, fmt.Errorf("length numbers must be finite")
-		}
-		return value, nil
-	case map[string]any:
-		return normalizeDashifyClampedLength(value)
-	default:
-		return nil, fmt.Errorf("length must be a number, string, or clamped object, got %T", value)
+	if clamped, ok := value.(map[string]any); ok {
+		return normalizeDashifyClampedLength(clamped)
 	}
+	return normalizeDashifySimpleLength(value)
 }
 
 func normalizeDashifyClampedLength(value map[string]any) (map[string]any, error) {
@@ -123,19 +102,14 @@ func normalizeDashifySimpleLength(value any) (any, error) {
 		return value, nil
 	case json.Number:
 		return normalizeDashifyNumber(value)
-	case float64:
-		if math.IsNaN(value) || math.IsInf(value, 0) {
-			return nil, fmt.Errorf("length numbers must be finite")
-		}
-		return value, nil
 	default:
 		return nil, fmt.Errorf("must be a number or string, got %T", value)
 	}
 }
 
 func normalizeDashifyNumber(value json.Number) (float64, error) {
-	number, err := value.Float64()
-	if err != nil || math.IsNaN(number) || math.IsInf(number, 0) {
+	number, ok := dashifyFiniteNumber(value)
+	if !ok {
 		return 0, fmt.Errorf("length number %q is not finite", value)
 	}
 	return number, nil
@@ -151,11 +125,6 @@ func dashifyLayoutString(item map[string]any, key string, coordinate bool) (type
 	switch value := value.(type) {
 	case string:
 		return types.StringValue(value), nil
-	case float64:
-		if math.IsNaN(value) || math.IsInf(value, 0) {
-			return types.StringNull(), fmt.Errorf("has %s %v rather than a finite number", key, value)
-		}
-		return types.StringValue(strconv.FormatFloat(value, 'f', -1, 64)), nil
 	case json.Number:
 		number, err := normalizeDashifyNumber(value)
 		if err != nil {

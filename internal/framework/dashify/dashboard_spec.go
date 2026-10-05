@@ -363,30 +363,8 @@ func parseDashifyContainer(spec map[string]any, used map[string]bool, id, path s
 	}
 }
 
-// Reports which child elements are valid at a container's nesting level,
-// derived from dashifyContainerLevelRules so this message cannot drift from
-// the schema/validation rules it describes.
 func dashifyUnexpectedContainerElement(tag string, level dashifyContainerLevel) error {
-	rule := dashifyContainerLevelRules[level]
-	supported := []string{"panels"}
-	if rule.allowSection {
-		supported = append(supported, "sections")
-	}
-	if rule.allowGroup {
-		supported = append(supported, "groups")
-	}
-	return fmt.Errorf("is a %s element; only %s are supported at this level", tag, joinWithAnd(supported))
-}
-
-func joinWithAnd(items []string) string {
-	switch len(items) {
-	case 1:
-		return items[0]
-	case 2:
-		return items[0] + " and " + items[1]
-	default:
-		return strings.Join(items[:len(items)-1], ", ") + ", and " + items[len(items)-1]
-	}
+	return fmt.Errorf("is a %s element; only %s are supported at this level", tag, dashifyContainerLevelRules[level].supportedElements)
 }
 
 // Resolves imports to Template IDs and preserves other elements as opaque inline content.
@@ -454,7 +432,8 @@ func oneDashifyElement(node map[string]any) (string, any, error) {
 	return tag, value, nil
 }
 
-// Returns unconsumed leaf paths, treating unknown arrays as indivisible values.
+// Returns unconsumed leaf paths, treating arrays as indivisible values. Empty objects
+// are skipped because parsing drains modeled objects in place rather than deleting them.
 func dashifyLeftovers(prefix string, node map[string]any) []string {
 	var leftovers []string
 	for key, value := range node {
@@ -462,18 +441,9 @@ func dashifyLeftovers(prefix string, node map[string]any) []string {
 		if prefix != "" {
 			path = prefix + "." + key
 		}
-		switch value := value.(type) {
-		case nil:
-			leftovers = append(leftovers, path)
-		case map[string]any:
-			if len(value) == 0 {
-				leftovers = append(leftovers, path)
-			} else {
-				leftovers = append(leftovers, dashifyLeftovers(path, value)...)
-			}
-		case []any:
-			leftovers = append(leftovers, path)
-		default:
+		if child, ok := value.(map[string]any); ok {
+			leftovers = append(leftovers, dashifyLeftovers(path, child)...)
+		} else {
 			leftovers = append(leftovers, path)
 		}
 	}

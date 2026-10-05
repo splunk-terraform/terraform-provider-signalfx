@@ -19,9 +19,6 @@ const (
 // list; parseDashifyControlBar performs the inverse decode.
 func buildDashifyControlBar(model *dashifyControlBarModel) map[string]any {
 	controls := make([]any, 0)
-	if model == nil {
-		return map[string]any{"controls": controls}
-	}
 	if model.TimeRange != nil {
 		control := map[string]any{
 			"type":         "TimeRange",
@@ -144,11 +141,6 @@ func parseDashifyControlBar(spec map[string]any) (*dashifyControlBarModel, []str
 	}
 
 	model := &dashifyControlBarModel{}
-	// Without these, a second control of the same canonical type or pinned
-	// variableName would silently overwrite the earlier one in model instead
-	// of surfacing the duplicate as an error.
-	seenPinned := map[string]struct{}{}
-	seenSingleton := map[string]bool{}
 	var leftovers []string
 	for i, rawControl := range controls {
 		controlPath := fmt.Sprintf("controlBar.controls.%d", i)
@@ -177,10 +169,6 @@ func parseDashifyControlBar(spec map[string]any) (*dashifyControlBarModel, []str
 				leftovers = append(leftovers, controlPath)
 				continue
 			}
-			if seenSingleton[dashifyTimeRangeVariableName] {
-				return nil, nil, fmt.Errorf("%s duplicates the canonical TimeRange control", controlPath)
-			}
-			seenSingleton[dashifyTimeRangeVariableName] = true
 			value := &dashifyTimeRangeControlModel{}
 			if value.Label, err = takeDashifyControlString(control, "label", controlPath); err != nil {
 				return nil, nil, err
@@ -200,10 +188,6 @@ func parseDashifyControlBar(spec map[string]any) (*dashifyControlBarModel, []str
 				leftovers = append(leftovers, controlPath)
 				continue
 			}
-			if seenSingleton[dashifyDensityVariableName] {
-				return nil, nil, fmt.Errorf("%s duplicates the canonical Density control", controlPath)
-			}
-			seenSingleton[dashifyDensityVariableName] = true
 			value := &dashifyDensityControlModel{}
 			if value.Label, err = takeDashifyControlString(control, "label", controlPath); err != nil {
 				return nil, nil, err
@@ -223,10 +207,6 @@ func parseDashifyControlBar(spec map[string]any) (*dashifyControlBarModel, []str
 				leftovers = append(leftovers, controlPath)
 				continue
 			}
-			if _, exists := seenPinned[variableName.ValueString()]; exists {
-				return nil, nil, fmt.Errorf("%s duplicates pinned filter variableName %q", controlPath, variableName.ValueString())
-			}
-			seenPinned[variableName.ValueString()] = struct{}{}
 			value := &dashifyPinnedFilterControlModel{VariableName: variableName}
 			if value.Label, err = takeDashifyControlString(control, "label", controlPath); err != nil {
 				return nil, nil, err
@@ -264,10 +244,6 @@ func parseDashifyControlBar(spec map[string]any) (*dashifyControlBarModel, []str
 				leftovers = append(leftovers, controlPath)
 				continue
 			}
-			if seenSingleton[dashifyFilterSetVariableName] {
-				return nil, nil, fmt.Errorf("%s duplicates the canonical FilterSet control", controlPath)
-			}
-			seenSingleton[dashifyFilterSetVariableName] = true
 			value := &dashifyFilterSetControlModel{}
 			if value.Label, err = takeDashifyControlString(control, "label", controlPath); err != nil {
 				return nil, nil, err

@@ -83,20 +83,25 @@ type dashifyContainerLevelRule struct {
 	allowSection bool
 	allowGroup   bool
 	errorMessage string
+	// Describes the stored elements accepted at this level, for Read errors.
+	supportedElements string
 }
 
 var dashifyContainerLevelRules = map[dashifyContainerLevel]dashifyContainerLevelRule{
 	dashifyDashboardContainerLevel: {
-		allowSection: true,
-		allowGroup:   true,
-		errorMessage: "each dashboard container must set exactly one content block: template, section, or group",
+		allowSection:      true,
+		allowGroup:        true,
+		errorMessage:      "each dashboard container must set exactly one content block: template, section, or group",
+		supportedElements: "panels, sections, and groups",
 	},
 	dashifySectionContainerLevel: {
-		allowGroup:   true,
-		errorMessage: "each container within a section must set exactly one content block: template or group",
+		allowGroup:        true,
+		errorMessage:      "each container within a section must set exactly one content block: template or group",
+		supportedElements: "panels and groups",
 	},
 	dashifyGroupContainerLevel: {
-		errorMessage: "each container within a group must set exactly one template block",
+		errorMessage:      "each container within a group must set exactly one template block",
+		supportedElements: "panels",
 	},
 }
 
@@ -174,7 +179,7 @@ func dashifyItemLayoutBlock() schema.SingleNestedBlock {
 	return schema.SingleNestedBlock{
 		Description: "Placement and size of this container inside its parent layout. Lengths accept numbers or relative strings; clamped values and coordinate arrays can be supplied with jsonencode.",
 		Attributes: map[string]schema.Attribute{
-			"order":      schema.Float64Attribute{Optional: true, Computed: true, Description: "Display order of the container within its parent layout. Defaults to the stored order when omitted."},
+			"order":      schema.Float64Attribute{Optional: true, Description: "Display order of the container within its parent layout, overriding declaration order. Reordering in the UI sets this on every container in the layout."},
 			"absolute":   schema.BoolAttribute{Optional: true, Description: "Whether to position the container independently using its x and y coordinates."},
 			"width":      dashifyLayoutLengthAttribute("Starting width of the container."),
 			"height":     dashifyLayoutLengthAttribute("Starting height of the container."),
@@ -225,7 +230,7 @@ func dashifyLayoutDefaultAttributes() map[string]schema.Attribute {
 }
 
 func dashifyLayoutLengthAttribute(description string) schema.StringAttribute {
-	return schema.StringAttribute{Optional: true, Description: description, PlanModifiers: []planmodifier.String{dashifyLayoutLengthSemanticEqualityModifier{}}}
+	return schema.StringAttribute{Optional: true, Description: description}
 }
 
 func (r *observabilityDashboardResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
@@ -297,10 +302,7 @@ func dashifyContainerContentAllowed(container dashifyContainer, level dashifyCon
 }
 
 func dashifyContainerContentError(level dashifyContainerLevel) string {
-	if rule, ok := dashifyContainerLevelRules[level]; ok {
-		return rule.errorMessage
-	}
-	return "each container must set exactly one supported content block"
+	return dashifyContainerLevelRules[level].errorMessage
 }
 
 func validateDashifyLayout(resp *resource.ValidateConfigResponse, layoutPath path.Path, layout *dashifyLayoutModel) {

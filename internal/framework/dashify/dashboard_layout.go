@@ -136,7 +136,7 @@ func buildDashifyLayoutOptions(options *dashifyLayoutOptionsModel) (map[string]a
 	return layout, nil
 }
 
-// Matches positional layout IDs to Terraform container order, discarding UI-only order state.
+// Matches positional layout IDs to Terraform container order.
 func parseDashifyLayouts(spec map[string]any, listKey string, count int) ([]*dashifyLayoutModel, map[string]any, []string, error) {
 	layouts := make([]*dashifyLayoutModel, count)
 	rawLayout, ok := spec["layout"]

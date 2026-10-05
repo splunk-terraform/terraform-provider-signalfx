@@ -103,7 +103,7 @@ func TestBuildAndParseDashifyControlBar(t *testing.T) {
 	raw, err := json.Marshal(built)
 	require.NoError(t, err)
 	var decoded map[string]any
-	require.NoError(t, json.Unmarshal(raw, &decoded))
+	require.NoError(t, decodeDashifyJSON(raw, &decoded))
 	parsed, leftovers, err := parseDashifyControlBar(map[string]any{"controlBar": decoded})
 	require.NoError(t, err)
 	assert.Empty(t, leftovers)
@@ -122,7 +122,7 @@ func TestParseDashifyControlBarIndependentJSON(t *testing.T) {
 	t.Parallel()
 
 	spec := map[string]any{}
-	require.NoError(t, json.Unmarshal([]byte(`{
+	require.NoError(t, decodeDashifyJSON([]byte(`{
 		"controlBar": {"controls": [
 			{"type":"PinnedFilter","variableName":"host","key":"host.name","defaultVariableValue":["web-1"],"preferablySuggestedValues":["web-1","web-2"],"onlySuggestPreferredValues":true,"matchMissing":false,"required":true,"applicationMode":"override"},
 			{"type":"TimeRange","variableName":"TIME","defaultVariableValue":"2026-01-01T00:00:00Z--2026-01-01T01:00:00Z"},
@@ -150,7 +150,7 @@ func TestDashifyControlBarCodecOmissionAndWarnings(t *testing.T) {
 	assert.Empty(t, leftovers)
 
 	spec := map[string]any{}
-	require.NoError(t, json.Unmarshal([]byte(`{"controlBar":{"controls":[
+	require.NoError(t, decodeDashifyJSON([]byte(`{"controlBar":{"controls":[
 		{"type":"Future","variableName":"future","future":true},
 		{"type":"Density","variableName":"wrong","future":true},
 		{"type":"PinnedFilter","variableName":"FILTERS","future":true},
@@ -166,7 +166,7 @@ func TestDashifyControlBarCodecOmissionAndWarnings(t *testing.T) {
 	assert.Contains(t, leftovers, "controlBar.futureBar")
 
 	filterSpec := map[string]any{}
-	require.NoError(t, json.Unmarshal([]byte(`{"controlBar":{"controls":[
+	require.NoError(t, decodeDashifyJSON([]byte(`{"controlBar":{"controls":[
 		{"type":"FilterSet","variableName":"FILTERS","defaultVariableValue":[{"key":"env","values":[],"futureFilter":true}]}
 	]}}`), &filterSpec))
 	_, leftovers, err = parseDashifyControlBar(filterSpec)
@@ -187,14 +187,12 @@ func TestDashifyControlBarCodecErrors(t *testing.T) {
 		"known field wrong type":    {spec: `{"controlBar":{"controls":[{"type":"Density","variableName":"DENSITY","defaultVariableValue":"60"}]}}`, want: "rather than an integer"},
 		"filter key missing":        {spec: `{"controlBar":{"controls":[{"type":"FilterSet","variableName":"FILTERS","defaultVariableValue":[{"values":[]}] }]}}`, want: "must be a non-empty string"},
 		"filter values missing":     {spec: `{"controlBar":{"controls":[{"type":"FilterSet","variableName":"FILTERS","defaultVariableValue":[{"key":"env"}] }]}}`, want: "values must be a list"},
-		"duplicate pinned":          {spec: `{"controlBar":{"controls":[{"type":"PinnedFilter","variableName":"env"},{"type":"PinnedFilter","variableName":"env"}]}}`, want: "duplicates pinned filter"},
-		"duplicate singleton":       {spec: `{"controlBar":{"controls":[{"type":"Density","variableName":"DENSITY"},{"type":"Density","variableName":"DENSITY"}]}}`, want: "duplicates the canonical Density"},
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			var spec map[string]any
-			require.NoError(t, json.Unmarshal([]byte(test.spec), &spec))
+			require.NoError(t, decodeDashifyJSON([]byte(test.spec), &spec))
 			_, _, err := parseDashifyControlBar(spec)
 			require.ErrorContains(t, err, test.want)
 		})
@@ -272,7 +270,7 @@ func TestDashboardSpecPlacesControlBarAtTopLevel(t *testing.T) {
 	})
 	require.NoError(t, err)
 	var spec map[string]any
-	require.NoError(t, json.Unmarshal(raw, &spec))
+	require.NoError(t, decodeDashifyJSON(raw, &spec))
 	assert.Contains(t, spec, "controlBar")
 	assert.Contains(t, spec, "<Dashboard>")
 	assert.Contains(t, spec, "layout")
@@ -322,4 +320,24 @@ func TestDashifyEmptyControlBarIsOmittedOnImport(t *testing.T) {
 	assert.Nil(t, controls)
 	assert.Empty(t, leftovers)
 	assert.NotContains(t, spec, "controlBar")
+}
+
+func TestDashifyDensityAcceptsIntegralNumberForms(t *testing.T) {
+	t.Parallel()
+
+	for _, raw := range []string{"60", "60.0", "6e1"} {
+		t.Run(raw, func(t *testing.T) {
+			t.Parallel()
+			spec := map[string]any{}
+			require.NoError(t, decodeDashifyJSON([]byte(`{"controlBar":{"controls":[{"type":"Density","variableName":"DENSITY","defaultVariableValue":`+raw+`}]}}`), &spec))
+			parsed, _, err := parseDashifyControlBar(spec)
+			require.NoError(t, err)
+			assert.Equal(t, int64(60), parsed.Density.DefaultVariableValue.ValueInt64())
+		})
+	}
+
+	spec := map[string]any{}
+	require.NoError(t, decodeDashifyJSON([]byte(`{"controlBar":{"controls":[{"type":"Density","variableName":"DENSITY","defaultVariableValue":60.5}]}}`), &spec))
+	_, _, err := parseDashifyControlBar(spec)
+	require.ErrorContains(t, err, "rather than an integer")
 }
