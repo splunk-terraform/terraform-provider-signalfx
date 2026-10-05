@@ -1,0 +1,35 @@
+---
+page_title: "Splunk Observability Cloud: signalfx_observability_dashboard"
+description: |-
+  Manages a Modern Dashboard Template with containers, controls, and layout.
+---
+
+# Resource: signalfx_observability_dashboard
+
+This resource manages a complete Dashboard Template document. Its ordered containers can reference existing Template IDs or hold opaque inline JSON. Sections, groups, layout, time range, density, pinned filters, and filter sets are supported. Typed chart blocks will be added separately.
+
+To place the dashboard in a Directory, include `signalfx_observability_dashboard.service.id` in the Directory resource's complete `templates` list. Dashboard updates replace the complete document. Import an existing dashboard and review the generated configuration before applying changes. The provider warns when the stored document contains fields it cannot represent; a later update can remove those fields.
+
+## Example
+
+{{tffile "examples/resources/observability_dashboard/example_1.tf"}}
+
+## Inline content
+
+{{tffile "examples/resources/observability_dashboard/example_7.tf"}}
+
+## Advanced layout
+
+{{tffile "examples/resources/observability_dashboard/example_5.tf"}}
+
+## Dashboard controls
+
+{{tffile "examples/resources/observability_dashboard/example_6.tf"}}
+
+Within a `template` block, set exactly one of `template_id` or `content`. The latter is a JSON object containing exactly one dashboard element key. It is preserved as inline content without converting unknown chart fields.
+
+Root, section, and group `layout` blocks arrange their immediate containers. A `container.layout` block sets that container's placement. Length arguments accept values such as `"4"`, `"6/12"`, or `"50%"`; use `jsonencode` for clamped lengths or a multi-part `x` or `y` coordinate.
+
+Terraform declaration order controls container order. Controls are written in the order time range, density, pinned filters, then filter set. Complete document updates can remove UI changes that are absent from Terraform configuration.
+
+{{ .SchemaMarkdown | trimspace }}
