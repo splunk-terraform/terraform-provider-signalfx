@@ -73,9 +73,7 @@ resource "signalfx_observability_dashboard" "advanced_layout" {
               y         = "12"
             }
 
-            template {
-              template_id = signalfx_observability_template.latency.id
-            }
+            template_id = signalfx_observability_template.latency.id
           }
         }
       }

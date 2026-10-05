@@ -56,13 +56,10 @@ func TestResourceObservabilityDashboardMetadataAndSchema(t *testing.T) {
 
 	rootContainer, ok := schemaResponse.Schema.Blocks["container"].(schema.ListNestedBlock)
 	require.True(t, ok)
-	assert.Contains(t, rootContainer.NestedObject.Blocks, "template")
+	assert.Contains(t, rootContainer.NestedObject.Attributes, "template_id")
 	assert.Contains(t, rootContainer.NestedObject.Blocks, "section")
 	assert.Contains(t, rootContainer.NestedObject.Blocks, "group")
-	templateBlock, ok := rootContainer.NestedObject.Blocks["template"].(schema.SingleNestedBlock)
-	require.True(t, ok)
-	assert.Contains(t, templateBlock.Attributes, "template_id")
-	contentAttribute, ok := templateBlock.Attributes["content"].(schema.StringAttribute)
+	contentAttribute, ok := rootContainer.NestedObject.Attributes["template_content"].(schema.StringAttribute)
 	require.True(t, ok)
 	require.Len(t, contentAttribute.PlanModifiers, 1)
 	itemLayout, ok := rootContainer.NestedObject.Blocks["layout"].(schema.SingleNestedBlock)
@@ -83,7 +80,8 @@ func TestResourceObservabilityDashboardMetadataAndSchema(t *testing.T) {
 	assert.Contains(t, section.Blocks, "layout")
 	sectionContainer, ok := section.Blocks["container"].(schema.ListNestedBlock)
 	require.True(t, ok)
-	assert.Contains(t, sectionContainer.NestedObject.Blocks, "template")
+	assert.Contains(t, sectionContainer.NestedObject.Attributes, "template_id")
+	assert.Contains(t, sectionContainer.NestedObject.Attributes, "template_content")
 	assert.Contains(t, sectionContainer.NestedObject.Blocks, "group")
 	assert.NotContains(t, sectionContainer.NestedObject.Blocks, "section")
 
@@ -98,7 +96,8 @@ func TestResourceObservabilityDashboardMetadataAndSchema(t *testing.T) {
 	assert.Contains(t, group.Blocks, "layout")
 	groupContainer, ok := group.Blocks["container"].(schema.ListNestedBlock)
 	require.True(t, ok)
-	assert.Contains(t, groupContainer.NestedObject.Blocks, "template")
+	assert.Contains(t, groupContainer.NestedObject.Attributes, "template_id")
+	assert.Contains(t, groupContainer.NestedObject.Attributes, "template_content")
 	assert.NotContains(t, groupContainer.NestedObject.Blocks, "section")
 	assert.NotContains(t, groupContainer.NestedObject.Blocks, "group")
 }
@@ -155,8 +154,8 @@ func TestResourceObservabilityDashboardInlineContentLifecycleAndGeneratedConfig(
 				Check: testresource.ComposeAggregateTestCheckFunc(
 					testresource.TestCheckResourceAttrSet("signalfx_observability_dashboard.inline_content", "id"),
 					testresource.TestCheckResourceAttr("signalfx_observability_dashboard.inline_content", "title", "Inline dashboard content"),
-					testresource.TestCheckResourceAttrSet("signalfx_observability_dashboard.inline_content", "container.0.template.content"),
-					testresource.TestCheckNoResourceAttr("signalfx_observability_dashboard.inline_content", "container.0.template.template_id"),
+					testresource.TestCheckResourceAttrSet("signalfx_observability_dashboard.inline_content", "container.0.template_content"),
+					testresource.TestCheckNoResourceAttr("signalfx_observability_dashboard.inline_content", "container.0.template_id"),
 				),
 			},
 			{
@@ -192,9 +191,7 @@ resource "signalfx_observability_dashboard" "untitled" {
       container {
         group {
           container {
-            template {
-              content = jsonencode({ "<Chart>" = [] })
-            }
+            template_content = jsonencode({ "<Chart>" = [] })
           }
         }
       }
@@ -250,15 +247,15 @@ func TestDashifyContainerContentErrorsDescribeOneContainer(t *testing.T) {
 	}{
 		"dashboard": {
 			level: dashifyDashboardContainerLevel,
-			want:  "each dashboard container must set exactly one content block: template, section, or group",
+			want:  "each dashboard container must set exactly one content source: template_id, template_content, section, or group",
 		},
 		"section": {
 			level: dashifySectionContainerLevel,
-			want:  "each container within a section must set exactly one content block: template or group",
+			want:  "each container within a section must set exactly one content source: template_id, template_content, or group",
 		},
 		"group": {
 			level: dashifyGroupContainerLevel,
-			want:  "each container within a group must set exactly one template block",
+			want:  "each container within a group must set exactly one of template_id or template_content",
 		},
 	}
 
@@ -474,7 +471,7 @@ func TestDashifyDashboardSpecRoundTrip(t *testing.T) {
 					X:         types.StringValue(`["1/4",8]`),
 					Y:         types.StringValue("12"),
 				},
-				Template: &dashifyTemplateModel{TemplateID: types.StringValue("chart-a")},
+				TemplateID: types.StringValue("chart-a"),
 			},
 			{
 				Section: &dashifySectionModel{
@@ -493,7 +490,7 @@ func TestDashifyDashboardSpecRoundTrip(t *testing.T) {
 								Layout: &dashifyLayoutOptionsModel{
 									Defaults: &dashifyLayoutDefaultsModel{Width: types.StringValue("1/2")},
 								},
-								Container: []dashifyGroupContainerModel{{Template: &dashifyTemplateModel{TemplateID: types.StringValue("chart-b")}}},
+								Container: []dashifyGroupContainerModel{{TemplateID: types.StringValue("chart-b")}},
 							},
 						},
 					},
@@ -505,8 +502,8 @@ func TestDashifyDashboardSpecRoundTrip(t *testing.T) {
 					Headerless: types.BoolValue(false),
 					Container: []dashifyGroupContainerModel{
 						{
-							Layout:   &dashifyLayoutModel{Width: types.StringValue("1/2")},
-							Template: &dashifyTemplateModel{TemplateID: types.StringValue("chart-c")},
+							Layout:     &dashifyLayoutModel{Width: types.StringValue("1/2")},
+							TemplateID: types.StringValue("chart-c"),
 						},
 					},
 				},
@@ -560,10 +557,7 @@ func TestDashifyDashboardInlineContentRoundTrip(t *testing.T) {
 			model := observabilityDashboardModel{
 				Title: types.StringValue("Dashboard"),
 				Container: []dashifyDashboardContainerModel{{
-					Template: &dashifyTemplateModel{
-						TemplateID: types.StringNull(),
-						Content:    types.StringValue(content),
-					},
+					TemplateContent: types.StringValue(content),
 				}},
 			}
 
@@ -589,9 +583,8 @@ func TestDashifyDashboardInlineContentRoundTrip(t *testing.T) {
 			})
 			require.Empty(t, diags, diags)
 			require.Len(t, parsed.Container, 1)
-			require.NotNil(t, parsed.Container[0].Template)
-			assert.True(t, parsed.Container[0].Template.TemplateID.IsNull())
-			assert.JSONEq(t, content, parsed.Container[0].Template.Content.ValueString())
+			assert.True(t, parsed.Container[0].TemplateID.IsNull())
+			assert.JSONEq(t, content, parsed.Container[0].TemplateContent.ValueString())
 
 			rebuilt, rebuiltImports, err := buildDashboardSpec(parsed)
 			require.NoError(t, err)
@@ -660,7 +653,7 @@ func TestDashifyDashboardSpecAllowsMissingLayout(t *testing.T) {
 	require.Empty(t, diags, diags)
 	require.Len(t, model.Container, 1)
 	assert.Nil(t, model.Container[0].Layout)
-	assert.Equal(t, "chart-id", model.Container[0].Template.TemplateID.ValueString())
+	assert.Equal(t, "chart-id", model.Container[0].TemplateID.ValueString())
 }
 
 func TestDashifyDashboardSpecAllowsUntitledSectionsAndGroups(t *testing.T) {
@@ -858,7 +851,7 @@ func TestResourceObservabilityDashboardUnitTest(t *testing.T) {
 						testresource.TestCheckResourceAttr("signalfx_observability_dashboard.test", "title", "Service overview"),
 						testresource.TestCheckResourceAttr("signalfx_observability_dashboard.test", "container.0.layout.width", "6/12"),
 						testresource.TestCheckResourceAttrPair(
-							"signalfx_observability_dashboard.test", "container.0.template.template_id",
+							"signalfx_observability_dashboard.test", "container.0.template_id",
 							"signalfx_observability_template.chart", "id",
 						),
 					),
@@ -870,7 +863,7 @@ func TestResourceObservabilityDashboardUnitTest(t *testing.T) {
 						testresource.TestCheckResourceAttr("signalfx_observability_dashboard.test", "title", "Updated service overview"),
 						testresource.TestCheckNoResourceAttr("signalfx_observability_dashboard.test", "container.0.layout.width"),
 						testresource.TestCheckResourceAttrPair(
-							"signalfx_observability_dashboard.test", "container.0.template.template_id",
+							"signalfx_observability_dashboard.test", "container.0.template_id",
 							"signalfx_observability_template.chart", "id",
 						),
 					),
@@ -891,9 +884,7 @@ func TestResourceObservabilityDashboardRecreatesAfterRemoteDelete(t *testing.T) 
 			{Config: `resource "signalfx_observability_dashboard" "test" {
   title = "Service overview"
   container {
-    template {
-      content = jsonencode({ "<Chart>" = [] })
-    }
+    template_content = jsonencode({ "<Chart>" = [] })
   }
 }`},
 			{
@@ -905,9 +896,7 @@ func TestResourceObservabilityDashboardRecreatesAfterRemoteDelete(t *testing.T) 
 				Config: `resource "signalfx_observability_dashboard" "test" {
   title = "Service overview"
   container {
-    template {
-      content = jsonencode({ "<Chart>" = [] })
-    }
+    template_content = jsonencode({ "<Chart>" = [] })
   }
 }`,
 				Check: testresource.TestCheckResourceAttr("signalfx_observability_dashboard.test", "id", "template-2"),
@@ -930,9 +919,7 @@ func TestResourceObservabilityDashboardCreateReportsMissingEndpoint(t *testing.T
 			Config: `resource "signalfx_observability_dashboard" "test" {
   title = "Service overview"
   container {
-    template {
-      content = jsonencode({ "<Chart>" = [] })
-    }
+    template_content = jsonencode({ "<Chart>" = [] })
   }
 }`,
 			ExpectError: regexp.MustCompile("The Template API endpoint was not found"),
@@ -954,18 +941,14 @@ func TestResourceObservabilityDashboardUpdateReportsNotFound(t *testing.T) {
 			{Config: `resource "signalfx_observability_dashboard" "test" {
   title = "Service overview"
   container {
-    template {
-      content = jsonencode({ "<Chart>" = [] })
-    }
+    template_content = jsonencode({ "<Chart>" = [] })
   }
 }`},
 			{
 				Config: `resource "signalfx_observability_dashboard" "test" {
   title = "Updated overview"
   container {
-    template {
-      content = jsonencode({ "<Chart>" = [] })
-    }
+    template_content = jsonencode({ "<Chart>" = [] })
   }
 }`,
 				ExpectError: regexp.MustCompile("was not found during update"),
@@ -1031,7 +1014,7 @@ func TestDashboardInlineContentPreservesLargeJSONNumbers(t *testing.T) {
 	model := observabilityDashboardModel{
 		Title: types.StringValue("Large numbers"),
 		Container: []dashifyDashboardContainerModel{{
-			Template: &dashifyTemplateModel{Content: types.StringValue(content)},
+			TemplateContent: types.StringValue(content),
 		}},
 	}
 	spec, _, err := buildDashboardSpec(model)
@@ -1047,8 +1030,7 @@ func TestDashboardInlineContentPreservesLargeJSONNumbers(t *testing.T) {
 	})
 	require.False(t, diags.HasError(), diags)
 	require.Len(t, parsed.Container, 1)
-	require.NotNil(t, parsed.Container[0].Template)
-	assert.Contains(t, parsed.Container[0].Template.Content.ValueString(), "9007199254740993")
+	assert.Contains(t, parsed.Container[0].TemplateContent.ValueString(), "9007199254740993")
 }
 
 func TestDashboardInlineContentRejectsNestedImports(t *testing.T) {
@@ -1080,8 +1062,7 @@ func TestDashboardParsesWrappedTemplateImport(t *testing.T) {
 	require.False(t, diags.HasError(), diags)
 	require.Empty(t, diags.Warnings())
 	require.Len(t, model.Container, 1)
-	require.NotNil(t, model.Container[0].Template)
-	assert.Equal(t, "chart-id", model.Container[0].Template.TemplateID.ValueString())
+	assert.Equal(t, "chart-id", model.Container[0].TemplateID.ValueString())
 }
 
 func TestDashboardRejectsNestedImportWithUnmodeledWrapperFields(t *testing.T) {

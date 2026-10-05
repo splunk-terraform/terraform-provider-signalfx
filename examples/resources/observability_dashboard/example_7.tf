@@ -15,19 +15,17 @@ resource "signalfx_observability_dashboard" "inline_content" {
       height = "2"
     }
 
-    template {
-      content = jsonencode({
-        "<o11y:SingleValue>" = []
-        chart = {
-          color = "blue"
-        }
-        datasource = {
-          program = "A = data('requests.count').sum().publish('A')"
-        }
-        widget = {
-          title = "Request rate"
-        }
-      })
-    }
+    template_content = jsonencode({
+      "<o11y:SingleValue>" = []
+      chart = {
+        color = "blue"
+      }
+      datasource = {
+        program = "A = data('requests.count').sum().publish('A')"
+      }
+      widget = {
+        title = "Request rate"
+      }
+    })
   }
 }

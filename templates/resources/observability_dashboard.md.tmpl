@@ -26,7 +26,7 @@ To place the dashboard in a Directory, include `signalfx_observability_dashboard
 
 {{tffile "examples/resources/observability_dashboard/example_6.tf"}}
 
-Within a `template` block, set exactly one of `template_id` or `content`. The latter is a JSON object containing exactly one dashboard element key. It is preserved as inline content without converting unknown chart fields.
+Within each `container`, set exactly one content source. Use `template_id` to reference a reusable Observability Template, or `template_content` for a JSON object containing exactly one dashboard element key. Inline content is preserved without converting unknown chart fields.
 
 Root, section, and group `layout` blocks arrange their immediate containers. A `container.layout` block sets that container's placement. Length arguments accept values such as `"4"`, `"6/12"`, or `"50%"`; use `jsonencode` for clamped lengths or a multi-part `x` or `y` coordinate.
 

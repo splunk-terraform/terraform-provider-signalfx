@@ -142,15 +142,15 @@ func buildDashifyContainerList(spec map[string]any, containers []dashifyContaine
 // imports add API metadata, signaled by a non-empty reference.
 func buildDashifyPanelChild(spec map[string]any, model *dashifyTemplateModel, id string) (map[string]any, string, error) {
 	if model == nil {
-		return nil, "", fmt.Errorf("template block is missing")
+		return nil, "", fmt.Errorf("template_id or template_content is required")
 	}
 	if model.TemplateID.IsUnknown() || model.Content.IsUnknown() {
-		return nil, "", fmt.Errorf("template_id and content must be known before writing")
+		return nil, "", fmt.Errorf("template_id and template_content must be known before writing")
 	}
 	idSet := !model.TemplateID.IsNull()
 	contentSet := !model.Content.IsNull()
 	if idSet == contentSet {
-		return nil, "", fmt.Errorf("exactly one of template_id or content must be set")
+		return nil, "", fmt.Errorf("exactly one of template_id or template_content must be set")
 	}
 	if contentSet {
 		content, err := decodeDashifyInlineContent(model.Content.ValueString())
@@ -176,21 +176,21 @@ func buildDashifyPanelChild(spec map[string]any, model *dashifyTemplateModel, id
 func decodeDashifyInlineContent(raw string) (map[string]any, error) {
 	var value any
 	if err := decodeDashifyJSON([]byte(raw), &value); err != nil {
-		return nil, fmt.Errorf("content must be valid JSON: %w", err)
+		return nil, fmt.Errorf("template_content must be valid JSON: %w", err)
 	}
 	content, ok := value.(map[string]any)
 	if !ok {
-		return nil, fmt.Errorf("content must be a JSON object")
+		return nil, fmt.Errorf("template_content must be a JSON object")
 	}
 	tag, _, err := oneDashifyElement(content)
 	if err != nil {
-		return nil, fmt.Errorf("content %w", err)
+		return nil, fmt.Errorf("template_content %w", err)
 	}
 	if isDashifyImportElement(tag) {
-		return nil, fmt.Errorf("content cannot be an import element; use template_id instead")
+		return nil, fmt.Errorf("template_content cannot be an import element; use template_id instead")
 	}
 	if nestedTag, ok := findDashifyImportElement(content); ok {
-		return nil, fmt.Errorf("content cannot contain import element %q; use template_id instead", nestedTag)
+		return nil, fmt.Errorf("template_content cannot contain import element %q; use template_id instead", nestedTag)
 	}
 	return content, nil
 }
