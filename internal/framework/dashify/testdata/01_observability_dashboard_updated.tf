@@ -11,8 +11,6 @@ resource "signalfx_observability_dashboard" "test" {
   title = "Updated service overview"
 
   container {
-    template {
-      template_id = signalfx_observability_template.chart.id
-    }
+    template_id = signalfx_observability_template.chart.id
   }
 }

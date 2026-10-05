@@ -15,8 +15,6 @@ resource "signalfx_observability_dashboard" "test" {
       width  = "6/12"
       height = "2"
     }
-    template {
-      template_id = signalfx_observability_template.chart.id
-    }
+    template_id = signalfx_observability_template.chart.id
   }
 }

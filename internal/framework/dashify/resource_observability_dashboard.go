@@ -67,7 +67,8 @@ func (r *observabilityDashboardResource) Schema(_ context.Context, _ resource.Sc
 			"container": schema.ListNestedBlock{
 				Description: "Ordered dashboard contents. Terraform declaration order is authoritative.",
 				NestedObject: schema.NestedBlockObject{
-					Blocks: dashifyContainerBlocks(dashifyDashboardContainerLevel),
+					Attributes: dashifyContainerAttributes(),
+					Blocks:     dashifyContainerBlocks(dashifyDashboardContainerLevel),
 				},
 			},
 		},
@@ -91,39 +92,40 @@ var dashifyContainerLevelRules = map[dashifyContainerLevel]dashifyContainerLevel
 	dashifyDashboardContainerLevel: {
 		allowSection:      true,
 		allowGroup:        true,
-		errorMessage:      "each dashboard container must set exactly one content block: template, section, or group",
+		errorMessage:      "each dashboard container must set exactly one content source: template_id, template_content, section, or group",
 		supportedElements: "panels, sections, and groups",
 	},
 	dashifySectionContainerLevel: {
 		allowGroup:        true,
-		errorMessage:      "each container within a section must set exactly one content block: template or group",
+		errorMessage:      "each container within a section must set exactly one content source: template_id, template_content, or group",
 		supportedElements: "panels and groups",
 	},
 	dashifyGroupContainerLevel: {
-		errorMessage:      "each container within a group must set exactly one template block",
+		errorMessage:      "each container within a group must set exactly one of template_id or template_content",
 		supportedElements: "panels",
 	},
+}
+
+func dashifyContainerAttributes() map[string]schema.Attribute {
+	return map[string]schema.Attribute{
+		"template_id": schema.StringAttribute{
+			Optional:    true,
+			Description: "ID of a reusable Observability Template rendered in this container.",
+		},
+		"template_content": schema.StringAttribute{
+			Optional:    true,
+			Description: "Self-contained dashboard JSON object rendered inline in this container.",
+			PlanModifiers: []planmodifier.String{
+				dashboardJSONSemanticEqualityModifier{},
+			},
+		},
+	}
 }
 
 func dashifyContainerBlocks(level dashifyContainerLevel) map[string]schema.Block {
 	// TODO(charts): Merge the blocks emitted by the external-schema chart
 	// generator here, including metrics_single_value and metrics_timeseries.
-	blocks := map[string]schema.Block{
-		"layout": dashifyItemLayoutBlock(),
-		"template": schema.SingleNestedBlock{
-			Description: "Dashboard content supplied by either a reusable Observability Template reference or a raw inline dashboard JSON object.",
-			Attributes: map[string]schema.Attribute{
-				"template_id": schema.StringAttribute{Optional: true, Description: "ID of the referenced Template."},
-				"content": schema.StringAttribute{
-					Optional:    true,
-					Description: "Self-contained dashboard JSON object rendered inline. Exactly one of content or template_id must be set.",
-					PlanModifiers: []planmodifier.String{
-						dashboardJSONSemanticEqualityModifier{},
-					},
-				},
-			},
-		},
-	}
+	blocks := map[string]schema.Block{"layout": dashifyItemLayoutBlock()}
 	rule := dashifyContainerLevelRules[level]
 	if rule.allowSection {
 		blocks["section"] = schema.SingleNestedBlock{
@@ -143,7 +145,8 @@ func dashifyContainerBlocks(level dashifyContainerLevel) map[string]schema.Block
 				"container": schema.ListNestedBlock{
 					Description: "Ordered contents of this section.",
 					NestedObject: schema.NestedBlockObject{
-						Blocks: dashifyContainerBlocks(dashifySectionContainerLevel),
+						Attributes: dashifyContainerAttributes(),
+						Blocks:     dashifyContainerBlocks(dashifySectionContainerLevel),
 					},
 				},
 			},
@@ -166,7 +169,8 @@ func dashifyContainerBlocks(level dashifyContainerLevel) map[string]schema.Block
 				"container": schema.ListNestedBlock{
 					Description: "Ordered contents of this group.",
 					NestedObject: schema.NestedBlockObject{
-						Blocks: dashifyContainerBlocks(dashifyGroupContainerLevel),
+						Attributes: dashifyContainerAttributes(),
+						Blocks:     dashifyContainerBlocks(dashifyGroupContainerLevel),
 					},
 				},
 			},
@@ -354,27 +358,26 @@ func dashifyLayoutDefaultsAreEmpty(defaults *dashifyLayoutDefaultsModel) bool {
 }
 
 func validateDashifyTemplate(resp *resource.ValidateConfigResponse, containerPath path.Path, model *dashifyTemplateModel) {
-	templatePath := containerPath.AtName("template")
 	idKnown := !model.TemplateID.IsUnknown()
 	contentKnown := !model.Content.IsUnknown()
 	idSet := idKnown && !model.TemplateID.IsNull()
 	contentSet := contentKnown && !model.Content.IsNull()
 
 	if idKnown && contentKnown && idSet == contentSet {
-		resp.Diagnostics.AddAttributeError(templatePath, "Invalid template content", "template must set exactly one of template_id or content")
+		resp.Diagnostics.AddAttributeError(containerPath, "Invalid template content", "container must set exactly one of template_id or template_content")
 		return
 	}
 	if idSet {
 		id := model.TemplateID.ValueString()
 		if id == "" {
-			resp.Diagnostics.AddAttributeError(templatePath.AtName("template_id"), "Missing required value", "template_id must be non-empty when set")
+			resp.Diagnostics.AddAttributeError(containerPath.AtName("template_id"), "Missing required value", "template_id must be non-empty when set")
 		} else if !observabilityTemplateIDValid(id) {
-			resp.Diagnostics.AddAttributeError(templatePath.AtName("template_id"), "Invalid Template ID", "Use a Template ID without an API path.")
+			resp.Diagnostics.AddAttributeError(containerPath.AtName("template_id"), "Invalid Template ID", "Use a Template ID without an API path.")
 		}
 	}
 	if contentSet {
 		if _, err := decodeDashifyInlineContent(model.Content.ValueString()); err != nil {
-			resp.Diagnostics.AddAttributeError(templatePath.AtName("content"), "Invalid inline content", err.Error())
+			resp.Diagnostics.AddAttributeError(containerPath.AtName("template_content"), "Invalid inline content", err.Error())
 		}
 	}
 }

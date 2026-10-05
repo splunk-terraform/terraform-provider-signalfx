@@ -57,8 +57,6 @@ resource "signalfx_observability_dashboard" "dashboard_controls" {
   }
 
   container {
-    template {
-      template_id = "chart-template-id"
-    }
+    template_id = "chart-template-id"
   }
 }

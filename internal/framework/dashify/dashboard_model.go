@@ -94,19 +94,22 @@ type dashifyLayoutDefaultsModel struct {
 	MaxHeight types.String `tfsdk:"max_height"`
 }
 
+// dashifyTemplateModel is the shared semantic representation of the two flat
+// Terraform container attributes that can produce a Panel child.
 type dashifyTemplateModel struct {
-	TemplateID types.String `tfsdk:"template_id"`
-	Content    types.String `tfsdk:"content"`
+	TemplateID types.String
+	Content    types.String
 }
 
 // TODO(charts): Generate the level-specific container chart fields from the
 // external Dashify schemas. The generated models should expose inline blocks
 // such as metrics_single_value and metrics_timeseries at every container level.
 type dashifyDashboardContainerModel struct {
-	Layout   *dashifyLayoutModel   `tfsdk:"layout"`
-	Template *dashifyTemplateModel `tfsdk:"template"`
-	Section  *dashifySectionModel  `tfsdk:"section"`
-	Group    *dashifyGroupModel    `tfsdk:"group"`
+	Layout          *dashifyLayoutModel  `tfsdk:"layout"`
+	TemplateID      types.String         `tfsdk:"template_id"`
+	TemplateContent types.String         `tfsdk:"template_content"`
+	Section         *dashifySectionModel `tfsdk:"section"`
+	Group           *dashifyGroupModel   `tfsdk:"group"`
 }
 
 type dashifySectionModel struct {
@@ -118,9 +121,10 @@ type dashifySectionModel struct {
 }
 
 type dashifySectionContainerModel struct {
-	Layout   *dashifyLayoutModel   `tfsdk:"layout"`
-	Template *dashifyTemplateModel `tfsdk:"template"`
-	Group    *dashifyGroupModel    `tfsdk:"group"`
+	Layout          *dashifyLayoutModel `tfsdk:"layout"`
+	TemplateID      types.String        `tfsdk:"template_id"`
+	TemplateContent types.String        `tfsdk:"template_content"`
+	Group           *dashifyGroupModel  `tfsdk:"group"`
 }
 
 type dashifyGroupModel struct {
@@ -131,8 +135,9 @@ type dashifyGroupModel struct {
 }
 
 type dashifyGroupContainerModel struct {
-	Layout   *dashifyLayoutModel   `tfsdk:"layout"`
-	Template *dashifyTemplateModel `tfsdk:"template"`
+	Layout          *dashifyLayoutModel `tfsdk:"layout"`
+	TemplateID      types.String        `tfsdk:"template_id"`
+	TemplateContent types.String        `tfsdk:"template_content"`
 }
 
 // dashifyContainer is the shared semantic model used after decoding and
@@ -173,7 +178,7 @@ const (
 func dashifyContainersFromDashboardModels(models []dashifyDashboardContainerModel) []dashifyContainer {
 	containers := make([]dashifyContainer, len(models))
 	for i, model := range models {
-		container := dashifyContainer{Layout: model.Layout, Template: model.Template}
+		container := dashifyContainer{Layout: model.Layout, Template: dashifyTemplateFromFields(model.TemplateID, model.TemplateContent)}
 		if model.Section != nil {
 			container.Section = &dashifySection{
 				Title:       model.Section.Title,
@@ -194,7 +199,7 @@ func dashifyContainersFromDashboardModels(models []dashifyDashboardContainerMode
 func dashifyContainersFromSectionModels(models []dashifySectionContainerModel) []dashifyContainer {
 	containers := make([]dashifyContainer, len(models))
 	for i, model := range models {
-		container := dashifyContainer{Layout: model.Layout, Template: model.Template}
+		container := dashifyContainer{Layout: model.Layout, Template: dashifyTemplateFromFields(model.TemplateID, model.TemplateContent)}
 		if model.Group != nil {
 			container.Group = dashifyGroupFromModel(model.Group)
 		}
@@ -215,7 +220,7 @@ func dashifyGroupFromModel(model *dashifyGroupModel) *dashifyGroup {
 func dashifyContainersFromGroupModels(models []dashifyGroupContainerModel) []dashifyContainer {
 	containers := make([]dashifyContainer, len(models))
 	for i, model := range models {
-		containers[i] = dashifyContainer{Layout: model.Layout, Template: model.Template}
+		containers[i] = dashifyContainer{Layout: model.Layout, Template: dashifyTemplateFromFields(model.TemplateID, model.TemplateContent)}
 	}
 	return containers
 }
@@ -223,7 +228,8 @@ func dashifyContainersFromGroupModels(models []dashifyGroupContainerModel) []das
 func dashifyDashboardModelsFromContainers(containers []dashifyContainer) []dashifyDashboardContainerModel {
 	models := make([]dashifyDashboardContainerModel, len(containers))
 	for i, container := range containers {
-		model := dashifyDashboardContainerModel{Layout: container.Layout, Template: container.Template}
+		templateID, templateContent := dashifyTemplateFields(container.Template)
+		model := dashifyDashboardContainerModel{Layout: container.Layout, TemplateID: templateID, TemplateContent: templateContent}
 		if container.Section != nil {
 			model.Section = &dashifySectionModel{
 				Title:       container.Section.Title,
@@ -244,7 +250,8 @@ func dashifyDashboardModelsFromContainers(containers []dashifyContainer) []dashi
 func dashifySectionModelsFromContainers(containers []dashifyContainer) []dashifySectionContainerModel {
 	models := make([]dashifySectionContainerModel, len(containers))
 	for i, container := range containers {
-		model := dashifySectionContainerModel{Layout: container.Layout, Template: container.Template}
+		templateID, templateContent := dashifyTemplateFields(container.Template)
+		model := dashifySectionContainerModel{Layout: container.Layout, TemplateID: templateID, TemplateContent: templateContent}
 		if container.Group != nil {
 			model.Group = dashifyGroupModelFromGroup(container.Group)
 		}
@@ -265,7 +272,22 @@ func dashifyGroupModelFromGroup(group *dashifyGroup) *dashifyGroupModel {
 func dashifyGroupModelsFromContainers(containers []dashifyContainer) []dashifyGroupContainerModel {
 	models := make([]dashifyGroupContainerModel, len(containers))
 	for i, container := range containers {
-		models[i] = dashifyGroupContainerModel{Layout: container.Layout, Template: container.Template}
+		templateID, templateContent := dashifyTemplateFields(container.Template)
+		models[i] = dashifyGroupContainerModel{Layout: container.Layout, TemplateID: templateID, TemplateContent: templateContent}
 	}
 	return models
+}
+
+func dashifyTemplateFromFields(templateID, templateContent types.String) *dashifyTemplateModel {
+	if templateID.IsNull() && templateContent.IsNull() {
+		return nil
+	}
+	return &dashifyTemplateModel{TemplateID: templateID, Content: templateContent}
+}
+
+func dashifyTemplateFields(model *dashifyTemplateModel) (types.String, types.String) {
+	if model == nil {
+		return types.StringNull(), types.StringNull()
+	}
+	return model.TemplateID, model.Content
 }

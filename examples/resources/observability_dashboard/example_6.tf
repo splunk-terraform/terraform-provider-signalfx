@@ -57,8 +57,6 @@ resource "signalfx_observability_dashboard" "controls" {
   }
 
   container {
-    template {
-      template_id = signalfx_observability_template.control_chart.id
-    }
+    template_id = signalfx_observability_template.control_chart.id
   }
 }

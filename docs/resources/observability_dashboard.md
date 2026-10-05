@@ -47,9 +47,7 @@ resource "signalfx_observability_dashboard" "service" {
       width  = "6/12"
       height = "2"
     }
-    template {
-      template_id = signalfx_observability_template.chart.id
-    }
+    template_id = signalfx_observability_template.chart.id
   }
 }
 ```
@@ -74,20 +72,18 @@ resource "signalfx_observability_dashboard" "inline_content" {
       height = "2"
     }
 
-    template {
-      content = jsonencode({
-        "<o11y:SingleValue>" = []
-        chart = {
-          color = "blue"
-        }
-        datasource = {
-          program = "A = data('requests.count').sum().publish('A')"
-        }
-        widget = {
-          title = "Request rate"
-        }
-      })
-    }
+    template_content = jsonencode({
+      "<o11y:SingleValue>" = []
+      chart = {
+        color = "blue"
+      }
+      datasource = {
+        program = "A = data('requests.count').sum().publish('A')"
+      }
+      widget = {
+        title = "Request rate"
+      }
+    })
   }
 }
 ```
@@ -170,9 +166,7 @@ resource "signalfx_observability_dashboard" "advanced_layout" {
               y         = "12"
             }
 
-            template {
-              template_id = signalfx_observability_template.latency.id
-            }
+            template_id = signalfx_observability_template.latency.id
           }
         }
       }
@@ -243,14 +237,12 @@ resource "signalfx_observability_dashboard" "controls" {
   }
 
   container {
-    template {
-      template_id = signalfx_observability_template.control_chart.id
-    }
+    template_id = signalfx_observability_template.control_chart.id
   }
 }
 ```
 
-Within a `template` block, set exactly one of `template_id` or `content`. The latter is a JSON object containing exactly one dashboard element key. It is preserved as inline content without converting unknown chart fields.
+Within each `container`, set exactly one content source. Use `template_id` to reference a reusable Observability Template, or `template_content` for a JSON object containing exactly one dashboard element key. Inline content is preserved without converting unknown chart fields.
 
 Root, section, and group `layout` blocks arrange their immediate containers. A `container.layout` block sets that container's placement. Length arguments accept values such as `"4"`, `"6/12"`, or `"50%"`; use `jsonencode` for clamped lengths or a multi-part `x` or `y` coordinate.
 
@@ -281,7 +273,8 @@ Optional:
 - `group` (Block, Optional) A group containing related containers. (see [below for nested schema](#nestedblock--container--group))
 - `layout` (Block, Optional) Placement and size of this container inside its parent layout. Lengths accept numbers or relative strings; clamped values and coordinate arrays can be supplied with jsonencode. (see [below for nested schema](#nestedblock--container--layout))
 - `section` (Block, Optional) A section containing containers and optional groups. (see [below for nested schema](#nestedblock--container--section))
-- `template` (Block, Optional) Dashboard content supplied by either a reusable Observability Template reference or a raw inline dashboard JSON object. (see [below for nested schema](#nestedblock--container--template))
+- `template_content` (String) Self-contained dashboard JSON object rendered inline in this container.
+- `template_id` (String) ID of a reusable Observability Template rendered in this container.
 
 <a id="nestedblock--container--group"></a>
 ### Nested Schema for `container.group`
@@ -299,7 +292,8 @@ Optional:
 Optional:
 
 - `layout` (Block, Optional) Placement and size of this container inside its parent layout. Lengths accept numbers or relative strings; clamped values and coordinate arrays can be supplied with jsonencode. (see [below for nested schema](#nestedblock--container--group--container--layout))
-- `template` (Block, Optional) Dashboard content supplied by either a reusable Observability Template reference or a raw inline dashboard JSON object. (see [below for nested schema](#nestedblock--container--group--container--template))
+- `template_content` (String) Self-contained dashboard JSON object rendered inline in this container.
+- `template_id` (String) ID of a reusable Observability Template rendered in this container.
 
 <a id="nestedblock--container--group--container--layout"></a>
 ### Nested Schema for `container.group.container.layout`
@@ -316,15 +310,6 @@ Optional:
 - `width` (String) Starting width of the container.
 - `x` (String) Horizontal coordinate. A jsonencoded array is treated as a sum of lengths.
 - `y` (String) Vertical coordinate. A jsonencoded array is treated as a sum of lengths.
-
-
-<a id="nestedblock--container--group--container--template"></a>
-### Nested Schema for `container.group.container.template`
-
-Optional:
-
-- `content` (String) Self-contained dashboard JSON object rendered inline. Exactly one of content or template_id must be set.
-- `template_id` (String) ID of the referenced Template.
 
 
 
@@ -388,7 +373,8 @@ Optional:
 
 - `group` (Block, Optional) A group containing related containers. (see [below for nested schema](#nestedblock--container--section--container--group))
 - `layout` (Block, Optional) Placement and size of this container inside its parent layout. Lengths accept numbers or relative strings; clamped values and coordinate arrays can be supplied with jsonencode. (see [below for nested schema](#nestedblock--container--section--container--layout))
-- `template` (Block, Optional) Dashboard content supplied by either a reusable Observability Template reference or a raw inline dashboard JSON object. (see [below for nested schema](#nestedblock--container--section--container--template))
+- `template_content` (String) Self-contained dashboard JSON object rendered inline in this container.
+- `template_id` (String) ID of a reusable Observability Template rendered in this container.
 
 <a id="nestedblock--container--section--container--group"></a>
 ### Nested Schema for `container.section.container.group`
@@ -406,7 +392,8 @@ Optional:
 Optional:
 
 - `layout` (Block, Optional) Placement and size of this container inside its parent layout. Lengths accept numbers or relative strings; clamped values and coordinate arrays can be supplied with jsonencode. (see [below for nested schema](#nestedblock--container--section--container--group--container--layout))
-- `template` (Block, Optional) Dashboard content supplied by either a reusable Observability Template reference or a raw inline dashboard JSON object. (see [below for nested schema](#nestedblock--container--section--container--group--container--template))
+- `template_content` (String) Self-contained dashboard JSON object rendered inline in this container.
+- `template_id` (String) ID of a reusable Observability Template rendered in this container.
 
 <a id="nestedblock--container--section--container--group--container--layout"></a>
 ### Nested Schema for `container.section.container.group.container.layout`
@@ -423,15 +410,6 @@ Optional:
 - `width` (String) Starting width of the container.
 - `x` (String) Horizontal coordinate. A jsonencoded array is treated as a sum of lengths.
 - `y` (String) Vertical coordinate. A jsonencoded array is treated as a sum of lengths.
-
-
-<a id="nestedblock--container--section--container--group--container--template"></a>
-### Nested Schema for `container.section.container.group.container.template`
-
-Optional:
-
-- `content` (String) Self-contained dashboard JSON object rendered inline. Exactly one of content or template_id must be set.
-- `template_id` (String) ID of the referenced Template.
 
 
 
@@ -477,15 +455,6 @@ Optional:
 - `y` (String) Vertical coordinate. A jsonencoded array is treated as a sum of lengths.
 
 
-<a id="nestedblock--container--section--container--template"></a>
-### Nested Schema for `container.section.container.template`
-
-Optional:
-
-- `content` (String) Self-contained dashboard JSON object rendered inline. Exactly one of content or template_id must be set.
-- `template_id` (String) ID of the referenced Template.
-
-
 
 <a id="nestedblock--container--section--layout"></a>
 ### Nested Schema for `container.section.layout`
@@ -510,15 +479,6 @@ Optional:
 - `width` (String) Default starting width.
 
 
-
-
-<a id="nestedblock--container--template"></a>
-### Nested Schema for `container.template`
-
-Optional:
-
-- `content` (String) Self-contained dashboard JSON object rendered inline. Exactly one of content or template_id must be set.
-- `template_id` (String) ID of the referenced Template.
 
 
 

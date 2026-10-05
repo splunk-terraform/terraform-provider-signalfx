@@ -114,9 +114,7 @@ resource "signalfx_observability_dashboard" "dashboard_layout" {
               y         = "12"
             }
 
-            template {
-              template_id = signalfx_observability_template.dashboard_layout_chart.id
-            }
+            template_id = signalfx_observability_template.dashboard_layout_chart.id
           }
         }
       }
