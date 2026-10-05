@@ -38,6 +38,7 @@ func TestDashifyControlBarSchemaAndModel(t *testing.T) {
 	filter, ok := filterSet.Blocks["filter"].(schema.ListNestedBlock)
 	require.True(t, ok)
 	assert.Contains(t, filter.NestedObject.Attributes, "values")
+	assert.Contains(t, filter.NestedObject.Attributes, "match_missing")
 }
 
 func TestBuildAndParseDashifyControlBar(t *testing.T) {
@@ -81,10 +82,11 @@ func TestBuildAndParseDashifyControlBar(t *testing.T) {
 			Hidden:      types.BoolValue(false),
 			Filter: []dashifyFilterSetEntryModel{
 				{
-					Key:      types.StringValue("deployment.environment"),
-					Values:   []types.String{types.StringValue("prod")},
-					Negated:  types.BoolValue(false),
-					Disabled: types.BoolValue(true),
+					Key:          types.StringValue("deployment.environment"),
+					Values:       []types.String{types.StringValue("prod")},
+					Negated:      types.BoolValue(false),
+					Disabled:     types.BoolValue(true),
+					MatchMissing: types.BoolValue(true),
 				},
 				{Key: types.StringValue("region"), Values: []types.String{}},
 			},

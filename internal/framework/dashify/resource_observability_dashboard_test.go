@@ -67,7 +67,7 @@ func TestResourceObservabilityDashboardMetadataAndSchema(t *testing.T) {
 	require.Len(t, contentAttribute.PlanModifiers, 1)
 	itemLayout, ok := rootContainer.NestedObject.Blocks["layout"].(schema.SingleNestedBlock)
 	require.True(t, ok)
-	for _, name := range []string{"absolute", "width", "height", "min_width", "max_width", "min_height", "max_height", "x", "y"} {
+	for _, name := range []string{"order", "absolute", "width", "height", "min_width", "max_width", "min_height", "max_height", "x", "y"} {
 		assert.Contains(t, itemLayout.Attributes, name)
 	}
 
@@ -798,7 +798,7 @@ func TestDashifyDashboardSpecRejectsInvalidGroupMetadata(t *testing.T) {
 	assert.Contains(t, diags.Errors()[0].Detail(), "rather than a boolean")
 }
 
-func TestDashifyDashboardSpecAcceptsAndDiscardsUIOrder(t *testing.T) {
+func TestDashifyDashboardSpecPreservesUIOrder(t *testing.T) {
 	t.Parallel()
 
 	root := template.RootElementDashboard
@@ -824,10 +824,13 @@ func TestDashifyDashboardSpecAcceptsAndDiscardsUIOrder(t *testing.T) {
 	require.Len(t, model.Container, 2)
 	assert.Equal(t, "8", model.Container[0].Layout.Width.ValueString())
 	assert.Equal(t, "4", model.Container[1].Layout.Width.ValueString())
+	assert.Equal(t, 9.0, model.Container[0].Layout.Order.ValueFloat64())
+	assert.Equal(t, 0.5, model.Container[1].Layout.Order.ValueFloat64())
 
 	rebuilt, _, err := buildDashboardSpec(model)
 	require.NoError(t, err)
-	assert.NotContains(t, string(rebuilt), `"order"`)
+	assert.Contains(t, string(rebuilt), `"order":9`)
+	assert.Contains(t, string(rebuilt), `"order":0.5`)
 	assert.NotContains(t, string(rebuilt), `"parent"`)
 	assert.NotContains(t, string(rebuilt), `"at"`)
 }

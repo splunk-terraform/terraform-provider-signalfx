@@ -464,12 +464,15 @@ func dashifyLeftovers(prefix string, node map[string]any) []string {
 		}
 		switch value := value.(type) {
 		case nil:
+			leftovers = append(leftovers, path)
 		case map[string]any:
-			leftovers = append(leftovers, dashifyLeftovers(path, value)...)
-		case []any:
-			if len(value) > 0 {
+			if len(value) == 0 {
 				leftovers = append(leftovers, path)
+			} else {
+				leftovers = append(leftovers, dashifyLeftovers(path, value)...)
 			}
+		case []any:
+			leftovers = append(leftovers, path)
 		default:
 			leftovers = append(leftovers, path)
 		}

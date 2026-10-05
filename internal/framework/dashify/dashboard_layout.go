@@ -96,6 +96,9 @@ func buildDashifyLayoutItem(id string, layout *dashifyLayoutModel) (map[string]a
 	if layout == nil {
 		return item, nil
 	}
+	if !layout.Order.IsNull() && !layout.Order.IsUnknown() {
+		item["order"] = layout.Order.ValueFloat64()
+	}
 	if !layout.Absolute.IsNull() && !layout.Absolute.IsUnknown() {
 		item["absolute"] = layout.Absolute.ValueBool()
 	}
@@ -191,7 +194,6 @@ func parseDashifyLayouts(spec map[string]any, listKey string, count int) ([]*das
 			return nil, nil, nil, fmt.Errorf("layout items %s and %s both place container %d", previous, id, position)
 		}
 		claimed[position] = id
-		takeDashifyLayoutOrder(item)
 		layoutModel, err := dashifyLayoutFromItem(item)
 		if err != nil {
 			return nil, nil, nil, fmt.Errorf("layout %s: %w", id, err)
@@ -200,16 +202,6 @@ func parseDashifyLayouts(spec map[string]any, listKey string, count int) ([]*das
 		leftovers = append(leftovers, dashifyLeftovers("layout."+id, item)...)
 	}
 	return layouts, container, leftovers, nil
-}
-
-func takeDashifyLayoutOrder(item map[string]any) {
-	raw, ok := item["order"]
-	if !ok {
-		return
-	}
-	if _, ok := dashifyFiniteNumber(raw); ok {
-		delete(item, "order")
-	}
 }
 
 func takeDashifyLayoutBookkeeping(entry map[string]any) {
@@ -233,11 +225,15 @@ func dashifyLayoutPosition(id, listKey string, count int) (int, error) {
 }
 
 func dashifyLayoutFromItem(item map[string]any) (*dashifyLayoutModel, error) {
+	order, _, err := dashifyLayoutFloat(item, "order")
+	if err != nil {
+		return nil, err
+	}
 	absolute, err := dashifyLayoutBool(item, "absolute")
 	if err != nil {
 		return nil, err
 	}
-	model := &dashifyLayoutModel{Absolute: absolute}
+	model := &dashifyLayoutModel{Order: order, Absolute: absolute}
 	if err := parseDashifyLayoutFields(item, dashifyLayoutModelFields(model)); err != nil {
 		return nil, err
 	}

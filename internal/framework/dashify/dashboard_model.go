@@ -58,22 +58,24 @@ type dashifyFilterSetControlModel struct {
 }
 
 type dashifyFilterSetEntryModel struct {
-	Key      types.String   `tfsdk:"key"`
-	Values   []types.String `tfsdk:"values"`
-	Negated  types.Bool     `tfsdk:"negated"`
-	Disabled types.Bool     `tfsdk:"disabled"`
+	Key          types.String   `tfsdk:"key"`
+	Values       []types.String `tfsdk:"values"`
+	Negated      types.Bool     `tfsdk:"negated"`
+	Disabled     types.Bool     `tfsdk:"disabled"`
+	MatchMissing types.Bool     `tfsdk:"match_missing"`
 }
 
 type dashifyLayoutModel struct {
-	Absolute  types.Bool   `tfsdk:"absolute"`
-	Width     types.String `tfsdk:"width"`
-	Height    types.String `tfsdk:"height"`
-	MinWidth  types.String `tfsdk:"min_width"`
-	MaxWidth  types.String `tfsdk:"max_width"`
-	MinHeight types.String `tfsdk:"min_height"`
-	MaxHeight types.String `tfsdk:"max_height"`
-	X         types.String `tfsdk:"x"`
-	Y         types.String `tfsdk:"y"`
+	Order     types.Float64 `tfsdk:"order"`
+	Absolute  types.Bool    `tfsdk:"absolute"`
+	Width     types.String  `tfsdk:"width"`
+	Height    types.String  `tfsdk:"height"`
+	MinWidth  types.String  `tfsdk:"min_width"`
+	MaxWidth  types.String  `tfsdk:"max_width"`
+	MinHeight types.String  `tfsdk:"min_height"`
+	MaxHeight types.String  `tfsdk:"max_height"`
+	X         types.String  `tfsdk:"x"`
+	Y         types.String  `tfsdk:"y"`
 }
 
 type dashifyLayoutOptionsModel struct {

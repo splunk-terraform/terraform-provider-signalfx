@@ -174,6 +174,7 @@ func dashifyItemLayoutBlock() schema.SingleNestedBlock {
 	return schema.SingleNestedBlock{
 		Description: "Placement and size of this container inside its parent layout. Lengths accept numbers or relative strings; clamped values and coordinate arrays can be supplied with jsonencode.",
 		Attributes: map[string]schema.Attribute{
+			"order":      schema.Float64Attribute{Optional: true, Computed: true, Description: "Display order of the container within its parent layout. Defaults to the stored order when omitted."},
 			"absolute":   schema.BoolAttribute{Optional: true, Description: "Whether to position the container independently using its x and y coordinates."},
 			"width":      dashifyLayoutLengthAttribute("Starting width of the container."),
 			"height":     dashifyLayoutLengthAttribute("Starting height of the container."),
@@ -224,7 +225,7 @@ func dashifyLayoutDefaultAttributes() map[string]schema.Attribute {
 }
 
 func dashifyLayoutLengthAttribute(description string) schema.StringAttribute {
-	return schema.StringAttribute{Optional: true, Description: description}
+	return schema.StringAttribute{Optional: true, Description: description, PlanModifiers: []planmodifier.String{dashifyLayoutLengthSemanticEqualityModifier{}}}
 }
 
 func (r *observabilityDashboardResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
@@ -343,7 +344,7 @@ func validateDashifyLayoutValue(resp *resource.ValidateConfigResponse, valuePath
 }
 
 func dashifyLayoutIsEmpty(layout *dashifyLayoutModel) bool {
-	return dashifyLayoutFieldsEmpty(layout.Absolute, dashifyLayoutModelFields(layout))
+	return layout.Order.IsNull() && dashifyLayoutFieldsEmpty(layout.Absolute, dashifyLayoutModelFields(layout))
 }
 
 func dashifyLayoutDefaultsAreEmpty(defaults *dashifyLayoutDefaultsModel) bool {
@@ -479,7 +480,15 @@ func (r *observabilityDashboardResource) Delete(ctx context.Context, req resourc
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	err := r.Details().Client.DeleteTemplate(ctx, state.ID.ValueString())
+	id := state.ID.ValueString()
+	result, lookupErr := r.Details().Client.GetTemplate(ctx, id, nil)
+	if lookupErr == nil && result != nil && result.Data != nil && len(result.Data.DirectoryEntries) > 0 {
+		resp.Diagnostics.AddWarning(
+			"Deleting dashboard with Directory memberships",
+			fmt.Sprintf("The dashboard is referenced by %d Directory entry(s). Deleting it can leave dangling memberships in those Directories; update them after deletion.", len(result.Data.DirectoryEntries)),
+		)
+	}
+	err := r.Details().Client.DeleteTemplate(ctx, id)
 	if responseErr, ok := signalfx.AsResponseError(err); ok && responseErr.Code() == http.StatusNotFound {
 		return
 	}
@@ -490,9 +499,6 @@ func observabilityDashboardTemplateWrite(model observabilityDashboardModel) (*te
 	spec, imports, err := buildDashboardSpec(model)
 	if err != nil {
 		return nil, err
-	}
-	if imports == nil {
-		imports = []string{}
 	}
 	rootElement := template.RootElementDashboard
 	return &template.CreateUpdateTemplateRequest{

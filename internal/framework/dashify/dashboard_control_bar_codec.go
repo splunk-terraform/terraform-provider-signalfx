@@ -79,6 +79,7 @@ func buildDashifyControlBar(model *dashifyControlBarModel) map[string]any {
 			}
 			setDashifyControlBool(entry, "negated", filter.Negated)
 			setDashifyControlBool(entry, "disabled", filter.Disabled)
+			setDashifyControlBool(entry, "matchMissing", filter.MatchMissing)
 			entries[i] = entry
 		}
 		control["defaultVariableValue"] = entries
@@ -388,6 +389,9 @@ func takeDashifyFilterSetEntries(object map[string]any, key, path string) ([]das
 			return nil, nil, err
 		}
 		if filter.Disabled, err = takeDashifyControlBool(entry, "disabled", entryPath); err != nil {
+			return nil, nil, err
+		}
+		if filter.MatchMissing, err = takeDashifyControlBool(entry, "matchMissing", entryPath); err != nil {
 			return nil, nil, err
 		}
 		// The filter entry itself is an independently modeled object, so its
