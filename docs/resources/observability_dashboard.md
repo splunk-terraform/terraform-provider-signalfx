@@ -312,6 +312,7 @@ Optional:
 - `max_width` (String) Maximum width of the container.
 - `min_height` (String) Minimum height of the container.
 - `min_width` (String) Minimum width of the container.
+- `order` (Number) Display order of the container within its parent layout, overriding declaration order. Reordering in the UI sets this on every container in the layout.
 - `width` (String) Starting width of the container.
 - `x` (String) Horizontal coordinate. A jsonencoded array is treated as a sum of lengths.
 - `y` (String) Vertical coordinate. A jsonencoded array is treated as a sum of lengths.
@@ -363,6 +364,7 @@ Optional:
 - `max_width` (String) Maximum width of the container.
 - `min_height` (String) Minimum height of the container.
 - `min_width` (String) Minimum width of the container.
+- `order` (Number) Display order of the container within its parent layout, overriding declaration order. Reordering in the UI sets this on every container in the layout.
 - `width` (String) Starting width of the container.
 - `x` (String) Horizontal coordinate. A jsonencoded array is treated as a sum of lengths.
 - `y` (String) Vertical coordinate. A jsonencoded array is treated as a sum of lengths.
@@ -417,6 +419,7 @@ Optional:
 - `max_width` (String) Maximum width of the container.
 - `min_height` (String) Minimum height of the container.
 - `min_width` (String) Minimum width of the container.
+- `order` (Number) Display order of the container within its parent layout, overriding declaration order. Reordering in the UI sets this on every container in the layout.
 - `width` (String) Starting width of the container.
 - `x` (String) Horizontal coordinate. A jsonencoded array is treated as a sum of lengths.
 - `y` (String) Vertical coordinate. A jsonencoded array is treated as a sum of lengths.
@@ -468,6 +471,7 @@ Optional:
 - `max_width` (String) Maximum width of the container.
 - `min_height` (String) Minimum height of the container.
 - `min_width` (String) Minimum width of the container.
+- `order` (Number) Display order of the container within its parent layout, overriding declaration order. Reordering in the UI sets this on every container in the layout.
 - `width` (String) Starting width of the container.
 - `x` (String) Horizontal coordinate. A jsonencoded array is treated as a sum of lengths.
 - `y` (String) Vertical coordinate. A jsonencoded array is treated as a sum of lengths.
@@ -560,6 +564,7 @@ Required:
 Optional:
 
 - `disabled` (Boolean) Whether to disable this default filter.
+- `match_missing` (Boolean) Whether values missing the property should match.
 - `negated` (Boolean) Whether to negate this filter.
 
 

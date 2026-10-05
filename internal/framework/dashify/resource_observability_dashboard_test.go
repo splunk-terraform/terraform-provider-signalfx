@@ -1057,12 +1057,11 @@ func TestDashboardInlineContentRejectsNestedImports(t *testing.T) {
 	assert.Contains(t, err.Error(), "cannot contain import element")
 }
 
-func TestDashboardWriteExplicitlyClearsImports(t *testing.T) {
+func TestDashboardWriteWithoutReferencesHasNoImports(t *testing.T) {
 	write, err := observabilityDashboardTemplateWrite(observabilityDashboardModel{
 		Title: types.StringValue("No references"),
 	})
 	require.NoError(t, err)
-	require.NotNil(t, write.Metadata.Imports)
 	assert.Empty(t, write.Metadata.Imports)
 }
 

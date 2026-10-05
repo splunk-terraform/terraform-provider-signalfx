@@ -57,7 +57,7 @@ func TestDashifyLayoutValue(t *testing.T) {
 		},
 		"multiple JSON values": {
 			value:     types.StringValue(`{"value":1} {"value":2}`),
-			wantError: "exactly one JSON value",
+			wantError: "multiple JSON values",
 		},
 		"missing clamped value": {
 			value:     types.StringValue(`{"min":1}`),
@@ -106,8 +106,8 @@ func TestDashifyLayoutStringCanonicalizesAdvancedValues(t *testing.T) {
 	t.Parallel()
 
 	item := map[string]any{
-		"w": map[string]any{"value": "1/2", "max": "100%", "min": float64(4)},
-		"x": []any{"1/4", float64(8)},
+		"w": map[string]any{"value": "1/2", "max": "100%", "min": json.Number("4")},
+		"x": []any{"1/4", json.Number("8")},
 	}
 	width, err := dashifyLayoutString(item, "w", false)
 	require.NoError(t, err)
@@ -126,8 +126,8 @@ func TestDashifyLayoutStringRejectsUnsupportedShapes(t *testing.T) {
 		coordinate bool
 		want       string
 	}{
-		"array width":        {value: []any{float64(1)}, want: "only for x and y"},
-		"missing value":      {value: map[string]any{"min": float64(1)}, want: "must contain value"},
+		"array width":        {value: []any{json.Number("1")}, want: "only for x and y"},
+		"missing value":      {value: map[string]any{"min": json.Number("1")}, want: "must contain value"},
 		"invalid coordinate": {value: []any{false}, coordinate: true, want: "coordinate part 0"},
 		"boolean":            {value: true, want: "rather than a layout length"},
 	}
