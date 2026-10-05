@@ -233,7 +233,7 @@ func TestResourceObservabilityDirectoryCreateRejectsUnexpectedLookup(t *testing.
 					http.Error(w, "lookup failed", test.status)
 					return
 				}
-				require.NoError(t, json.NewEncoder(w).Encode(directory.Result{Data: test.entry}))
+				assert.NoError(t, json.NewEncoder(w).Encode(directory.Result{Data: test.entry}))
 			})
 			handlers["PATCH /v2/directory/{path...}"] = http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {
 				t.Error("unexpected directory PATCH")
@@ -402,7 +402,7 @@ func TestResourceObservabilityDirectoryDeleteRejectsDifferentPath(t *testing.T) 
 	const directoryPath = "~organization/platform/dashboards"
 	handlers := newDirectoryAPIStore().handlers()
 	handlers["GET /v2/directory/{path...}"] = http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		require.NoError(t, json.NewEncoder(w).Encode(directory.Result{Data: &directory.Entry{
+		assert.NoError(t, json.NewEncoder(w).Encode(directory.Result{Data: &directory.Entry{
 			Path: "~organization/platform/other", Pinned: true,
 		}}))
 	})
@@ -428,7 +428,7 @@ func TestResourceObservabilityDirectoryReadRejectsUnsupportedTemplateReference(t
 	const directoryPath = "~organization/platform/dashboards"
 	handlers := newDirectoryAPIStore().handlers()
 	handlers["GET /v2/directory/{path...}"] = http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		require.NoError(t, json.NewEncoder(w).Encode(directory.Result{Data: &directory.Entry{
+		assert.NoError(t, json.NewEncoder(w).Encode(directory.Result{Data: &directory.Entry{
 			Path: directoryPath, Templates: []string{"/v3/templates/other"},
 		}}))
 	})

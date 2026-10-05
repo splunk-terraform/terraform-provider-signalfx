@@ -206,8 +206,8 @@ func (r *observabilityDirectoryResource) Update(ctx context.Context, req resourc
 		return
 	}
 	if observabilityDirectoryPlanUnoccupied(model.Pinned, model.Templates) {
-		current, diags := r.fetchDirectoryEntry(ctx, resp.State, prior.Path.ValueString())
-		resp.Diagnostics.Append(diags...)
+		current, fetchDiags := r.fetchDirectoryEntry(ctx, resp.State, prior.Path.ValueString())
+		resp.Diagnostics.Append(fetchDiags...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
