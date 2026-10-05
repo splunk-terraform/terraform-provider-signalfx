@@ -675,11 +675,11 @@ func TestDashifyDashboardSpecAllowsUntitledSectionsAndGroups(t *testing.T) {
 			require.Len(t, model.Container, 1)
 			require.NotNil(t, model.Container[0].Section)
 			assert.False(t, model.Container[0].Section.Title.IsNull())
-			assert.Equal(t, "", model.Container[0].Section.Title.ValueString())
+			assert.Empty(t, model.Container[0].Section.Title.ValueString())
 			require.Len(t, model.Container[0].Section.Container, 1)
 			require.NotNil(t, model.Container[0].Section.Container[0].Group)
 			assert.False(t, model.Container[0].Section.Container[0].Group.Title.IsNull())
-			assert.Equal(t, "", model.Container[0].Section.Container[0].Group.Title.ValueString())
+			assert.Empty(t, model.Container[0].Section.Container[0].Group.Title.ValueString())
 
 			rebuilt, _, err := buildDashboardSpec(model)
 			require.NoError(t, err)
