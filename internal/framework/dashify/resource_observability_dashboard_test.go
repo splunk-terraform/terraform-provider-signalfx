@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -61,7 +62,7 @@ func TestResourceObservabilityDashboardMetadataAndSchema(t *testing.T) {
 	assert.Contains(t, rootContainer.NestedObject.Blocks, "group")
 	contentAttribute, ok := rootContainer.NestedObject.Attributes["template_content"].(schema.StringAttribute)
 	require.True(t, ok)
-	require.Len(t, contentAttribute.PlanModifiers, 1)
+	assert.Equal(t, jsontypes.NormalizedType{}, contentAttribute.CustomType)
 	itemLayout, ok := rootContainer.NestedObject.Blocks["layout"].(schema.SingleNestedBlock)
 	require.True(t, ok)
 	for _, name := range []string{"order", "absolute", "width", "height", "min_width", "max_width", "min_height", "max_height", "x", "y"} {
@@ -278,69 +279,69 @@ func TestValidateDashifyTemplate(t *testing.T) {
 		"template id": {
 			model: dashifyTemplateModel{
 				TemplateID: types.StringValue("chart-id"),
-				Content:    types.StringNull(),
+				Content:    jsontypes.NewNormalizedNull(),
 			},
 		},
 		"direct content": {
 			model: dashifyTemplateModel{
 				TemplateID: types.StringNull(),
-				Content:    types.StringValue(`{"<o11y:SingleValue>":[],"chart":{}}`),
+				Content:    jsontypes.NewNormalizedValue(`{"<o11y:SingleValue>":[],"chart":{}}`),
 			},
 		},
 		"chart wrapped content": {
 			model: dashifyTemplateModel{
 				TemplateID: types.StringNull(),
-				Content:    types.StringValue(`{"<Chart>":[{"<o11y:SingleValue>":[]}]}`),
+				Content:    jsontypes.NewNormalizedValue(`{"<Chart>":[{"<o11y:SingleValue>":[]}]}`),
 			},
 		},
 		"neither": {
-			model:       dashifyTemplateModel{TemplateID: types.StringNull(), Content: types.StringNull()},
+			model:       dashifyTemplateModel{TemplateID: types.StringNull(), Content: jsontypes.NewNormalizedNull()},
 			wantError:   true,
 			wantMessage: "exactly one",
 		},
 		"both": {
 			model: dashifyTemplateModel{
 				TemplateID: types.StringValue("chart-id"),
-				Content:    types.StringValue(`{"<o11y:SingleValue>":[]}`),
+				Content:    jsontypes.NewNormalizedValue(`{"<o11y:SingleValue>":[]}`),
 			},
 			wantError:   true,
 			wantMessage: "exactly one",
 		},
 		"empty template id": {
-			model:       dashifyTemplateModel{TemplateID: types.StringValue(""), Content: types.StringNull()},
+			model:       dashifyTemplateModel{TemplateID: types.StringValue(""), Content: jsontypes.NewNormalizedNull()},
 			wantError:   true,
 			wantMessage: "non-empty",
 		},
 		"malformed content": {
-			model:       dashifyTemplateModel{TemplateID: types.StringNull(), Content: types.StringValue(`{"<Chart>":`)},
+			model:       dashifyTemplateModel{TemplateID: types.StringNull(), Content: jsontypes.NewNormalizedValue(`{"<Chart>":`)},
 			wantError:   true,
 			wantMessage: "valid JSON",
 		},
 		"non-object content": {
-			model:       dashifyTemplateModel{TemplateID: types.StringNull(), Content: types.StringValue(`[]`)},
+			model:       dashifyTemplateModel{TemplateID: types.StringNull(), Content: jsontypes.NewNormalizedValue(`[]`)},
 			wantError:   true,
 			wantMessage: "JSON object",
 		},
 		"content without element": {
-			model:       dashifyTemplateModel{TemplateID: types.StringNull(), Content: types.StringValue(`{"chart":{}}`)},
+			model:       dashifyTemplateModel{TemplateID: types.StringNull(), Content: jsontypes.NewNormalizedValue(`{"chart":{}}`)},
 			wantError:   true,
 			wantMessage: "no dashboard element key",
 		},
 		"content with multiple elements": {
-			model:       dashifyTemplateModel{TemplateID: types.StringNull(), Content: types.StringValue(`{"<Chart>":[],"<Dashboard>":[]}`)},
+			model:       dashifyTemplateModel{TemplateID: types.StringNull(), Content: jsontypes.NewNormalizedValue(`{"<Chart>":[],"<Dashboard>":[]}`)},
 			wantError:   true,
 			wantMessage: "multiple dashboard element keys",
 		},
 		"content import element": {
-			model:       dashifyTemplateModel{TemplateID: types.StringNull(), Content: types.StringValue(`{"<$import.widget0>":[]}`)},
+			model:       dashifyTemplateModel{TemplateID: types.StringNull(), Content: jsontypes.NewNormalizedValue(`{"<$import.widget0>":[]}`)},
 			wantError:   true,
 			wantMessage: "use template_id",
 		},
 		"unknown template id": {
-			model: dashifyTemplateModel{TemplateID: types.StringUnknown(), Content: types.StringNull()},
+			model: dashifyTemplateModel{TemplateID: types.StringUnknown(), Content: jsontypes.NewNormalizedNull()},
 		},
 		"known id with unknown content": {
-			model: dashifyTemplateModel{TemplateID: types.StringValue("chart-id"), Content: types.StringUnknown()},
+			model: dashifyTemplateModel{TemplateID: types.StringValue("chart-id"), Content: jsontypes.NewNormalizedUnknown()},
 		},
 	}
 
@@ -393,7 +394,7 @@ func TestValidateDashifyContainersAllowsUntitledSectionsAndGroups(t *testing.T) 
 					Container: []dashifyContainer{{
 						Template: &dashifyTemplateModel{
 							TemplateID: types.StringValue("chart-id"),
-							Content:    types.StringNull(),
+							Content:    jsontypes.NewNormalizedNull(),
 						},
 					}},
 				},
@@ -557,7 +558,7 @@ func TestDashifyDashboardInlineContentRoundTrip(t *testing.T) {
 			model := observabilityDashboardModel{
 				Title: types.StringValue("Dashboard"),
 				Container: []dashifyDashboardContainerModel{{
-					TemplateContent: types.StringValue(content),
+					TemplateContent: jsontypes.NewNormalizedValue(content),
 				}},
 			}
 
@@ -1014,13 +1015,15 @@ func TestDashboardInlineContentPreservesLargeJSONNumbers(t *testing.T) {
 	model := observabilityDashboardModel{
 		Title: types.StringValue("Large numbers"),
 		Container: []dashifyDashboardContainerModel{{
-			TemplateContent: types.StringValue(content),
+			TemplateContent: jsontypes.NewNormalizedValue(content),
 		}},
 	}
 	spec, _, err := buildDashboardSpec(model)
 	require.NoError(t, err)
 	assert.Contains(t, string(spec), "9007199254740993")
-	assert.False(t, dashboardJSONEqual(content, `{"<o11y:SingleValue>":[],"chart":{"sampleCount":9007199254740992}}`))
+	equal, diags := jsontypes.NewNormalizedValue(content).StringSemanticEquals(t.Context(), jsontypes.NewNormalizedValue(`{"<o11y:SingleValue>":[],"chart":{"sampleCount":9007199254740992}}`))
+	require.False(t, diags.HasError(), diags)
+	assert.False(t, equal)
 
 	rootElement := template.RootElementDashboard
 	parsed, diags := parseDashboardTemplate(&template.Template{

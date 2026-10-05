@@ -8,13 +8,13 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/float64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -114,10 +114,8 @@ func dashifyContainerAttributes() map[string]schema.Attribute {
 		},
 		"template_content": schema.StringAttribute{
 			Optional:    true,
+			CustomType:  jsontypes.NormalizedType{},
 			Description: "Self-contained dashboard JSON object rendered inline in this container.",
-			PlanModifiers: []planmodifier.String{
-				dashboardJSONSemanticEqualityModifier{},
-			},
 		},
 	}
 }

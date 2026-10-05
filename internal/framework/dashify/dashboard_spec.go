@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/signalfx/signalfx-go/template"
@@ -393,7 +394,7 @@ func parseDashifyPanel(spec map[string]any, used map[string]bool, id, path strin
 		if err != nil {
 			return nil, nil, fmt.Errorf("container %s encode inline content: %w", id, err)
 		}
-		return &dashifyTemplateModel{Content: types.StringValue(string(encoded))}, nil, nil
+		return &dashifyTemplateModel{Content: jsontypes.NewNormalizedValue(string(encoded))}, nil, nil
 	}
 	alias := strings.TrimSuffix(strings.TrimPrefix(tag, dashifyImportElement), ">")
 	reference, ok := spec[dashifyImportPrefix+alias].(string)

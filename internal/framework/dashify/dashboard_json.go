@@ -5,43 +5,11 @@ package fwdashify
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"math"
-
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 )
-
-type dashboardJSONSemanticEqualityModifier struct{}
-
-func (dashboardJSONSemanticEqualityModifier) Description(_ context.Context) string {
-	return "Treats JSON content as unchanged when it is semantically equivalent to the prior value."
-}
-
-func (modifier dashboardJSONSemanticEqualityModifier) MarkdownDescription(ctx context.Context) string {
-	return modifier.Description(ctx)
-}
-
-func (dashboardJSONSemanticEqualityModifier) PlanModifyString(_ context.Context, req planmodifier.StringRequest, resp *planmodifier.StringResponse) {
-	if req.StateValue.IsNull() || req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() {
-		return
-	}
-	if dashboardJSONEqual(req.StateValue.ValueString(), req.ConfigValue.ValueString()) {
-		resp.PlanValue = req.StateValue
-	}
-}
-
-func dashboardJSONEqual(first, second string) bool {
-	var firstValue, secondValue any
-	if decodeDashifyJSON([]byte(first), &firstValue) != nil || decodeDashifyJSON([]byte(second), &secondValue) != nil {
-		return false
-	}
-	firstJSON, firstErr := json.Marshal(firstValue)
-	secondJSON, secondErr := json.Marshal(secondValue)
-	return firstErr == nil && secondErr == nil && bytes.Equal(firstJSON, secondJSON)
-}
 
 func decodeDashifyJSON(raw []byte, target any) error {
 	decoder := json.NewDecoder(bytes.NewReader(raw))
