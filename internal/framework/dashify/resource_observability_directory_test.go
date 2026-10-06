@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"regexp"
 	"sync"
 	"testing"
 
@@ -141,6 +142,58 @@ func TestResourceObservabilityDirectoryRejectsUnoccupiedCreateAndUpdate(t *testi
 	entry := store.entries[pathValue.ValueString()]
 	store.mu.Unlock()
 	assert.True(t, entry.Pinned)
+}
+
+func TestResourceObservabilityDirectoryPlanRejectsUnoccupiedCreate(t *testing.T) {
+	testresource.UnitTest(t, testresource.TestCase{
+		IsUnitTest: true,
+		ProtoV6ProviderFactories: fwtest.NewMockProto6Server(
+			t, nil, fwtest.WithMockResources(NewResourceObservabilityDirectory),
+		),
+		Steps: []testresource.TestStep{{
+			Config: `resource "signalfx_observability_directory" "test" {
+  path      = "~organization/platform/dashboards"
+  templates = []
+  pinned    = false
+}`,
+			PlanOnly:    true,
+			ExpectError: regexp.MustCompile(observabilityDirectoryUnoccupiedSummary),
+		}},
+	})
+}
+
+func TestResourceObservabilityDirectoryPlanAllowsUnpinnedParentImport(t *testing.T) {
+	const directoryPath = "~organization/platform/dashboards"
+	handlers := map[string]http.Handler{
+		"GET /v2/directory/{path...}": http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			assert.NoError(t, json.NewEncoder(w).Encode(directory.Result{Data: &directory.Entry{
+				Path:     directoryPath,
+				Children: []string{"team"},
+			}}))
+		}),
+	}
+	testresource.UnitTest(t, testresource.TestCase{
+		IsUnitTest: true,
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_5_0),
+		},
+		ProtoV6ProviderFactories: fwtest.NewMockProto6Server(
+			t, handlers, fwtest.WithMockResources(NewResourceObservabilityDirectory),
+		),
+		Steps: []testresource.TestStep{{
+			Config: `
+import {
+  to = signalfx_observability_directory.test
+  id = "~organization/platform/dashboards"
+}
+resource "signalfx_observability_directory" "test" {
+  path      = "~organization/platform/dashboards"
+  templates = []
+  pinned    = false
+}`,
+			PlanOnly: true,
+		}},
+	})
 }
 
 func TestResourceObservabilityDirectoryAllowsUnpinnedParentWithChild(t *testing.T) {
