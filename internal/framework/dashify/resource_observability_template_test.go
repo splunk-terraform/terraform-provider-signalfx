@@ -414,6 +414,31 @@ func TestResourceObservabilityTemplateReadRejectsMismatchedResponseID(t *testing
 	assert.Equal(t, state.Raw, response.State.Raw)
 }
 
+func TestResourceObservabilityTemplateReportsErrorEnvelope(t *testing.T) {
+	handlers := map[string]http.Handler{
+		"GET /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			_, _ = w.Write([]byte(`{"data":null,"errors":[{"code":"400","message":"invalid template request"}],"includes":[]}`))
+		}),
+	}
+	managed, resourceSchema := configuredObservabilityTemplateResourceWithHandlers(t, handlers)
+	state := tfsdk.State{Schema: resourceSchema}
+	require.False(t, state.Set(t.Context(), observabilityTemplateModel{
+		ID:          types.StringValue("owned"),
+		Title:       types.StringValue("Owned"),
+		RootElement: types.StringValue(string(template.RootElementChart)),
+		Spec:        jsontypes.NewNormalizedValue(`{"<Chart>":[]}`),
+	}).HasError())
+
+	response := resource.ReadResponse{State: state}
+	managed.Read(t.Context(), resource.ReadRequest{State: state}, &response)
+
+	require.True(t, response.Diagnostics.HasError())
+	assert.Contains(t, response.Diagnostics.Errors()[0].Summary(), "status code 400")
+	assert.Contains(t, response.Diagnostics.Errors()[0].Detail(), "invalid template request")
+}
+
 func TestResourceObservabilityTemplateImportedUpdateRequiresMetadata(t *testing.T) {
 	store := newTemplateAPIStore()
 	root := template.RootElementChart
