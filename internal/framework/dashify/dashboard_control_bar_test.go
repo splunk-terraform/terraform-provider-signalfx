@@ -237,7 +237,7 @@ func TestDashifyControlBarAttributeValidators(t *testing.T) {
 func TestResourceObservabilityDashboardAllControlsConfig(t *testing.T) {
 	testresource.UnitTest(t, testresource.TestCase{
 		IsUnitTest: true,
-		ProtoV5ProviderFactories: fwtest.NewMockProto5Server(
+		ProtoV6ProviderFactories: fwtest.NewMockProto6Server(
 			t,
 			nil,
 			fwtest.WithMockResources(NewResourceObservabilityDashboard, NewResourceObservabilityTemplate),

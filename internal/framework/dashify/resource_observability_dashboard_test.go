@@ -6,6 +6,7 @@ package fwdashify
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"regexp"
 	"testing"
@@ -25,6 +26,71 @@ import (
 
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/fwtest"
 )
+
+func dashboardTemplateHandlers(t *testing.T) map[string]http.Handler {
+	t.Helper()
+
+	nextID := 0
+	records := make(map[string]*template.Template)
+	return map[string]http.Handler{
+		"POST /v2/template": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			var write template.CreateUpdateTemplateRequest
+			if err := json.NewDecoder(r.Body).Decode(&write); err != nil {
+				t.Errorf("decode template create request: %v", err)
+				http.Error(w, "invalid create request", http.StatusBadRequest)
+				return
+			}
+			assert.Equal(t, observabilityTemplateRecordType, write.Type)
+			if !assert.NotNil(t, write.Metadata.RootElement) {
+				http.Error(w, "missing template root element", http.StatusBadRequest)
+				return
+			}
+			nextID++
+			record := &template.Template{
+				ID: fmt.Sprintf("template-%d", nextID), Type: write.Type, Title: write.Title,
+				Spec: write.Spec, Metadata: &template.Metadata{
+					RootElement: write.Metadata.RootElement, Imports: write.Metadata.Imports,
+				},
+			}
+			records[record.ID] = record
+			w.WriteHeader(http.StatusCreated)
+			assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: record}))
+		}),
+		"GET /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			record := records[r.PathValue("id")]
+			if record == nil {
+				http.Error(w, "template not found", http.StatusNotFound)
+				return
+			}
+			assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: record}))
+		}),
+		"PUT /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			record := records[r.PathValue("id")]
+			if record == nil {
+				http.Error(w, "template not found", http.StatusNotFound)
+				return
+			}
+			var write template.CreateUpdateTemplateRequest
+			if err := json.NewDecoder(r.Body).Decode(&write); err != nil {
+				t.Errorf("decode template update request: %v", err)
+				http.Error(w, "invalid update request", http.StatusBadRequest)
+				return
+			}
+			assert.Equal(t, observabilityTemplateRecordType, write.Type)
+			record.Type = write.Type
+			record.Title = write.Title
+			record.Spec = write.Spec
+			record.Metadata = &template.Metadata{
+				RootElement: write.Metadata.RootElement, Imports: write.Metadata.Imports,
+			}
+			assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: record}))
+		}),
+		"DELETE /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			delete(records, r.PathValue("id"))
+			w.WriteHeader(http.StatusNoContent)
+		}),
+	}
+}
 
 func TestResourceObservabilityDashboardMetadataAndSchema(t *testing.T) {
 	t.Parallel()
@@ -104,16 +170,14 @@ func TestResourceObservabilityDashboardMetadataAndSchema(t *testing.T) {
 }
 
 func TestResourceObservabilityDashboardGeneratedConfig(t *testing.T) {
-	store := newTemplateAPIStore()
-
 	testresource.UnitTest(t, testresource.TestCase{
 		IsUnitTest: true,
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
 			tfversion.SkipBelow(tfversion.Version1_5_0),
 		},
-		ProtoV5ProviderFactories: fwtest.NewMockProto5Server(
+		ProtoV6ProviderFactories: fwtest.NewMockProto6Server(
 			t,
-			store.handlers(),
+			dashboardTemplateHandlers(t),
 			fwtest.WithMockResources(NewResourceObservabilityDashboard, NewResourceObservabilityTemplate),
 		),
 		Steps: []testresource.TestStep{
@@ -137,16 +201,14 @@ func TestResourceObservabilityDashboardGeneratedConfig(t *testing.T) {
 }
 
 func TestResourceObservabilityDashboardInlineContentLifecycleAndGeneratedConfig(t *testing.T) {
-	store := newTemplateAPIStore()
-
 	testresource.UnitTest(t, testresource.TestCase{
 		IsUnitTest: true,
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
 			tfversion.SkipBelow(tfversion.Version1_5_0),
 		},
-		ProtoV5ProviderFactories: fwtest.NewMockProto5Server(
+		ProtoV6ProviderFactories: fwtest.NewMockProto6Server(
 			t,
-			store.handlers(),
+			dashboardTemplateHandlers(t),
 			fwtest.WithMockResources(NewResourceObservabilityDashboard),
 		),
 		Steps: []testresource.TestStep{
@@ -170,16 +232,14 @@ func TestResourceObservabilityDashboardInlineContentLifecycleAndGeneratedConfig(
 }
 
 func TestResourceObservabilityDashboardUntitledContainers(t *testing.T) {
-	store := newTemplateAPIStore()
-
 	testresource.UnitTest(t, testresource.TestCase{
 		IsUnitTest: true,
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
 			tfversion.SkipBelow(tfversion.Version1_5_0),
 		},
-		ProtoV5ProviderFactories: fwtest.NewMockProto5Server(
+		ProtoV6ProviderFactories: fwtest.NewMockProto6Server(
 			t,
-			store.handlers(),
+			dashboardTemplateHandlers(t),
 			fwtest.WithMockResources(NewResourceObservabilityDashboard),
 		),
 		Steps: []testresource.TestStep{{
@@ -830,8 +890,6 @@ func TestDashifyDashboardSpecPreservesUIOrder(t *testing.T) {
 }
 
 func TestResourceObservabilityDashboardUnitTest(t *testing.T) {
-	store := newTemplateAPIStore()
-
 	testresource.UnitTest(
 		t,
 		testresource.TestCase{
@@ -839,9 +897,9 @@ func TestResourceObservabilityDashboardUnitTest(t *testing.T) {
 			TerraformVersionChecks: []tfversion.TerraformVersionCheck{
 				tfversion.RequireAbove(tfversion.Version0_12_26),
 			},
-			ProtoV5ProviderFactories: fwtest.NewMockProto5Server(
+			ProtoV6ProviderFactories: fwtest.NewMockProto6Server(
 				t,
-				store.handlers(),
+				dashboardTemplateHandlers(t),
 				fwtest.WithMockResources(NewResourceObservabilityDashboard, NewResourceObservabilityTemplate),
 			),
 			Steps: []testresource.TestStep{
@@ -875,11 +933,42 @@ func TestResourceObservabilityDashboardUnitTest(t *testing.T) {
 }
 
 func TestResourceObservabilityDashboardRecreatesAfterRemoteDelete(t *testing.T) {
-	store := newTemplateAPIStore()
+	createdID := "template-1"
+	var readFixture *template.Template
+	handlers := map[string]http.Handler{
+		"POST /v2/template": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			var write template.CreateUpdateTemplateRequest
+			if err := json.NewDecoder(r.Body).Decode(&write); err != nil {
+				t.Errorf("decode dashboard create request: %v", err)
+				http.Error(w, "invalid create request", http.StatusBadRequest)
+				return
+			}
+			root := template.RootElementDashboard
+			assert.Equal(t, &root, write.Metadata.RootElement)
+			readFixture = &template.Template{
+				ID: createdID, Type: write.Type, Title: write.Title, Spec: write.Spec,
+				Metadata: &template.Metadata{RootElement: &root, Imports: write.Metadata.Imports},
+			}
+			w.WriteHeader(http.StatusCreated)
+			assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: readFixture}))
+		}),
+		"GET /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if readFixture == nil {
+				http.Error(w, "dashboard not found", http.StatusNotFound)
+				return
+			}
+			assert.Equal(t, readFixture.ID, r.PathValue("id"))
+			assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: readFixture}))
+		}),
+		"DELETE /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			readFixture = nil
+			w.WriteHeader(http.StatusNoContent)
+		}),
+	}
 	testresource.UnitTest(t, testresource.TestCase{
 		IsUnitTest: true,
-		ProtoV5ProviderFactories: fwtest.NewMockProto5Server(
-			t, store.handlers(), fwtest.WithMockResources(NewResourceObservabilityDashboard),
+		ProtoV6ProviderFactories: fwtest.NewMockProto6Server(
+			t, handlers, fwtest.WithMockResources(NewResourceObservabilityDashboard),
 		),
 		Steps: []testresource.TestStep{
 			{Config: `resource "signalfx_observability_dashboard" "test" {
@@ -890,9 +979,8 @@ func TestResourceObservabilityDashboardRecreatesAfterRemoteDelete(t *testing.T) 
 }`},
 			{
 				PreConfig: func() {
-					store.mu.Lock()
-					delete(store.items, "template-1")
-					store.mu.Unlock()
+					createdID = "template-2"
+					readFixture = nil
 				},
 				Config: `resource "signalfx_observability_dashboard" "test" {
   title = "Service overview"
@@ -906,14 +994,52 @@ func TestResourceObservabilityDashboardRecreatesAfterRemoteDelete(t *testing.T) 
 	})
 }
 
-func TestResourceObservabilityDashboardCreateReportsMissingEndpoint(t *testing.T) {
-	handlers := newTemplateAPIStore().handlers()
-	handlers["POST /v2/template"] = http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		http.Error(w, "template endpoint not found", http.StatusNotFound)
+func TestResourceObservabilityDashboardReadRejectsMismatchedID(t *testing.T) {
+	handlers := dashboardTemplateHandlers(t)
+	read := handlers["GET /v2/template/{id}"]
+	mismatched := false
+	handlers["GET /v2/template/{id}"] = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !mismatched {
+			read.ServeHTTP(w, r)
+			return
+		}
+		root := template.RootElementDashboard
+		assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: &template.Template{
+			ID: "another-dashboard", Type: observabilityTemplateRecordType,
+			Title: "Service overview", Metadata: &template.Metadata{RootElement: &root},
+		}}))
 	})
+	const dashboardConfig = `resource "signalfx_observability_dashboard" "test" {
+  title = "Service overview"
+  container {
+    template_content = jsonencode({ "<Chart>" = [] })
+  }
+}`
 	testresource.UnitTest(t, testresource.TestCase{
 		IsUnitTest: true,
-		ProtoV5ProviderFactories: fwtest.NewMockProto5Server(
+		ProtoV6ProviderFactories: fwtest.NewMockProto6Server(
+			t, handlers, fwtest.WithMockResources(NewResourceObservabilityDashboard),
+		),
+		Steps: []testresource.TestStep{
+			{Config: dashboardConfig},
+			{
+				PreConfig:   func() { mismatched = true },
+				Config:      dashboardConfig,
+				ExpectError: regexp.MustCompile(`(?s)Template API returned record "another-dashboard" when reading Dashboard.*"template-1"`),
+			},
+		},
+	})
+}
+
+func TestResourceObservabilityDashboardCreateReportsMissingEndpoint(t *testing.T) {
+	handlers := map[string]http.Handler{
+		"POST /v2/template": http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			http.Error(w, "template endpoint not found", http.StatusNotFound)
+		}),
+	}
+	testresource.UnitTest(t, testresource.TestCase{
+		IsUnitTest: true,
+		ProtoV6ProviderFactories: fwtest.NewMockProto6Server(
 			t, handlers, fwtest.WithMockResources(NewResourceObservabilityDashboard),
 		),
 		Steps: []testresource.TestStep{{
@@ -929,13 +1055,41 @@ func TestResourceObservabilityDashboardCreateReportsMissingEndpoint(t *testing.T
 }
 
 func TestResourceObservabilityDashboardUpdateReportsNotFound(t *testing.T) {
-	handlers := newTemplateAPIStore().handlers()
-	handlers["PUT /v2/template/{id}"] = http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		http.Error(w, "dashboard not found", http.StatusNotFound)
-	})
+	root := template.RootElementDashboard
+	record := &template.Template{
+		ID: "template-1", Type: observabilityTemplateRecordType, Title: "Service overview",
+		Spec: json.RawMessage(`{"<Dashboard>":[]}`), Metadata: &template.Metadata{RootElement: &root},
+	}
+	handlers := map[string]http.Handler{
+		"POST /v2/template": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			var write template.CreateUpdateTemplateRequest
+			if err := json.NewDecoder(r.Body).Decode(&write); err != nil {
+				t.Errorf("decode dashboard create request: %v", err)
+				http.Error(w, "invalid create request", http.StatusBadRequest)
+				return
+			}
+			assert.Equal(t, &root, write.Metadata.RootElement)
+			record.Spec = write.Spec
+			record.Metadata.Imports = write.Metadata.Imports
+			w.WriteHeader(http.StatusCreated)
+			assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: record}))
+		}),
+		"GET /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, record.ID, r.PathValue("id"))
+			assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: record}))
+		}),
+		"PUT /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, record.ID, r.PathValue("id"))
+			http.Error(w, "dashboard not found", http.StatusNotFound)
+		}),
+		"DELETE /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, record.ID, r.PathValue("id"))
+			w.WriteHeader(http.StatusNoContent)
+		}),
+	}
 	testresource.UnitTest(t, testresource.TestCase{
 		IsUnitTest: true,
-		ProtoV5ProviderFactories: fwtest.NewMockProto5Server(
+		ProtoV6ProviderFactories: fwtest.NewMockProto6Server(
 			t, handlers, fwtest.WithMockResources(NewResourceObservabilityDashboard),
 		),
 		Steps: []testresource.TestStep{

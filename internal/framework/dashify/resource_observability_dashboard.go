@@ -44,10 +44,6 @@ func (r *observabilityDashboardResource) Metadata(_ context.Context, req resourc
 	resp.TypeName = req.ProviderTypeName + "_observability_dashboard"
 }
 
-func (r *observabilityDashboardResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	r.ResourceData.Configure(ctx, req, resp)
-}
-
 func (r *observabilityDashboardResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Description: "Manages an Observability dashboard Template using reusable Template references or raw inline dashboard content. Typed chart blocks are coming soon; Directory placement is managed by signalfx_observability_directory.",
@@ -404,10 +400,6 @@ func (r *observabilityDashboardResource) Create(ctx context.Context, req resourc
 		resp.Diagnostics.AddError("Error creating dashboard", err.Error())
 		return
 	}
-	if record.ID == "" {
-		resp.Diagnostics.AddError("Error creating dashboard", "The Template API returned a dashboard without an ID.")
-		return
-	}
 	model.ID = types.StringValue(record.ID)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &model)...)
 }
@@ -429,6 +421,10 @@ func (r *observabilityDashboardResource) Read(ctx context.Context, req resource.
 	record, err := observabilityTemplateFromResult(result)
 	if err != nil {
 		resp.Diagnostics.AddError("Error reading dashboard", err.Error())
+		return
+	}
+	if record.ID != state.ID.ValueString() {
+		resp.Diagnostics.AddError("Error reading dashboard", fmt.Sprintf("Template API returned record %q when reading Dashboard %q.", record.ID, state.ID.ValueString()))
 		return
 	}
 	model, diags := parseDashboardTemplate(record)
