@@ -275,7 +275,8 @@ func (r *observabilityTemplateResource) Read(ctx context.Context, req resource.R
 		return
 	}
 
-	result, err := r.Details().Client.GetTemplate(ctx, model.ID.ValueString(), nil)
+	requestedID := model.ID.ValueString()
+	result, err := r.Details().Client.GetTemplate(ctx, requestedID, nil)
 	if responseErr, ok := signalfx.AsResponseError(err); ok && responseErr.Code() == http.StatusNotFound {
 		resp.State.RemoveResource(ctx)
 		return
@@ -286,6 +287,13 @@ func (r *observabilityTemplateResource) Read(ctx context.Context, req resource.R
 	record, err := observabilityTemplateFromResult(result)
 	if err != nil {
 		resp.Diagnostics.AddError("Error reading template", err.Error())
+		return
+	}
+	if record.ID != requestedID {
+		resp.Diagnostics.AddError(
+			"Error reading template",
+			fmt.Sprintf("Template API returned record %q when reading Template %q.", record.ID, requestedID),
+		)
 		return
 	}
 	model, err = observabilityTemplateModelFromRecord(model, record)
@@ -384,6 +392,9 @@ func observabilityTemplateFromResult(result *template.Result) (*template.Templat
 	if result == nil || result.Data == nil {
 		return nil, errors.New("template API returned no template record")
 	}
+	if result.Data.ID == "" {
+		return nil, errors.New("template API returned a template record without an ID")
+	}
 	return result.Data, nil
 }
 
@@ -440,9 +451,6 @@ func observabilityTemplateWrite(ctx context.Context, model observabilityTemplate
 }
 
 func observabilityTemplateModelFromRecord(prior observabilityTemplateModel, record *template.Template) (observabilityTemplateModel, error) {
-	if record.ID == "" {
-		return observabilityTemplateModel{}, errors.New("template API returned a template record without an ID")
-	}
 	if record.Metadata == nil || record.Metadata.RootElement == nil {
 		return observabilityTemplateModel{}, errors.New("template API returned a template record without root element metadata")
 	}

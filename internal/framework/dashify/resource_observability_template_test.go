@@ -338,6 +338,30 @@ func TestResourceObservabilityTemplateCreateReportsMissingEndpoint(t *testing.T)
 	})
 }
 
+func TestResourceObservabilityTemplateCreateRejectsMissingResponseID(t *testing.T) {
+	root := template.RootElementChart
+	handlers := newTemplateAPIStore().handlers()
+	handlers["POST /v2/template"] = http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusCreated)
+		assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: &template.Template{
+			Title:    "Request rate",
+			Spec:     json.RawMessage(`{"<Chart>":[]}`),
+			Metadata: &template.Metadata{RootElement: &root},
+		}}))
+	})
+
+	testresource.UnitTest(t, testresource.TestCase{
+		IsUnitTest: true,
+		ProtoV6ProviderFactories: fwtest.NewMockProto6Server(
+			t, handlers, fwtest.WithMockResources(NewResourceObservabilityTemplate),
+		),
+		Steps: []testresource.TestStep{{
+			Config:      observabilityTemplateInitialConfig,
+			ExpectError: regexp.MustCompile("template API returned a template record without an ID"),
+		}},
+	})
+}
+
 func TestResourceObservabilityTemplateUpdateReportsNotFound(t *testing.T) {
 	handlers := newTemplateAPIStore().handlers()
 	handlers["PUT /v2/template/{id}"] = http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
@@ -357,6 +381,37 @@ func TestResourceObservabilityTemplateUpdateReportsNotFound(t *testing.T) {
 			},
 		},
 	})
+}
+
+func TestResourceObservabilityTemplateReadRejectsMismatchedResponseID(t *testing.T) {
+	root := template.RootElementChart
+	handlers := newTemplateAPIStore().handlers()
+	handlers["GET /v2/template/{id}"] = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "owned", r.PathValue("id"))
+		assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: &template.Template{
+			ID:       "unrelated",
+			Title:    "Unrelated",
+			Spec:     json.RawMessage(`{"<Chart>":[]}`),
+			Metadata: &template.Metadata{RootElement: &root},
+		}}))
+	})
+	managed, resourceSchema := configuredObservabilityTemplateResourceWithHandlers(t, handlers)
+	state := tfsdk.State{Schema: resourceSchema}
+	require.False(t, state.Set(t.Context(), observabilityTemplateModel{
+		ID:          types.StringValue("owned"),
+		Title:       types.StringValue("Owned"),
+		RootElement: types.StringValue(string(template.RootElementChart)),
+		Spec:        jsontypes.NewNormalizedValue(`{"<Chart>":[]}`),
+	}).HasError())
+
+	response := resource.ReadResponse{State: state}
+	managed.Read(t.Context(), resource.ReadRequest{State: state}, &response)
+
+	require.True(t, response.Diagnostics.HasError())
+	assert.Equal(t, "Error reading template", response.Diagnostics.Errors()[0].Summary())
+	assert.Contains(t, response.Diagnostics.Errors()[0].Detail(), `record "unrelated"`)
+	assert.Contains(t, response.Diagnostics.Errors()[0].Detail(), `Template "owned"`)
+	assert.Equal(t, state.Raw, response.State.Raw)
 }
 
 func TestResourceObservabilityTemplateImportedUpdateRequiresMetadata(t *testing.T) {
@@ -536,7 +591,6 @@ func TestObservabilityTemplateRejectsIncompleteAPIRecords(t *testing.T) {
 		record *template.Template
 		want   string
 	}{
-		"missing ID":            {record: &template.Template{Metadata: &template.Metadata{RootElement: &root}}, want: "without an ID"},
 		"missing metadata":      {record: &template.Template{ID: "example"}, want: "without root element metadata"},
 		"invalid specification": {record: &template.Template{ID: "example", Metadata: &template.Metadata{RootElement: &root}, Spec: json.RawMessage(`[]`)}, want: "invalid specification"},
 	} {
@@ -550,6 +604,8 @@ func TestObservabilityTemplateRejectsIncompleteAPIRecords(t *testing.T) {
 	require.ErrorContains(t, err, "no template record")
 	_, err = observabilityTemplateFromResult(&template.Result{})
 	require.ErrorContains(t, err, "no template record")
+	_, err = observabilityTemplateFromResult(&template.Result{Data: &template.Template{}})
+	require.ErrorContains(t, err, "without an ID")
 }
 
 func TestResourceObservabilityTemplateDeleteWarnsOnDirectoryMemberships(t *testing.T) {
