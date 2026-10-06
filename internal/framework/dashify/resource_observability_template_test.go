@@ -761,6 +761,15 @@ func TestResourceObservabilityTemplateImportedUpdateRequiresMetadata(t *testing.
   root_element = "Chart"
   spec         = jsonencode({ "<Chart>" = [] })
 }`
+	const computedTitleConfig = `resource "terraform_data" "title" {
+  input = "Changed"
+}
+
+resource "signalfx_observability_template" "test" {
+  title        = terraform_data.title.output
+  root_element = "Chart"
+  spec         = jsonencode({ "<Chart>" = [] })
+}`
 	const replacementConfig = `resource "signalfx_observability_template" "test" {
   title        = "Imported"
   root_element = "Dashboard"
@@ -790,6 +799,11 @@ import {
 			},
 			{
 				Config:      changedConfig,
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("Cannot safely update imported template"),
+			},
+			{
+				Config:      computedTitleConfig,
 				PlanOnly:    true,
 				ExpectError: regexp.MustCompile("Cannot safely update imported template"),
 			},
