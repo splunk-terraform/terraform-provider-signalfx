@@ -62,10 +62,6 @@ func (r *observabilityDirectoryResource) Metadata(_ context.Context, req resourc
 	resp.TypeName = req.ProviderTypeName + "_observability_directory"
 }
 
-func (r *observabilityDirectoryResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	r.ResourceData.Configure(ctx, req, resp)
-}
-
 func (r *observabilityDirectoryResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Description: "Manages an Observability Directory entry and its complete ordered Template membership list.",

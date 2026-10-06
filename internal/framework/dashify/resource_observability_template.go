@@ -77,10 +77,6 @@ func (r *observabilityTemplateResource) Metadata(_ context.Context, req resource
 	resp.TypeName = req.ProviderTypeName + "_observability_template"
 }
 
-func (r *observabilityTemplateResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	r.ResourceData.Configure(ctx, req, resp)
-}
-
 func (r *observabilityTemplateResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Description: "Manages an Observability Template record using the Template API write model.",
