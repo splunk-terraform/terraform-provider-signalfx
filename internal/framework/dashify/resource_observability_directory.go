@@ -416,9 +416,6 @@ func observabilityReservedDirectoryPath(value string) string {
 			return value
 		}
 	}
-	if len(segments) == 2 && segments[0] == "~users" {
-		return value
-	}
 	if len(segments) >= 2 && strings.Join(segments[len(segments)-2:], "/") == "~observability/homepage" {
 		return value
 	}

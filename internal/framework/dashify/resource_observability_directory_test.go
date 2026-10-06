@@ -151,13 +151,15 @@ func TestResourceObservabilityDirectoryTemplatesRejectsDuplicates(t *testing.T) 
 func TestObservabilityReservedDirectoryPath(t *testing.T) {
 	for _, path := range []string{
 		"~demo/team", "~local/team", "~signalview/team", "~templates/team",
-		"~users", "team/~users", "~users/example@example.com", "~observability/homepage",
+		"~users", "team/~users", "~observability/homepage",
 	} {
 		assert.Equal(t, path, observabilityReservedDirectoryPath(path))
 	}
 	for _, path := range []string{
 		"~demo-team", "~local-team", "~signalview-team", "~templates-team",
 		"team/~users-extra", "~organization/platform/dashboards",
+		// A user's own namespace root is their writable space, not reserved.
+		"~users/example@example.com",
 	} {
 		assert.Empty(t, observabilityReservedDirectoryPath(path))
 	}
