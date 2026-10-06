@@ -319,6 +319,32 @@ func TestResourceObservabilityDirectoryReadReportsUnexpectedNotFound(t *testing.
 	assert.Equal(t, state.Raw, response.State.Raw)
 }
 
+func TestResourceObservabilityDirectoryReportsErrorEnvelope(t *testing.T) {
+	const directoryPath = "~organization/platform/dashboards"
+	handlers := map[string]http.Handler{
+		"GET /v2/directory/{path...}": http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			_, _ = w.Write([]byte(`{"data":null,"errors":[{"code":"400","message":"invalid directory request"}],"includes":[]}`))
+		}),
+	}
+	managed, resourceSchema := configuredObservabilityDirectoryResourceWithHandlers(t, handlers)
+	state := tfsdk.State{Schema: resourceSchema}
+	require.False(t, state.Set(t.Context(), observabilityDirectoryModel{
+		ID:        types.StringValue(directoryPath),
+		Path:      types.StringValue(directoryPath),
+		Templates: types.ListValueMust(types.StringType, nil),
+		Pinned:    types.BoolValue(true),
+	}).HasError())
+
+	response := resource.ReadResponse{State: state}
+	managed.Read(t.Context(), resource.ReadRequest{State: state}, &response)
+
+	require.True(t, response.Diagnostics.HasError())
+	assert.Contains(t, response.Diagnostics.Errors()[0].Summary(), "status code 400")
+	assert.Contains(t, response.Diagnostics.Errors()[0].Detail(), "invalid directory request")
+}
+
 func TestResourceObservabilityDirectoryUpdateReportsUnexpectedNotFound(t *testing.T) {
 	store := newDirectoryAPIStore()
 	handlers := store.handlers()
