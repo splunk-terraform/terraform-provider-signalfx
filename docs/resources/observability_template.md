@@ -9,7 +9,7 @@ description: |-
 Terraform owns the Template API write fields, so an update replaces the title, metadata, and specification represented by this resource.
 The provider supplies the Template record schema `type` automatically. SignalView association metadata is not managed.
 Set `metadata.imports` to the IDs of directly imported Templates.
-After importing a Template, specify the complete desired `metadata` block before updating it. The API does not return datasource write metadata and its import list may include indirect imports, so the provider cannot safely reconstruct those fields from a read.
+After importing a Template, specify the complete desired `metadata` object before updating it. The API does not return datasource write metadata and its import list may include indirect imports, so the provider cannot safely reconstruct those fields from a read.
 
 Deleting a Template can leave Directory memberships pointing to a missing Template. When the API reports memberships, the provider warns with their count; update those Directories after deletion.
 
@@ -54,21 +54,21 @@ resource "signalfx_observability_template" "chart" {
 
 ### Optional
 
-- `metadata` (Block, Optional) Optional metadata extracted from the template specification. (see [below for nested schema](#nestedblock--metadata))
+- `metadata` (Attributes) Optional metadata extracted from the template specification. (see [below for nested schema](#nestedatt--metadata))
 
 ### Read-Only
 
 - `id` (String) The unique identifier for the resource.
 
-<a id="nestedblock--metadata"></a>
+<a id="nestedatt--metadata"></a>
 ### Nested Schema for `metadata`
 
 Optional:
 
-- `datasource` (Block, Optional) Datasource metadata extracted from the template. (see [below for nested schema](#nestedblock--metadata--datasource))
+- `datasource` (Attributes) Datasource metadata extracted from the template. (see [below for nested schema](#nestedatt--metadata--datasource))
 - `imports` (List of String) Template IDs imported directly by the specification.
 
-<a id="nestedblock--metadata--datasource"></a>
+<a id="nestedatt--metadata--datasource"></a>
 ### Nested Schema for `metadata.datasource`
 
 Optional:
