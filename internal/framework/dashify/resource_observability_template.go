@@ -59,11 +59,14 @@ const (
 	observabilityTemplateRecordType            = "#/dashify/v1/templates/Record"
 	observabilityTemplateWriteMetadataKnownKey = "write_metadata_known"
 	observabilityTemplateReferencePrefix       = signalfx.TemplateAPIURL + "/"
+	observabilityTemplateUnsafeUpdateSummary   = "Cannot safely update imported template"
+	observabilityTemplateUnsafeUpdateDetail    = "The Template API does not return all write-side metadata, so an update after import could erase existing imports or datasource metadata. Set metadata to the complete desired imports and datasource values before updating this template."
 )
 
 var (
-	_ resource.Resource              = (*observabilityTemplateResource)(nil)
-	_ resource.ResourceWithConfigure = (*observabilityTemplateResource)(nil)
+	_ resource.Resource               = (*observabilityTemplateResource)(nil)
+	_ resource.ResourceWithConfigure  = (*observabilityTemplateResource)(nil)
+	_ resource.ResourceWithModifyPlan = (*observabilityTemplateResource)(nil)
 )
 
 func NewResourceObservabilityTemplate() resource.Resource {
@@ -198,6 +201,41 @@ func validateObservabilityTemplateDatasource(rootElement types.String, datasourc
 	}
 }
 
+func (r *observabilityTemplateResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	if req.State.Raw.IsNull() || req.Plan.Raw.IsNull() || req.Plan.Raw.Equal(req.State.Raw) || !req.Plan.Raw.IsFullyKnown() {
+		return
+	}
+
+	// root_element is the only attribute that currently requires replacement.
+	// A replacement creates a new Template and does not risk overwriting the
+	// imported record's unmodeled write metadata.
+	var priorRootElement, plannedRootElement types.String
+	resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("root_element"), &priorRootElement)...)
+	resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, path.Root("root_element"), &plannedRootElement)...)
+	if resp.Diagnostics.HasError() || priorRootElement.IsNull() || priorRootElement.IsUnknown() || plannedRootElement.IsNull() || plannedRootElement.IsUnknown() {
+		return
+	}
+	if priorRootElement.ValueString() != plannedRootElement.ValueString() {
+		return
+	}
+
+	if req.Private != nil {
+		knownMetadata, diags := req.Private.GetKey(ctx, observabilityTemplateWriteMetadataKnownKey)
+		resp.Diagnostics.Append(diags...)
+		if resp.Diagnostics.HasError() || len(knownMetadata) > 0 {
+			return
+		}
+	}
+
+	var plannedMetadata types.Object
+	resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, path.Root("metadata"), &plannedMetadata)...)
+	if resp.Diagnostics.HasError() || plannedMetadata.IsUnknown() || !plannedMetadata.IsNull() {
+		return
+	}
+
+	resp.Diagnostics.AddError(observabilityTemplateUnsafeUpdateSummary, observabilityTemplateUnsafeUpdateDetail)
+}
+
 func (r *observabilityTemplateResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var model observabilityTemplateModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &model)...)
@@ -270,16 +308,17 @@ func (r *observabilityTemplateResource) Update(ctx context.Context, req resource
 		return
 	}
 	model.ID = prior.ID
-	knownMetadata, diags := req.Private.GetKey(ctx, observabilityTemplateWriteMetadataKnownKey)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
+	var knownMetadata []byte
+	if req.Private != nil {
+		var privateDiags diag.Diagnostics
+		knownMetadata, privateDiags = req.Private.GetKey(ctx, observabilityTemplateWriteMetadataKnownKey)
+		resp.Diagnostics.Append(privateDiags...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
 	}
 	if len(knownMetadata) == 0 && model.Metadata == nil {
-		resp.Diagnostics.AddError(
-			"Cannot safely update imported template",
-			"The Template API does not return all write-side metadata, so an update after import could erase existing imports or datasource metadata. Set metadata to the complete desired imports and datasource values before updating this template.",
-		)
+		resp.Diagnostics.AddError(observabilityTemplateUnsafeUpdateSummary, observabilityTemplateUnsafeUpdateDetail)
 		return
 	}
 

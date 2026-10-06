@@ -369,6 +369,21 @@ func TestResourceObservabilityTemplateImportedUpdateRequiresMetadata(t *testing.
 		Spec:     json.RawMessage(`{"<Chart>":[]}`),
 		Metadata: &template.Metadata{RootElement: &root, Imports: []string{"/v2/template/child"}},
 	}
+	const importedConfig = `resource "signalfx_observability_template" "test" {
+  title        = "Imported"
+  root_element = "Chart"
+  spec         = jsonencode({ "<Chart>" = [] })
+}`
+	const changedConfig = `resource "signalfx_observability_template" "test" {
+  title        = "Changed"
+  root_element = "Chart"
+  spec         = jsonencode({ "<Chart>" = [] })
+}`
+	const replacementConfig = `resource "signalfx_observability_template" "test" {
+  title        = "Imported"
+  root_element = "Dashboard"
+  spec         = jsonencode({ "<Dashboard>" = [] })
+}`
 
 	testresource.UnitTest(t, testresource.TestCase{
 		IsUnitTest: true,
@@ -385,23 +400,53 @@ import {
   to = signalfx_observability_template.test
   id = "imported"
 }
-resource "signalfx_observability_template" "test" {
-  title        = "Imported"
-  root_element = "Chart"
-  spec         = jsonencode({ "<Chart>" = [] })
-}`,
+` + importedConfig,
 			},
 			{
-				Config: `
-resource "signalfx_observability_template" "test" {
-  title        = "Changed"
-  root_element = "Chart"
-  spec         = jsonencode({ "<Chart>" = [] })
-}`,
+				Config:   importedConfig,
+				PlanOnly: true,
+			},
+			{
+				Config:      changedConfig,
+				PlanOnly:    true,
 				ExpectError: regexp.MustCompile("Cannot safely update imported template"),
+			},
+			{
+				Config:             replacementConfig,
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: true,
+			},
+			{
+				Config:  importedConfig,
+				Destroy: true,
 			},
 		},
 	})
+}
+
+func TestResourceObservabilityTemplateUpdateRetainsImportedMetadataGuard(t *testing.T) {
+	managed := NewResourceObservabilityTemplate().(*observabilityTemplateResource)
+	var schemaResponse resource.SchemaResponse
+	managed.Schema(t.Context(), resource.SchemaRequest{}, &schemaResponse)
+
+	prior := observabilityTemplateModel{
+		ID:          types.StringValue("imported"),
+		Title:       types.StringValue("Imported"),
+		RootElement: types.StringValue(string(template.RootElementChart)),
+		Spec:        jsontypes.NewNormalizedValue(`{"<Chart>":[]}`),
+	}
+	planned := prior
+	planned.Title = types.StringValue("Changed")
+
+	state := tfsdk.State{Schema: schemaResponse.Schema}
+	require.False(t, state.Set(t.Context(), prior).HasError())
+	plan := tfsdk.Plan{Schema: schemaResponse.Schema}
+	require.False(t, plan.Set(t.Context(), planned).HasError())
+
+	response := resource.UpdateResponse{State: state}
+	managed.Update(t.Context(), resource.UpdateRequest{Plan: plan, State: state}, &response)
+	require.True(t, response.Diagnostics.HasError())
+	assert.Equal(t, observabilityTemplateUnsafeUpdateSummary, response.Diagnostics.Errors()[0].Summary())
 }
 
 func TestObservabilityTemplateResourceModelMapping(t *testing.T) {
