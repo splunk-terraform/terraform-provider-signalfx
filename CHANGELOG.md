@@ -1,5 +1,10 @@
 ## Unreleased
 
+IMPROVEMENTS:
+
+* Added `signalfx_observability_dashboard` for Modern Dashboard composition, controls, import, and complete document management.
+* Added `signalfx_observability_template` and `signalfx_observability_directory` resources for Template API records and Directory entries.
+
 ## 9.7.2
 
 BUGFIXES:
