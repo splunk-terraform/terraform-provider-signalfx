@@ -150,7 +150,7 @@ func (r *observabilityDirectoryResource) Create(ctx context.Context, req resourc
 	// PATCH is an upsert and replaces the complete Template membership list.
 	// A GET can also return a synthetic unoccupied entry for an absent path.
 	// Refuse to claim an occupied entry; users can import it instead.
-	existing, diags := r.fetchDirectoryEntry(ctx, resp.State, model.Path.ValueString())
+	existing, diags := r.fetchDirectoryEntry(ctx, resp.State, model.Path.ValueString(), "checking")
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -197,20 +197,17 @@ func (r *observabilityDirectoryResource) Read(ctx context.Context, req resource.
 		return
 	}
 
-	result, err := r.Details().Client.GetDirectoryEntry(ctx, state.Path.ValueString())
-	if resp.Diagnostics.Append(observabilityDirectoryRequestError(ctx, resp.State, "reading", err)...); resp.Diagnostics.HasError() || err != nil {
-		return
-	}
-	if result == nil || result.Data == nil {
-		resp.Diagnostics.AddError("Error reading directory", "Directory API returned no directory entry")
-		return
-	}
-	next, diags := observabilityDirectoryModelFromEntry(ctx, state.Path.ValueString(), result.Data)
+	entry, diags := r.fetchDirectoryEntry(ctx, resp.State, state.Path.ValueString(), "reading")
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	if !observabilityDirectoryEntryOccupied(result.Data) {
+	next, diags := observabilityDirectoryModelFromEntry(ctx, state.Path.ValueString(), entry)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	if !observabilityDirectoryEntryOccupied(entry) {
 		resp.State.RemoveResource(ctx)
 		return
 	}
@@ -235,7 +232,7 @@ func (r *observabilityDirectoryResource) Update(ctx context.Context, req resourc
 		return
 	}
 	if observabilityDirectoryPlanUnoccupied(model.Pinned, model.Templates) {
-		current, fetchDiags := r.fetchDirectoryEntry(ctx, resp.State, prior.Path.ValueString())
+		current, fetchDiags := r.fetchDirectoryEntry(ctx, resp.State, prior.Path.ValueString(), "checking")
 		resp.Diagnostics.Append(fetchDiags...)
 		if resp.Diagnostics.HasError() {
 			return
@@ -269,17 +266,9 @@ func (r *observabilityDirectoryResource) Delete(ctx context.Context, req resourc
 		return
 	}
 
-	result, err := r.Details().Client.GetDirectoryEntry(ctx, state.Path.ValueString())
-	if resp.Diagnostics.Append(observabilityDirectoryRequestError(ctx, resp.State, "checking", err)...); resp.Diagnostics.HasError() || err != nil {
-		return
-	}
-	if result == nil || result.Data == nil {
-		resp.Diagnostics.AddError("Error deleting directory", "Directory API returned no directory entry")
-		return
-	}
-	entry := result.Data
-	if entry.Path != state.Path.ValueString() {
-		resp.Diagnostics.AddError("Refusing to delete directory", "The Directory API returned a different logical path than the provider state; no entry was deleted.")
+	entry, diags := r.fetchDirectoryEntry(ctx, resp.State, state.Path.ValueString(), "deleting")
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
 		return
 	}
 	if reserved := observabilityReservedDirectoryPath(entry.Path); reserved != "" {
@@ -303,24 +292,36 @@ func (r *observabilityDirectoryResource) Delete(ctx context.Context, req resourc
 		)
 	}
 
-	err = r.Details().Client.DeleteDirectoryEntry(ctx, entry.Path)
+	err := r.Details().Client.DeleteDirectoryEntry(ctx, entry.Path)
 	resp.Diagnostics.Append(observabilityDirectoryRequestError(ctx, resp.State, "deleting", err)...)
 }
 
 // fetchDirectoryEntry fetches the live entry for path and validates it was
 // returned successfully and for the expected logical path.
-func (r *observabilityDirectoryResource) fetchDirectoryEntry(ctx context.Context, state tfsdk.State, path string) (*directory.Entry, diag.Diagnostics) {
+func (r *observabilityDirectoryResource) fetchDirectoryEntry(ctx context.Context, state tfsdk.State, path, action string) (*directory.Entry, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	result, err := r.Details().Client.GetDirectoryEntry(ctx, path)
-	if diags.Append(observabilityDirectoryRequestError(ctx, state, "checking", err)...); diags.HasError() || err != nil {
+	requestAction := action
+	if action == "deleting" {
+		// This is the pre-delete GET, not the DELETE request.
+		requestAction = "checking"
+	}
+	if diags.Append(observabilityDirectoryRequestError(ctx, state, requestAction, err)...); diags.HasError() || err != nil {
 		return nil, diags
 	}
 	if result == nil || result.Data == nil {
-		diags.AddError("Error checking directory", "Directory API returned no directory entry")
+		diags.AddError("Error "+action+" directory", "Directory API returned no directory entry")
 		return nil, diags
 	}
 	if result.Data.Path != path {
-		diags.AddError("Error checking directory", "Directory API returned a different logical path than the requested path")
+		switch action {
+		case "reading":
+			diags.AddError("Unexpected Directory path", fmt.Sprintf("The Directory API returned path %q for %q; Terraform state was not changed.", result.Data.Path, path))
+		case "deleting":
+			diags.AddError("Refusing to delete directory", "The Directory API returned a different logical path than the provider state; no entry was deleted.")
+		default:
+			diags.AddError("Error checking directory", "Directory API returned a different logical path than the requested path")
+		}
 		return nil, diags
 	}
 	return result.Data, diags
