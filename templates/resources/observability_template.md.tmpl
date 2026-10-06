@@ -18,3 +18,11 @@ Deleting a Template can leave Directory memberships pointing to a missing Templa
 {{tffile "examples/resources/observability_template/example_1.tf"}}
 
 {{ .SchemaMarkdown | trimspace }}
+
+## Import
+
+After adding a matching resource block, import an existing Template by its ID, not a URL or `/v2/template/...` API reference:
+
+```shell
+terraform import signalfx_observability_template.chart G47WjI1AABc
+```

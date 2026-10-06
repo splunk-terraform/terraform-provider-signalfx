@@ -19,3 +19,11 @@ Destroying the Directory removes its membership links but does not delete the re
 {{tffile "examples/resources/observability_directory/example_1.tf"}}
 
 {{ .SchemaMarkdown | trimspace }}
+
+## Import
+
+After adding a matching resource block, import an existing Directory by its decoded logical path, not a URL or `/v2/directory/...` API path:
+
+```shell
+terraform import signalfx_observability_directory.charts '~users/user@example.com/charts'
+```
