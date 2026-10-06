@@ -463,7 +463,7 @@ func TestResourceObservabilityDirectoryRejectsIncompleteResponses(t *testing.T) 
 			entry:     &directory.Entry{Path: "~organization/platform/other", Pinned: true},
 			want:      "Unexpected Directory path",
 		},
-		"delete without entry": {operation: "delete", want: "Error deleting directory"},
+		"delete without entry": {operation: "delete", want: "Error checking directory"},
 	}
 
 	for name, test := range tests {
@@ -835,7 +835,7 @@ func TestResourceObservabilityDirectoryDeleteRejectsDifferentPath(t *testing.T) 
 	response := resource.DeleteResponse{State: state}
 	managed.Delete(t.Context(), resource.DeleteRequest{State: state}, &response)
 	require.True(t, response.Diagnostics.HasError())
-	assert.Equal(t, "Refusing to delete directory", response.Diagnostics.Errors()[0].Summary())
+	assert.Equal(t, "Unexpected Directory path", response.Diagnostics.Errors()[0].Summary())
 }
 
 func TestResourceObservabilityDirectoryReadRejectsUnsupportedTemplateReference(t *testing.T) {

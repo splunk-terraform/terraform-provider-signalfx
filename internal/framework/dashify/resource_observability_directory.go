@@ -266,7 +266,7 @@ func (r *observabilityDirectoryResource) Delete(ctx context.Context, req resourc
 		return
 	}
 
-	entry, diags := r.fetchDirectoryEntry(ctx, resp.State, state.Path.ValueString(), "deleting")
+	entry, diags := r.fetchDirectoryEntry(ctx, resp.State, state.Path.ValueString(), "checking")
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -297,16 +297,12 @@ func (r *observabilityDirectoryResource) Delete(ctx context.Context, req resourc
 }
 
 // fetchDirectoryEntry fetches the live entry for path and validates it was
-// returned successfully and for the expected logical path.
+// returned successfully and for the expected logical path. The action describes
+// the GET: reading during refresh, checking before a write or delete.
 func (r *observabilityDirectoryResource) fetchDirectoryEntry(ctx context.Context, state tfsdk.State, path, action string) (*directory.Entry, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	result, err := r.Details().Client.GetDirectoryEntry(ctx, path)
-	requestAction := action
-	if action == "deleting" {
-		// This is the pre-delete GET, not the DELETE request.
-		requestAction = "checking"
-	}
-	if diags.Append(observabilityDirectoryRequestError(ctx, state, requestAction, err)...); diags.HasError() || err != nil {
+	if diags.Append(observabilityDirectoryRequestError(ctx, state, action, err)...); diags.HasError() || err != nil {
 		return nil, diags
 	}
 	if result == nil || result.Data == nil {
@@ -314,14 +310,7 @@ func (r *observabilityDirectoryResource) fetchDirectoryEntry(ctx context.Context
 		return nil, diags
 	}
 	if result.Data.Path != path {
-		switch action {
-		case "reading":
-			diags.AddError("Unexpected Directory path", fmt.Sprintf("The Directory API returned path %q for %q; Terraform state was not changed.", result.Data.Path, path))
-		case "deleting":
-			diags.AddError("Refusing to delete directory", "The Directory API returned a different logical path than the provider state; no entry was deleted.")
-		default:
-			diags.AddError("Error checking directory", "Directory API returned a different logical path than the requested path")
-		}
+		diags.AddError("Unexpected Directory path", fmt.Sprintf("The Directory API returned a different logical path %q for %q; Terraform state was not changed.", result.Data.Path, path))
 		return nil, diags
 	}
 	return result.Data, diags
