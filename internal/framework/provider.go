@@ -66,6 +66,7 @@ func (op *ollyProvider) Schema(ctx context.Context, req provider.SchemaRequest, 
 		Attributes: map[string]schema.Attribute{
 			"auth_token": schema.StringAttribute{
 				Optional:    true,
+				Sensitive:   true,
 				Description: "Splunk Observability Cloud auth token",
 			},
 			"api_url": schema.StringAttribute{

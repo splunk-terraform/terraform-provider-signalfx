@@ -49,6 +49,7 @@ func Provider() *schema.Provider {
 			"auth_token": {
 				Type:        schema.TypeString,
 				Optional:    true,
+				Sensitive:   true,
 				DefaultFunc: schema.EnvDefaultFunc("SFX_AUTH_TOKEN", ""),
 				Description: "Splunk Observability Cloud auth token",
 			},
