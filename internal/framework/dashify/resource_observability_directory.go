@@ -39,10 +39,16 @@ type observabilityDirectoryResource struct {
 	fwembed.ResourceData
 }
 
+const (
+	observabilityDirectoryUnoccupiedSummary      = "Unoccupied directory"
+	observabilityDirectoryCreateUnoccupiedDetail = "Set pinned to true or provide at least one Template. Terraform cannot manage a new unpinned Directory without Templates because the API represents it the same as an unoccupied path."
+)
+
 var (
 	_ resource.Resource                = (*observabilityDirectoryResource)(nil)
 	_ resource.ResourceWithConfigure   = (*observabilityDirectoryResource)(nil)
 	_ resource.ResourceWithImportState = (*observabilityDirectoryResource)(nil)
+	_ resource.ResourceWithModifyPlan  = (*observabilityDirectoryResource)(nil)
 )
 
 func NewResourceObservabilityDirectory() resource.Resource {
@@ -104,6 +110,23 @@ func (r *observabilityDirectoryResource) ValidateConfig(ctx context.Context, req
 	}
 }
 
+func (r *observabilityDirectoryResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	if !req.State.Raw.IsNull() || req.Plan.Raw.IsNull() {
+		return
+	}
+
+	var pinned types.Bool
+	var templates types.List
+	resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, path.Root("pinned"), &pinned)...)
+	resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, path.Root("templates"), &templates)...)
+	if resp.Diagnostics.HasError() || pinned.IsUnknown() || templates.IsUnknown() {
+		return
+	}
+	if observabilityDirectoryPlanUnoccupied(pinned, templates) {
+		resp.Diagnostics.AddAttributeError(path.Root("pinned"), observabilityDirectoryUnoccupiedSummary, observabilityDirectoryCreateUnoccupiedDetail)
+	}
+}
+
 func (r *observabilityDirectoryResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var model observabilityDirectoryModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &model)...)
@@ -135,7 +158,7 @@ func (r *observabilityDirectoryResource) Create(ctx context.Context, req resourc
 		return
 	}
 	if observabilityDirectoryPlanUnoccupied(model.Pinned, model.Templates) {
-		resp.Diagnostics.AddAttributeError(path.Root("pinned"), "Unoccupied directory", "Set pinned to true or provide at least one Template or child directory. An unpinned Directory without Templates or children is removed by the service.")
+		resp.Diagnostics.AddAttributeError(path.Root("pinned"), observabilityDirectoryUnoccupiedSummary, observabilityDirectoryCreateUnoccupiedDetail)
 		return
 	}
 
