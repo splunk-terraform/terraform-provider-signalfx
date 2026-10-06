@@ -198,13 +198,14 @@ func validateObservabilityTemplateDatasource(rootElement types.String, datasourc
 }
 
 func (r *observabilityTemplateResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
-	if req.State.Raw.IsNull() || req.Plan.Raw.IsNull() || req.Plan.Raw.Equal(req.State.Raw) || !req.Plan.Raw.IsFullyKnown() {
+	if req.State.Raw.IsNull() || req.Plan.Raw.IsNull() || req.Plan.Raw.Equal(req.State.Raw) {
 		return
 	}
 
 	// root_element is the only attribute that currently requires replacement.
 	// A replacement creates a new Template and does not risk overwriting the
-	// imported record's unmodeled write metadata.
+	// imported record's unmodeled write metadata. Inspect only the values needed
+	// for this decision: title or spec may still be unknown during planning.
 	var priorRootElement, plannedRootElement types.String
 	resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("root_element"), &priorRootElement)...)
 	resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, path.Root("root_element"), &plannedRootElement)...)
