@@ -105,9 +105,8 @@ func (r *observabilityTemplateResource) Schema(_ context.Context, _ resource.Sch
 				Description: "JSON object containing the polymorphic template specification.",
 				CustomType:  jsontypes.NormalizedType{},
 			},
-		},
-		Blocks: map[string]schema.Block{
-			"metadata": schema.SingleNestedBlock{
+			"metadata": schema.SingleNestedAttribute{
+				Optional:    true,
 				Description: "Optional metadata extracted from the template specification.",
 				Attributes: map[string]schema.Attribute{
 					"imports": schema.ListAttribute{
@@ -116,9 +115,8 @@ func (r *observabilityTemplateResource) Schema(_ context.Context, _ resource.Sch
 						Description: "Template IDs imported directly by the specification.",
 						Validators:  observabilityTemplateIDListValidators(),
 					},
-				},
-				Blocks: map[string]schema.Block{
-					"datasource": schema.SingleNestedBlock{
+					"datasource": schema.SingleNestedAttribute{
+						Optional:    true,
 						Description: "Datasource metadata extracted from the template.",
 						Attributes: map[string]schema.Attribute{
 							"type": schema.StringAttribute{
@@ -280,7 +278,7 @@ func (r *observabilityTemplateResource) Update(ctx context.Context, req resource
 	if len(knownMetadata) == 0 && model.Metadata == nil {
 		resp.Diagnostics.AddError(
 			"Cannot safely update imported template",
-			"The Template API does not return all write-side metadata, so an update after import could erase existing imports or datasource metadata. Add a metadata block with the complete desired imports and datasource values before updating this template.",
+			"The Template API does not return all write-side metadata, so an update after import could erase existing imports or datasource metadata. Set metadata to the complete desired imports and datasource values before updating this template.",
 		)
 		return
 	}

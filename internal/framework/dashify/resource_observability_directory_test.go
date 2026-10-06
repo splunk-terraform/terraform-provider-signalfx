@@ -564,7 +564,7 @@ func TestResourceObservabilityDirectoryLifecycleAndGeneratedConfig(t *testing.T)
 			TerraformVersionChecks: []tfversion.TerraformVersionCheck{
 				tfversion.SkipBelow(tfversion.Version1_5_0),
 			},
-			ProtoV5ProviderFactories: fwtest.NewMockProto5Server(
+			ProtoV6ProviderFactories: fwtest.NewMockProto6Server(
 				t,
 				store.handlers(),
 				fwtest.WithMockResources(NewResourceObservabilityDirectory),

@@ -46,7 +46,7 @@ const observabilityTemplateUpdatedConfig = `resource "signalfx_observability_tem
     "<Chart>" = []
   })
 
-  metadata {
+  metadata = {
     imports = ["shared"]
   }
 }`
@@ -66,13 +66,15 @@ func TestResourceObservabilityTemplateMetadataAndSchema(t *testing.T) {
 	assert.True(t, rootElement.IsRequired())
 	require.Len(t, rootElement.PlanModifiers, 1)
 	assert.True(t, schemaResponse.Schema.Attributes["spec"].IsRequired())
-	metadataBlock, ok := schemaResponse.Schema.Blocks["metadata"].(schema.SingleNestedBlock)
+	metadataAttribute, ok := schemaResponse.Schema.Attributes["metadata"].(schema.SingleNestedAttribute)
 	require.True(t, ok)
-	assert.Empty(t, metadataBlock.Validators)
-	assert.NotContains(t, metadataBlock.Attributes, "root_element")
-	assert.True(t, metadataBlock.Attributes["imports"].IsOptional())
-	datasource, ok := metadataBlock.Blocks["datasource"].(schema.SingleNestedBlock)
+	assert.True(t, metadataAttribute.IsOptional())
+	assert.Empty(t, metadataAttribute.Validators)
+	assert.NotContains(t, metadataAttribute.Attributes, "root_element")
+	assert.True(t, metadataAttribute.Attributes["imports"].IsOptional())
+	datasource, ok := metadataAttribute.Attributes["datasource"].(schema.SingleNestedAttribute)
 	require.True(t, ok)
+	assert.True(t, datasource.IsOptional())
 	assert.True(t, datasource.Attributes["type"].IsOptional())
 	assert.True(t, datasource.Attributes["program_text"].IsOptional())
 	assert.True(t, datasource.Attributes["slo_id"].IsOptional())
@@ -85,8 +87,8 @@ func TestResourceObservabilityTemplateImportsValidation(t *testing.T) {
 
 	var schemaResponse resource.SchemaResponse
 	NewResourceObservabilityTemplate().Schema(t.Context(), resource.SchemaRequest{}, &schemaResponse)
-	metadataBlock := schemaResponse.Schema.Blocks["metadata"].(schema.SingleNestedBlock)
-	importsAttr := metadataBlock.Attributes["imports"].(schema.ListAttribute)
+	metadataAttribute := schemaResponse.Schema.Attributes["metadata"].(schema.SingleNestedAttribute)
+	importsAttr := metadataAttribute.Attributes["imports"].(schema.ListAttribute)
 
 	validate := func(values []string) bool {
 		list, diags := types.ListValueFrom(t.Context(), types.StringType, values)
@@ -232,7 +234,7 @@ func TestResourceObservabilityTemplateRejectsInvalidConfiguration(t *testing.T) 
 		t.Run(name, func(t *testing.T) {
 			testresource.UnitTest(t, testresource.TestCase{
 				IsUnitTest: true,
-				ProtoV5ProviderFactories: fwtest.NewMockProto5Server(
+				ProtoV6ProviderFactories: fwtest.NewMockProto6Server(
 					t, nil, fwtest.WithMockResources(NewResourceObservabilityTemplate),
 				),
 				Steps: []testresource.TestStep{{
@@ -258,7 +260,7 @@ func TestResourceObservabilityTemplateLifecycleAndGeneratedConfig(t *testing.T) 
 			TerraformVersionChecks: []tfversion.TerraformVersionCheck{
 				tfversion.SkipBelow(tfversion.Version1_5_0),
 			},
-			ProtoV5ProviderFactories: fwtest.NewMockProto5Server(
+			ProtoV6ProviderFactories: fwtest.NewMockProto6Server(
 				t,
 				store.handlers(),
 				fwtest.WithMockResources(NewResourceObservabilityTemplate),
@@ -298,7 +300,7 @@ func TestResourceObservabilityTemplateRecreatesAfterRemoteDelete(t *testing.T) {
 
 	testresource.UnitTest(t, testresource.TestCase{
 		IsUnitTest: true,
-		ProtoV5ProviderFactories: fwtest.NewMockProto5Server(
+		ProtoV6ProviderFactories: fwtest.NewMockProto6Server(
 			t, store.handlers(), fwtest.WithMockResources(NewResourceObservabilityTemplate),
 		),
 		Steps: []testresource.TestStep{
@@ -326,7 +328,7 @@ func TestResourceObservabilityTemplateCreateReportsMissingEndpoint(t *testing.T)
 
 	testresource.UnitTest(t, testresource.TestCase{
 		IsUnitTest: true,
-		ProtoV5ProviderFactories: fwtest.NewMockProto5Server(
+		ProtoV6ProviderFactories: fwtest.NewMockProto6Server(
 			t, handlers, fwtest.WithMockResources(NewResourceObservabilityTemplate),
 		),
 		Steps: []testresource.TestStep{{
@@ -344,7 +346,7 @@ func TestResourceObservabilityTemplateUpdateReportsNotFound(t *testing.T) {
 
 	testresource.UnitTest(t, testresource.TestCase{
 		IsUnitTest: true,
-		ProtoV5ProviderFactories: fwtest.NewMockProto5Server(
+		ProtoV6ProviderFactories: fwtest.NewMockProto6Server(
 			t, handlers, fwtest.WithMockResources(NewResourceObservabilityTemplate),
 		),
 		Steps: []testresource.TestStep{
@@ -373,7 +375,7 @@ func TestResourceObservabilityTemplateImportedUpdateRequiresMetadata(t *testing.
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
 			tfversion.SkipBelow(tfversion.Version1_5_0),
 		},
-		ProtoV5ProviderFactories: fwtest.NewMockProto5Server(
+		ProtoV6ProviderFactories: fwtest.NewMockProto6Server(
 			t, store.handlers(), fwtest.WithMockResources(NewResourceObservabilityTemplate),
 		),
 		Steps: []testresource.TestStep{
