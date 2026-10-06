@@ -9,13 +9,14 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
-	"sync"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -35,6 +36,12 @@ func TestResourceObservabilityDirectoryMetadataAndSchema(t *testing.T) {
 	var metadata resource.MetadataResponse
 	r.Metadata(context.Background(), resource.MetadataRequest{ProviderTypeName: "signalfx"}, &metadata)
 	assert.Equal(t, "signalfx_observability_directory", metadata.TypeName)
+	var schemaResponse resource.SchemaResponse
+	r.Schema(t.Context(), resource.SchemaRequest{}, &schemaResponse)
+	pathAttribute, ok := schemaResponse.Schema.Attributes["path"].(schema.StringAttribute)
+	require.True(t, ok)
+	require.Len(t, pathAttribute.PlanModifiers, 1)
+	assert.IsType(t, stringplanmodifier.RequiresReplace(), pathAttribute.PlanModifiers[0])
 	assert.NoError(t, fwtest.ResourceSchemaValidate(r, observabilityDirectoryModel{
 		Templates: types.ListNull(types.StringType),
 	}))
@@ -102,6 +109,22 @@ func TestObservabilityDirectoryPatchReplacesMembership(t *testing.T) {
 	require.False(t, diags.HasError(), diags)
 	require.NotNil(t, patch.Templates)
 	assert.Empty(t, patch.Templates)
+
+	patch, diags = observabilityDirectoryPatch(
+		t.Context(),
+		types.BoolNull(),
+		types.ListNull(types.StringType),
+	)
+	require.False(t, diags.HasError(), diags)
+	require.NotNil(t, patch.Pinned)
+	assert.True(t, *patch.Pinned)
+	assert.Nil(t, patch.Templates)
+
+	invalid := types.ListValueMust(types.StringType, []attr.Value{types.StringValue("invalid/id")})
+	patch, diags = observabilityDirectoryPatch(t.Context(), types.BoolValue(true), invalid)
+	assert.Nil(t, patch)
+	require.True(t, diags.HasError())
+	assert.Equal(t, "Invalid Template ID", diags.Errors()[0].Summary())
 }
 
 func TestResourceObservabilityDirectoryTemplatesRejectsDuplicates(t *testing.T) {
@@ -126,52 +149,89 @@ func TestResourceObservabilityDirectoryTemplatesRejectsDuplicates(t *testing.T) 
 }
 
 func TestObservabilityReservedDirectoryPath(t *testing.T) {
-	for _, path := range []string{"~templates", "~users", "team/~users", "~observability/homepage"} {
+	for _, path := range []string{
+		"~demo/team", "~local/team", "~signalview/team", "~templates/team",
+		"~users", "team/~users", "~users/example@example.com", "~observability/homepage",
+	} {
 		assert.Equal(t, path, observabilityReservedDirectoryPath(path))
 	}
-	assert.Empty(t, observabilityReservedDirectoryPath("~organization/platform/dashboards"))
+	for _, path := range []string{
+		"~demo-team", "~local-team", "~signalview-team", "~templates-team",
+		"team/~users-extra", "~organization/platform/dashboards",
+	} {
+		assert.Empty(t, observabilityReservedDirectoryPath(path))
+	}
+}
+
+func TestResourceObservabilityDirectoryRejectsReservedPathDuringValidation(t *testing.T) {
+	managed, resourceSchema := configuredObservabilityDirectoryResourceWithHandlers(t, nil)
+	config := tfsdk.Plan{Schema: resourceSchema}
+	require.False(t, config.Set(t.Context(), observabilityDirectoryModel{
+		ID:        types.StringUnknown(),
+		Path:      types.StringValue("~templates"),
+		Templates: types.ListValueMust(types.StringType, nil),
+		Pinned:    types.BoolValue(true),
+	}).HasError())
+
+	var response resource.ValidateConfigResponse
+	managed.ValidateConfig(t.Context(), resource.ValidateConfigRequest{
+		Config: tfsdk.Config{Schema: resourceSchema, Raw: config.Raw},
+	}, &response)
+
+	require.True(t, response.Diagnostics.HasError())
+	assert.Equal(t, "Reserved directory path", response.Diagnostics.Errors()[0].Summary())
 }
 
 func TestResourceObservabilityDirectoryRejectsUnoccupiedCreateAndUpdate(t *testing.T) {
-	store := newDirectoryAPIStore()
-	managed, resourceSchema := configuredObservabilityDirectoryResource(t, store)
-	pathValue := types.StringValue("~organization/platform/dashboards")
+	const directoryPath = "~organization/platform/dashboards"
+	pathValue := types.StringValue(directoryPath)
 	emptyTemplates := types.ListValueMust(types.StringType, nil)
-
-	plan := tfsdk.Plan{Schema: resourceSchema}
-	require.False(t, plan.Set(t.Context(), observabilityDirectoryModel{
+	planModel := observabilityDirectoryModel{
 		ID:        types.StringUnknown(),
 		Path:      pathValue,
 		Templates: emptyTemplates,
 		Pinned:    types.BoolValue(false),
-	}).HasError())
-	var validation resource.ValidateConfigResponse
-	managed.ValidateConfig(t.Context(), resource.ValidateConfigRequest{
-		Config: tfsdk.Config{Schema: resourceSchema, Raw: plan.Raw},
-	}, &validation)
-	require.False(t, validation.Diagnostics.HasError(), validation.Diagnostics)
+	}
 
-	create := resource.CreateResponse{State: tfsdk.State{Schema: resourceSchema}}
-	managed.Create(t.Context(), resource.CreateRequest{Plan: plan}, &create)
-	require.True(t, create.Diagnostics.HasError())
-	assert.Equal(t, "Unoccupied directory", create.Diagnostics.Errors()[0].Summary())
+	t.Run("create", func(t *testing.T) {
+		handlers := map[string]http.Handler{
+			"GET /v2/directory/{path...}": http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				assert.NoError(t, json.NewEncoder(w).Encode(directory.Result{Data: &directory.Entry{Path: directoryPath}}))
+			}),
+			"PATCH /v2/directory/{path...}": http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+				t.Error("unexpected directory PATCH")
+			}),
+		}
+		managed, resourceSchema := configuredObservabilityDirectoryResourceWithHandlers(t, handlers)
+		plan := tfsdk.Plan{Schema: resourceSchema}
+		require.False(t, plan.Set(t.Context(), planModel).HasError())
+		response := resource.CreateResponse{State: tfsdk.State{Schema: resourceSchema}}
+		managed.Create(t.Context(), resource.CreateRequest{Plan: plan}, &response)
+		require.True(t, response.Diagnostics.HasError())
+		assert.Equal(t, "Unoccupied directory", response.Diagnostics.Errors()[0].Summary())
+	})
 
-	store.entries[pathValue.ValueString()] = &directory.Entry{Path: pathValue.ValueString(), Pinned: true}
-	state := tfsdk.State{Schema: resourceSchema}
-	require.False(t, state.Set(t.Context(), observabilityDirectoryModel{
-		ID:        pathValue,
-		Path:      pathValue,
-		Templates: emptyTemplates,
-		Pinned:    types.BoolValue(true),
-	}).HasError())
-	update := resource.UpdateResponse{State: state}
-	managed.Update(t.Context(), resource.UpdateRequest{Plan: plan, State: state}, &update)
-	require.True(t, update.Diagnostics.HasError())
-	assert.Equal(t, "Unoccupied directory", update.Diagnostics.Errors()[0].Summary())
-	store.mu.Lock()
-	entry := store.entries[pathValue.ValueString()]
-	store.mu.Unlock()
-	assert.True(t, entry.Pinned)
+	t.Run("update", func(t *testing.T) {
+		handlers := map[string]http.Handler{
+			"GET /v2/directory/{path...}": http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				assert.NoError(t, json.NewEncoder(w).Encode(directory.Result{Data: &directory.Entry{Path: directoryPath, Pinned: true}}))
+			}),
+			"PATCH /v2/directory/{path...}": http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+				t.Error("unexpected directory PATCH")
+			}),
+		}
+		managed, resourceSchema := configuredObservabilityDirectoryResourceWithHandlers(t, handlers)
+		plan := tfsdk.Plan{Schema: resourceSchema}
+		require.False(t, plan.Set(t.Context(), planModel).HasError())
+		state := tfsdk.State{Schema: resourceSchema}
+		require.False(t, state.Set(t.Context(), observabilityDirectoryModel{
+			ID: pathValue, Path: pathValue, Templates: emptyTemplates, Pinned: types.BoolValue(true),
+		}).HasError())
+		response := resource.UpdateResponse{State: state}
+		managed.Update(t.Context(), resource.UpdateRequest{Plan: plan, State: state}, &response)
+		require.True(t, response.Diagnostics.HasError())
+		assert.Equal(t, "Unoccupied directory", response.Diagnostics.Errors()[0].Summary())
+	})
 }
 
 func TestResourceObservabilityDirectoryPlanRejectsUnoccupiedCreate(t *testing.T) {
@@ -228,13 +288,31 @@ resource "signalfx_observability_directory" "test" {
 
 func TestResourceObservabilityDirectoryAllowsUnpinnedParentWithChild(t *testing.T) {
 	const directoryPath = "~organization/platform/dashboards"
-	store := newDirectoryAPIStore()
-	store.entries[directoryPath] = &directory.Entry{
-		Path:     directoryPath,
-		Pinned:   true,
-		Children: []string{"/v2/directory/~organization/platform/dashboards/team"},
+	children := []string{"/v2/directory/~organization/platform/dashboards/team"}
+	entryFixture := directory.Entry{Path: directoryPath, Pinned: true, Children: children}
+	handlers := map[string]http.Handler{
+		"GET /v2/directory/{path...}": http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			assert.NoError(t, json.NewEncoder(w).Encode(directory.Result{Data: &entryFixture}))
+		}),
+		"PATCH /v2/directory/{path...}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			var patch directory.PatchDirectoryEntryRequest
+			if err := json.NewDecoder(r.Body).Decode(&patch); err != nil {
+				t.Errorf("decode directory patch: %v", err)
+				http.Error(w, "invalid patch", http.StatusBadRequest)
+				return
+			}
+			if patch.Pinned == nil {
+				t.Error("directory patch omitted pinned")
+				http.Error(w, "missing pinned", http.StatusBadRequest)
+				return
+			}
+			assert.False(t, *patch.Pinned)
+			assert.Empty(t, patch.Templates)
+			entryFixture = directory.Entry{Path: directoryPath, Children: children}
+			assert.NoError(t, json.NewEncoder(w).Encode(directory.Result{Data: &entryFixture}))
+		}),
 	}
-	managed, resourceSchema := configuredObservabilityDirectoryResource(t, store)
+	managed, resourceSchema := configuredObservabilityDirectoryResourceWithHandlers(t, handlers)
 	planModel := observabilityDirectoryModel{
 		ID:        types.StringValue(directoryPath),
 		Path:      types.StringValue(directoryPath),
@@ -267,18 +345,23 @@ func TestResourceObservabilityDirectoryAllowsUnpinnedParentWithChild(t *testing.
 }
 
 func TestResourceObservabilityDirectoryCreateRefusesExistingEntry(t *testing.T) {
-	store := newDirectoryAPIStore()
-	store.entries["~organization/platform/dashboards"] = &directory.Entry{
-		Path:      "~organization/platform/dashboards",
-		Templates: []string{"/v2/template/existing"},
-		Pinned:    true,
+	const directoryPath = "~organization/platform/dashboards"
+	handlers := map[string]http.Handler{
+		"GET /v2/directory/{path...}": http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			assert.NoError(t, json.NewEncoder(w).Encode(directory.Result{Data: &directory.Entry{
+				Path: directoryPath, Templates: []string{"/v2/template/existing"}, Pinned: true,
+			}}))
+		}),
+		"PATCH /v2/directory/{path...}": http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+			t.Error("unexpected directory PATCH")
+		}),
 	}
-	managed, resourceSchema := configuredObservabilityDirectoryResource(t, store)
+	managed, resourceSchema := configuredObservabilityDirectoryResourceWithHandlers(t, handlers)
 
 	plan := tfsdk.Plan{Schema: resourceSchema}
 	require.False(t, plan.Set(t.Context(), observabilityDirectoryModel{
 		ID:        types.StringUnknown(),
-		Path:      types.StringValue("~organization/platform/dashboards"),
+		Path:      types.StringValue(directoryPath),
 		Templates: types.ListValueMust(types.StringType, nil),
 		Pinned:    types.BoolValue(true),
 	}).HasError())
@@ -287,40 +370,39 @@ func TestResourceObservabilityDirectoryCreateRefusesExistingEntry(t *testing.T) 
 
 	require.True(t, response.Diagnostics.HasError())
 	assert.Equal(t, "Directory already exists", response.Diagnostics.Errors()[0].Summary())
-	store.mu.Lock()
-	entry := store.entries["~organization/platform/dashboards"]
-	store.mu.Unlock()
-	assert.Equal(t, []string{"/v2/template/existing"}, entry.Templates)
-	assert.True(t, entry.Pinned)
 }
 
 func TestResourceObservabilityDirectoryCreateRejectsUnexpectedLookup(t *testing.T) {
 	const directoryPath = "~organization/platform/dashboards"
 	for name, test := range map[string]struct {
-		status int
-		entry  *directory.Entry
-		want   string
+		status      int
+		entry       *directory.Entry
+		wantSummary string
+		wantDetail  string
 	}{
-		"missing entry": {want: "Directory API returned no directory entry"},
+		"missing entry": {wantDetail: "Directory API returned no directory entry"},
 		"different path": {
-			entry: &directory.Entry{Path: "~organization/platform/other", Pinned: true},
-			want:  "Directory API returned a different logical path",
+			entry:      &directory.Entry{Path: "~organization/platform/other", Pinned: true},
+			wantDetail: "Directory API returned a different logical path",
 		},
-		"server error":         {status: http.StatusInternalServerError},
-		"unexpected not found": {status: http.StatusNotFound, want: "HTTP 404"},
+		"server error": {
+			status: http.StatusInternalServerError, wantSummary: "status code 500", wantDetail: "lookup failed",
+		},
+		"unexpected not found": {status: http.StatusNotFound, wantDetail: "HTTP 404"},
 	} {
 		t.Run(name, func(t *testing.T) {
-			handlers := newDirectoryAPIStore().handlers()
-			handlers["GET /v2/directory/{path...}"] = http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-				if test.status != 0 {
-					http.Error(w, "lookup failed", test.status)
-					return
-				}
-				assert.NoError(t, json.NewEncoder(w).Encode(directory.Result{Data: test.entry}))
-			})
-			handlers["PATCH /v2/directory/{path...}"] = http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {
-				t.Error("unexpected directory PATCH")
-			})
+			handlers := map[string]http.Handler{
+				"GET /v2/directory/{path...}": http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					if test.status != 0 {
+						http.Error(w, "lookup failed", test.status)
+						return
+					}
+					assert.NoError(t, json.NewEncoder(w).Encode(directory.Result{Data: test.entry}))
+				}),
+				"PATCH /v2/directory/{path...}": http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+					t.Error("unexpected directory PATCH")
+				}),
+			}
 			managed, resourceSchema := configuredObservabilityDirectoryResourceWithHandlers(t, handlers)
 			plan := tfsdk.Plan{Schema: resourceSchema}
 			require.False(t, plan.Set(t.Context(), observabilityDirectoryModel{
@@ -333,16 +415,18 @@ func TestResourceObservabilityDirectoryCreateRejectsUnexpectedLookup(t *testing.
 			response := resource.CreateResponse{State: tfsdk.State{Schema: resourceSchema}}
 			managed.Create(t.Context(), resource.CreateRequest{Plan: plan}, &response)
 			require.True(t, response.Diagnostics.HasError())
-			if test.want != "" {
-				assert.Contains(t, response.Diagnostics.Errors()[0].Detail(), test.want)
+			if test.wantSummary != "" {
+				assert.Contains(t, response.Diagnostics.Errors()[0].Summary(), test.wantSummary)
+			}
+			if test.wantDetail != "" {
+				assert.Contains(t, response.Diagnostics.Errors()[0].Detail(), test.wantDetail)
 			}
 		})
 	}
 }
 
 func TestResourceObservabilityDirectoryCreateRejectsResolvedReservedPath(t *testing.T) {
-	store := newDirectoryAPIStore()
-	managed, resourceSchema := configuredObservabilityDirectoryResource(t, store)
+	managed, resourceSchema := configuredObservabilityDirectoryResourceWithHandlers(t, nil)
 
 	// A path that was unknown during ValidateConfig is known in the apply plan.
 	plan := tfsdk.Plan{Schema: resourceSchema}
@@ -357,19 +441,109 @@ func TestResourceObservabilityDirectoryCreateRejectsResolvedReservedPath(t *test
 
 	require.True(t, response.Diagnostics.HasError())
 	assert.Equal(t, "Reserved directory path", response.Diagnostics.Errors()[0].Summary())
-	store.mu.Lock()
-	defer store.mu.Unlock()
-	assert.Empty(t, store.entries)
+}
+
+func TestResourceObservabilityDirectoryRejectsIncompleteResponses(t *testing.T) {
+	const directoryPath = "~organization/platform/dashboards"
+	tests := map[string]struct {
+		operation string
+		entry     *directory.Entry
+		want      string
+	}{
+		"create without entry": {operation: "create", want: "Error creating directory"},
+		"create with different path": {
+			operation: "create",
+			entry:     &directory.Entry{Path: "~organization/platform/other", Pinned: true},
+			want:      "Unexpected Directory path",
+		},
+		"read without entry":   {operation: "read", want: "Error reading directory"},
+		"update without entry": {operation: "update", want: "Error updating directory"},
+		"update with different path": {
+			operation: "update",
+			entry:     &directory.Entry{Path: "~organization/platform/other", Pinned: true},
+			want:      "Unexpected Directory path",
+		},
+		"delete without entry": {operation: "delete", want: "Error deleting directory"},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			writeResult := func(w http.ResponseWriter, entry *directory.Entry) {
+				assert.NoError(t, json.NewEncoder(w).Encode(directory.Result{Data: entry}))
+			}
+			handlers := map[string]http.Handler{}
+			switch test.operation {
+			case "create":
+				handlers["GET /v2/directory/{path...}"] = http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					writeResult(w, &directory.Entry{Path: directoryPath})
+				})
+				handlers["PATCH /v2/directory/{path...}"] = http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					writeResult(w, test.entry)
+				})
+			case "read", "delete":
+				handlers["GET /v2/directory/{path...}"] = http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					writeResult(w, test.entry)
+				})
+			case "update":
+				handlers["PATCH /v2/directory/{path...}"] = http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					writeResult(w, test.entry)
+				})
+			}
+
+			managed, resourceSchema := configuredObservabilityDirectoryResourceWithHandlers(t, handlers)
+			model := observabilityDirectoryModel{
+				ID:        types.StringValue(directoryPath),
+				Path:      types.StringValue(directoryPath),
+				Templates: types.ListValueMust(types.StringType, nil),
+				Pinned:    types.BoolValue(true),
+			}
+			state := tfsdk.State{Schema: resourceSchema}
+			require.False(t, state.Set(t.Context(), model).HasError())
+
+			var diagnostics diag.Diagnostics
+			switch test.operation {
+			case "create":
+				model.ID = types.StringUnknown()
+				plan := tfsdk.Plan{Schema: resourceSchema}
+				require.False(t, plan.Set(t.Context(), model).HasError())
+				response := resource.CreateResponse{State: tfsdk.State{Schema: resourceSchema}}
+				managed.Create(t.Context(), resource.CreateRequest{Plan: plan}, &response)
+				diagnostics = response.Diagnostics
+			case "read":
+				response := resource.ReadResponse{State: state}
+				managed.Read(t.Context(), resource.ReadRequest{State: state}, &response)
+				diagnostics = response.Diagnostics
+			case "update":
+				plan := tfsdk.Plan{Schema: resourceSchema}
+				require.False(t, plan.Set(t.Context(), model).HasError())
+				response := resource.UpdateResponse{State: state}
+				managed.Update(t.Context(), resource.UpdateRequest{Plan: plan, State: state}, &response)
+				diagnostics = response.Diagnostics
+			case "delete":
+				response := resource.DeleteResponse{State: state}
+				managed.Delete(t.Context(), resource.DeleteRequest{State: state}, &response)
+				diagnostics = response.Diagnostics
+			}
+
+			require.True(t, diagnostics.HasError())
+			assert.Equal(t, test.want, diagnostics.Errors()[0].Summary())
+		})
+	}
 }
 
 func TestResourceObservabilityDirectoryReadRemovesMissingEntry(t *testing.T) {
-	store := newDirectoryAPIStore()
-	managed, resourceSchema := configuredObservabilityDirectoryResource(t, store)
+	const directoryPath = "~organization/platform/dashboards"
+	handlers := map[string]http.Handler{
+		"GET /v2/directory/{path...}": http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			assert.NoError(t, json.NewEncoder(w).Encode(directory.Result{Data: &directory.Entry{Path: directoryPath}}))
+		}),
+	}
+	managed, resourceSchema := configuredObservabilityDirectoryResourceWithHandlers(t, handlers)
 
 	state := tfsdk.State{Schema: resourceSchema}
 	require.False(t, state.Set(t.Context(), observabilityDirectoryModel{
-		ID:        types.StringValue("~organization/platform/dashboards"),
-		Path:      types.StringValue("~organization/platform/dashboards"),
+		ID:        types.StringValue(directoryPath),
+		Path:      types.StringValue(directoryPath),
 		Templates: types.ListValueMust(types.StringType, nil),
 		Pinned:    types.BoolValue(false),
 	}).HasError())
@@ -382,10 +556,11 @@ func TestResourceObservabilityDirectoryReadRemovesMissingEntry(t *testing.T) {
 
 func TestResourceObservabilityDirectoryReadReportsUnexpectedNotFound(t *testing.T) {
 	const directoryPath = "~organization/platform/dashboards"
-	handlers := newDirectoryAPIStore().handlers()
-	handlers["GET /v2/directory/{path...}"] = http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		http.Error(w, "directory endpoint unavailable", http.StatusNotFound)
-	})
+	handlers := map[string]http.Handler{
+		"GET /v2/directory/{path...}": http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			http.Error(w, "directory endpoint unavailable", http.StatusNotFound)
+		}),
+	}
 	managed, resourceSchema := configuredObservabilityDirectoryResourceWithHandlers(t, handlers)
 	state := tfsdk.State{Schema: resourceSchema}
 	require.False(t, state.Set(t.Context(), observabilityDirectoryModel{
@@ -399,6 +574,35 @@ func TestResourceObservabilityDirectoryReadReportsUnexpectedNotFound(t *testing.
 
 	require.True(t, response.Diagnostics.HasError())
 	assert.Contains(t, response.Diagnostics.Errors()[0].Detail(), "HTTP 404")
+	assert.Equal(t, state.Raw, response.State.Raw)
+}
+
+func TestResourceObservabilityDirectoryReadRejectsMismatchedResponsePath(t *testing.T) {
+	const directoryPath = "~organization/platform/dashboards"
+	handlers := map[string]http.Handler{
+		"GET /v2/directory/{path...}": http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			assert.NoError(t, json.NewEncoder(w).Encode(directory.Result{Data: &directory.Entry{
+				Path:   "~organization/platform/unrelated",
+				Pinned: true,
+			}}))
+		}),
+	}
+	managed, resourceSchema := configuredObservabilityDirectoryResourceWithHandlers(t, handlers)
+	state := tfsdk.State{Schema: resourceSchema}
+	require.False(t, state.Set(t.Context(), observabilityDirectoryModel{
+		ID:        types.StringValue(directoryPath),
+		Path:      types.StringValue(directoryPath),
+		Templates: types.ListValueMust(types.StringType, nil),
+		Pinned:    types.BoolValue(true),
+	}).HasError())
+
+	response := resource.ReadResponse{State: state}
+	managed.Read(t.Context(), resource.ReadRequest{State: state}, &response)
+
+	require.True(t, response.Diagnostics.HasError())
+	assert.Equal(t, "Unexpected Directory path", response.Diagnostics.Errors()[0].Summary())
+	assert.Contains(t, response.Diagnostics.Errors()[0].Detail(), `"~organization/platform/unrelated"`)
+	assert.Contains(t, response.Diagnostics.Errors()[0].Detail(), `"~organization/platform/dashboards"`)
 	assert.Equal(t, state.Raw, response.State.Raw)
 }
 
@@ -429,11 +633,11 @@ func TestResourceObservabilityDirectoryReportsErrorEnvelope(t *testing.T) {
 }
 
 func TestResourceObservabilityDirectoryUpdateReportsUnexpectedNotFound(t *testing.T) {
-	store := newDirectoryAPIStore()
-	handlers := store.handlers()
-	handlers["PATCH /v2/directory/{path...}"] = http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		http.Error(w, "directory entry not found", http.StatusNotFound)
-	})
+	handlers := map[string]http.Handler{
+		"PATCH /v2/directory/{path...}": http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			http.Error(w, "directory entry not found", http.StatusNotFound)
+		}),
+	}
 	managed, resourceSchema := configuredObservabilityDirectoryResourceWithHandlers(t, handlers)
 
 	model := observabilityDirectoryModel{
@@ -456,14 +660,109 @@ func TestResourceObservabilityDirectoryUpdateReportsUnexpectedNotFound(t *testin
 	assert.Equal(t, state.Raw, response.State.Raw)
 }
 
+func TestResourceObservabilityDirectoryWriteFailures(t *testing.T) {
+	const directoryPath = "~organization/platform/dashboards"
+	base := observabilityDirectoryModel{
+		ID:        types.StringValue(directoryPath),
+		Path:      types.StringValue(directoryPath),
+		Templates: types.ListValueMust(types.StringType, nil),
+		Pinned:    types.BoolValue(true),
+	}
+
+	for name, test := range map[string]struct {
+		operation   string
+		model       observabilityDirectoryModel
+		handlers    map[string]http.Handler
+		wantSummary string
+		wantDetail  string
+	}{
+		"create patch failure": {
+			operation:   "create",
+			model:       base,
+			wantSummary: "status code 500",
+			wantDetail:  "patch failed",
+			handlers: map[string]http.Handler{
+				"GET /v2/directory/{path...}": http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					assert.NoError(t, json.NewEncoder(w).Encode(directory.Result{Data: &directory.Entry{Path: directoryPath}}))
+				}),
+				"PATCH /v2/directory/{path...}": http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					http.Error(w, "patch failed", http.StatusInternalServerError)
+				}),
+			},
+		},
+		"update lookup failure": {
+			operation:   "update",
+			wantSummary: "status code 500",
+			wantDetail:  "lookup failed",
+			model: observabilityDirectoryModel{
+				ID: base.ID, Path: base.Path, Templates: base.Templates, Pinned: types.BoolValue(false),
+			},
+			handlers: map[string]http.Handler{
+				"GET /v2/directory/{path...}": http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					http.Error(w, "lookup failed", http.StatusInternalServerError)
+				}),
+			},
+		},
+		"update invalid template": {
+			operation:   "update",
+			wantSummary: "Invalid Template ID",
+			model: observabilityDirectoryModel{
+				ID:   base.ID,
+				Path: base.Path,
+				Templates: types.ListValueMust(types.StringType, []attr.Value{
+					types.StringValue("invalid/id"),
+				}),
+				Pinned: types.BoolValue(true),
+			},
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			managed, resourceSchema := configuredObservabilityDirectoryResourceWithHandlers(t, test.handlers)
+			state := tfsdk.State{Schema: resourceSchema}
+			require.False(t, state.Set(t.Context(), base).HasError())
+			plan := tfsdk.Plan{Schema: resourceSchema}
+			planned := test.model
+			if test.operation == "create" {
+				planned.ID = types.StringUnknown()
+			}
+			require.False(t, plan.Set(t.Context(), planned).HasError())
+
+			var diagnostics diag.Diagnostics
+			if test.operation == "create" {
+				response := resource.CreateResponse{State: tfsdk.State{Schema: resourceSchema}}
+				managed.Create(t.Context(), resource.CreateRequest{Plan: plan}, &response)
+				diagnostics = response.Diagnostics
+			} else {
+				response := resource.UpdateResponse{State: state}
+				managed.Update(t.Context(), resource.UpdateRequest{Plan: plan, State: state}, &response)
+				diagnostics = response.Diagnostics
+			}
+
+			require.True(t, diagnostics.HasError())
+			assert.Contains(t, diagnostics.Errors()[0].Summary(), test.wantSummary)
+			if test.wantDetail != "" {
+				assert.Contains(t, diagnostics.Errors()[0].Detail(), test.wantDetail)
+			}
+		})
+	}
+}
+
 func TestResourceObservabilityDirectoryDeleteIgnoresMissingEntry(t *testing.T) {
-	store := newDirectoryAPIStore()
-	managed, resourceSchema := configuredObservabilityDirectoryResource(t, store)
+	const directoryPath = "~organization/platform/dashboards"
+	handlers := map[string]http.Handler{
+		"GET /v2/directory/{path...}": http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			assert.NoError(t, json.NewEncoder(w).Encode(directory.Result{Data: &directory.Entry{Path: directoryPath}}))
+		}),
+		"DELETE /v2/directory/{path...}": http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+			t.Error("unexpected directory DELETE")
+		}),
+	}
+	managed, resourceSchema := configuredObservabilityDirectoryResourceWithHandlers(t, handlers)
 
 	state := tfsdk.State{Schema: resourceSchema}
 	require.False(t, state.Set(t.Context(), observabilityDirectoryModel{
-		ID:        types.StringValue("~organization/platform/dashboards"),
-		Path:      types.StringValue("~organization/platform/dashboards"),
+		ID:        types.StringValue(directoryPath),
+		Path:      types.StringValue(directoryPath),
 		Templates: types.ListValueMust(types.StringType, nil),
 		Pinned:    types.BoolValue(false),
 	}).HasError())
@@ -475,15 +774,23 @@ func TestResourceObservabilityDirectoryDeleteIgnoresMissingEntry(t *testing.T) {
 
 func TestResourceObservabilityDirectoryDeleteReportsUnexpectedNotFound(t *testing.T) {
 	const directoryPath = "~organization/platform/dashboards"
-	for name, failingMethod := range map[string]string{
-		"lookup": "GET /v2/directory/{path...}",
-		"delete": "DELETE /v2/directory/{path...}",
+	for name, test := range map[string]struct {
+		failingMethod string
+		wantSummary   string
+	}{
+		"lookup": {failingMethod: "GET /v2/directory/{path...}", wantSummary: "Error checking directory"},
+		"delete": {failingMethod: "DELETE /v2/directory/{path...}", wantSummary: "Error deleting directory"},
 	} {
 		t.Run(name, func(t *testing.T) {
-			store := newDirectoryAPIStore()
-			store.entries[directoryPath] = &directory.Entry{Path: directoryPath, Pinned: true}
-			handlers := store.handlers()
-			handlers[failingMethod] = http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			handlers := map[string]http.Handler{
+				"GET /v2/directory/{path...}": http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					assert.NoError(t, json.NewEncoder(w).Encode(directory.Result{Data: &directory.Entry{Path: directoryPath, Pinned: true}}))
+				}),
+				"DELETE /v2/directory/{path...}": http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					w.WriteHeader(http.StatusNoContent)
+				}),
+			}
+			handlers[test.failingMethod] = http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 				http.Error(w, "directory endpoint unavailable", http.StatusNotFound)
 			})
 			managed, resourceSchema := configuredObservabilityDirectoryResourceWithHandlers(t, handlers)
@@ -498,26 +805,24 @@ func TestResourceObservabilityDirectoryDeleteReportsUnexpectedNotFound(t *testin
 			managed.Delete(t.Context(), resource.DeleteRequest{State: state}, &response)
 
 			require.True(t, response.Diagnostics.HasError())
+			assert.Equal(t, test.wantSummary, response.Diagnostics.Errors()[0].Summary())
 			assert.Contains(t, response.Diagnostics.Errors()[0].Detail(), "HTTP 404")
-			store.mu.Lock()
-			_, exists := store.entries[directoryPath]
-			store.mu.Unlock()
-			assert.True(t, exists)
 		})
 	}
 }
 
 func TestResourceObservabilityDirectoryDeleteRejectsDifferentPath(t *testing.T) {
 	const directoryPath = "~organization/platform/dashboards"
-	handlers := newDirectoryAPIStore().handlers()
-	handlers["GET /v2/directory/{path...}"] = http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		assert.NoError(t, json.NewEncoder(w).Encode(directory.Result{Data: &directory.Entry{
-			Path: "~organization/platform/other", Pinned: true,
-		}}))
-	})
-	handlers["DELETE /v2/directory/{path...}"] = http.HandlerFunc(func(_ http.ResponseWriter, _ *http.Request) {
-		t.Error("unexpected directory DELETE")
-	})
+	handlers := map[string]http.Handler{
+		"GET /v2/directory/{path...}": http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			assert.NoError(t, json.NewEncoder(w).Encode(directory.Result{Data: &directory.Entry{
+				Path: "~organization/platform/other", Pinned: true,
+			}}))
+		}),
+		"DELETE /v2/directory/{path...}": http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+			t.Error("unexpected directory DELETE")
+		}),
+	}
 	managed, resourceSchema := configuredObservabilityDirectoryResourceWithHandlers(t, handlers)
 	state := tfsdk.State{Schema: resourceSchema}
 	require.False(t, state.Set(t.Context(), observabilityDirectoryModel{
@@ -535,12 +840,13 @@ func TestResourceObservabilityDirectoryDeleteRejectsDifferentPath(t *testing.T) 
 
 func TestResourceObservabilityDirectoryReadRejectsUnsupportedTemplateReference(t *testing.T) {
 	const directoryPath = "~organization/platform/dashboards"
-	handlers := newDirectoryAPIStore().handlers()
-	handlers["GET /v2/directory/{path...}"] = http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		assert.NoError(t, json.NewEncoder(w).Encode(directory.Result{Data: &directory.Entry{
-			Path: directoryPath, Templates: []string{"/v3/templates/other"},
-		}}))
-	})
+	handlers := map[string]http.Handler{
+		"GET /v2/directory/{path...}": http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			assert.NoError(t, json.NewEncoder(w).Encode(directory.Result{Data: &directory.Entry{
+				Path: directoryPath, Templates: []string{"/v3/templates/other"},
+			}}))
+		}),
+	}
 	managed, resourceSchema := configuredObservabilityDirectoryResourceWithHandlers(t, handlers)
 	state := tfsdk.State{Schema: resourceSchema}
 	require.False(t, state.Set(t.Context(), observabilityDirectoryModel{
@@ -555,11 +861,6 @@ func TestResourceObservabilityDirectoryReadRejectsUnsupportedTemplateReference(t
 	require.True(t, response.Diagnostics.HasError())
 	assert.Equal(t, "Invalid Directory Template reference", response.Diagnostics.Errors()[0].Summary())
 	assert.Equal(t, state.Raw, response.State.Raw)
-}
-
-func configuredObservabilityDirectoryResource(t *testing.T, store *directoryAPIStore) (*observabilityDirectoryResource, schema.Schema) {
-	t.Helper()
-	return configuredObservabilityDirectoryResourceWithHandlers(t, store.handlers())
 }
 
 func configuredObservabilityDirectoryResourceWithHandlers(t *testing.T, handlers map[string]http.Handler) (*observabilityDirectoryResource, schema.Schema) {
@@ -617,10 +918,20 @@ func TestObservabilityDirectoryDeleteSafeguards(t *testing.T) {
 
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			store := newDirectoryAPIStore()
-			store.entries[test.entry.Path] = &test.entry
+			deleteCalled := false
+			handlers := map[string]http.Handler{
+				"GET /v2/directory/{path...}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					assert.Equal(t, "/v2/directory/"+test.entry.Path, r.URL.EscapedPath())
+					assert.NoError(t, json.NewEncoder(w).Encode(directory.Result{Data: &test.entry}))
+				}),
+				"DELETE /v2/directory/{path...}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					assert.Equal(t, "/v2/directory/"+test.entry.Path, r.URL.EscapedPath())
+					deleteCalled = true
+					w.WriteHeader(http.StatusNoContent)
+				}),
+			}
 
-			managed, resourceSchema := configuredObservabilityDirectoryResource(t, store)
+			managed, resourceSchema := configuredObservabilityDirectoryResourceWithHandlers(t, handlers)
 			state := tfsdk.State{Schema: resourceSchema}
 			model, diags := observabilityDirectoryModelFromEntry(t.Context(), test.entry.Path, &test.entry)
 			require.False(t, diags.HasError(), diags)
@@ -640,16 +951,127 @@ func TestObservabilityDirectoryDeleteSafeguards(t *testing.T) {
 				assert.Contains(t, response.Diagnostics.Warnings()[0].Detail(), test.wantWarning)
 			}
 
-			store.mu.Lock()
-			_, exists := store.entries[test.entry.Path]
-			store.mu.Unlock()
-			assert.Equal(t, !test.wantDelete, exists)
+			assert.Equal(t, test.wantDelete, deleteCalled)
+		})
+	}
+}
+
+func TestResourceObservabilityDirectoryEncodedPathLifecycleAndImport(t *testing.T) {
+	for name, test := range map[string]struct {
+		path        string
+		escapedPath string
+		testImport  bool
+	}{
+		"space": {
+			path: "~organization/platform/My Charts", escapedPath: "/v2/directory/~organization/platform/My+Charts",
+		},
+		"literal plus": {
+			path: "~organization/platform/A+B", escapedPath: "/v2/directory/~organization/platform/A%2BB", testImport: true,
+		},
+		"unicode": {
+			path: "~organization/platform/zażółć/東京", escapedPath: "/v2/directory/~organization/platform/za%C5%BC%C3%B3%C5%82%C4%87/%E6%9D%B1%E4%BA%AC",
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			directoryPath := test.path
+			config := fmt.Sprintf(`resource "signalfx_observability_directory" "test" {
+  path   = %q
+  pinned = true
+}`, directoryPath)
+			entryFixture := directory.Entry{Path: directoryPath}
+			createHandlers := map[string]http.Handler{
+				"GET /v2/directory/{path...}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					assert.Equal(t, test.escapedPath, r.URL.EscapedPath())
+					assert.NoError(t, json.NewEncoder(w).Encode(directory.Result{Data: &entryFixture}))
+				}),
+				"PATCH /v2/directory/{path...}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					assert.Equal(t, test.escapedPath, r.URL.EscapedPath())
+					entryFixture = directory.Entry{Path: directoryPath, Pinned: true}
+					assert.NoError(t, json.NewEncoder(w).Encode(directory.Result{Data: &entryFixture}))
+				}),
+				"DELETE /v2/directory/{path...}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					assert.Equal(t, test.escapedPath, r.URL.EscapedPath())
+					entryFixture = directory.Entry{Path: directoryPath}
+					w.WriteHeader(http.StatusNoContent)
+				}),
+			}
+			testresource.UnitTest(t, testresource.TestCase{
+				IsUnitTest: true,
+				ProtoV6ProviderFactories: fwtest.NewMockProto6Server(
+					t, createHandlers, fwtest.WithMockResources(NewResourceObservabilityDirectory),
+				),
+				Steps: []testresource.TestStep{{
+					Config: config,
+					Check: testresource.ComposeAggregateTestCheckFunc(
+						testresource.TestCheckResourceAttr("signalfx_observability_directory.test", "id", directoryPath),
+						testresource.TestCheckResourceAttr("signalfx_observability_directory.test", "path", directoryPath),
+					),
+				}},
+			})
+
+			if !test.testImport {
+				return
+			}
+			importHandlers := map[string]http.Handler{
+				"GET /v2/directory/{path...}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					assert.Equal(t, test.escapedPath, r.URL.EscapedPath())
+					assert.NoError(t, json.NewEncoder(w).Encode(directory.Result{Data: &directory.Entry{Path: directoryPath, Pinned: true}}))
+				}),
+			}
+			testresource.UnitTest(t, testresource.TestCase{
+				IsUnitTest: true,
+				TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+					tfversion.SkipBelow(tfversion.Version1_5_0),
+				},
+				ProtoV6ProviderFactories: fwtest.NewMockProto6Server(
+					t, importHandlers, fwtest.WithMockResources(NewResourceObservabilityDirectory),
+				),
+				Steps: []testresource.TestStep{{
+					Config: fmt.Sprintf(`import {
+  to = signalfx_observability_directory.test
+  id = %q
+}
+%s`, directoryPath, config),
+					PlanOnly: true,
+				}},
+			})
 		})
 	}
 }
 
 func TestResourceObservabilityDirectoryLifecycleAndGeneratedConfig(t *testing.T) {
-	store := newDirectoryAPIStore()
+	const directoryPath = "~organization/platform/dashboards"
+	const requestPath = "/v2/directory/~organization/platform/dashboards"
+	entryFixture := directory.Entry{Path: directoryPath}
+	handlers := map[string]http.Handler{
+		"GET /v2/directory/{path...}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, requestPath, r.URL.EscapedPath())
+			assert.NoError(t, json.NewEncoder(w).Encode(directory.Result{Data: &entryFixture}))
+		}),
+		"PATCH /v2/directory/{path...}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, requestPath, r.URL.EscapedPath())
+			var patch directory.PatchDirectoryEntryRequest
+			if err := json.NewDecoder(r.Body).Decode(&patch); err != nil {
+				t.Errorf("decode directory patch: %v", err)
+				http.Error(w, "invalid patch", http.StatusBadRequest)
+				return
+			}
+			if patch.Pinned == nil {
+				t.Error("directory patch omitted pinned")
+				http.Error(w, "missing pinned", http.StatusBadRequest)
+				return
+			}
+			entryFixture = directory.Entry{
+				Path: directoryPath, Templates: patch.Templates, Pinned: *patch.Pinned,
+			}
+			assert.NoError(t, json.NewEncoder(w).Encode(directory.Result{Data: &entryFixture}))
+		}),
+		"DELETE /v2/directory/{path...}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, requestPath, r.URL.EscapedPath())
+			entryFixture = directory.Entry{Path: directoryPath}
+			w.WriteHeader(http.StatusNoContent)
+		}),
+	}
 	const initialConfig = `resource "signalfx_observability_directory" "test" {
   path = "~organization/platform/dashboards"
   templates = ["dashboard-a", "dashboard-b"]
@@ -665,7 +1087,6 @@ func TestResourceObservabilityDirectoryLifecycleAndGeneratedConfig(t *testing.T)
   templates = []
   pinned    = true
 }`
-
 	testresource.UnitTest(
 		t,
 		testresource.TestCase{
@@ -675,7 +1096,7 @@ func TestResourceObservabilityDirectoryLifecycleAndGeneratedConfig(t *testing.T)
 			},
 			ProtoV6ProviderFactories: fwtest.NewMockProto6Server(
 				t,
-				store.handlers(),
+				handlers,
 				fwtest.WithMockResources(NewResourceObservabilityDirectory),
 			),
 			Steps: []testresource.TestStep{
@@ -691,12 +1112,22 @@ func TestResourceObservabilityDirectoryLifecycleAndGeneratedConfig(t *testing.T)
 					),
 				},
 				{
+					PreConfig: func() {
+						entryFixture = directory.Entry{
+							Path: directoryPath, Templates: []string{"/v2/template/dashboard-a", "/v2/template/dashboard-b"}, Pinned: true,
+						}
+					},
 					ResourceName:    "signalfx_observability_directory.test",
 					ImportState:     true,
 					ImportStateKind: testresource.ImportBlockWithID,
 					GenerateConfig:  true,
 				},
 				{
+					PreConfig: func() {
+						entryFixture = directory.Entry{
+							Path: directoryPath, Templates: []string{"/v2/template/dashboard-a", "/v2/template/dashboard-b"}, Pinned: true,
+						}
+					},
 					Config: updatedConfig,
 					Check: testresource.ComposeAggregateTestCheckFunc(
 						testresource.TestCheckResourceAttr("signalfx_observability_directory.test", "id", "~organization/platform/dashboards"),
@@ -708,17 +1139,14 @@ func TestResourceObservabilityDirectoryLifecycleAndGeneratedConfig(t *testing.T)
 				},
 				{
 					PreConfig: func() {
-						store.mu.Lock()
-						assert.Equal(t, []string{
-							"/v2/template/dashboard-b",
-							"/v2/template/dashboard-c",
-						}, store.entries["~organization/platform/dashboards"].Templates)
-						store.entries["~organization/platform/dashboards"].Templates = []string{
-							"/v2/template/dashboard-b",
-							"/v2/template/dashboard-c",
-							"/v2/template/ui-added",
+						entryFixture = directory.Entry{
+							Path: directoryPath,
+							Templates: []string{
+								"/v2/template/dashboard-b",
+								"/v2/template/dashboard-c",
+								"/v2/template/ui-added",
+							},
 						}
-						store.mu.Unlock()
 					},
 					Config: updatedConfig,
 					Check: testresource.ComposeAggregateTestCheckFunc(
@@ -728,6 +1156,12 @@ func TestResourceObservabilityDirectoryLifecycleAndGeneratedConfig(t *testing.T)
 					),
 				},
 				{
+					PreConfig: func() {
+						assert.Equal(t, []string{"/v2/template/dashboard-b", "/v2/template/dashboard-c"}, entryFixture.Templates)
+						entryFixture = directory.Entry{
+							Path: directoryPath, Templates: []string{"/v2/template/dashboard-b", "/v2/template/dashboard-c"}, Pinned: false,
+						}
+					},
 					Config: emptyConfig,
 					Check: testresource.ComposeAggregateTestCheckFunc(
 						testresource.TestCheckResourceAttr("signalfx_observability_directory.test", "templates.#", "0"),
@@ -737,69 +1171,4 @@ func TestResourceObservabilityDirectoryLifecycleAndGeneratedConfig(t *testing.T)
 			},
 		},
 	)
-}
-
-// directoryAPIStore is a minimal in-memory fake of the Directory API used by
-// the Directory resource lifecycle tests.
-type directoryAPIStore struct {
-	mu      sync.Mutex
-	entries map[string]*directory.Entry
-}
-
-func newDirectoryAPIStore() *directoryAPIStore {
-	return &directoryAPIStore{entries: make(map[string]*directory.Entry)}
-}
-
-func (s *directoryAPIStore) handlers() map[string]http.Handler {
-	return map[string]http.Handler{
-		"GET /v2/directory/{path...}":    http.HandlerFunc(s.read),
-		"PATCH /v2/directory/{path...}":  http.HandlerFunc(s.patch),
-		"DELETE /v2/directory/{path...}": http.HandlerFunc(s.delete),
-	}
-}
-
-func (s *directoryAPIStore) read(w http.ResponseWriter, r *http.Request) {
-	s.mu.Lock()
-	entry, ok := s.entries[r.PathValue("path")]
-	s.mu.Unlock()
-	if !ok {
-		// The service synthesizes an unoccupied entry for an absent path.
-		entry = &directory.Entry{Path: r.PathValue("path")}
-	}
-	_ = json.NewEncoder(w).Encode(directory.Result{Data: entry})
-}
-
-func (s *directoryAPIStore) patch(w http.ResponseWriter, r *http.Request) {
-	var patch directory.PatchDirectoryEntryRequest
-	if err := json.NewDecoder(r.Body).Decode(&patch); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	path := r.PathValue("path")
-	s.mu.Lock()
-	entry, ok := s.entries[path]
-	if !ok {
-		entry = &directory.Entry{Path: path}
-		s.entries[path] = entry
-	}
-	if patch.Pinned != nil {
-		entry.Pinned = *patch.Pinned
-	}
-	if patch.Templates != nil {
-		entry.Templates = patch.Templates
-	}
-	if !observabilityDirectoryEntryOccupied(entry) {
-		delete(s.entries, path)
-	}
-	s.mu.Unlock()
-
-	_ = json.NewEncoder(w).Encode(directory.Result{Data: entry})
-}
-
-func (s *directoryAPIStore) delete(w http.ResponseWriter, r *http.Request) {
-	s.mu.Lock()
-	delete(s.entries, r.PathValue("path"))
-	s.mu.Unlock()
-	w.WriteHeader(http.StatusNoContent)
 }
