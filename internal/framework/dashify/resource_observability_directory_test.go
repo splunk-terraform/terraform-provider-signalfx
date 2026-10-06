@@ -6,6 +6,7 @@ package fwdashify
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"regexp"
 	"sync"
@@ -37,6 +38,35 @@ func TestResourceObservabilityDirectoryMetadataAndSchema(t *testing.T) {
 	assert.NoError(t, fwtest.ResourceSchemaValidate(r, observabilityDirectoryModel{
 		Templates: types.ListNull(types.StringType),
 	}))
+}
+
+func TestResourceObservabilityDirectoryPlanRejectsInvalidPath(t *testing.T) {
+	for _, test := range []struct {
+		name string
+		path string
+		want string
+	}{
+		{name: "empty", path: "", want: "at least 1"},
+		{name: "leading slash", path: "/~organization/platform", want: "decoded logical Directory path"},
+		{name: "trailing slash", path: "~organization/platform/", want: "decoded logical Directory path"},
+		{name: "empty segment", path: "~organization//platform", want: "decoded logical Directory path"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			testresource.UnitTest(t, testresource.TestCase{
+				IsUnitTest: true,
+				ProtoV6ProviderFactories: fwtest.NewMockProto6Server(
+					t, nil, fwtest.WithMockResources(NewResourceObservabilityDirectory),
+				),
+				Steps: []testresource.TestStep{{
+					Config: fmt.Sprintf(`resource "signalfx_observability_directory" "test" {
+  path = %q
+}`, test.path),
+					PlanOnly:    true,
+					ExpectError: regexp.MustCompile(test.want),
+				}},
+			})
+		})
+	}
 }
 
 func TestObservabilityDirectoryPatchReplacesMembership(t *testing.T) {
