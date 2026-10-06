@@ -72,3 +72,11 @@ resource "signalfx_observability_directory" "charts" {
 ### Read-Only
 
 - `id` (String) The unique identifier for the resource.
+
+## Import
+
+After adding a matching resource block, import an existing Directory by its decoded logical path, not a URL or `/v2/directory/...` API path:
+
+```shell
+terraform import signalfx_observability_directory.charts '~users/user@example.com/charts'
+```

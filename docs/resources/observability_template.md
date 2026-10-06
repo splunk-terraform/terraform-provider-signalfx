@@ -76,3 +76,11 @@ Optional:
 - `program_text` (String) SignalFlow program text associated with the template.
 - `slo_id` (String) Service-level objective ID. Required when type is SPLUNK_O11Y_SLO.
 - `type` (String) Datasource type.
+
+## Import
+
+After adding a matching resource block, import an existing Template by its ID, not a URL or `/v2/template/...` API reference:
+
+```shell
+terraform import signalfx_observability_template.chart G47WjI1AABc
+```
