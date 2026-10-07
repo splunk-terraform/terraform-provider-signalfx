@@ -187,6 +187,9 @@ func TestDashifyControlBarCodecErrors(t *testing.T) {
 		"known field wrong type":    {spec: `{"controlBar":{"controls":[{"type":"Density","variableName":"DENSITY","defaultVariableValue":"60"}]}}`, want: "rather than an integer"},
 		"filter key missing":        {spec: `{"controlBar":{"controls":[{"type":"FilterSet","variableName":"FILTERS","defaultVariableValue":[{"values":[]}] }]}}`, want: "must be a non-empty string"},
 		"filter values missing":     {spec: `{"controlBar":{"controls":[{"type":"FilterSet","variableName":"FILTERS","defaultVariableValue":[{"key":"env"}] }]}}`, want: "values must be a list"},
+		"duplicate time range":      {spec: `{"controlBar":{"controls":[{"type":"TimeRange","variableName":"TIME"},{"type":"TimeRange","variableName":"TIME"}]}}`, want: "duplicates the TIME control"},
+		"duplicate density":         {spec: `{"controlBar":{"controls":[{"type":"Density","variableName":"DENSITY"},{"type":"Density","variableName":"DENSITY"}]}}`, want: "duplicates the DENSITY control"},
+		"duplicate filter set":      {spec: `{"controlBar":{"controls":[{"type":"FilterSet","variableName":"FILTERS","defaultVariableValue":[]},{"type":"FilterSet","variableName":"FILTERS","defaultVariableValue":[]}]}}`, want: "duplicates the FILTERS control"},
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {

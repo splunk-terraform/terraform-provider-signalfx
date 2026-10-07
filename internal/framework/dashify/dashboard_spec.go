@@ -16,14 +16,15 @@ import (
 )
 
 const (
-	dashifyDashboardElement = "<Dashboard>"
-	dashifyChartElement     = "<Chart>"
-	dashifyPanelElement     = "<Panel>"
-	dashifySectionElement   = "<Section>"
-	dashifyGroupElement     = "<Group>"
-	dashifyImportPrefix     = "$import:"
-	dashifyImportElement    = "<$import."
-	dashifyLeftoverLimit    = 10
+	dashifyDashboardElement       = "<Dashboard>"
+	dashifyChartElement           = "<Chart>"
+	dashifyPanelElement           = "<Panel>"
+	dashifySectionElement         = "<Section>"
+	dashifyGroupElement           = "<Group>"
+	dashifyImportPrefix           = "$import:"
+	dashifyImportElement          = "<$import."
+	dashifyLeftoverLimit          = 10
+	dashifyUnmodeledFieldsSummary = "Dashboard fields not represented in Terraform state"
 )
 
 // isDashifyImportElement reports whether an element tag is a template
@@ -248,6 +249,21 @@ func parseDashboardTemplate(record *template.Template) (observabilityDashboardMo
 		delete(spec, dashifyImportPrefix+alias)
 	}
 	leftovers = append(leftovers, dashifyLeftovers("", spec)...)
+	_, representedImports, err := buildDashboardSpec(model)
+	if err != nil {
+		return model, formatDashboardParseError(err)
+	}
+	represented := make(map[string]int, len(representedImports))
+	for _, reference := range representedImports {
+		represented[reference]++
+	}
+	for _, reference := range record.Metadata.Imports {
+		if represented[reference] == 0 {
+			leftovers = append(leftovers, "metadata.imports")
+			break
+		}
+		represented[reference]--
+	}
 	if raw := strings.TrimSpace(string(record.SignalView)); raw != "" && raw != "null" {
 		leftovers = append(leftovers, "signalview")
 	}
@@ -257,9 +273,9 @@ func parseDashboardTemplate(record *template.Template) (observabilityDashboardMo
 	if len(leftovers) > 0 {
 		sort.Strings(leftovers)
 		diags.AddWarning(
-			"Dashboard fields not represented in Terraform state",
+			dashifyUnmodeledFieldsSummary,
 			fmt.Sprintf(
-				"The stored dashboard contains %d field(s) this provider does not model:\n  %s\n\nThese fields are absent from Terraform state. A later update replaces the complete dashboard document and removes them.",
+				"The stored dashboard contains %d field(s) this provider does not model:\n  %s\n\nThese fields are absent from Terraform state, so this resource blocks updates that would remove them. To manage this dashboard, import it as signalfx_observability_template with its complete specification and explicit metadata instead.",
 				len(leftovers),
 				strings.Join(truncateDashifyLeftovers(leftovers, dashifyLeftoverLimit), "\n  "),
 			),

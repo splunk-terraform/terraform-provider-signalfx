@@ -8,7 +8,7 @@ description: |-
 
 This resource manages a complete Dashboard Template document. Its ordered containers can reference existing Template IDs or hold opaque inline JSON. Sections, groups, layout, time range, density, pinned filters, and filter sets are supported. Typed chart blocks will be added separately.
 
-To place the dashboard in a Directory, include `signalfx_observability_dashboard.service.id` in the Directory resource's complete `templates` list. Dashboard updates replace the complete document. Import an existing dashboard and review the generated configuration before applying changes. The provider warns when the stored document contains fields it cannot represent; a later update can remove those fields.
+To place the dashboard in a Directory, include `signalfx_observability_dashboard.service.id` in the Directory resource's complete `templates` list. Dashboard updates replace the complete document. Imported dashboards may contain write metadata the API cannot return, and stored dashboards may have fields this resource cannot represent. This resource blocks updates in either case to avoid removing those fields. Import such a dashboard as `signalfx_observability_template` with the complete specification and explicit metadata to manage it.
 
 ## Example
 
@@ -33,3 +33,13 @@ Root, section, and group `layout` blocks arrange their immediate containers. A `
 Terraform declaration order controls container order. Controls are written in the order time range, density, pinned filters, then filter set. Complete document updates can remove UI changes that are absent from Terraform configuration.
 
 {{ .SchemaMarkdown | trimspace }}
+
+## Import
+
+After adding a matching resource block, import an existing Dashboard by its Template ID, not a URL or `/v2/template/...` API reference:
+
+```shell
+terraform import signalfx_observability_dashboard.service G47WjI1AABc
+```
+
+An imported dashboard can be read by this resource, but cannot be updated. To manage it, import it as `signalfx_observability_template` with its complete specification and explicit metadata instead.

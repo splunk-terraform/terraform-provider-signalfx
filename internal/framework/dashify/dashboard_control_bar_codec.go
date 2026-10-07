@@ -169,6 +169,9 @@ func parseDashifyControlBar(spec map[string]any) (*dashifyControlBarModel, []str
 				leftovers = append(leftovers, controlPath)
 				continue
 			}
+			if model.TimeRange != nil {
+				return nil, nil, fmt.Errorf("%s duplicates the TIME control", controlPath)
+			}
 			value := &dashifyTimeRangeControlModel{}
 			if value.Label, err = takeDashifyControlString(control, "label", controlPath); err != nil {
 				return nil, nil, err
@@ -187,6 +190,9 @@ func parseDashifyControlBar(spec map[string]any) (*dashifyControlBarModel, []str
 			if variableName.ValueString() != dashifyDensityVariableName {
 				leftovers = append(leftovers, controlPath)
 				continue
+			}
+			if model.Density != nil {
+				return nil, nil, fmt.Errorf("%s duplicates the DENSITY control", controlPath)
 			}
 			value := &dashifyDensityControlModel{}
 			if value.Label, err = takeDashifyControlString(control, "label", controlPath); err != nil {
@@ -243,6 +249,9 @@ func parseDashifyControlBar(spec map[string]any) (*dashifyControlBarModel, []str
 			if variableName.ValueString() != dashifyFilterSetVariableName {
 				leftovers = append(leftovers, controlPath)
 				continue
+			}
+			if model.FilterSet != nil {
+				return nil, nil, fmt.Errorf("%s duplicates the FILTERS control", controlPath)
 			}
 			value := &dashifyFilterSetControlModel{}
 			if value.Label, err = takeDashifyControlString(control, "label", controlPath); err != nil {

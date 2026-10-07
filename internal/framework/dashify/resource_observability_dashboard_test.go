@@ -6,7 +6,6 @@ package fwdashify
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"regexp"
 	"testing"
@@ -16,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-testing/config"
 	testresource "github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -26,71 +26,6 @@ import (
 
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/fwtest"
 )
-
-func dashboardTemplateHandlers(t *testing.T) map[string]http.Handler {
-	t.Helper()
-
-	nextID := 0
-	records := make(map[string]*template.Template)
-	return map[string]http.Handler{
-		"POST /v2/template": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			var write template.CreateUpdateTemplateRequest
-			if err := json.NewDecoder(r.Body).Decode(&write); err != nil {
-				t.Errorf("decode template create request: %v", err)
-				http.Error(w, "invalid create request", http.StatusBadRequest)
-				return
-			}
-			assert.Equal(t, observabilityTemplateRecordType, write.Type)
-			if !assert.NotNil(t, write.Metadata.RootElement) {
-				http.Error(w, "missing template root element", http.StatusBadRequest)
-				return
-			}
-			nextID++
-			record := &template.Template{
-				ID: fmt.Sprintf("template-%d", nextID), Type: write.Type, Title: write.Title,
-				Spec: write.Spec, Metadata: &template.Metadata{
-					RootElement: write.Metadata.RootElement, Imports: write.Metadata.Imports,
-				},
-			}
-			records[record.ID] = record
-			w.WriteHeader(http.StatusCreated)
-			assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: record}))
-		}),
-		"GET /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			record := records[r.PathValue("id")]
-			if record == nil {
-				http.Error(w, "template not found", http.StatusNotFound)
-				return
-			}
-			assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: record}))
-		}),
-		"PUT /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			record := records[r.PathValue("id")]
-			if record == nil {
-				http.Error(w, "template not found", http.StatusNotFound)
-				return
-			}
-			var write template.CreateUpdateTemplateRequest
-			if err := json.NewDecoder(r.Body).Decode(&write); err != nil {
-				t.Errorf("decode template update request: %v", err)
-				http.Error(w, "invalid update request", http.StatusBadRequest)
-				return
-			}
-			assert.Equal(t, observabilityTemplateRecordType, write.Type)
-			record.Type = write.Type
-			record.Title = write.Title
-			record.Spec = write.Spec
-			record.Metadata = &template.Metadata{
-				RootElement: write.Metadata.RootElement, Imports: write.Metadata.Imports,
-			}
-			assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: record}))
-		}),
-		"DELETE /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			delete(records, r.PathValue("id"))
-			w.WriteHeader(http.StatusNoContent)
-		}),
-	}
-}
 
 func TestResourceObservabilityDashboardMetadataAndSchema(t *testing.T) {
 	t.Parallel()
@@ -169,7 +104,212 @@ func TestResourceObservabilityDashboardMetadataAndSchema(t *testing.T) {
 	assert.NotContains(t, groupContainer.NestedObject.Blocks, "group")
 }
 
+func TestResourceObservabilityDashboardRejectsInvalidPlans(t *testing.T) {
+	for _, test := range []struct {
+		name   string
+		config string
+		want   string
+	}{
+		{
+			name: "missing container content",
+			config: `resource "signalfx_observability_dashboard" "test" {
+  title = "Service overview"
+  container {}
+}`,
+			want: "Invalid container content",
+		},
+		{
+			name: "two content sources",
+			config: `resource "signalfx_observability_dashboard" "test" {
+  title = "Service overview"
+  container {
+    template_id      = "chart-1"
+    template_content = jsonencode({ "<Chart>" = [] })
+  }
+}`,
+			want: "Invalid template content",
+		},
+		{
+			name: "invalid inline content",
+			config: `resource "signalfx_observability_dashboard" "test" {
+  title = "Service overview"
+  container {
+    template_content = jsonencode({ chart = {} })
+  }
+}`,
+			want: "no dashboard element key",
+		},
+		{
+			name: "empty section",
+			config: `resource "signalfx_observability_dashboard" "test" {
+  title = "Service overview"
+  container {
+    section {}
+  }
+}`,
+			want: "Empty section",
+		},
+		{
+			name: "invalid width array",
+			config: `resource "signalfx_observability_dashboard" "test" {
+  title = "Service overview"
+  container {
+    template_content = jsonencode({ "<Chart>" = [] })
+    layout { width = jsonencode([1, 2]) }
+  }
+}`,
+			want: "JSON arrays are supported only for x and y",
+		},
+		{
+			name: "duplicate pinned control",
+			config: `resource "signalfx_observability_dashboard" "test" {
+  title = "Service overview"
+  control_bar {
+    pinned_filter { variable_name = "service" }
+    pinned_filter { variable_name = "service" }
+  }
+}`,
+			want: "Duplicate control variable name",
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			testresource.UnitTest(t, testresource.TestCase{
+				IsUnitTest: true,
+				ProtoV6ProviderFactories: fwtest.NewMockProto6Server(
+					t, nil, fwtest.WithMockResources(NewResourceObservabilityDashboard),
+				),
+				Steps: []testresource.TestStep{{
+					Config:      test.config,
+					PlanOnly:    true,
+					ExpectError: regexp.MustCompile(test.want),
+				}},
+			})
+		})
+	}
+}
+
+func TestResourceObservabilityDashboardRejectsImportedUpdate(t *testing.T) {
+	root := template.RootElementDashboard
+	imported := template.Template{
+		ID: "imported-dashboard", Type: observabilityTemplateRecordType,
+		Title: "Imported", Spec: json.RawMessage(`{"<Dashboard>":[],"layout":{"saved":{"_":{"items":[]}}}}`),
+		Metadata: &template.Metadata{RootElement: &root},
+	}
+	handlers := map[string]http.Handler{
+		"GET /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, imported.ID, r.PathValue("id"))
+			assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: &imported}))
+		}),
+		"DELETE /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, imported.ID, r.PathValue("id"))
+			w.WriteHeader(http.StatusNoContent)
+		}),
+	}
+	const importedConfig = `resource "signalfx_observability_dashboard" "test" {
+  title = "Imported"
+}`
+	const changedConfig = `resource "signalfx_observability_dashboard" "test" {
+  title = "Changed"
+}`
+	const computedTitleConfig = `resource "terraform_data" "title" {
+  input = "Changed"
+}
+resource "signalfx_observability_dashboard" "test" {
+  title = terraform_data.title.output
+}`
+	testresource.UnitTest(t, testresource.TestCase{
+		IsUnitTest: true,
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_5_0),
+		},
+		ProtoV6ProviderFactories: fwtest.NewMockProto6Server(
+			t, handlers, fwtest.WithMockResources(NewResourceObservabilityDashboard),
+		),
+		Steps: []testresource.TestStep{
+			{Config: `import {
+  to = signalfx_observability_dashboard.test
+  id = "imported-dashboard"
+}
+` + importedConfig},
+			{Config: importedConfig, PlanOnly: true},
+			{Config: changedConfig, PlanOnly: true, ExpectError: regexp.MustCompile(observabilityDashboardUnsafeUpdateSummary)},
+			{Config: computedTitleConfig, PlanOnly: true, ExpectError: regexp.MustCompile(observabilityDashboardUnsafeUpdateSummary)},
+			{Config: importedConfig, Destroy: true},
+		},
+	})
+}
+
+func TestResourceObservabilityDashboardUpdateRejectsImportedResource(t *testing.T) {
+	managed := NewResourceObservabilityDashboard().(*observabilityDashboardResource)
+	var schemaResponse resource.SchemaResponse
+	managed.Schema(t.Context(), resource.SchemaRequest{}, &schemaResponse)
+	prior := observabilityDashboardModel{
+		ID: types.StringValue("imported-dashboard"), Title: types.StringValue("Imported"),
+	}
+	planned := prior
+	planned.Title = types.StringValue("Changed")
+	state := tfsdk.State{Schema: schemaResponse.Schema}
+	require.False(t, state.Set(t.Context(), prior).HasError())
+	plan := tfsdk.Plan{Schema: schemaResponse.Schema}
+	require.False(t, plan.Set(t.Context(), planned).HasError())
+	response := resource.UpdateResponse{State: state}
+	managed.Update(t.Context(), resource.UpdateRequest{Plan: plan, State: state}, &response)
+	require.True(t, response.Diagnostics.HasError())
+	assert.Equal(t, observabilityDashboardUnsafeUpdateSummary, response.Diagnostics.Errors()[0].Summary())
+}
+
 func TestResourceObservabilityDashboardGeneratedConfig(t *testing.T) {
+	chartRoot := template.RootElementChart
+	dashboardRoot := template.RootElementDashboard
+	var chart, dashboard *template.Template
+	handlers := map[string]http.Handler{
+		"POST /v2/template": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			var write template.CreateUpdateTemplateRequest
+			if err := json.NewDecoder(r.Body).Decode(&write); err != nil {
+				t.Errorf("decode create request: %v", err)
+				http.Error(w, "invalid request", http.StatusBadRequest)
+				return
+			}
+			assert.Equal(t, observabilityTemplateRecordType, write.Type)
+			var record *template.Template
+			switch {
+			case write.Metadata.RootElement != nil && *write.Metadata.RootElement == chartRoot:
+				assert.Equal(t, "Request rate", write.Title)
+				record = &template.Template{ID: "chart-1", Type: write.Type, Title: write.Title, Spec: write.Spec, Metadata: &template.Metadata{RootElement: &chartRoot}}
+				chart = record
+			case write.Metadata.RootElement != nil && *write.Metadata.RootElement == dashboardRoot:
+				assert.Equal(t, "Complete layout", write.Title)
+				assert.Contains(t, string(write.Spec), `"controlBar"`)
+				assert.Equal(t, []string{"/v2/template/chart-1"}, write.Metadata.Imports)
+				record = &template.Template{ID: "dashboard-1", Type: write.Type, Title: write.Title, Spec: write.Spec, Metadata: &template.Metadata{RootElement: &dashboardRoot, Imports: write.Metadata.Imports}}
+				dashboard = record
+			default:
+				t.Errorf("unexpected root element %v", write.Metadata.RootElement)
+				http.Error(w, "unexpected root element", http.StatusBadRequest)
+				return
+			}
+			w.WriteHeader(http.StatusCreated)
+			assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: record}))
+		}),
+		"GET /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			var record *template.Template
+			switch r.PathValue("id") {
+			case "chart-1":
+				record = chart
+			case "dashboard-1":
+				record = dashboard
+			}
+			if record == nil {
+				http.Error(w, "template not found", http.StatusNotFound)
+				return
+			}
+			assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: record}))
+		}),
+		"DELETE /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Contains(t, []string{"chart-1", "dashboard-1"}, r.PathValue("id"))
+			w.WriteHeader(http.StatusNoContent)
+		}),
+	}
 	testresource.UnitTest(t, testresource.TestCase{
 		IsUnitTest: true,
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
@@ -177,7 +317,7 @@ func TestResourceObservabilityDashboardGeneratedConfig(t *testing.T) {
 		},
 		ProtoV6ProviderFactories: fwtest.NewMockProto6Server(
 			t,
-			dashboardTemplateHandlers(t),
+			handlers,
 			fwtest.WithMockResources(NewResourceObservabilityDashboard, NewResourceObservabilityTemplate),
 		),
 		Steps: []testresource.TestStep{
@@ -201,6 +341,33 @@ func TestResourceObservabilityDashboardGeneratedConfig(t *testing.T) {
 }
 
 func TestResourceObservabilityDashboardInlineContentLifecycleAndGeneratedConfig(t *testing.T) {
+	root := template.RootElementDashboard
+	var record *template.Template
+	handlers := map[string]http.Handler{
+		"POST /v2/template": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			var write template.CreateUpdateTemplateRequest
+			if err := json.NewDecoder(r.Body).Decode(&write); err != nil {
+				t.Errorf("decode dashboard create request: %v", err)
+				http.Error(w, "invalid create request", http.StatusBadRequest)
+				return
+			}
+			assert.Equal(t, "Inline dashboard content", write.Title)
+			assert.Equal(t, &root, write.Metadata.RootElement)
+			assert.Empty(t, write.Metadata.Imports)
+			assert.Contains(t, string(write.Spec), "o11y:SingleValue")
+			record = &template.Template{ID: "dashboard-inline", Type: write.Type, Title: write.Title, Spec: write.Spec, Metadata: &template.Metadata{RootElement: &root}}
+			w.WriteHeader(http.StatusCreated)
+			assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: record}))
+		}),
+		"GET /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "dashboard-inline", r.PathValue("id"))
+			assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: record}))
+		}),
+		"DELETE /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "dashboard-inline", r.PathValue("id"))
+			w.WriteHeader(http.StatusNoContent)
+		}),
+	}
 	testresource.UnitTest(t, testresource.TestCase{
 		IsUnitTest: true,
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
@@ -208,7 +375,7 @@ func TestResourceObservabilityDashboardInlineContentLifecycleAndGeneratedConfig(
 		},
 		ProtoV6ProviderFactories: fwtest.NewMockProto6Server(
 			t,
-			dashboardTemplateHandlers(t),
+			handlers,
 			fwtest.WithMockResources(NewResourceObservabilityDashboard),
 		),
 		Steps: []testresource.TestStep{
@@ -232,6 +399,33 @@ func TestResourceObservabilityDashboardInlineContentLifecycleAndGeneratedConfig(
 }
 
 func TestResourceObservabilityDashboardUntitledContainers(t *testing.T) {
+	root := template.RootElementDashboard
+	var record *template.Template
+	handlers := map[string]http.Handler{
+		"POST /v2/template": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			var write template.CreateUpdateTemplateRequest
+			if err := json.NewDecoder(r.Body).Decode(&write); err != nil {
+				t.Errorf("decode dashboard create request: %v", err)
+				http.Error(w, "invalid create request", http.StatusBadRequest)
+				return
+			}
+			assert.Equal(t, "Untitled containers", write.Title)
+			assert.Equal(t, &root, write.Metadata.RootElement)
+			assert.Contains(t, string(write.Spec), "Section")
+			assert.Contains(t, string(write.Spec), "Group")
+			record = &template.Template{ID: "dashboard-untitled", Type: write.Type, Title: write.Title, Spec: write.Spec, Metadata: &template.Metadata{RootElement: &root}}
+			w.WriteHeader(http.StatusCreated)
+			assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: record}))
+		}),
+		"GET /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "dashboard-untitled", r.PathValue("id"))
+			assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: record}))
+		}),
+		"DELETE /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "dashboard-untitled", r.PathValue("id"))
+			w.WriteHeader(http.StatusNoContent)
+		}),
+	}
 	testresource.UnitTest(t, testresource.TestCase{
 		IsUnitTest: true,
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
@@ -239,7 +433,7 @@ func TestResourceObservabilityDashboardUntitledContainers(t *testing.T) {
 		},
 		ProtoV6ProviderFactories: fwtest.NewMockProto6Server(
 			t,
-			dashboardTemplateHandlers(t),
+			handlers,
 			fwtest.WithMockResources(NewResourceObservabilityDashboard),
 		),
 		Steps: []testresource.TestStep{{
@@ -679,7 +873,7 @@ func TestDashifyDashboardSpecWarnsAboutUnmodeledFields(t *testing.T) {
 		Type:       observabilityTemplateRecordType,
 		Title:      "Dashboard",
 		Spec:       spec,
-		Metadata:   &template.Metadata{RootElement: &root},
+		Metadata:   &template.Metadata{RootElement: &root, Imports: []string{"/v2/template/chart-id", "/v2/template/extra-id"}},
 		SignalView: json.RawMessage(`{"lastConvertedAt":"2026-01-01T00:00:00Z"}`),
 	})
 	require.False(t, diags.HasError(), diags)
@@ -698,6 +892,7 @@ func TestDashifyDashboardSpecWarnsAboutUnmodeledFields(t *testing.T) {
 		"layout._.0.0.0.futureConstraint",
 		"layout.saved._.0.section.futureSection",
 		"layout.saved._.0.0.group.futureGroup",
+		"metadata.imports",
 		"signalview",
 	} {
 		assert.Contains(t, warnings[0].Detail(), path)
@@ -890,6 +1085,69 @@ func TestDashifyDashboardSpecPreservesUIOrder(t *testing.T) {
 }
 
 func TestResourceObservabilityDashboardUnitTest(t *testing.T) {
+	chartRoot := template.RootElementChart
+	dashboardRoot := template.RootElementDashboard
+	var chart, dashboard *template.Template
+	handlers := map[string]http.Handler{
+		"POST /v2/template": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			var write template.CreateUpdateTemplateRequest
+			if err := json.NewDecoder(r.Body).Decode(&write); err != nil {
+				t.Errorf("decode template create request: %v", err)
+				http.Error(w, "invalid create request", http.StatusBadRequest)
+				return
+			}
+			assert.Equal(t, observabilityTemplateRecordType, write.Type)
+			var record *template.Template
+			switch {
+			case write.Metadata.RootElement != nil && *write.Metadata.RootElement == chartRoot:
+				assert.Equal(t, "Request rate", write.Title)
+				chart = &template.Template{ID: "chart-1", Type: write.Type, Title: write.Title, Spec: write.Spec, Metadata: &template.Metadata{RootElement: &chartRoot}}
+				record = chart
+			case write.Metadata.RootElement != nil && *write.Metadata.RootElement == dashboardRoot:
+				assert.Equal(t, "Service overview", write.Title)
+				assert.Equal(t, []string{"/v2/template/chart-1"}, write.Metadata.Imports)
+				dashboard = &template.Template{ID: "dashboard-1", Type: write.Type, Title: write.Title, Spec: write.Spec, Metadata: &template.Metadata{RootElement: &dashboardRoot, Imports: write.Metadata.Imports}}
+				record = dashboard
+			default:
+				t.Errorf("unexpected root element %v", write.Metadata.RootElement)
+				http.Error(w, "unexpected root element", http.StatusBadRequest)
+				return
+			}
+			w.WriteHeader(http.StatusCreated)
+			assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: record}))
+		}),
+		"GET /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			var record *template.Template
+			switch r.PathValue("id") {
+			case "chart-1":
+				record = chart
+			case "dashboard-1":
+				record = dashboard
+			}
+			if record == nil {
+				http.Error(w, "template not found", http.StatusNotFound)
+				return
+			}
+			assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: record}))
+		}),
+		"PUT /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "dashboard-1", r.PathValue("id"))
+			var write template.CreateUpdateTemplateRequest
+			if err := json.NewDecoder(r.Body).Decode(&write); err != nil {
+				t.Errorf("decode dashboard update request: %v", err)
+				http.Error(w, "invalid update request", http.StatusBadRequest)
+				return
+			}
+			assert.Equal(t, "Updated service overview", write.Title)
+			assert.Equal(t, []string{"/v2/template/chart-1"}, write.Metadata.Imports)
+			dashboard = &template.Template{ID: "dashboard-1", Type: write.Type, Title: write.Title, Spec: write.Spec, Metadata: &template.Metadata{RootElement: &dashboardRoot, Imports: write.Metadata.Imports}}
+			assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: dashboard}))
+		}),
+		"DELETE /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Contains(t, []string{"chart-1", "dashboard-1"}, r.PathValue("id"))
+			w.WriteHeader(http.StatusNoContent)
+		}),
+	}
 	testresource.UnitTest(
 		t,
 		testresource.TestCase{
@@ -899,7 +1157,7 @@ func TestResourceObservabilityDashboardUnitTest(t *testing.T) {
 			},
 			ProtoV6ProviderFactories: fwtest.NewMockProto6Server(
 				t,
-				dashboardTemplateHandlers(t),
+				handlers,
 				fwtest.WithMockResources(NewResourceObservabilityDashboard, NewResourceObservabilityTemplate),
 			),
 			Steps: []testresource.TestStep{
@@ -995,20 +1253,38 @@ func TestResourceObservabilityDashboardRecreatesAfterRemoteDelete(t *testing.T) 
 }
 
 func TestResourceObservabilityDashboardReadRejectsMismatchedID(t *testing.T) {
-	handlers := dashboardTemplateHandlers(t)
-	read := handlers["GET /v2/template/{id}"]
+	root := template.RootElementDashboard
+	var record *template.Template
 	mismatched := false
-	handlers["GET /v2/template/{id}"] = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !mismatched {
-			read.ServeHTTP(w, r)
-			return
-		}
-		root := template.RootElementDashboard
-		assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: &template.Template{
-			ID: "another-dashboard", Type: observabilityTemplateRecordType,
-			Title: "Service overview", Metadata: &template.Metadata{RootElement: &root},
-		}}))
-	})
+	handlers := map[string]http.Handler{
+		"POST /v2/template": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			var write template.CreateUpdateTemplateRequest
+			if err := json.NewDecoder(r.Body).Decode(&write); err != nil {
+				t.Errorf("decode dashboard create request: %v", err)
+				http.Error(w, "invalid create request", http.StatusBadRequest)
+				return
+			}
+			assert.Equal(t, &root, write.Metadata.RootElement)
+			record = &template.Template{ID: "template-1", Type: write.Type, Title: write.Title, Spec: write.Spec, Metadata: &template.Metadata{RootElement: &root}}
+			w.WriteHeader(http.StatusCreated)
+			assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: record}))
+		}),
+		"GET /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "template-1", r.PathValue("id"))
+			if mismatched {
+				assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: &template.Template{
+					ID: "another-dashboard", Type: observabilityTemplateRecordType,
+					Title: "Service overview", Metadata: &template.Metadata{RootElement: &root},
+				}}))
+				return
+			}
+			assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: record}))
+		}),
+		"DELETE /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "template-1", r.PathValue("id"))
+			w.WriteHeader(http.StatusNoContent)
+		}),
+	}
 	const dashboardConfig = `resource "signalfx_observability_dashboard" "test" {
   title = "Service overview"
   container {
@@ -1025,10 +1301,48 @@ func TestResourceObservabilityDashboardReadRejectsMismatchedID(t *testing.T) {
 			{
 				PreConfig:   func() { mismatched = true },
 				Config:      dashboardConfig,
-				ExpectError: regexp.MustCompile(`(?s)Template API returned record "another-dashboard" when reading Dashboard.*"template-1"`),
+				ExpectError: regexp.MustCompile(`(?s)Template API returned record "another-dashboard" for Dashboard.*"template-1"`),
 			},
 		},
 	})
+}
+
+func TestObservabilityDashboardRejectsInvalidAPIRecords(t *testing.T) {
+	root := template.RootElementDashboard
+	chartRoot := template.RootElementChart
+	for _, test := range []struct {
+		name   string
+		record template.Template
+		want   string
+	}{
+		{
+			name:   "wrong record type",
+			record: template.Template{ID: "dashboard-1", Type: "other", Metadata: &template.Metadata{RootElement: &root}, Spec: json.RawMessage(`{"<Dashboard>":[]}`)},
+			want:   "record type",
+		},
+		{
+			name:   "missing root",
+			record: template.Template{ID: "dashboard-1", Type: observabilityTemplateRecordType, Spec: json.RawMessage(`{"<Dashboard>":[]}`)},
+			want:   "no Dashboard root element metadata",
+		},
+		{
+			name:   "wrong root",
+			record: template.Template{ID: "dashboard-1", Type: observabilityTemplateRecordType, Metadata: &template.Metadata{RootElement: &chartRoot}, Spec: json.RawMessage(`{"<Dashboard>":[]}`)},
+			want:   "not \"Dashboard\"",
+		},
+		{
+			name:   "missing spec",
+			record: template.Template{ID: "dashboard-1", Type: observabilityTemplateRecordType, Metadata: &template.Metadata{RootElement: &root}},
+			want:   "EOF",
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			_, _, diags := observabilityDashboardFromResult(&template.Result{Data: &test.record}, test.record.ID)
+			require.True(t, diags.HasError(), diags)
+			assert.Contains(t, diags.Errors()[0].Detail(), test.want)
+		})
+	}
 }
 
 func TestResourceObservabilityDashboardCreateReportsMissingEndpoint(t *testing.T) {
