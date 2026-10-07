@@ -25,18 +25,14 @@ import (
 func TestDashifyControlBarSchemaAndModel(t *testing.T) {
 	t.Parallel()
 
-	resourceSchema := dashifyControlBarBlock()
-	assert.NotEmpty(t, resourceSchema.Description)
+	bar := dashifyControlBarAttribute()
+	assert.NotEmpty(t, bar.Description)
 	for _, name := range []string{"time_range", "density", "pinned_filter", "filter_set"} {
-		assert.Contains(t, resourceSchema.Blocks, name)
+		assert.Contains(t, bar.Attributes, name)
 	}
-	pinned, ok := resourceSchema.Blocks["pinned_filter"].(schema.ListNestedBlock)
-	require.True(t, ok)
+	pinned := bar.Attributes["pinned_filter"].(schema.ListNestedAttribute)
 	assert.Contains(t, pinned.NestedObject.Attributes, "variable_name")
-	filterSet, ok := resourceSchema.Blocks["filter_set"].(schema.SingleNestedBlock)
-	require.True(t, ok)
-	filter, ok := filterSet.Blocks["filter"].(schema.ListNestedBlock)
-	require.True(t, ok)
+	filter := bar.Attributes["filter_set"].(schema.SingleNestedAttribute).Attributes["filter"].(schema.ListNestedAttribute)
 	assert.Contains(t, filter.NestedObject.Attributes, "values")
 	assert.Contains(t, filter.NestedObject.Attributes, "match_missing")
 }
@@ -172,6 +168,31 @@ func TestDashifyControlBarCodecOmissionAndWarnings(t *testing.T) {
 	_, leftovers, err = parseDashifyControlBar(filterSpec)
 	require.NoError(t, err)
 	assert.Contains(t, leftovers, "controlBar.controls.0.defaultVariableValue.0.futureFilter")
+
+	built := buildDashifyControlBar(&dashifyControlBarModel{FilterSet: &dashifyFilterSetControlModel{}})
+	roundTrip, _, err := parseDashifyControlBar(map[string]any{"controlBar": built})
+	require.NoError(t, err)
+	require.NotNil(t, roundTrip.FilterSet)
+	assert.Nil(t, roundTrip.FilterSet.Filter, "an omitted filter attribute must read back as null")
+
+	duplicateSpec := map[string]any{}
+	require.NoError(t, decodeDashifyJSON([]byte(`{"controlBar":{"controls":[
+		{"type":"TimeRange","variableName":"TIME","label":"First"},
+		{"type":"Density","variableName":"DENSITY"},
+		{"type":"PinnedFilter","variableName":"env"},
+		{"type":"FilterSet","variableName":"FILTERS","defaultVariableValue":[]},
+		{"type":"TimeRange","variableName":"TIME","label":"Second"},
+		{"type":"Density","variableName":"DENSITY"},
+		{"type":"PinnedFilter","variableName":"env"},
+		{"type":"FilterSet","variableName":"FILTERS","defaultVariableValue":[]}
+	]}}`), &duplicateSpec))
+	parsed, leftovers, err = parseDashifyControlBar(duplicateSpec)
+	require.NoError(t, err)
+	assert.Equal(t, "First", parsed.TimeRange.Label.ValueString())
+	assert.Len(t, parsed.PinnedFilter, 1)
+	assert.ElementsMatch(t, []string{
+		"controlBar.controls.4", "controlBar.controls.5", "controlBar.controls.6", "controlBar.controls.7",
+	}, leftovers)
 }
 
 func TestDashifyControlBarCodecErrors(t *testing.T) {
@@ -187,9 +208,6 @@ func TestDashifyControlBarCodecErrors(t *testing.T) {
 		"known field wrong type":    {spec: `{"controlBar":{"controls":[{"type":"Density","variableName":"DENSITY","defaultVariableValue":"60"}]}}`, want: "rather than an integer"},
 		"filter key missing":        {spec: `{"controlBar":{"controls":[{"type":"FilterSet","variableName":"FILTERS","defaultVariableValue":[{"values":[]}] }]}}`, want: "must be a non-empty string"},
 		"filter values missing":     {spec: `{"controlBar":{"controls":[{"type":"FilterSet","variableName":"FILTERS","defaultVariableValue":[{"key":"env"}] }]}}`, want: "values must be a list"},
-		"duplicate time range":      {spec: `{"controlBar":{"controls":[{"type":"TimeRange","variableName":"TIME"},{"type":"TimeRange","variableName":"TIME"}]}}`, want: "duplicates the TIME control"},
-		"duplicate density":         {spec: `{"controlBar":{"controls":[{"type":"Density","variableName":"DENSITY"},{"type":"Density","variableName":"DENSITY"}]}}`, want: "duplicates the DENSITY control"},
-		"duplicate filter set":      {spec: `{"controlBar":{"controls":[{"type":"FilterSet","variableName":"FILTERS","defaultVariableValue":[]},{"type":"FilterSet","variableName":"FILTERS","defaultVariableValue":[]}]}}`, want: "duplicates the FILTERS control"},
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -226,12 +244,12 @@ func TestValidateDashifyControlBar(t *testing.T) {
 func TestDashifyControlBarAttributeValidators(t *testing.T) {
 	t.Parallel()
 
-	bar := dashifyControlBarBlock()
-	density := bar.Blocks["density"].(schema.SingleNestedBlock).Attributes["default_variable_value"].(schema.Int64Attribute)
+	bar := dashifyControlBarAttribute()
+	density := bar.Attributes["density"].(schema.SingleNestedAttribute).Attributes["default_variable_value"].(schema.Int64Attribute)
 	assertValidatorInt64(t, density.Validators, 60, false)
 	assertValidatorInt64(t, density.Validators, 45, true)
 
-	pinned := bar.Blocks["pinned_filter"].(schema.ListNestedBlock).NestedObject.Attributes
+	pinned := bar.Attributes["pinned_filter"].(schema.ListNestedAttribute).NestedObject.Attributes
 	applicationMode := pinned["application_mode"].(schema.StringAttribute)
 	assertValidatorString(t, applicationMode.Validators, "override", false)
 	assertValidatorString(t, applicationMode.Validators, "replace_only", true)

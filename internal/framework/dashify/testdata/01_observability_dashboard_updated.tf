@@ -10,7 +10,7 @@ resource "signalfx_observability_template" "chart" {
 resource "signalfx_observability_dashboard" "test" {
   title = "Updated service overview"
 
-  container {
+  container = [{
     template_id = signalfx_observability_template.chart.id
-  }
+  }]
 }

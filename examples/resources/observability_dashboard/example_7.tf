@@ -9,8 +9,8 @@ terraform {
 resource "signalfx_observability_dashboard" "inline_content" {
   title = "Inline dashboard content"
 
-  container {
-    layout {
+  container = [{
+    layout = {
       width  = "6/12"
       height = "2"
     }
@@ -27,5 +27,5 @@ resource "signalfx_observability_dashboard" "inline_content" {
         title = "Request rate"
       }
     })
-  }
+  }]
 }

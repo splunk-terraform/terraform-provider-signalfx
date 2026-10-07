@@ -142,6 +142,7 @@ func parseDashifyControlBar(spec map[string]any) (*dashifyControlBarModel, []str
 
 	model := &dashifyControlBarModel{}
 	var leftovers []string
+	modeled := map[string]bool{}
 	for i, rawControl := range controls {
 		controlPath := fmt.Sprintf("controlBar.controls.%d", i)
 		control, ok := rawControl.(map[string]any)
@@ -163,14 +164,16 @@ func parseDashifyControlBar(spec map[string]any) (*dashifyControlBarModel, []str
 			return nil, nil, fmt.Errorf("%s.type must be a non-empty string", controlPath)
 		}
 
+		if modeled[variableName.ValueString()] {
+			leftovers = append(leftovers, controlPath)
+			continue
+		}
+
 		switch controlType.ValueString() {
 		case "TimeRange":
 			if variableName.ValueString() != dashifyTimeRangeVariableName {
 				leftovers = append(leftovers, controlPath)
 				continue
-			}
-			if model.TimeRange != nil {
-				return nil, nil, fmt.Errorf("%s duplicates the TIME control", controlPath)
 			}
 			value := &dashifyTimeRangeControlModel{}
 			if value.Label, err = takeDashifyControlString(control, "label", controlPath); err != nil {
@@ -190,9 +193,6 @@ func parseDashifyControlBar(spec map[string]any) (*dashifyControlBarModel, []str
 			if variableName.ValueString() != dashifyDensityVariableName {
 				leftovers = append(leftovers, controlPath)
 				continue
-			}
-			if model.Density != nil {
-				return nil, nil, fmt.Errorf("%s duplicates the DENSITY control", controlPath)
 			}
 			value := &dashifyDensityControlModel{}
 			if value.Label, err = takeDashifyControlString(control, "label", controlPath); err != nil {
@@ -250,9 +250,6 @@ func parseDashifyControlBar(spec map[string]any) (*dashifyControlBarModel, []str
 				leftovers = append(leftovers, controlPath)
 				continue
 			}
-			if model.FilterSet != nil {
-				return nil, nil, fmt.Errorf("%s duplicates the FILTERS control", controlPath)
-			}
 			value := &dashifyFilterSetControlModel{}
 			if value.Label, err = takeDashifyControlString(control, "label", controlPath); err != nil {
 				return nil, nil, err
@@ -273,6 +270,7 @@ func parseDashifyControlBar(spec map[string]any) (*dashifyControlBarModel, []str
 			leftovers = append(leftovers, controlPath)
 			continue
 		}
+		modeled[variableName.ValueString()] = true
 		leftovers = append(leftovers, dashifyLeftovers(controlPath, control)...)
 	}
 	leftovers = append(leftovers, dashifyLeftovers("controlBar", bar)...)
@@ -347,6 +345,10 @@ func takeDashifyFilterSetEntries(object map[string]any, key, path string) ([]das
 	values, ok := raw.([]any)
 	if !ok {
 		return nil, nil, fmt.Errorf("%s.%s is %v (%T) rather than a list", path, key, raw, raw)
+	}
+	if len(values) == 0 {
+		delete(object, key)
+		return nil, nil, nil
 	}
 	result := make([]dashifyFilterSetEntryModel, len(values))
 	var leftovers []string

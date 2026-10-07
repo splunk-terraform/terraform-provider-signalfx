@@ -10,6 +10,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework-validators/float64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -18,6 +19,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/signalfx/signalfx-go"
 	"github.com/signalfx/signalfx-go/template"
 
@@ -53,7 +55,7 @@ func (r *observabilityDashboardResource) Metadata(_ context.Context, req resourc
 
 func (r *observabilityDashboardResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Manages an Observability dashboard Template using reusable Template references or raw inline dashboard content. Typed chart blocks are coming soon; Directory placement is managed by signalfx_observability_directory.",
+		Description: "Manages an Observability dashboard Template using reusable Template references or raw inline dashboard content. Typed chart attributes are coming soon; Directory placement is managed by signalfx_observability_directory.",
 		Attributes: map[string]schema.Attribute{
 			"id": fwshared.ResourceIDAttribute(),
 			"title": schema.StringAttribute{
@@ -63,26 +65,17 @@ func (r *observabilityDashboardResource) Schema(_ context.Context, _ resource.Sc
 					stringvalidator.LengthAtLeast(1),
 				},
 			},
-		},
-		Blocks: map[string]schema.Block{
-			"control_bar": dashifyControlBarBlock(),
-			"layout":      dashifyLayoutOptionsBlock(),
-			"container": schema.ListNestedBlock{
-				Description: "Ordered dashboard contents. Terraform declaration order is authoritative.",
-				NestedObject: schema.NestedBlockObject{
-					Attributes: dashifyContainerAttributes(),
-					Blocks:     dashifyContainerBlocks(dashifyDashboardContainerLevel),
-				},
-			},
+			"control_bar": dashifyControlBarAttribute(),
+			"layout":      dashifyLayoutOptionsAttribute(),
+			"container":   dashifyContainerListAttribute("Ordered dashboard contents. Terraform declaration order is authoritative.", dashifyDashboardContainerLevel, false),
 		},
 	}
 }
 
 // dashifyContainerLevelRule is the single source of truth for which
-// content blocks a container may hold at each nesting level: it drives
-// schema block registration, the ValidateConfig one-of check, and the
-// resulting error message, so the three stay in sync by construction
-// instead of via three hand-maintained switches.
+// content a container may hold at each nesting level: it drives schema
+// attribute registration, the ValidateConfig one-of check, and the
+// resulting error message, so the three stay in sync by construction.
 type dashifyContainerLevelRule struct {
 	allowSection bool
 	allowGroup   bool
@@ -109,8 +102,20 @@ var dashifyContainerLevelRules = map[dashifyContainerLevel]dashifyContainerLevel
 	},
 }
 
-func dashifyContainerAttributes() map[string]schema.Attribute {
-	return map[string]schema.Attribute{
+func dashifyContainerListAttribute(description string, level dashifyContainerLevel, required bool) schema.ListNestedAttribute {
+	return schema.ListNestedAttribute{
+		Required:     required,
+		Optional:     !required,
+		Description:  description,
+		Validators:   []validator.List{listvalidator.SizeAtLeast(1)},
+		NestedObject: schema.NestedAttributeObject{Attributes: dashifyContainerAttributes(level)},
+	}
+}
+
+func dashifyContainerAttributes(level dashifyContainerLevel) map[string]schema.Attribute {
+	// TODO(charts): Merge the attributes emitted by the external-schema chart
+	// generator here, including metrics_single_value and metrics_timeseries.
+	attributes := map[string]schema.Attribute{
 		"template_id": schema.StringAttribute{
 			Optional:    true,
 			Description: "ID of a reusable Observability Template rendered in this container.",
@@ -120,68 +125,49 @@ func dashifyContainerAttributes() map[string]schema.Attribute {
 			CustomType:  jsontypes.NormalizedType{},
 			Description: "Self-contained dashboard JSON object rendered inline in this container.",
 		},
+		"layout": dashifyItemLayoutAttribute(),
 	}
-}
-
-func dashifyContainerBlocks(level dashifyContainerLevel) map[string]schema.Block {
-	// TODO(charts): Merge the blocks emitted by the external-schema chart
-	// generator here, including metrics_single_value and metrics_timeseries.
-	blocks := map[string]schema.Block{"layout": dashifyItemLayoutBlock()}
 	rule := dashifyContainerLevelRules[level]
 	if rule.allowSection {
-		blocks["section"] = schema.SingleNestedBlock{
+		attributes["section"] = schema.SingleNestedAttribute{
+			Optional:    true,
 			Description: "A section containing containers and optional groups.",
 			Attributes: map[string]schema.Attribute{
-				"title": schema.StringAttribute{
-					Optional:    true,
-					Computed:    true,
-					Default:     stringdefault.StaticString(""),
-					Description: "Optional section title. Omit it for an untitled section.",
-				},
+				"title":       dashifyOptionalTitleAttribute("Optional section title. Omit it for an untitled section."),
 				"collapse":    schema.BoolAttribute{Optional: true, Description: "Whether the section is currently collapsed."},
 				"collapsible": schema.BoolAttribute{Optional: true, Description: "Whether the section can be collapsed."},
-			},
-			Blocks: map[string]schema.Block{
-				"layout": dashifyLayoutOptionsBlock(),
-				"container": schema.ListNestedBlock{
-					Description: "Ordered contents of this section.",
-					NestedObject: schema.NestedBlockObject{
-						Attributes: dashifyContainerAttributes(),
-						Blocks:     dashifyContainerBlocks(dashifySectionContainerLevel),
-					},
-				},
+				"layout":      dashifyLayoutOptionsAttribute(),
+				"container":   dashifyContainerListAttribute("Ordered contents of this section.", dashifySectionContainerLevel, true),
 			},
 		}
 	}
 	if rule.allowGroup {
-		blocks["group"] = schema.SingleNestedBlock{
+		attributes["group"] = schema.SingleNestedAttribute{
+			Optional:    true,
 			Description: "A group containing related containers.",
 			Attributes: map[string]schema.Attribute{
-				"title": schema.StringAttribute{
-					Optional:    true,
-					Computed:    true,
-					Default:     stringdefault.StaticString(""),
-					Description: "Optional group title. Omit it for an untitled group.",
-				},
+				"title":      dashifyOptionalTitleAttribute("Optional group title. Omit it for an untitled group."),
 				"headerless": schema.BoolAttribute{Optional: true, Description: "Whether to hide the group header."},
-			},
-			Blocks: map[string]schema.Block{
-				"layout": dashifyLayoutOptionsBlock(),
-				"container": schema.ListNestedBlock{
-					Description: "Ordered contents of this group.",
-					NestedObject: schema.NestedBlockObject{
-						Attributes: dashifyContainerAttributes(),
-						Blocks:     dashifyContainerBlocks(dashifyGroupContainerLevel),
-					},
-				},
+				"layout":     dashifyLayoutOptionsAttribute(),
+				"container":  dashifyContainerListAttribute("Ordered contents of this group.", dashifyGroupContainerLevel, true),
 			},
 		}
 	}
-	return blocks
+	return attributes
 }
 
-func dashifyItemLayoutBlock() schema.SingleNestedBlock {
-	return schema.SingleNestedBlock{
+func dashifyOptionalTitleAttribute(description string) schema.StringAttribute {
+	return schema.StringAttribute{
+		Optional:    true,
+		Computed:    true,
+		Default:     stringdefault.StaticString(""),
+		Description: description,
+	}
+}
+
+func dashifyItemLayoutAttribute() schema.SingleNestedAttribute {
+	return schema.SingleNestedAttribute{
+		Optional:    true,
 		Description: "Placement and size of this container inside its parent layout. Lengths accept numbers or relative strings; clamped values and coordinate arrays can be supplied with jsonencode.",
 		Attributes: map[string]schema.Attribute{
 			"order":      schema.Float64Attribute{Optional: true, Description: "Display order of the container within its parent layout, overriding declaration order. Reordering in the UI sets this on every container in the layout."},
@@ -198,8 +184,9 @@ func dashifyItemLayoutBlock() schema.SingleNestedBlock {
 	}
 }
 
-func dashifyLayoutOptionsBlock() schema.SingleNestedBlock {
-	return schema.SingleNestedBlock{
+func dashifyLayoutOptionsAttribute() schema.SingleNestedAttribute {
+	return schema.SingleNestedAttribute{
+		Optional:    true,
 		Description: "Settings for the layout that arranges this level's containers.",
 		Attributes: map[string]schema.Attribute{
 			"gap": schema.Float64Attribute{
@@ -212,9 +199,8 @@ func dashifyLayoutOptionsBlock() schema.SingleNestedBlock {
 				Description: "Layout resolution in pixels. Lengths are rounded to multiples of this value.",
 				Validators:  []validator.Float64{float64validator.AtLeast(1)},
 			},
-		},
-		Blocks: map[string]schema.Block{
-			"defaults": schema.SingleNestedBlock{
+			"defaults": schema.SingleNestedAttribute{
+				Optional:    true,
 				Description: "Default placement and size constraints inherited by every container in this layout.",
 				Attributes:  dashifyLayoutDefaultAttributes(),
 			},
@@ -238,9 +224,25 @@ func dashifyLayoutLengthAttribute(description string) schema.StringAttribute {
 	return schema.StringAttribute{Optional: true, Description: description}
 }
 
+// Validates each top-level value once it is fully known; Create and Update
+// validate the complete model again after unknown values resolve.
 func (r *observabilityDashboardResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
-	var model observabilityDashboardModel
-	resp.Diagnostics.Append(req.Config.Get(ctx, &model)...)
+	model := observabilityDashboardModel{Title: types.StringUnknown()}
+	for _, field := range []struct {
+		name   string
+		target any
+	}{
+		{"title", &model.Title},
+		{"control_bar", &model.ControlBar},
+		{"layout", &model.Layout},
+		{"container", &model.Container},
+	} {
+		value, _, err := tftypes.WalkAttributePath(req.Config.Raw, tftypes.NewAttributePath().WithAttributeName(field.name))
+		if known, ok := value.(tftypes.Value); err != nil || !ok || !known.IsFullyKnown() {
+			continue
+		}
+		resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root(field.name), field.target)...)
+	}
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -262,16 +264,7 @@ func validateDashboardModel(model observabilityDashboardModel) diag.Diagnostics 
 }
 
 func (r *observabilityDashboardResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
-	if req.Plan.Raw.IsNull() {
-		return
-	}
-	var planned observabilityDashboardModel
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &planned)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-	resp.Diagnostics.Append(validateDashboardModel(planned)...)
-	if resp.Diagnostics.HasError() || req.State.Raw.IsNull() || req.Plan.Raw.Equal(req.State.Raw) {
+	if req.Plan.Raw.IsNull() || req.State.Raw.IsNull() || req.Plan.Raw.Equal(req.State.Raw) {
 		return
 	}
 	var knownWrite []byte
@@ -314,17 +307,11 @@ func validateDashifyContainers(resp *resource.ValidateConfigResponse, base path.
 		if container.Section != nil {
 			sectionPath := containerPath.AtName("section")
 			validateDashifyLayoutOptions(resp, sectionPath.AtName("layout"), container.Section.Layout)
-			if len(container.Section.Container) == 0 {
-				resp.Diagnostics.AddAttributeError(sectionPath, "Empty section", "section must contain at least one container")
-			}
 			validateDashifyContainers(resp, sectionPath.AtName("container"), container.Section.Container, dashifySectionContainerLevel)
 		}
 		if container.Group != nil {
 			groupPath := containerPath.AtName("group")
 			validateDashifyLayoutOptions(resp, groupPath.AtName("layout"), container.Group.Layout)
-			if len(container.Group.Container) == 0 {
-				resp.Diagnostics.AddAttributeError(groupPath, "Empty group", "group must contain at least one container")
-			}
 			validateDashifyContainers(resp, groupPath.AtName("container"), container.Group.Container, dashifyGroupContainerLevel)
 		}
 	}
@@ -346,7 +333,7 @@ func validateDashifyLayout(resp *resource.ValidateConfigResponse, layoutPath pat
 		return
 	}
 	if dashifyLayoutIsEmpty(layout) {
-		resp.Diagnostics.AddAttributeError(layoutPath, "Empty layout block", "layout must set at least one placement or size option")
+		resp.Diagnostics.AddAttributeError(layoutPath, "Empty layout", "layout must set at least one placement or size option")
 		return
 	}
 	for _, field := range dashifyLayoutModelFields(layout) {
@@ -359,7 +346,7 @@ func validateDashifyLayoutOptions(resp *resource.ValidateConfigResponse, layoutP
 		return
 	}
 	if layout.Gap.IsNull() && layout.Step.IsNull() && layout.Defaults == nil {
-		resp.Diagnostics.AddAttributeError(layoutPath, "Empty layout block", "layout must set gap, step, defaults, or a combination")
+		resp.Diagnostics.AddAttributeError(layoutPath, "Empty layout", "layout must set gap, step, defaults, or a combination")
 		return
 	}
 	if layout.Defaults == nil {
@@ -367,7 +354,7 @@ func validateDashifyLayoutOptions(resp *resource.ValidateConfigResponse, layoutP
 	}
 	defaultsPath := layoutPath.AtName("defaults")
 	if dashifyLayoutDefaultsAreEmpty(layout.Defaults) {
-		resp.Diagnostics.AddAttributeError(defaultsPath, "Empty defaults block", "defaults must set at least one placement or size option")
+		resp.Diagnostics.AddAttributeError(defaultsPath, "Empty defaults", "defaults must set at least one placement or size option")
 		return
 	}
 	for _, field := range dashifyLayoutDefaultsModelFields(layout.Defaults) {
@@ -534,15 +521,7 @@ func (r *observabilityDashboardResource) Delete(ctx context.Context, req resourc
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	id := state.ID.ValueString()
-	result, lookupErr := r.Details().Client.GetTemplate(ctx, id, nil)
-	if lookupErr == nil && result != nil && result.Data != nil && len(result.Data.DirectoryEntries) > 0 {
-		resp.Diagnostics.AddWarning(
-			"Deleting dashboard with Directory memberships",
-			fmt.Sprintf("The dashboard is referenced by %d Directory entry(s). Deleting it can leave dangling memberships in those Directories; update them after deletion.", len(result.Data.DirectoryEntries)),
-		)
-	}
-	err := r.Details().Client.DeleteTemplate(ctx, id)
+	err := r.Details().Client.DeleteTemplate(ctx, state.ID.ValueString())
 	if responseErr, ok := signalfx.AsResponseError(err); ok && responseErr.Code() == http.StatusNotFound {
 		return
 	}
@@ -558,12 +537,6 @@ func observabilityDashboardFromResult(result *template.Result, expectedID string
 		return nil, observabilityDashboardModel{}, diag.Diagnostics{diag.NewErrorDiagnostic(
 			"Invalid Dashboard API response",
 			fmt.Sprintf("Template API returned record %q for Dashboard %q.", record.ID, expectedID),
-		)}
-	}
-	if record.Type != observabilityTemplateRecordType {
-		return nil, observabilityDashboardModel{}, diag.Diagnostics{diag.NewErrorDiagnostic(
-			"Invalid Dashboard API response",
-			fmt.Sprintf("Template API returned record type %q instead of %q.", record.Type, observabilityTemplateRecordType),
 		)}
 	}
 	model, diags := parseDashboardTemplate(record)

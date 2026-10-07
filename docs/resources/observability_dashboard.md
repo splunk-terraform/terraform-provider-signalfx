@@ -6,7 +6,7 @@ description: |-
 
 # Resource: signalfx_observability_dashboard
 
-This resource manages a complete Dashboard Template document. Its ordered containers can reference existing Template IDs or hold opaque inline JSON. Sections, groups, layout, time range, density, pinned filters, and filter sets are supported. Typed chart blocks will be added separately.
+This resource manages a complete Dashboard Template document. Its ordered containers can reference existing Template IDs or hold opaque inline JSON. Sections, groups, layout, time range, density, pinned filters, and filter sets are supported. Typed chart attributes will be added separately.
 
 To place the dashboard in a Directory, include `signalfx_observability_dashboard.service.id` in the Directory resource's complete `templates` list. Dashboard updates replace the complete document. Imported dashboards may contain write metadata the API cannot return, and stored dashboards may have fields this resource cannot represent. This resource blocks updates in either case to avoid removing those fields. Import such a dashboard as `signalfx_observability_template` with the complete specification and explicit metadata to manage it.
 
@@ -42,13 +42,13 @@ resource "signalfx_observability_template" "chart" {
 resource "signalfx_observability_dashboard" "service" {
   title = "Service overview"
 
-  container {
-    layout {
+  container = [{
+    layout = {
       width  = "6/12"
       height = "2"
     }
     template_id = signalfx_observability_template.chart.id
-  }
+  }]
 }
 ```
 
@@ -66,8 +66,8 @@ terraform {
 resource "signalfx_observability_dashboard" "inline_content" {
   title = "Inline dashboard content"
 
-  container {
-    layout {
+  container = [{
+    layout = {
       width  = "6/12"
       height = "2"
     }
@@ -84,7 +84,7 @@ resource "signalfx_observability_dashboard" "inline_content" {
         title = "Request rate"
       }
     })
-  }
+  }]
 }
 ```
 
@@ -120,43 +120,43 @@ resource "signalfx_observability_template" "latency" {
 resource "signalfx_observability_dashboard" "advanced_layout" {
   title = "Advanced service layout"
 
-  layout {
+  layout = {
     gap  = 8
     step = 8
 
-    defaults {
+    defaults = {
       min_width  = "4"
       min_height = "2"
     }
   }
 
-  container {
-    section {
+  container = [{
+    section = {
       title       = "Service health"
       collapse    = false
       collapsible = true
 
-      layout {
+      layout = {
         gap  = 4
         step = 4
       }
 
-      container {
-        group {
+      container = [{
+        group = {
           title      = "Latency details"
           headerless = true
 
-          layout {
+          layout = {
             gap  = 0
             step = 1
 
-            defaults {
+            defaults = {
               height = "20"
             }
           }
 
-          container {
-            layout {
+          container = [{
+            layout = {
               absolute  = true
               width     = jsonencode({ value = "1/2", min = 4, max = "100%" })
               height    = "20"
@@ -167,11 +167,11 @@ resource "signalfx_observability_dashboard" "advanced_layout" {
             }
 
             template_id = signalfx_observability_template.latency.id
-          }
+          }]
         }
-      }
+      }]
     }
-  }
+  }]
 }
 ```
 
@@ -207,46 +207,46 @@ resource "signalfx_observability_template" "control_chart" {
 resource "signalfx_observability_dashboard" "controls" {
   title = "Service health"
 
-  control_bar {
-    time_range {
+  control_bar = {
+    time_range = {
       label                  = "Time Range"
       default_variable_value = "-15m"
     }
 
-    density {
+    density = {
       default_variable_value = 60
     }
 
-    pinned_filter {
+    pinned_filter = [{
       variable_name          = "service"
       key                    = "service.name"
       default_variable_value = ["checkout"]
       suggested_values       = ["checkout", "payments"]
       required               = true
       application_mode       = "add"
-    }
+    }]
 
-    filter_set {
+    filter_set = {
       hidden = false
 
-      filter {
+      filter = [{
         key    = "deployment.environment"
         values = ["prod"]
-      }
+      }]
     }
   }
 
-  container {
+  container = [{
     template_id = signalfx_observability_template.control_chart.id
-  }
+  }]
 }
 ```
 
 Within each `container`, set exactly one content source. Use `template_id` to reference a reusable Observability Template, or `template_content` for a JSON object containing exactly one dashboard element key. Inline content is preserved without converting unknown chart fields.
 
-Root, section, and group `layout` blocks arrange their immediate containers. A `container.layout` block sets that container's placement. Length arguments accept values such as `"4"`, `"6/12"`, or `"50%"`; use `jsonencode` for clamped lengths or a multi-part `x` or `y` coordinate.
+Root, section, and group `layout` attributes arrange their immediate containers. A container's own `layout` sets its placement. Length arguments accept values such as `"4"`, `"6/12"`, or `"50%"`; use `jsonencode` for clamped lengths or a multi-part `x` or `y` coordinate.
 
-Terraform declaration order controls container order. Controls are written in the order time range, density, pinned filters, then filter set. Complete document updates can remove UI changes that are absent from Terraform configuration.
+Terraform list order controls container order. Use a `for` expression to generate one container per item, for example `container = [for id in var.chart_ids : { template_id = id }]`. Controls are written in the order time range, density, pinned filters, then filter set. Complete document updates can remove UI changes that are absent from Terraform configuration.
 
 <!-- schema generated by tfplugindocs -->
 ## Schema
@@ -257,45 +257,48 @@ Terraform declaration order controls container order. Controls are written in th
 
 ### Optional
 
-- `container` (Block List) Ordered dashboard contents. Terraform declaration order is authoritative. (see [below for nested schema](#nestedblock--container))
-- `control_bar` (Block, Optional) Optional controls applied to the dashboard and its charts. (see [below for nested schema](#nestedblock--control_bar))
-- `layout` (Block, Optional) Settings for the layout that arranges this level's containers. (see [below for nested schema](#nestedblock--layout))
+- `container` (Attributes List) Ordered dashboard contents. Terraform declaration order is authoritative. (see [below for nested schema](#nestedatt--container))
+- `control_bar` (Attributes) Optional controls applied to the dashboard and its charts. (see [below for nested schema](#nestedatt--control_bar))
+- `layout` (Attributes) Settings for the layout that arranges this level's containers. (see [below for nested schema](#nestedatt--layout))
 
 ### Read-Only
 
 - `id` (String) The unique identifier for the resource.
 
-<a id="nestedblock--container"></a>
+<a id="nestedatt--container"></a>
 ### Nested Schema for `container`
 
 Optional:
 
-- `group` (Block, Optional) A group containing related containers. (see [below for nested schema](#nestedblock--container--group))
-- `layout` (Block, Optional) Placement and size of this container inside its parent layout. Lengths accept numbers or relative strings; clamped values and coordinate arrays can be supplied with jsonencode. (see [below for nested schema](#nestedblock--container--layout))
-- `section` (Block, Optional) A section containing containers and optional groups. (see [below for nested schema](#nestedblock--container--section))
+- `group` (Attributes) A group containing related containers. (see [below for nested schema](#nestedatt--container--group))
+- `layout` (Attributes) Placement and size of this container inside its parent layout. Lengths accept numbers or relative strings; clamped values and coordinate arrays can be supplied with jsonencode. (see [below for nested schema](#nestedatt--container--layout))
+- `section` (Attributes) A section containing containers and optional groups. (see [below for nested schema](#nestedatt--container--section))
 - `template_content` (String) Self-contained dashboard JSON object rendered inline in this container.
 - `template_id` (String) ID of a reusable Observability Template rendered in this container.
 
-<a id="nestedblock--container--group"></a>
+<a id="nestedatt--container--group"></a>
 ### Nested Schema for `container.group`
+
+Required:
+
+- `container` (Attributes List) Ordered contents of this group. (see [below for nested schema](#nestedatt--container--group--container))
 
 Optional:
 
-- `container` (Block List) Ordered contents of this group. (see [below for nested schema](#nestedblock--container--group--container))
 - `headerless` (Boolean) Whether to hide the group header.
-- `layout` (Block, Optional) Settings for the layout that arranges this level's containers. (see [below for nested schema](#nestedblock--container--group--layout))
+- `layout` (Attributes) Settings for the layout that arranges this level's containers. (see [below for nested schema](#nestedatt--container--group--layout))
 - `title` (String) Optional group title. Omit it for an untitled group.
 
-<a id="nestedblock--container--group--container"></a>
+<a id="nestedatt--container--group--container"></a>
 ### Nested Schema for `container.group.container`
 
 Optional:
 
-- `layout` (Block, Optional) Placement and size of this container inside its parent layout. Lengths accept numbers or relative strings; clamped values and coordinate arrays can be supplied with jsonencode. (see [below for nested schema](#nestedblock--container--group--container--layout))
+- `layout` (Attributes) Placement and size of this container inside its parent layout. Lengths accept numbers or relative strings; clamped values and coordinate arrays can be supplied with jsonencode. (see [below for nested schema](#nestedatt--container--group--container--layout))
 - `template_content` (String) Self-contained dashboard JSON object rendered inline in this container.
 - `template_id` (String) ID of a reusable Observability Template rendered in this container.
 
-<a id="nestedblock--container--group--container--layout"></a>
+<a id="nestedatt--container--group--container--layout"></a>
 ### Nested Schema for `container.group.container.layout`
 
 Optional:
@@ -313,16 +316,16 @@ Optional:
 
 
 
-<a id="nestedblock--container--group--layout"></a>
+<a id="nestedatt--container--group--layout"></a>
 ### Nested Schema for `container.group.layout`
 
 Optional:
 
-- `defaults` (Block, Optional) Default placement and size constraints inherited by every container in this layout. (see [below for nested schema](#nestedblock--container--group--layout--defaults))
+- `defaults` (Attributes) Default placement and size constraints inherited by every container in this layout. (see [below for nested schema](#nestedatt--container--group--layout--defaults))
 - `gap` (Number) Visual gap between adjacent containers in pixels.
 - `step` (Number) Layout resolution in pixels. Lengths are rounded to multiples of this value.
 
-<a id="nestedblock--container--group--layout--defaults"></a>
+<a id="nestedatt--container--group--layout--defaults"></a>
 ### Nested Schema for `container.group.layout.defaults`
 
 Optional:
@@ -338,7 +341,7 @@ Optional:
 
 
 
-<a id="nestedblock--container--layout"></a>
+<a id="nestedatt--container--layout"></a>
 ### Nested Schema for `container.layout`
 
 Optional:
@@ -355,47 +358,53 @@ Optional:
 - `y` (String) Vertical coordinate. A jsonencoded array is treated as a sum of lengths.
 
 
-<a id="nestedblock--container--section"></a>
+<a id="nestedatt--container--section"></a>
 ### Nested Schema for `container.section`
+
+Required:
+
+- `container` (Attributes List) Ordered contents of this section. (see [below for nested schema](#nestedatt--container--section--container))
 
 Optional:
 
 - `collapse` (Boolean) Whether the section is currently collapsed.
 - `collapsible` (Boolean) Whether the section can be collapsed.
-- `container` (Block List) Ordered contents of this section. (see [below for nested schema](#nestedblock--container--section--container))
-- `layout` (Block, Optional) Settings for the layout that arranges this level's containers. (see [below for nested schema](#nestedblock--container--section--layout))
+- `layout` (Attributes) Settings for the layout that arranges this level's containers. (see [below for nested schema](#nestedatt--container--section--layout))
 - `title` (String) Optional section title. Omit it for an untitled section.
 
-<a id="nestedblock--container--section--container"></a>
+<a id="nestedatt--container--section--container"></a>
 ### Nested Schema for `container.section.container`
 
 Optional:
 
-- `group` (Block, Optional) A group containing related containers. (see [below for nested schema](#nestedblock--container--section--container--group))
-- `layout` (Block, Optional) Placement and size of this container inside its parent layout. Lengths accept numbers or relative strings; clamped values and coordinate arrays can be supplied with jsonencode. (see [below for nested schema](#nestedblock--container--section--container--layout))
+- `group` (Attributes) A group containing related containers. (see [below for nested schema](#nestedatt--container--section--container--group))
+- `layout` (Attributes) Placement and size of this container inside its parent layout. Lengths accept numbers or relative strings; clamped values and coordinate arrays can be supplied with jsonencode. (see [below for nested schema](#nestedatt--container--section--container--layout))
 - `template_content` (String) Self-contained dashboard JSON object rendered inline in this container.
 - `template_id` (String) ID of a reusable Observability Template rendered in this container.
 
-<a id="nestedblock--container--section--container--group"></a>
+<a id="nestedatt--container--section--container--group"></a>
 ### Nested Schema for `container.section.container.group`
+
+Required:
+
+- `container` (Attributes List) Ordered contents of this group. (see [below for nested schema](#nestedatt--container--section--container--group--container))
 
 Optional:
 
-- `container` (Block List) Ordered contents of this group. (see [below for nested schema](#nestedblock--container--section--container--group--container))
 - `headerless` (Boolean) Whether to hide the group header.
-- `layout` (Block, Optional) Settings for the layout that arranges this level's containers. (see [below for nested schema](#nestedblock--container--section--container--group--layout))
+- `layout` (Attributes) Settings for the layout that arranges this level's containers. (see [below for nested schema](#nestedatt--container--section--container--group--layout))
 - `title` (String) Optional group title. Omit it for an untitled group.
 
-<a id="nestedblock--container--section--container--group--container"></a>
+<a id="nestedatt--container--section--container--group--container"></a>
 ### Nested Schema for `container.section.container.group.container`
 
 Optional:
 
-- `layout` (Block, Optional) Placement and size of this container inside its parent layout. Lengths accept numbers or relative strings; clamped values and coordinate arrays can be supplied with jsonencode. (see [below for nested schema](#nestedblock--container--section--container--group--container--layout))
+- `layout` (Attributes) Placement and size of this container inside its parent layout. Lengths accept numbers or relative strings; clamped values and coordinate arrays can be supplied with jsonencode. (see [below for nested schema](#nestedatt--container--section--container--group--container--layout))
 - `template_content` (String) Self-contained dashboard JSON object rendered inline in this container.
 - `template_id` (String) ID of a reusable Observability Template rendered in this container.
 
-<a id="nestedblock--container--section--container--group--container--layout"></a>
+<a id="nestedatt--container--section--container--group--container--layout"></a>
 ### Nested Schema for `container.section.container.group.container.layout`
 
 Optional:
@@ -413,16 +422,16 @@ Optional:
 
 
 
-<a id="nestedblock--container--section--container--group--layout"></a>
+<a id="nestedatt--container--section--container--group--layout"></a>
 ### Nested Schema for `container.section.container.group.layout`
 
 Optional:
 
-- `defaults` (Block, Optional) Default placement and size constraints inherited by every container in this layout. (see [below for nested schema](#nestedblock--container--section--container--group--layout--defaults))
+- `defaults` (Attributes) Default placement and size constraints inherited by every container in this layout. (see [below for nested schema](#nestedatt--container--section--container--group--layout--defaults))
 - `gap` (Number) Visual gap between adjacent containers in pixels.
 - `step` (Number) Layout resolution in pixels. Lengths are rounded to multiples of this value.
 
-<a id="nestedblock--container--section--container--group--layout--defaults"></a>
+<a id="nestedatt--container--section--container--group--layout--defaults"></a>
 ### Nested Schema for `container.section.container.group.layout.defaults`
 
 Optional:
@@ -438,7 +447,7 @@ Optional:
 
 
 
-<a id="nestedblock--container--section--container--layout"></a>
+<a id="nestedatt--container--section--container--layout"></a>
 ### Nested Schema for `container.section.container.layout`
 
 Optional:
@@ -456,16 +465,16 @@ Optional:
 
 
 
-<a id="nestedblock--container--section--layout"></a>
+<a id="nestedatt--container--section--layout"></a>
 ### Nested Schema for `container.section.layout`
 
 Optional:
 
-- `defaults` (Block, Optional) Default placement and size constraints inherited by every container in this layout. (see [below for nested schema](#nestedblock--container--section--layout--defaults))
+- `defaults` (Attributes) Default placement and size constraints inherited by every container in this layout. (see [below for nested schema](#nestedatt--container--section--layout--defaults))
 - `gap` (Number) Visual gap between adjacent containers in pixels.
 - `step` (Number) Layout resolution in pixels. Lengths are rounded to multiples of this value.
 
-<a id="nestedblock--container--section--layout--defaults"></a>
+<a id="nestedatt--container--section--layout--defaults"></a>
 ### Nested Schema for `container.section.layout.defaults`
 
 Optional:
@@ -482,17 +491,17 @@ Optional:
 
 
 
-<a id="nestedblock--control_bar"></a>
+<a id="nestedatt--control_bar"></a>
 ### Nested Schema for `control_bar`
 
 Optional:
 
-- `density` (Block, Optional) The chart density control. Its reserved variable name is always DENSITY. (see [below for nested schema](#nestedblock--control_bar--density))
-- `filter_set` (Block, Optional) The ad-hoc filter picker and its optional default filters. Its reserved variable name is always FILTERS. (see [below for nested schema](#nestedblock--control_bar--filter_set))
-- `pinned_filter` (Block List) An ordered filter control pinned to the dashboard bar. (see [below for nested schema](#nestedblock--control_bar--pinned_filter))
-- `time_range` (Block, Optional) The dashboard time-range control. Its reserved variable name is always TIME. (see [below for nested schema](#nestedblock--control_bar--time_range))
+- `density` (Attributes) The chart density control. Its reserved variable name is always DENSITY. (see [below for nested schema](#nestedatt--control_bar--density))
+- `filter_set` (Attributes) The ad-hoc filter picker and its optional default filters. Its reserved variable name is always FILTERS. (see [below for nested schema](#nestedatt--control_bar--filter_set))
+- `pinned_filter` (Attributes List) Ordered filter controls pinned to the dashboard bar. (see [below for nested schema](#nestedatt--control_bar--pinned_filter))
+- `time_range` (Attributes) The dashboard time-range control. Its reserved variable name is always TIME. (see [below for nested schema](#nestedatt--control_bar--time_range))
 
-<a id="nestedblock--control_bar--density"></a>
+<a id="nestedatt--control_bar--density"></a>
 ### Nested Schema for `control_bar.density`
 
 Optional:
@@ -503,17 +512,17 @@ Optional:
 - `label` (String) The density control label.
 
 
-<a id="nestedblock--control_bar--filter_set"></a>
+<a id="nestedatt--control_bar--filter_set"></a>
 ### Nested Schema for `control_bar.filter_set`
 
 Optional:
 
 - `description` (String) The filter-set control description.
-- `filter` (Block List) Ordered default filters for the filter-set control. Empty values are a no-op. (see [below for nested schema](#nestedblock--control_bar--filter_set--filter))
+- `filter` (Attributes List) Ordered default filters for the filter-set control. Empty values are a no-op. (see [below for nested schema](#nestedatt--control_bar--filter_set--filter))
 - `hidden` (Boolean) Whether to hide the filter-set control.
 - `label` (String) The filter-set control label.
 
-<a id="nestedblock--control_bar--filter_set--filter"></a>
+<a id="nestedatt--control_bar--filter_set--filter"></a>
 ### Nested Schema for `control_bar.filter_set.filter`
 
 Required:
@@ -529,7 +538,7 @@ Optional:
 
 
 
-<a id="nestedblock--control_bar--pinned_filter"></a>
+<a id="nestedatt--control_bar--pinned_filter"></a>
 ### Nested Schema for `control_bar.pinned_filter`
 
 Required:
@@ -550,7 +559,7 @@ Optional:
 - `suggested_values` (List of String) Preferred filter suggestions.
 
 
-<a id="nestedblock--control_bar--time_range"></a>
+<a id="nestedatt--control_bar--time_range"></a>
 ### Nested Schema for `control_bar.time_range`
 
 Optional:
@@ -562,16 +571,16 @@ Optional:
 
 
 
-<a id="nestedblock--layout"></a>
+<a id="nestedatt--layout"></a>
 ### Nested Schema for `layout`
 
 Optional:
 
-- `defaults` (Block, Optional) Default placement and size constraints inherited by every container in this layout. (see [below for nested schema](#nestedblock--layout--defaults))
+- `defaults` (Attributes) Default placement and size constraints inherited by every container in this layout. (see [below for nested schema](#nestedatt--layout--defaults))
 - `gap` (Number) Visual gap between adjacent containers in pixels.
 - `step` (Number) Layout resolution in pixels. Lengths are rounded to multiples of this value.
 
-<a id="nestedblock--layout--defaults"></a>
+<a id="nestedatt--layout--defaults"></a>
 ### Nested Schema for `layout.defaults`
 
 Optional:

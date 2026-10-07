@@ -32,76 +32,52 @@ func TestResourceObservabilityDashboardMetadataAndSchema(t *testing.T) {
 
 	r := NewResourceObservabilityDashboard()
 	var metadata resource.MetadataResponse
-	r.Metadata(context.Background(), resource.MetadataRequest{ProviderTypeName: "signalfx"}, &metadata)
+	r.Metadata(t.Context(), resource.MetadataRequest{ProviderTypeName: "signalfx"}, &metadata)
 	assert.Equal(t, "signalfx_observability_dashboard", metadata.TypeName)
 	var schemaResponse resource.SchemaResponse
-	r.Schema(context.Background(), resource.SchemaRequest{}, &schemaResponse)
-	require.False(t, schemaResponse.Schema.ValidateImplementation(context.Background()).HasError())
-	assert.NotEmpty(t, schemaResponse.Schema.Description)
-	controlBar, ok := schemaResponse.Schema.Blocks["control_bar"].(schema.SingleNestedBlock)
-	require.True(t, ok)
-	assert.Contains(t, controlBar.Blocks, "time_range")
-	assert.Contains(t, controlBar.Blocks, "density")
-	assert.Contains(t, controlBar.Blocks, "pinned_filter")
-	assert.Contains(t, controlBar.Blocks, "filter_set")
-	rootLayout, ok := schemaResponse.Schema.Blocks["layout"].(schema.SingleNestedBlock)
-	require.True(t, ok)
-	assert.Contains(t, rootLayout.Attributes, "gap")
-	assert.Contains(t, rootLayout.Attributes, "step")
-	defaults, ok := rootLayout.Blocks["defaults"].(schema.SingleNestedBlock)
-	require.True(t, ok)
-	for _, name := range []string{"absolute", "width", "height", "min_width", "max_width", "min_height", "max_height"} {
-		assert.Contains(t, defaults.Attributes, name)
+	r.Schema(t.Context(), resource.SchemaRequest{}, &schemaResponse)
+	resourceSchema := schemaResponse.Schema
+	require.False(t, resourceSchema.ValidateImplementation(t.Context()).HasError())
+	assert.NotEmpty(t, resourceSchema.Description)
+	assert.Empty(t, resourceSchema.Blocks)
+
+	root := path.Root("container").AtListIndex(0)
+	section := root.AtName("section")
+	sectionContainer := section.AtName("container").AtListIndex(0)
+	group := sectionContainer.AtName("group")
+	groupContainer := group.AtName("container").AtListIndex(0)
+	for _, test := range []struct {
+		path   path.Path
+		exists bool
+	}{
+		{path.Root("control_bar").AtName("pinned_filter").AtListIndex(0).AtName("variable_name"), true},
+		{path.Root("control_bar").AtName("filter_set").AtName("filter").AtListIndex(0).AtName("match_missing"), true},
+		{path.Root("layout").AtName("defaults").AtName("max_height"), true},
+		{path.Root("layout").AtName("defaults").AtName("x"), false},
+		{root.AtName("template_content"), true},
+		{root.AtName("layout").AtName("order"), true},
+		{root.AtName("group").AtName("headerless"), true},
+		{section.AtName("collapsible"), true},
+		{section.AtName("layout").AtName("gap"), true},
+		{sectionContainer.AtName("template_id"), true},
+		{sectionContainer.AtName("section"), false},
+		{groupContainer.AtName("template_id"), true},
+		{groupContainer.AtName("section"), false},
+		{groupContainer.AtName("group"), false},
+	} {
+		_, diags := resourceSchema.AttributeAtPath(t.Context(), test.path)
+		assert.Equal(t, test.exists, !diags.HasError(), test.path.String())
 	}
-	assert.NotContains(t, defaults.Attributes, "x")
-	assert.NotContains(t, defaults.Attributes, "y")
 
-	rootContainer, ok := schemaResponse.Schema.Blocks["container"].(schema.ListNestedBlock)
-	require.True(t, ok)
-	assert.Contains(t, rootContainer.NestedObject.Attributes, "template_id")
-	assert.Contains(t, rootContainer.NestedObject.Blocks, "section")
-	assert.Contains(t, rootContainer.NestedObject.Blocks, "group")
-	contentAttribute, ok := rootContainer.NestedObject.Attributes["template_content"].(schema.StringAttribute)
-	require.True(t, ok)
-	assert.Equal(t, jsontypes.NormalizedType{}, contentAttribute.CustomType)
-	itemLayout, ok := rootContainer.NestedObject.Blocks["layout"].(schema.SingleNestedBlock)
-	require.True(t, ok)
-	for _, name := range []string{"order", "absolute", "width", "height", "min_width", "max_width", "min_height", "max_height", "x", "y"} {
-		assert.Contains(t, itemLayout.Attributes, name)
+	content, diags := resourceSchema.AttributeAtPath(t.Context(), root.AtName("template_content"))
+	require.False(t, diags.HasError())
+	assert.Equal(t, jsontypes.NormalizedType{}, content.(schema.StringAttribute).CustomType)
+	for _, titlePath := range []path.Path{section.AtName("title"), group.AtName("title")} {
+		title, diags := resourceSchema.AttributeAtPath(t.Context(), titlePath)
+		require.False(t, diags.HasError())
+		assert.True(t, title.(schema.StringAttribute).Computed, titlePath.String())
+		assert.NotNil(t, title.(schema.StringAttribute).Default, titlePath.String())
 	}
-
-	section, ok := rootContainer.NestedObject.Blocks["section"].(schema.SingleNestedBlock)
-	require.True(t, ok)
-	sectionTitle, ok := section.Attributes["title"].(schema.StringAttribute)
-	require.True(t, ok)
-	assert.True(t, sectionTitle.Optional)
-	assert.True(t, sectionTitle.Computed)
-	assert.NotNil(t, sectionTitle.Default)
-	assert.Contains(t, section.Attributes, "collapse")
-	assert.Contains(t, section.Attributes, "collapsible")
-	assert.Contains(t, section.Blocks, "layout")
-	sectionContainer, ok := section.Blocks["container"].(schema.ListNestedBlock)
-	require.True(t, ok)
-	assert.Contains(t, sectionContainer.NestedObject.Attributes, "template_id")
-	assert.Contains(t, sectionContainer.NestedObject.Attributes, "template_content")
-	assert.Contains(t, sectionContainer.NestedObject.Blocks, "group")
-	assert.NotContains(t, sectionContainer.NestedObject.Blocks, "section")
-
-	group, ok := rootContainer.NestedObject.Blocks["group"].(schema.SingleNestedBlock)
-	require.True(t, ok)
-	groupTitle, ok := group.Attributes["title"].(schema.StringAttribute)
-	require.True(t, ok)
-	assert.True(t, groupTitle.Optional)
-	assert.True(t, groupTitle.Computed)
-	assert.NotNil(t, groupTitle.Default)
-	assert.Contains(t, group.Attributes, "headerless")
-	assert.Contains(t, group.Blocks, "layout")
-	groupContainer, ok := group.Blocks["container"].(schema.ListNestedBlock)
-	require.True(t, ok)
-	assert.Contains(t, groupContainer.NestedObject.Attributes, "template_id")
-	assert.Contains(t, groupContainer.NestedObject.Attributes, "template_content")
-	assert.NotContains(t, groupContainer.NestedObject.Blocks, "section")
-	assert.NotContains(t, groupContainer.NestedObject.Blocks, "group")
 }
 
 func TestResourceObservabilityDashboardRejectsInvalidPlans(t *testing.T) {
@@ -114,7 +90,7 @@ func TestResourceObservabilityDashboardRejectsInvalidPlans(t *testing.T) {
 			name: "missing container content",
 			config: `resource "signalfx_observability_dashboard" "test" {
   title = "Service overview"
-  container {}
+  container = [{}]
 }`,
 			want: "Invalid container content",
 		},
@@ -122,10 +98,10 @@ func TestResourceObservabilityDashboardRejectsInvalidPlans(t *testing.T) {
 			name: "two content sources",
 			config: `resource "signalfx_observability_dashboard" "test" {
   title = "Service overview"
-  container {
+  container = [{
     template_id      = "chart-1"
     template_content = jsonencode({ "<Chart>" = [] })
-  }
+  }]
 }`,
 			want: "Invalid template content",
 		},
@@ -133,30 +109,38 @@ func TestResourceObservabilityDashboardRejectsInvalidPlans(t *testing.T) {
 			name: "invalid inline content",
 			config: `resource "signalfx_observability_dashboard" "test" {
   title = "Service overview"
-  container {
+  container = [{
     template_content = jsonencode({ chart = {} })
-  }
+  }]
 }`,
 			want: "no dashboard element key",
+		},
+		{
+			name: "empty container list",
+			config: `resource "signalfx_observability_dashboard" "test" {
+  title     = "Service overview"
+  container = []
+}`,
+			want: "must contain at least 1 elements",
 		},
 		{
 			name: "empty section",
 			config: `resource "signalfx_observability_dashboard" "test" {
   title = "Service overview"
-  container {
-    section {}
-  }
+  container = [{
+    section = {}
+  }]
 }`,
-			want: "Empty section",
+			want: `attribute "container" is required`,
 		},
 		{
 			name: "invalid width array",
 			config: `resource "signalfx_observability_dashboard" "test" {
   title = "Service overview"
-  container {
+  container = [{
     template_content = jsonencode({ "<Chart>" = [] })
-    layout { width = jsonencode([1, 2]) }
-  }
+    layout = { width = jsonencode([1, 2]) }
+  }]
 }`,
 			want: "JSON arrays are supported only for x and y",
 		},
@@ -164,9 +148,11 @@ func TestResourceObservabilityDashboardRejectsInvalidPlans(t *testing.T) {
 			name: "duplicate pinned control",
 			config: `resource "signalfx_observability_dashboard" "test" {
   title = "Service overview"
-  control_bar {
-    pinned_filter { variable_name = "service" }
-    pinned_filter { variable_name = "service" }
+  control_bar = {
+    pinned_filter = [
+      { variable_name = "service" },
+      { variable_name = "service" },
+    ]
   }
 }`,
 			want: "Duplicate control variable name",
@@ -186,6 +172,42 @@ func TestResourceObservabilityDashboardRejectsInvalidPlans(t *testing.T) {
 			})
 		})
 	}
+}
+
+func TestResourceObservabilityDashboardPlansWithUnknownValues(t *testing.T) {
+	testresource.UnitTest(t, testresource.TestCase{
+		IsUnitTest: true,
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_5_0),
+		},
+		ProtoV6ProviderFactories: fwtest.NewMockProto6Server(
+			t, nil, fwtest.WithMockResources(NewResourceObservabilityDashboard),
+		),
+		Steps: []testresource.TestStep{
+			{
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: true,
+				Config: `resource "terraform_data" "ids" {
+  input = ["chart-1"]
+}
+resource "signalfx_observability_dashboard" "test" {
+  title     = "Unknown containers"
+  container = [for id in terraform_data.ids.output : { template_id = id }]
+}`,
+			},
+			{
+				PlanOnly: true,
+				Config: `resource "terraform_data" "title" {
+  input = "Computed title"
+}
+resource "signalfx_observability_dashboard" "test" {
+  title     = terraform_data.title.output
+  container = [{}]
+}`,
+				ExpectError: regexp.MustCompile("Invalid container content"),
+			},
+		},
+	})
 }
 
 func TestResourceObservabilityDashboardRejectsImportedUpdate(t *testing.T) {
@@ -441,17 +463,17 @@ func TestResourceObservabilityDashboardUntitledContainers(t *testing.T) {
 resource "signalfx_observability_dashboard" "untitled" {
   title = "Untitled containers"
 
-  container {
-    section {
-      container {
-        group {
-          container {
+  container = [{
+    section = {
+      container = [{
+        group = {
+          container = [{
             template_content = jsonencode({ "<Chart>" = [] })
-          }
+          }]
         }
-      }
+      }]
     }
-  }
+  }]
 }
 `,
 			Check: testresource.ComposeAggregateTestCheckFunc(
@@ -465,7 +487,7 @@ resource "signalfx_observability_dashboard" "untitled" {
 func TestDashifyLayoutOptionValidators(t *testing.T) {
 	t.Parallel()
 
-	block := dashifyLayoutOptionsBlock()
+	block := dashifyLayoutOptionsAttribute()
 	for name, test := range map[string]struct {
 		attribute   string
 		value       float64
@@ -870,11 +892,10 @@ func TestDashifyDashboardSpecWarnsAboutUnmodeledFields(t *testing.T) {
 		"$import:widget0":"/v2/template/chart-id"
 	}`)
 	model, diags := parseDashboardTemplate(&template.Template{
-		Type:       observabilityTemplateRecordType,
-		Title:      "Dashboard",
-		Spec:       spec,
-		Metadata:   &template.Metadata{RootElement: &root, Imports: []string{"/v2/template/chart-id", "/v2/template/extra-id"}},
-		SignalView: json.RawMessage(`{"lastConvertedAt":"2026-01-01T00:00:00Z"}`),
+		Type:     observabilityTemplateRecordType,
+		Title:    "Dashboard",
+		Spec:     spec,
+		Metadata: &template.Metadata{RootElement: &root},
 	})
 	require.False(t, diags.HasError(), diags)
 	require.Len(t, model.Container, 1)
@@ -892,8 +913,6 @@ func TestDashifyDashboardSpecWarnsAboutUnmodeledFields(t *testing.T) {
 		"layout._.0.0.0.futureConstraint",
 		"layout.saved._.0.section.futureSection",
 		"layout.saved._.0.0.group.futureGroup",
-		"metadata.imports",
-		"signalview",
 	} {
 		assert.Contains(t, warnings[0].Detail(), path)
 	}
@@ -1231,9 +1250,9 @@ func TestResourceObservabilityDashboardRecreatesAfterRemoteDelete(t *testing.T) 
 		Steps: []testresource.TestStep{
 			{Config: `resource "signalfx_observability_dashboard" "test" {
   title = "Service overview"
-  container {
+  container = [{
     template_content = jsonencode({ "<Chart>" = [] })
-  }
+  }]
 }`},
 			{
 				PreConfig: func() {
@@ -1242,9 +1261,9 @@ func TestResourceObservabilityDashboardRecreatesAfterRemoteDelete(t *testing.T) 
 				},
 				Config: `resource "signalfx_observability_dashboard" "test" {
   title = "Service overview"
-  container {
+  container = [{
     template_content = jsonencode({ "<Chart>" = [] })
-  }
+  }]
 }`,
 				Check: testresource.TestCheckResourceAttr("signalfx_observability_dashboard.test", "id", "template-2"),
 			},
@@ -1287,9 +1306,9 @@ func TestResourceObservabilityDashboardReadRejectsMismatchedID(t *testing.T) {
 	}
 	const dashboardConfig = `resource "signalfx_observability_dashboard" "test" {
   title = "Service overview"
-  container {
+  container = [{
     template_content = jsonencode({ "<Chart>" = [] })
-  }
+  }]
 }`
 	testresource.UnitTest(t, testresource.TestCase{
 		IsUnitTest: true,
@@ -1315,11 +1334,6 @@ func TestObservabilityDashboardRejectsInvalidAPIRecords(t *testing.T) {
 		record template.Template
 		want   string
 	}{
-		{
-			name:   "wrong record type",
-			record: template.Template{ID: "dashboard-1", Type: "other", Metadata: &template.Metadata{RootElement: &root}, Spec: json.RawMessage(`{"<Dashboard>":[]}`)},
-			want:   "record type",
-		},
 		{
 			name:   "missing root",
 			record: template.Template{ID: "dashboard-1", Type: observabilityTemplateRecordType, Spec: json.RawMessage(`{"<Dashboard>":[]}`)},
@@ -1359,9 +1373,9 @@ func TestResourceObservabilityDashboardCreateReportsMissingEndpoint(t *testing.T
 		Steps: []testresource.TestStep{{
 			Config: `resource "signalfx_observability_dashboard" "test" {
   title = "Service overview"
-  container {
+  container = [{
     template_content = jsonencode({ "<Chart>" = [] })
-  }
+  }]
 }`,
 			ExpectError: regexp.MustCompile("The Template API endpoint was not found"),
 		}},
@@ -1409,16 +1423,16 @@ func TestResourceObservabilityDashboardUpdateReportsNotFound(t *testing.T) {
 		Steps: []testresource.TestStep{
 			{Config: `resource "signalfx_observability_dashboard" "test" {
   title = "Service overview"
-  container {
+  container = [{
     template_content = jsonencode({ "<Chart>" = [] })
-  }
+  }]
 }`},
 			{
 				Config: `resource "signalfx_observability_dashboard" "test" {
   title = "Updated overview"
-  container {
+  container = [{
     template_content = jsonencode({ "<Chart>" = [] })
-  }
+  }]
 }`,
 				ExpectError: regexp.MustCompile("was not found during update"),
 			},

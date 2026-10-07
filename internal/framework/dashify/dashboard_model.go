@@ -229,6 +229,10 @@ func dashifyContainersFromGroupModels(models []dashifyGroupContainerModel) []das
 }
 
 func dashifyDashboardModelsFromContainers(containers []dashifyContainer) []dashifyDashboardContainerModel {
+	// An omitted container attribute is null, so no containers must stay nil.
+	if len(containers) == 0 {
+		return nil
+	}
 	models := make([]dashifyDashboardContainerModel, len(containers))
 	for i, container := range containers {
 		templateID, templateContent := dashifyTemplateFields(container.Template)

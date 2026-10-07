@@ -10,11 +10,11 @@ resource "signalfx_observability_template" "chart" {
 resource "signalfx_observability_dashboard" "test" {
   title = "Service overview"
 
-  container {
-    layout {
+  container = [{
+    layout = {
       width  = "6/12"
       height = "2"
     }
     template_id = signalfx_observability_template.chart.id
-  }
+  }]
 }

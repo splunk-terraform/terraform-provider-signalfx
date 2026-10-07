@@ -27,36 +27,36 @@ resource "signalfx_observability_template" "control_chart" {
 resource "signalfx_observability_dashboard" "controls" {
   title = "Service health"
 
-  control_bar {
-    time_range {
+  control_bar = {
+    time_range = {
       label                  = "Time Range"
       default_variable_value = "-15m"
     }
 
-    density {
+    density = {
       default_variable_value = 60
     }
 
-    pinned_filter {
+    pinned_filter = [{
       variable_name          = "service"
       key                    = "service.name"
       default_variable_value = ["checkout"]
       suggested_values       = ["checkout", "payments"]
       required               = true
       application_mode       = "add"
-    }
+    }]
 
-    filter_set {
+    filter_set = {
       hidden = false
 
-      filter {
+      filter = [{
         key    = "deployment.environment"
         values = ["prod"]
-      }
+      }]
     }
   }
 
-  container {
+  container = [{
     template_id = signalfx_observability_template.control_chart.id
-  }
+  }]
 }

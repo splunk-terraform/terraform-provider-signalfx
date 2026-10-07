@@ -249,27 +249,6 @@ func parseDashboardTemplate(record *template.Template) (observabilityDashboardMo
 		delete(spec, dashifyImportPrefix+alias)
 	}
 	leftovers = append(leftovers, dashifyLeftovers("", spec)...)
-	_, representedImports, err := buildDashboardSpec(model)
-	if err != nil {
-		return model, formatDashboardParseError(err)
-	}
-	represented := make(map[string]int, len(representedImports))
-	for _, reference := range representedImports {
-		represented[reference]++
-	}
-	for _, reference := range record.Metadata.Imports {
-		if represented[reference] == 0 {
-			leftovers = append(leftovers, "metadata.imports")
-			break
-		}
-		represented[reference]--
-	}
-	if raw := strings.TrimSpace(string(record.SignalView)); raw != "" && raw != "null" {
-		leftovers = append(leftovers, "signalview")
-	}
-	if record.Type != "" && record.Type != observabilityTemplateRecordType {
-		leftovers = append(leftovers, "type")
-	}
 	if len(leftovers) > 0 {
 		sort.Strings(leftovers)
 		diags.AddWarning(

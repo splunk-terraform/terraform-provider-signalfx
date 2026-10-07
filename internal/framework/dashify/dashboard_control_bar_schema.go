@@ -16,11 +16,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-func dashifyControlBarBlock() schema.SingleNestedBlock {
-	return schema.SingleNestedBlock{
+func dashifyControlBarAttribute() schema.SingleNestedAttribute {
+	return schema.SingleNestedAttribute{
+		Optional:    true,
 		Description: "Optional controls applied to the dashboard and its charts.",
-		Blocks: map[string]schema.Block{
-			"time_range": schema.SingleNestedBlock{
+		Attributes: map[string]schema.Attribute{
+			"time_range": schema.SingleNestedAttribute{
+				Optional:    true,
 				Description: "The dashboard time-range control. Its reserved variable name is always TIME.",
 				Attributes: func() map[string]schema.Attribute {
 					attributes := dashifyCommonControlAttributes("time-range")
@@ -32,7 +34,8 @@ func dashifyControlBarBlock() schema.SingleNestedBlock {
 					return attributes
 				}(),
 			},
-			"density": schema.SingleNestedBlock{
+			"density": schema.SingleNestedAttribute{
+				Optional:    true,
 				Description: "The chart density control. Its reserved variable name is always DENSITY.",
 				Attributes: func() map[string]schema.Attribute {
 					attributes := dashifyCommonControlAttributes("density")
@@ -44,9 +47,11 @@ func dashifyControlBarBlock() schema.SingleNestedBlock {
 					return attributes
 				}(),
 			},
-			"pinned_filter": schema.ListNestedBlock{
-				Description: "An ordered filter control pinned to the dashboard bar.",
-				NestedObject: schema.NestedBlockObject{
+			"pinned_filter": schema.ListNestedAttribute{
+				Optional:    true,
+				Description: "Ordered filter controls pinned to the dashboard bar.",
+				Validators:  []validator.List{listvalidator.SizeAtLeast(1)},
+				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"variable_name": schema.StringAttribute{
 							Required:    true,
@@ -83,13 +88,16 @@ func dashifyControlBarBlock() schema.SingleNestedBlock {
 					},
 				},
 			},
-			"filter_set": schema.SingleNestedBlock{
+			"filter_set": schema.SingleNestedAttribute{
+				Optional:    true,
 				Description: "The ad-hoc filter picker and its optional default filters. Its reserved variable name is always FILTERS.",
-				Attributes:  dashifyCommonControlAttributes("filter-set"),
-				Blocks: map[string]schema.Block{
-					"filter": schema.ListNestedBlock{
+				Attributes: func() map[string]schema.Attribute {
+					attributes := dashifyCommonControlAttributes("filter-set")
+					attributes["filter"] = schema.ListNestedAttribute{
+						Optional:    true,
 						Description: "Ordered default filters for the filter-set control. Empty values are a no-op.",
-						NestedObject: schema.NestedBlockObject{
+						Validators:  []validator.List{listvalidator.SizeAtLeast(1)},
+						NestedObject: schema.NestedAttributeObject{
 							Attributes: map[string]schema.Attribute{
 								"key": schema.StringAttribute{
 									Required:    true,
@@ -116,8 +124,9 @@ func dashifyControlBarBlock() schema.SingleNestedBlock {
 								},
 							},
 						},
-					},
-				},
+					}
+					return attributes
+				}(),
 			},
 		},
 	}
@@ -153,7 +162,7 @@ func validateDashifyControlBar(resp *resource.ValidateConfigResponse, controlBar
 		return
 	}
 	if model.TimeRange == nil && model.Density == nil && len(model.PinnedFilter) == 0 && model.FilterSet == nil {
-		resp.Diagnostics.AddAttributeError(controlBarPath, "Empty control bar", "control_bar must contain at least one time_range, density, pinned_filter, or filter_set block")
+		resp.Diagnostics.AddAttributeError(controlBarPath, "Empty control bar", "control_bar must set at least one of time_range, density, pinned_filter, or filter_set")
 		return
 	}
 
