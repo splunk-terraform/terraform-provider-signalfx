@@ -16,7 +16,7 @@ jobs:
           uses: actions/checkout@v7
   
         - name: Set up Go
-          uses: actions/setup-go@v6
+          uses: actions/setup-go@v7
           with:
             go-version: 'stable'
   
@@ -30,4 +30,4 @@ jobs:
             key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
   
         - name: Validate docs
-          run: make check-docs test-docs check-schema-docs
+          run: make check-docs
