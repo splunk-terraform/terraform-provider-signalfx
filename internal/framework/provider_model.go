@@ -23,6 +23,7 @@ type OllyProviderModel struct {
 	FeaturePreview      types.Map    `tfsdk:"feature_preview"`
 	Tags                types.List   `tfsdk:"tags"`
 	Teams               types.List   `tfsdk:"teams"`
+	FileOutput          types.String `tfsdk:"file_output"`
 }
 
 func newDefaultOllyProviderModel() *OllyProviderModel {
@@ -40,6 +41,7 @@ func newDefaultOllyProviderModel() *OllyProviderModel {
 		FeaturePreview:      types.MapNull(types.BoolType),
 		Tags:                types.ListNull(types.StringType),
 		Teams:               types.ListNull(types.StringType),
+		FileOutput:          types.StringNull(),
 	}
 }
 
