@@ -200,8 +200,8 @@ For sections, groups, and advanced layout, use `signalfx_observability_template`
 
 Optional:
 
-- `layout` (Attributes) Basic panel sizing. Numeric sizes are layout values, not pixels. (see [below for nested schema](#nestedatt--container--layout))
 - `inline_content` (String) Self-contained dashboard JSON object rendered inline in this panel.
+- `layout` (Attributes) Basic panel sizing. Numeric sizes are layout values, not pixels. (see [below for nested schema](#nestedatt--container--layout))
 - `template_id` (String) ID of a reusable Observability Template rendered in this panel.
 
 <a id="nestedatt--container--layout"></a>
