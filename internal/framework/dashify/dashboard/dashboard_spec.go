@@ -23,9 +23,8 @@ const (
 	dashifyPanelElement           = "<Panel>"
 	dashifySectionElement         = "<Section>"
 	dashifyGroupElement           = "<Group>"
-	dashifyImportPrefix           = fwdashify.ObservabilityTemplateImportPrefix
-	dashifyImportElement          = "<$import."
-	dashifyLeftoverLimit          = 10
+	dashifyImportPrefix           = fwdashify.DashifyImportNamespace + ":"
+	dashifyImportElement          = "<" + fwdashify.DashifyImportNamespace + "."
 	dashifyUnmodeledFieldsSummary = "Dashboard fields not represented in Terraform state"
 )
 
@@ -78,18 +77,18 @@ func buildDashboardSpec(model observabilityDashboardModel) (json.RawMessage, []s
 // imports add API metadata, signaled by a non-empty reference.
 func buildDashifyPanelChild(spec map[string]any, model *dashifyDashboardContainerModel, id string) (map[string]any, string, error) {
 	if model == nil {
-		return nil, "", fmt.Errorf("template_id or template_content is required")
+		return nil, "", fmt.Errorf("template_id or inline_content is required")
 	}
-	if model.TemplateID.IsUnknown() || model.TemplateContent.IsUnknown() {
-		return nil, "", fmt.Errorf("template_id and template_content must be known before writing")
+	if model.TemplateID.IsUnknown() || model.InlineContent.IsUnknown() {
+		return nil, "", fmt.Errorf("template_id and inline_content must be known before writing")
 	}
 	idSet := !model.TemplateID.IsNull()
-	contentSet := !model.TemplateContent.IsNull()
+	contentSet := !model.InlineContent.IsNull()
 	if idSet == contentSet {
-		return nil, "", fmt.Errorf("exactly one of template_id or template_content must be set")
+		return nil, "", fmt.Errorf("exactly one of template_id or inline_content must be set")
 	}
 	if contentSet {
-		content, err := decodeDashifyInlineContent(model.TemplateContent.ValueString())
+		content, err := decodeDashifyInlineContent(model.InlineContent.ValueString())
 		if err != nil {
 			return nil, "", err
 		}
@@ -112,21 +111,21 @@ func buildDashifyPanelChild(spec map[string]any, model *dashifyDashboardContaine
 func decodeDashifyInlineContent(raw string) (map[string]any, error) {
 	var value any
 	if err := decodeDashifyJSON([]byte(raw), &value); err != nil {
-		return nil, fmt.Errorf("template_content must be valid JSON: %w", err)
+		return nil, fmt.Errorf("inline_content must be valid JSON: %w", err)
 	}
 	content, ok := value.(map[string]any)
 	if !ok {
-		return nil, fmt.Errorf("template_content must be a JSON object")
+		return nil, fmt.Errorf("inline_content must be a JSON object")
 	}
 	tag, _, err := oneDashifyElement(content)
 	if err != nil {
-		return nil, fmt.Errorf("template_content %w", err)
+		return nil, fmt.Errorf("inline_content %w", err)
 	}
 	if isDashifyImportElement(tag) {
-		return nil, fmt.Errorf("template_content cannot be an import element; use template_id instead")
+		return nil, fmt.Errorf("inline_content cannot be an import element; use template_id instead")
 	}
 	if nestedTag, ok := findDashifyImportElement(content); ok {
-		return nil, fmt.Errorf("template_content cannot contain import element %q; use template_id instead", nestedTag)
+		return nil, fmt.Errorf("inline_content cannot contain import element %q; use template_id instead", nestedTag)
 	}
 	return content, nil
 }
@@ -215,7 +214,7 @@ func parseDashboardTemplate(record *template.Template) (observabilityDashboardMo
 			fmt.Sprintf(
 				"The stored dashboard contains %d field(s) this provider does not model:\n  %s\n\nThese fields are absent from Terraform state, so this resource blocks updates that would remove them. To manage this dashboard, import it as signalfx_observability_template with its complete specification instead.",
 				len(leftovers),
-				strings.Join(truncateDashifyLeftovers(leftovers, dashifyLeftoverLimit), "\n  "),
+				strings.Join(leftovers, "\n  "),
 			),
 		)
 	}
@@ -248,7 +247,7 @@ func parseDashifyPanel(spec map[string]any, used map[string]bool, id, path strin
 		if err != nil {
 			return dashifyDashboardContainerModel{}, nil, fmt.Errorf("container %s encode inline content: %w", id, err)
 		}
-		return dashifyDashboardContainerModel{TemplateContent: jsontypes.NewNormalizedValue(string(encoded))}, nil, nil
+		return dashifyDashboardContainerModel{InlineContent: jsontypes.NewNormalizedValue(string(encoded))}, nil, nil
 	}
 	alias := strings.TrimSuffix(strings.TrimPrefix(tag, dashifyImportElement), ">")
 	reference, ok := spec[dashifyImportPrefix+alias].(string)
@@ -307,14 +306,6 @@ func dashifyLeftovers(prefix string, node map[string]any) []string {
 		}
 	}
 	return leftovers
-}
-
-// Bounds warning output and reports how many unmodeled paths were omitted.
-func truncateDashifyLeftovers(leftovers []string, limit int) []string {
-	if len(leftovers) <= limit {
-		return leftovers
-	}
-	return append(leftovers[:limit:limit], fmt.Sprintf("... and %d more", len(leftovers)-limit))
 }
 
 func findDashifyImportElement(value any) (string, bool) {

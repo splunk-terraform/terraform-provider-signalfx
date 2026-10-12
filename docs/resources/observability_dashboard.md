@@ -57,7 +57,7 @@ resource "signalfx_observability_dashboard" "inline_content" {
       min_height = "22"
     }
 
-    template_content = jsonencode({
+    inline_content = jsonencode({
       "<o11y:SingleValue>" = []
       chart = {
         color = "blue"
@@ -173,7 +173,7 @@ resource "signalfx_observability_dashboard" "controls" {
 }
 ```
 
-Each `container` represents one panel and needs exactly one content source: `template_id` for a reusable Template or `template_content` for inline JSON.
+Each `container` represents one panel and needs exactly one content source: `template_id` for a reusable Template or `inline_content` for inline JSON.
 
 A panel's `layout` supports `width`, `height`, `min_width`, and `min_height`. Numeric sizes are layout values, not pixels; simple fractions and percentages are also supported. Terraform list order controls panel order. Use a `for` expression to generate panels from a list, for example `container = [for id in var.chart_ids : { template_id = id }]`.
 
@@ -201,7 +201,7 @@ For sections, groups, and advanced layout, use `signalfx_observability_template`
 Optional:
 
 - `layout` (Attributes) Basic panel sizing. Numeric sizes are layout values, not pixels. (see [below for nested schema](#nestedatt--container--layout))
-- `template_content` (String) Self-contained dashboard JSON object rendered inline in this panel.
+- `inline_content` (String) Self-contained dashboard JSON object rendered inline in this panel.
 - `template_id` (String) ID of a reusable Observability Template rendered in this panel.
 
 <a id="nestedatt--container--layout"></a>

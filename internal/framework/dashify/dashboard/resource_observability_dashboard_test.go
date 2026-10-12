@@ -53,7 +53,7 @@ func TestResourceObservabilityDashboardMetadataAndSchema(t *testing.T) {
 		assert.True(t, diags.HasError(), attributePath.String())
 	}
 
-	content, diags := resourceSchema.AttributeAtPath(t.Context(), root.AtName("template_content"))
+	content, diags := resourceSchema.AttributeAtPath(t.Context(), root.AtName("inline_content"))
 	require.False(t, diags.HasError())
 	assert.Equal(t, jsontypes.NormalizedType{}, content.(schema.StringAttribute).CustomType)
 }
@@ -78,7 +78,7 @@ func TestResourceObservabilityDashboardRejectsInvalidPlans(t *testing.T) {
   title = "Service overview"
   container = [{}]
 }`,
-			want: "Invalid template content",
+			want: "Invalid panel content",
 		},
 		{
 			name: "two content sources",
@@ -86,17 +86,17 @@ func TestResourceObservabilityDashboardRejectsInvalidPlans(t *testing.T) {
   title = "Service overview"
   container = [{
     template_id      = "chart-1"
-    template_content = jsonencode({ "<Chart>" = [] })
+    inline_content = jsonencode({ "<Chart>" = [] })
   }]
 }`,
-			want: "Invalid template content",
+			want: "Invalid panel content",
 		},
 		{
 			name: "invalid inline content",
 			config: `resource "signalfx_observability_dashboard" "test" {
   title = "Service overview"
   container = [{
-    template_content = jsonencode({ chart = {} })
+    inline_content = jsonencode({ chart = {} })
   }]
 }`,
 			want: "no dashboard element key",
@@ -114,7 +114,7 @@ func TestResourceObservabilityDashboardRejectsInvalidPlans(t *testing.T) {
 			config: `resource "signalfx_observability_dashboard" "test" {
   title = "Service overview"
   container = [{
-    template_content = jsonencode({ "<Chart>" = [] })
+    inline_content = jsonencode({ "<Chart>" = [] })
     layout = { width = jsonencode([1, 2]) }
   }]
 }`,
@@ -188,7 +188,7 @@ resource "signalfx_observability_dashboard" "test" {
   title     = terraform_data.title.output
   container = [{}]
 }`,
-				ExpectError: regexp.MustCompile("Invalid template content"),
+				ExpectError: regexp.MustCompile("Invalid panel content"),
 			},
 		},
 	})
@@ -457,7 +457,7 @@ func TestResourceObservabilityDashboardInlineContentLifecycleAndGeneratedConfig(
 				Check: testresource.ComposeAggregateTestCheckFunc(
 					testresource.TestCheckResourceAttrSet("signalfx_observability_dashboard.inline_content", "id"),
 					testresource.TestCheckResourceAttr("signalfx_observability_dashboard.inline_content", "title", "Inline dashboard content"),
-					testresource.TestCheckResourceAttrSet("signalfx_observability_dashboard.inline_content", "container.0.template_content"),
+					testresource.TestCheckResourceAttrSet("signalfx_observability_dashboard.inline_content", "container.0.inline_content"),
 					testresource.TestCheckNoResourceAttr("signalfx_observability_dashboard.inline_content", "container.0.template_id"),
 				),
 			},
@@ -479,12 +479,12 @@ func TestValidateDashifyTemplate(t *testing.T) {
 		wantMessage string
 	}{
 		"empty template id":              {model: dashifyDashboardContainerModel{TemplateID: types.StringValue("")}, wantError: true, wantMessage: "non-empty"},
-		"malformed content":              {model: dashifyDashboardContainerModel{TemplateContent: jsontypes.NewNormalizedValue(`{"<Chart>":`)}, wantError: true, wantMessage: "valid JSON"},
-		"non-object content":             {model: dashifyDashboardContainerModel{TemplateContent: jsontypes.NewNormalizedValue(`[]`)}, wantError: true, wantMessage: "JSON object"},
-		"content with multiple elements": {model: dashifyDashboardContainerModel{TemplateContent: jsontypes.NewNormalizedValue(`{"<Chart>":[],"<Dashboard>":[]}`)}, wantError: true, wantMessage: "multiple dashboard element keys"},
-		"content import element":         {model: dashifyDashboardContainerModel{TemplateContent: jsontypes.NewNormalizedValue(`{"<$import.widget0>":[]}`)}, wantError: true, wantMessage: "use template_id"},
+		"malformed content":              {model: dashifyDashboardContainerModel{InlineContent: jsontypes.NewNormalizedValue(`{"<Chart>":`)}, wantError: true, wantMessage: "valid JSON"},
+		"non-object content":             {model: dashifyDashboardContainerModel{InlineContent: jsontypes.NewNormalizedValue(`[]`)}, wantError: true, wantMessage: "JSON object"},
+		"content with multiple elements": {model: dashifyDashboardContainerModel{InlineContent: jsontypes.NewNormalizedValue(`{"<Chart>":[],"<Dashboard>":[]}`)}, wantError: true, wantMessage: "multiple dashboard element keys"},
+		"content import element":         {model: dashifyDashboardContainerModel{InlineContent: jsontypes.NewNormalizedValue(`{"<$import.widget0>":[]}`)}, wantError: true, wantMessage: "use template_id"},
 		"unknown template id":            {model: dashifyDashboardContainerModel{TemplateID: types.StringUnknown()}},
-		"known id with unknown content":  {model: dashifyDashboardContainerModel{TemplateID: types.StringValue("chart-id"), TemplateContent: jsontypes.NewNormalizedUnknown()}},
+		"known id with unknown content":  {model: dashifyDashboardContainerModel{TemplateID: types.StringValue("chart-id"), InlineContent: jsontypes.NewNormalizedUnknown()}},
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -543,7 +543,7 @@ func TestDashifyDashboardInlineContentRoundTrip(t *testing.T) {
 			model := observabilityDashboardModel{
 				Title: types.StringValue("Dashboard"),
 				Container: []dashifyDashboardContainerModel{{
-					TemplateContent: jsontypes.NewNormalizedValue(content),
+					InlineContent: jsontypes.NewNormalizedValue(content),
 				}},
 			}
 
@@ -570,7 +570,7 @@ func TestDashifyDashboardInlineContentRoundTrip(t *testing.T) {
 			require.Empty(t, diags, diags)
 			require.Len(t, parsed.Container, 1)
 			assert.True(t, parsed.Container[0].TemplateID.IsNull())
-			assert.JSONEq(t, content, parsed.Container[0].TemplateContent.ValueString())
+			assert.JSONEq(t, content, parsed.Container[0].InlineContent.ValueString())
 
 			rebuilt, rebuiltImports, err := buildDashboardSpec(parsed)
 			require.NoError(t, err)
@@ -896,7 +896,7 @@ func TestResourceObservabilityDashboardRecreatesAfterRemoteDelete(t *testing.T) 
 			{Config: `resource "signalfx_observability_dashboard" "test" {
   title = "Service overview"
   container = [{
-    template_content = jsonencode({ "<Chart>" = [] })
+    inline_content = jsonencode({ "<Chart>" = [] })
   }]
 }`},
 			{
@@ -907,7 +907,7 @@ func TestResourceObservabilityDashboardRecreatesAfterRemoteDelete(t *testing.T) 
 				Config: `resource "signalfx_observability_dashboard" "test" {
   title = "Service overview"
   container = [{
-    template_content = jsonencode({ "<Chart>" = [] })
+    inline_content = jsonencode({ "<Chart>" = [] })
   }]
 }`,
 				Check: testresource.TestCheckResourceAttr("signalfx_observability_dashboard.test", "id", "template-2"),
@@ -952,7 +952,7 @@ func TestResourceObservabilityDashboardReadRejectsMismatchedID(t *testing.T) {
 	const dashboardConfig = `resource "signalfx_observability_dashboard" "test" {
   title = "Service overview"
   container = [{
-    template_content = jsonencode({ "<Chart>" = [] })
+    inline_content = jsonencode({ "<Chart>" = [] })
   }]
 }`
 	testresource.UnitTest(t, testresource.TestCase{
@@ -1019,7 +1019,7 @@ func TestResourceObservabilityDashboardCreateReportsMissingEndpoint(t *testing.T
 			Config: `resource "signalfx_observability_dashboard" "test" {
   title = "Service overview"
   container = [{
-    template_content = jsonencode({ "<Chart>" = [] })
+    inline_content = jsonencode({ "<Chart>" = [] })
   }]
 }`,
 			ExpectError: regexp.MustCompile("The Template API endpoint was not found"),
@@ -1069,14 +1069,14 @@ func TestResourceObservabilityDashboardUpdateReportsNotFound(t *testing.T) {
 			{Config: `resource "signalfx_observability_dashboard" "test" {
   title = "Service overview"
   container = [{
-    template_content = jsonencode({ "<Chart>" = [] })
+    inline_content = jsonencode({ "<Chart>" = [] })
   }]
 }`},
 			{
 				Config: `resource "signalfx_observability_dashboard" "test" {
   title = "Updated overview"
   container = [{
-    template_content = jsonencode({ "<Chart>" = [] })
+    inline_content = jsonencode({ "<Chart>" = [] })
   }]
 }`,
 				ExpectError: regexp.MustCompile("was not found during update"),
@@ -1142,7 +1142,7 @@ func TestDashboardInlineContentPreservesLargeJSONNumbers(t *testing.T) {
 	model := observabilityDashboardModel{
 		Title: types.StringValue("Large numbers"),
 		Container: []dashifyDashboardContainerModel{{
-			TemplateContent: jsontypes.NewNormalizedValue(content),
+			InlineContent: jsontypes.NewNormalizedValue(content),
 		}},
 	}
 	spec, _, err := buildDashboardSpec(model)
@@ -1160,7 +1160,7 @@ func TestDashboardInlineContentPreservesLargeJSONNumbers(t *testing.T) {
 	})
 	require.False(t, diags.HasError(), diags)
 	require.Len(t, parsed.Container, 1)
-	assert.Contains(t, parsed.Container[0].TemplateContent.ValueString(), "9007199254740993")
+	assert.Contains(t, parsed.Container[0].InlineContent.ValueString(), "9007199254740993")
 }
 
 func TestDashboardInlineContentRejectsNestedImports(t *testing.T) {

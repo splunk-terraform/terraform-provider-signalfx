@@ -26,7 +26,7 @@ To place the dashboard in a folder, add its ID to a Directory resource's `templa
 
 {{tffile "examples/resources/observability_dashboard/example_4.tf"}}
 
-Each `container` represents one panel and needs exactly one content source: `template_id` for a reusable Template or `template_content` for inline JSON.
+Each `container` represents one panel and needs exactly one content source: `template_id` for a reusable Template or `inline_content` for inline JSON.
 
 A panel's `layout` supports `width`, `height`, `min_width`, and `min_height`. Numeric sizes are layout values, not pixels; simple fractions and percentages are also supported. Terraform list order controls panel order. Use a `for` expression to generate panels from a list, for example `container = [for id in var.chart_ids : { template_id = id }]`.
 

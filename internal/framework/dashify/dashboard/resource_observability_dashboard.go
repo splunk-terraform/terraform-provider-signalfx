@@ -80,7 +80,7 @@ func dashifyContainerListAttribute() schema.ListNestedAttribute {
 				Optional:    true,
 				Description: "ID of a reusable Observability Template rendered in this panel.",
 			},
-			"template_content": schema.StringAttribute{
+			"inline_content": schema.StringAttribute{
 				Optional:    true,
 				CustomType:  jsontypes.NormalizedType{},
 				Description: "Self-contained dashboard JSON object rendered inline in this panel.",
@@ -172,12 +172,12 @@ func validateDashifyLayout(resp *resource.ValidateConfigResponse, layoutPath pat
 
 func validateDashifyTemplate(resp *resource.ValidateConfigResponse, containerPath path.Path, model *dashifyDashboardContainerModel) {
 	idKnown := !model.TemplateID.IsUnknown()
-	contentKnown := !model.TemplateContent.IsUnknown()
+	contentKnown := !model.InlineContent.IsUnknown()
 	idSet := idKnown && !model.TemplateID.IsNull()
-	contentSet := contentKnown && !model.TemplateContent.IsNull()
+	contentSet := contentKnown && !model.InlineContent.IsNull()
 
 	if idKnown && contentKnown && idSet == contentSet {
-		resp.Diagnostics.AddAttributeError(containerPath, "Invalid template content", "container must set exactly one of template_id or template_content")
+		resp.Diagnostics.AddAttributeError(containerPath, "Invalid panel content", "container must set exactly one of template_id or inline_content")
 		return
 	}
 	if idSet {
@@ -189,8 +189,8 @@ func validateDashifyTemplate(resp *resource.ValidateConfigResponse, containerPat
 		}
 	}
 	if contentSet {
-		if _, err := decodeDashifyInlineContent(model.TemplateContent.ValueString()); err != nil {
-			resp.Diagnostics.AddAttributeError(containerPath.AtName("template_content"), "Invalid inline content", err.Error())
+		if _, err := decodeDashifyInlineContent(model.InlineContent.ValueString()); err != nil {
+			resp.Diagnostics.AddAttributeError(containerPath.AtName("inline_content"), "Invalid inline content", err.Error())
 		}
 	}
 }

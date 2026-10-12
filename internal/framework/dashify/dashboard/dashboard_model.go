@@ -75,5 +75,5 @@ type dashifyLayoutModel struct {
 type dashifyDashboardContainerModel struct {
 	Layout          *dashifyLayoutModel  `tfsdk:"layout"`
 	TemplateID      types.String         `tfsdk:"template_id"`
-	TemplateContent jsontypes.Normalized `tfsdk:"template_content"`
+	InlineContent jsontypes.Normalized `tfsdk:"inline_content"`
 }

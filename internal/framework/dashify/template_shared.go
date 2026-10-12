@@ -15,8 +15,10 @@ import (
 )
 
 const (
+	// DashifyImportNamespace is the namespace shared by Dashify import annotations.
+	DashifyImportNamespace               = "$import"
 	ObservabilityTemplateRecordType      = "#/dashify/v1/templates/Record"
-	ObservabilityTemplateImportPrefix    = "$import:"
+	observabilityTemplateImportPrefix    = DashifyImportNamespace + ":"
 	observabilityTemplateReferencePrefix = signalfx.TemplateAPIURL + "/"
 )
 

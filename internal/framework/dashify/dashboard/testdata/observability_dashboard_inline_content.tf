@@ -7,7 +7,7 @@ resource "signalfx_observability_dashboard" "inline_content" {
       height = "2"
     }
 
-    template_content = jsonencode({
+    inline_content = jsonencode({
       "<o11y:SingleValue>" = []
       chart = {
         color = "blue"

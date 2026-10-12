@@ -407,7 +407,7 @@ func observabilityTemplateImportsFromSpec(raw string) ([]string, error) {
 	}
 	keys := make([]string, 0, len(spec))
 	for key := range spec {
-		if strings.HasPrefix(key, ObservabilityTemplateImportPrefix) {
+		if strings.HasPrefix(key, observabilityTemplateImportPrefix) {
 			keys = append(keys, key)
 		}
 	}
