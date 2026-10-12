@@ -274,6 +274,63 @@ func TestResourceObservabilityDashboardUpdatesModeledImport(t *testing.T) {
 	})
 }
 
+func TestResourceObservabilityDashboardRejectsUnmodeledImportUpdateDuringPlan(t *testing.T) {
+	root := template.RootElementDashboard
+	record := template.Template{
+		ID: "imported-dashboard", Type: observabilityTemplateRecordType,
+		Title: "Imported", Spec: json.RawMessage(`{"<Dashboard>":[],"futureField":true}`),
+		Metadata: &template.Metadata{RootElement: &root},
+	}
+	const importedConfig = `resource "signalfx_observability_dashboard" "test" {
+  title = "Imported"
+}`
+	for _, test := range []struct {
+		name   string
+		config string
+	}{
+		{name: "known title", config: `resource "signalfx_observability_dashboard" "test" {
+  title = "Changed"
+}`},
+		{name: "computed title", config: `resource "terraform_data" "title" {
+  input = "Changed"
+}
+resource "signalfx_observability_dashboard" "test" {
+  title = terraform_data.title.output
+}`},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			handlers := map[string]http.Handler{
+				"GET /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					assert.Equal(t, record.ID, r.PathValue("id"))
+					assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: &record}))
+				}),
+				"DELETE /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					assert.Equal(t, record.ID, r.PathValue("id"))
+					w.WriteHeader(http.StatusNoContent)
+				}),
+			}
+			testresource.UnitTest(t, testresource.TestCase{
+				IsUnitTest: true,
+				TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+					tfversion.SkipBelow(tfversion.Version1_5_0),
+				},
+				ProtoV6ProviderFactories: fwtest.NewMockProto6Server(
+					t, handlers, fwtest.WithMockResources(NewResourceObservabilityDashboard),
+				),
+				Steps: []testresource.TestStep{
+					{Config: `import {
+  to = signalfx_observability_dashboard.test
+  id = "imported-dashboard"
+}
+` + importedConfig},
+					{Config: importedConfig, PlanOnly: true},
+					{Config: test.config, PlanOnly: true, ExpectError: regexp.MustCompile(observabilityDashboardUnsafeUpdateSummary)},
+				},
+			})
+		})
+	}
+}
+
 func TestResourceObservabilityDashboardUpdateRejectsUnknownWriteState(t *testing.T) {
 	managed := NewResourceObservabilityDashboard().(*observabilityDashboardResource)
 	var schemaResponse resource.SchemaResponse
