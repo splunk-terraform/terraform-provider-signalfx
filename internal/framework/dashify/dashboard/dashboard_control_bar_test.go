@@ -189,10 +189,10 @@ func TestDashifyControlBarCodecOmissionAndWarnings(t *testing.T) {
 	]}}`), &duplicateSpec))
 	parsed, leftovers, err = parseDashifyControlBar(duplicateSpec)
 	require.NoError(t, err)
-	assert.Equal(t, "First", parsed.TimeRange.Label.ValueString())
+	assert.Equal(t, "Second", parsed.TimeRange.Label.ValueString())
 	assert.Len(t, parsed.PinnedFilter, 1)
 	assert.ElementsMatch(t, []string{
-		"controlBar.controls.4", "controlBar.controls.5", "controlBar.controls.6", "controlBar.controls.7",
+		"controlBar.controls.0", "controlBar.controls.1", "controlBar.controls.2", "controlBar.controls.3",
 	}, leftovers)
 }
 

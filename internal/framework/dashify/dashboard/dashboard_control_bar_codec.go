@@ -140,9 +140,25 @@ func parseDashifyControlBar(spec map[string]any) (*dashifyControlBarModel, []str
 		return nil, dashifyLeftovers("controlBar", bar), nil
 	}
 
+	// The UI dedupes controls by variableName with last-occurrence-wins
+	// (olly ControlBar.ts builds a Map keyed by variableName from the
+	// array, which overwrites earlier entries). Pre-scan to find each
+	// variableName's last index so the main loop can match that behavior.
+	latestVariableIndex := map[string]int{}
+	for i, rawControl := range controls {
+		control, ok := rawControl.(map[string]any)
+		if !ok {
+			continue
+		}
+		name, ok := control["variableName"].(string)
+		if !ok || name == "" {
+			continue
+		}
+		latestVariableIndex[name] = i
+	}
+
 	model := &dashifyControlBarModel{}
 	var leftovers []string
-	modeled := map[string]bool{}
 	for i, rawControl := range controls {
 		controlPath := fmt.Sprintf("controlBar.controls.%d", i)
 		control, ok := rawControl.(map[string]any)
@@ -164,7 +180,7 @@ func parseDashifyControlBar(spec map[string]any) (*dashifyControlBarModel, []str
 			return nil, nil, fmt.Errorf("%s.type must be a non-empty string", controlPath)
 		}
 
-		if modeled[variableName.ValueString()] {
+		if latestVariableIndex[variableName.ValueString()] != i {
 			leftovers = append(leftovers, controlPath)
 			continue
 		}
@@ -270,7 +286,6 @@ func parseDashifyControlBar(spec map[string]any) (*dashifyControlBarModel, []str
 			leftovers = append(leftovers, controlPath)
 			continue
 		}
-		modeled[variableName.ValueString()] = true
 		leftovers = append(leftovers, dashifyLeftovers(controlPath, control)...)
 	}
 	leftovers = append(leftovers, dashifyLeftovers("controlBar", bar)...)
