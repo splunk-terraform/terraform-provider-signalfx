@@ -1,7 +1,7 @@
 // Copyright Splunk, Inc.
 // SPDX-License-Identifier: MPL-2.0
 
-package fwdashify
+package dashboard
 
 import (
 	"bytes"

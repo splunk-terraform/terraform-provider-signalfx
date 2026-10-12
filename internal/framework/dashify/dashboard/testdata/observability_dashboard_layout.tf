@@ -78,47 +78,13 @@ resource "signalfx_observability_dashboard" "dashboard_layout" {
     }
   }
 
-  layout = {
-    gap  = 8
-    step = 8
-
-    defaults = {
+  container = [{
+    template_id = signalfx_observability_template.dashboard_layout_chart.id
+    layout = {
+      width      = "1/2"
+      height     = "20"
       min_width  = "4"
       min_height = "2"
-    }
-  }
-
-  container = [{
-    section = {
-      title       = "Service health"
-      collapse    = false
-      collapsible = true
-
-      layout = {
-        gap = 4
-      }
-
-      container = [{
-        group = {
-          title      = "Requests"
-          headerless = true
-
-          layout = {
-            step = 1
-          }
-
-          container = [{
-            layout = {
-              width     = "1/2"
-              height    = "20"
-              min_width = "4"
-              max_width = "100%"
-            }
-
-            template_id = signalfx_observability_template.dashboard_layout_chart.id
-          }]
-        }
-      }]
     }
   }]
 }

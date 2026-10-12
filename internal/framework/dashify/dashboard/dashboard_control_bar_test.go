@@ -1,7 +1,7 @@
 // Copyright Splunk, Inc.
 // SPDX-License-Identifier: MPL-2.0
 
-package fwdashify
+package dashboard
 
 import (
 	"context"
@@ -19,6 +19,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	fwdashify "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/dashify"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/fwtest"
 )
 
@@ -261,7 +262,7 @@ func TestResourceObservabilityDashboardAllControlsConfig(t *testing.T) {
 		ProtoV6ProviderFactories: fwtest.NewMockProto6Server(
 			t,
 			nil,
-			fwtest.WithMockResources(NewResourceObservabilityDashboard, NewResourceObservabilityTemplate),
+			fwtest.WithMockResources(NewResourceObservabilityDashboard, fwdashify.NewResourceObservabilityTemplate),
 		),
 		Steps: []testresource.TestStep{{
 			ConfigFile:         config.StaticFile("testdata/observability_dashboard_controls.tf"),

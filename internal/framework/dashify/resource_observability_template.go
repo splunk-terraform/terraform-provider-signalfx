@@ -56,11 +56,6 @@ type observabilityTemplateResource struct {
 	fwembed.ResourceIDImporter
 }
 
-const (
-	observabilityTemplateRecordType      = "#/dashify/v1/templates/Record"
-	observabilityTemplateReferencePrefix = signalfx.TemplateAPIURL + "/"
-)
-
 var (
 	_ resource.Resource              = (*observabilityTemplateResource)(nil)
 	_ resource.ResourceWithConfigure = (*observabilityTemplateResource)(nil)
@@ -173,7 +168,7 @@ func (r *observabilityTemplateResource) ValidateConfig(ctx context.Context, req 
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	validateObservabilityTitle(resp, path.Root("title"), model.Title)
+	ValidateObservabilityTitle(resp, path.Root("title"), model.Title)
 	if !model.Spec.IsNull() && !model.Spec.IsUnknown() {
 		if err := validateObservabilityTemplateSpec(model.Spec.ValueString()); err != nil {
 			resp.Diagnostics.AddAttributeError(path.Root("spec"), "Invalid template specification", err.Error())
@@ -247,7 +242,7 @@ func (r *observabilityTemplateResource) Create(ctx context.Context, req resource
 	if resp.Diagnostics.Append(fwerr.ErrorHandler(ctx, resp.State, err)...); resp.Diagnostics.HasError() || err != nil {
 		return
 	}
-	record, err := observabilityTemplateFromResult(result)
+	record, err := ObservabilityTemplateFromResult(result)
 	if err != nil {
 		resp.Diagnostics.AddError("Error creating template", err.Error())
 		return
@@ -272,7 +267,7 @@ func (r *observabilityTemplateResource) Read(ctx context.Context, req resource.R
 	if resp.Diagnostics.Append(fwerr.ErrorHandler(ctx, resp.State, err)...); resp.Diagnostics.HasError() || err != nil {
 		return
 	}
-	record, err := observabilityTemplateFromResult(result)
+	record, err := ObservabilityTemplateFromResult(result)
 	if err != nil {
 		resp.Diagnostics.AddError("Error reading template", err.Error())
 		return
@@ -317,7 +312,7 @@ func (r *observabilityTemplateResource) Update(ctx context.Context, req resource
 	if resp.Diagnostics.Append(fwerr.ErrorHandler(ctx, resp.State, err)...); resp.Diagnostics.HasError() || err != nil {
 		return
 	}
-	if _, err := observabilityTemplateFromResult(result); err != nil {
+	if _, err := ObservabilityTemplateFromResult(result); err != nil {
 		resp.Diagnostics.AddError("Error updating template", err.Error())
 		return
 	}
@@ -337,25 +332,6 @@ func (r *observabilityTemplateResource) Delete(ctx context.Context, req resource
 		return
 	}
 	resp.Diagnostics.Append(fwerr.ErrorHandler(ctx, resp.State, err)...)
-}
-
-func validateObservabilityTitle(resp *resource.ValidateConfigResponse, titlePath path.Path, title types.String) {
-	if title.IsUnknown() {
-		return
-	}
-	if title.IsNull() || strings.TrimSpace(title.ValueString()) == "" {
-		resp.Diagnostics.AddAttributeError(titlePath, "Missing required value", "title must contain at least one non-whitespace character")
-	}
-}
-
-func observabilityTemplateFromResult(result *template.Result) (*template.Template, error) {
-	if result == nil || result.Data == nil {
-		return nil, errors.New("template API returned no template record")
-	}
-	if result.Data.ID == "" {
-		return nil, errors.New("template API returned a template record without an ID")
-	}
-	return result.Data, nil
 }
 
 func observabilityTemplateWrite(ctx context.Context, model observabilityTemplateModel) (*template.CreateUpdateTemplateRequest, diag.Diagnostics) {
@@ -390,11 +366,11 @@ func observabilityTemplateWrite(ctx context.Context, model observabilityTemplate
 		}
 		imports = make([]string, len(ids))
 		for i, id := range ids {
-			if !observabilityTemplateIDValid(id) {
+			if !ObservabilityTemplateIDValid(id) {
 				diags.AddAttributeError(path.Root("metadata").AtName("imports").AtListIndex(i), "Invalid Template ID", "Use a Template ID without an API path.")
 				return nil, diags
 			}
-			imports[i] = observabilityTemplateReference(id)
+			imports[i] = ObservabilityTemplateReference(id)
 		}
 	}
 
@@ -410,7 +386,7 @@ func observabilityTemplateWrite(ctx context.Context, model observabilityTemplate
 
 	rootElement := template.RootElement(model.RootElement.ValueString())
 	return &template.CreateUpdateTemplateRequest{
-		Type:  observabilityTemplateRecordType,
+		Type:  ObservabilityTemplateRecordType,
 		Title: model.Title.ValueString(),
 		Spec:  json.RawMessage(model.Spec.ValueString()),
 		Metadata: template.WriteMetadata{
@@ -431,7 +407,7 @@ func observabilityTemplateImportsFromSpec(raw string) ([]string, error) {
 	}
 	keys := make([]string, 0, len(spec))
 	for key := range spec {
-		if strings.HasPrefix(key, dashifyImportPrefix) {
+		if strings.HasPrefix(key, ObservabilityTemplateImportPrefix) {
 			keys = append(keys, key)
 		}
 	}
@@ -444,7 +420,7 @@ func observabilityTemplateImportsFromSpec(raw string) ([]string, error) {
 		if err := json.Unmarshal(spec[key], &reference); err != nil {
 			return nil, fmt.Errorf("%q must contain a Template API reference: %w", key, err)
 		}
-		if _, ok := observabilityTemplateIDFromReference(reference); !ok {
+		if _, ok := ObservabilityTemplateIDFromReference(reference); !ok {
 			return nil, fmt.Errorf("%q must reference a Template at %s<ID>, got %q", key, observabilityTemplateReferencePrefix, reference)
 		}
 		if !seen[reference] {
@@ -492,17 +468,4 @@ func observabilityTemplateIDListValidators() []validator.List {
 		),
 		listvalidator.UniqueValues(),
 	}
-}
-
-func observabilityTemplateIDValid(id string) bool {
-	return id != "" && id != "." && id != ".." && !strings.Contains(id, "/")
-}
-
-func observabilityTemplateReference(id string) string {
-	return observabilityTemplateReferencePrefix + id
-}
-
-func observabilityTemplateIDFromReference(reference string) (string, bool) {
-	id, ok := strings.CutPrefix(reference, observabilityTemplateReferencePrefix)
-	return id, ok && observabilityTemplateIDValid(id)
 }

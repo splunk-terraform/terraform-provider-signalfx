@@ -6,7 +6,7 @@ description: |-
 
 # Resource: signalfx_observability_dashboard
 
-Use this resource to manage a modern dashboard's charts, sections, controls, and layout. Each container can reference a Template or hold inline JSON.
+Use this resource to manage a modern dashboard's flat panels, controls, and basic panel sizing. Each panel can reference a Template or hold inline JSON.
 
 To place the dashboard in a folder, add its ID to a Directory resource's `templates` list. Updates replace the saved dashboard content, so copy UI changes you want to keep into Terraform before applying.
 
@@ -18,7 +18,7 @@ To place the dashboard in a folder, add its ID to a Directory resource's `templa
 
 {{tffile "examples/resources/observability_dashboard/example_2.tf"}}
 
-## Nested layout
+## Panel sizing
 
 {{tffile "examples/resources/observability_dashboard/example_3.tf"}}
 
@@ -26,11 +26,11 @@ To place the dashboard in a folder, add its ID to a Directory resource's `templa
 
 {{tffile "examples/resources/observability_dashboard/example_4.tf"}}
 
-Each `container` needs one content source: `template_id`, `template_content`, `section`, or `group`. Use `template_id` for a reusable Template or `template_content` for inline JSON.
+Each `container` represents one panel and needs exactly one content source: `template_id` for a reusable Template or `template_content` for inline JSON.
 
-A `layout` arranges the containers directly inside it. A container's own `layout` sets its size and display order. Numeric sizes are layout values, not pixels. With the default root layout, `height = "30"` makes a card about 224 pixels tall, and `min_height = "22"` gives a minimum near 160 pixels. `step` and `gap` are pixel values; nested layouts can override them. Simple fractions and percentages are supported as size strings. For absolute positioning, coordinates, or clamped JSON sizes, use `signalfx_observability_template` with the full `spec`.
+A panel's `layout` supports `width`, `height`, `min_width`, and `min_height`. Numeric sizes are layout values, not pixels; simple fractions and percentages are also supported. Terraform list order controls panel order. Use a `for` expression to generate panels from a list, for example `container = [for id in var.chart_ids : { template_id = id }]`.
 
-Terraform list order controls container order. Use a `for` expression to generate containers from a list, for example `container = [for id in var.chart_ids : { template_id = id }]`.
+For sections, groups, and advanced layout, use `signalfx_observability_template` with the full `spec`. Importing a nested dashboard into this resource returns an error. A flat dashboard with other unsupported fields can be read, but this resource blocks updates that would discard those fields.
 
 {{ .SchemaMarkdown | trimspace }}
 

@@ -302,15 +302,15 @@ func TestResourceObservabilityTemplateRejectsInvalidConfiguration(t *testing.T) 
 func TestResourceObservabilityTemplateLifecycleAndGeneratedConfig(t *testing.T) {
 	root := template.RootElementChart
 	initial := template.Template{
-		ID: "template-1", Type: observabilityTemplateRecordType, Title: "Request rate",
+		ID: "template-1", Type: ObservabilityTemplateRecordType, Title: "Request rate",
 		Spec: json.RawMessage(`{"<Chart>":[]}`), Metadata: &template.Metadata{RootElement: &root},
 	}
 	updated := template.Template{
-		ID: "template-1", Type: observabilityTemplateRecordType, Title: "Request rate (updated)",
+		ID: "template-1", Type: ObservabilityTemplateRecordType, Title: "Request rate (updated)",
 		Spec: json.RawMessage(`{"<Chart>":[]}`), Metadata: &template.Metadata{RootElement: &root, Imports: []string{"/v2/template/shared"}},
 	}
 	managedUpdate := template.Template{
-		ID: "template-1", Type: observabilityTemplateRecordType, Title: "Request rate (managed update)",
+		ID: "template-1", Type: ObservabilityTemplateRecordType, Title: "Request rate (managed update)",
 		Spec: json.RawMessage(`{"<Chart>":[]}`), Metadata: &template.Metadata{RootElement: &root},
 	}
 	readFixture := initial
@@ -322,7 +322,7 @@ func TestResourceObservabilityTemplateLifecycleAndGeneratedConfig(t *testing.T) 
 				http.Error(w, "invalid create request", http.StatusBadRequest)
 				return
 			}
-			assert.Equal(t, observabilityTemplateRecordType, write.Type)
+			assert.Equal(t, ObservabilityTemplateRecordType, write.Type)
 			assert.Equal(t, initial.Title, write.Title)
 			assert.JSONEq(t, string(initial.Spec), string(write.Spec))
 			assert.Equal(t, initial.Metadata.RootElement, write.Metadata.RootElement)
@@ -347,7 +347,7 @@ func TestResourceObservabilityTemplateLifecycleAndGeneratedConfig(t *testing.T) 
 				http.Error(w, "invalid update request", http.StatusBadRequest)
 				return
 			}
-			assert.Equal(t, observabilityTemplateRecordType, write.Type)
+			assert.Equal(t, ObservabilityTemplateRecordType, write.Type)
 			switch write.Title {
 			case managedUpdate.Title:
 				assert.Empty(t, write.Metadata.Imports)
@@ -529,13 +529,13 @@ func TestResourceObservabilityTemplateUpdateReportsNotFound(t *testing.T) {
 		"POST /v2/template": http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 			w.WriteHeader(http.StatusCreated)
 			assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: &template.Template{
-				ID: "template-1", Type: observabilityTemplateRecordType, Title: "Request rate",
+				ID: "template-1", Type: ObservabilityTemplateRecordType, Title: "Request rate",
 				Spec: json.RawMessage(`{"<Chart>":[]}`), Metadata: &template.Metadata{RootElement: &root},
 			}}))
 		}),
 		"GET /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 			assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: &template.Template{
-				ID: "template-1", Type: observabilityTemplateRecordType, Title: "Request rate",
+				ID: "template-1", Type: ObservabilityTemplateRecordType, Title: "Request rate",
 				Spec: json.RawMessage(`{"<Chart>":[]}`), Metadata: &template.Metadata{RootElement: &root},
 			}}))
 		}),
@@ -756,7 +756,7 @@ func TestResourceObservabilityTemplateImportedUpdateDerivesMetadata(t *testing.T
 	root := template.RootElementChart
 	imported := template.Template{
 		ID:       "imported",
-		Type:     observabilityTemplateRecordType,
+		Type:     ObservabilityTemplateRecordType,
 		Title:    "Imported",
 		Spec:     json.RawMessage(`{"$import:child":"/v2/template/child","<Chart>":[]}`),
 		Metadata: &template.Metadata{RootElement: &root, Imports: []string{"/v2/template/child", "/v2/template/indirect"}},
@@ -866,7 +866,7 @@ func TestObservabilityTemplateResourceModelMapping(t *testing.T) {
 
 	write, diags := observabilityTemplateWrite(ctx, model)
 	require.False(t, diags.HasError(), diags)
-	assert.Equal(t, observabilityTemplateRecordType, write.Type)
+	assert.Equal(t, ObservabilityTemplateRecordType, write.Type)
 	assert.Equal(t, "Example", write.Title)
 	assert.JSONEq(t, `{"<Chart>":[]}`, string(write.Spec))
 	assert.Equal(t, []string{"/v2/template/chart"}, write.Metadata.Imports)
@@ -971,11 +971,11 @@ func TestObservabilityTemplateRejectsIncompleteAPIRecords(t *testing.T) {
 		})
 	}
 
-	_, err := observabilityTemplateFromResult(nil)
+	_, err := ObservabilityTemplateFromResult(nil)
 	require.ErrorContains(t, err, "no template record")
-	_, err = observabilityTemplateFromResult(&template.Result{})
+	_, err = ObservabilityTemplateFromResult(&template.Result{})
 	require.ErrorContains(t, err, "no template record")
-	_, err = observabilityTemplateFromResult(&template.Result{Data: &template.Template{}})
+	_, err = ObservabilityTemplateFromResult(&template.Result{Data: &template.Template{}})
 	require.ErrorContains(t, err, "without an ID")
 }
 

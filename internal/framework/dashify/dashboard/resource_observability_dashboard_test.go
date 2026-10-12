@@ -1,7 +1,7 @@
 // Copyright Splunk, Inc.
 // SPDX-License-Identifier: MPL-2.0
 
-package fwdashify
+package dashboard
 
 import (
 	"encoding/json"
@@ -22,6 +22,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	fwdashify "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/dashify"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/fwtest"
 )
 
@@ -41,9 +42,12 @@ func TestResourceObservabilityDashboardMetadataAndSchema(t *testing.T) {
 
 	root := path.Root("container").AtListIndex(0)
 	for _, attributePath := range []path.Path{
-		path.Root("layout").AtName("defaults").AtName("absolute"),
+		path.Root("layout"),
+		root.AtName("section"),
+		root.AtName("group"),
 		root.AtName("layout").AtName("x"),
 		root.AtName("layout").AtName("absolute"),
+		root.AtName("layout").AtName("max_width"),
 	} {
 		_, diags := resourceSchema.AttributeAtPath(t.Context(), attributePath)
 		assert.True(t, diags.HasError(), attributePath.String())
@@ -74,7 +78,7 @@ func TestResourceObservabilityDashboardRejectsInvalidPlans(t *testing.T) {
   title = "Service overview"
   container = [{}]
 }`,
-			want: "Invalid container content",
+			want: "Invalid template content",
 		},
 		{
 			name: "two content sources",
@@ -106,16 +110,6 @@ func TestResourceObservabilityDashboardRejectsInvalidPlans(t *testing.T) {
 			want: "must contain at least 1 elements",
 		},
 		{
-			name: "empty section",
-			config: `resource "signalfx_observability_dashboard" "test" {
-  title = "Service overview"
-  container = [{
-    section = {}
-  }]
-}`,
-			want: `attribute "container" is required`,
-		},
-		{
 			name: "invalid width array",
 			config: `resource "signalfx_observability_dashboard" "test" {
   title = "Service overview"
@@ -132,43 +126,7 @@ func TestResourceObservabilityDashboardRejectsInvalidPlans(t *testing.T) {
   title     = "Service overview"
   container = [{ template_id = "chart-1", layout = {} }]
 }`,
-			want: "layout must set at least one placement or size option",
-		},
-		{
-			name: "empty dashboard layout",
-			config: `resource "signalfx_observability_dashboard" "test" {
-  title     = "Service overview"
-  container = [{ template_id = "chart-1" }]
-  layout    = {}
-}`,
-			want: "layout must set gap, step, defaults, or a combination",
-		},
-		{
-			name: "empty dashboard layout defaults",
-			config: `resource "signalfx_observability_dashboard" "test" {
-  title     = "Service overview"
-  container = [{ template_id = "chart-1" }]
-  layout    = { defaults = {} }
-}`,
-			want: "defaults must set at least one placement or size option",
-		},
-		{
-			name: "negative dashboard layout gap",
-			config: `resource "signalfx_observability_dashboard" "test" {
-  title     = "Service overview"
-  container = [{ template_id = "chart-1" }]
-  layout    = { gap = -1 }
-}`,
-			want: "must be at least 0",
-		},
-		{
-			name: "zero dashboard layout step",
-			config: `resource "signalfx_observability_dashboard" "test" {
-  title     = "Service overview"
-  container = [{ template_id = "chart-1" }]
-  layout    = { step = 0 }
-}`,
-			want: "must be at least 1",
+			want: "layout must set at least one size option",
 		},
 		{
 			name: "duplicate pinned control",
@@ -230,7 +188,7 @@ resource "signalfx_observability_dashboard" "test" {
   title     = terraform_data.title.output
   container = [{}]
 }`,
-				ExpectError: regexp.MustCompile("Invalid container content"),
+				ExpectError: regexp.MustCompile("Invalid template content"),
 			},
 		},
 	})
@@ -239,7 +197,7 @@ resource "signalfx_observability_dashboard" "test" {
 func TestResourceObservabilityDashboardUpdatesModeledImport(t *testing.T) {
 	root := template.RootElementDashboard
 	imported := template.Template{
-		ID: "imported-dashboard", Type: observabilityTemplateRecordType,
+		ID: "imported-dashboard", Type: fwdashify.ObservabilityTemplateRecordType,
 		Title: "Imported", Spec: json.RawMessage(`{"<Dashboard>":[],"layout":{"saved":{"_":{"items":[]}}}}`),
 		Metadata: &template.Metadata{RootElement: &root},
 	}
@@ -300,7 +258,7 @@ func TestResourceObservabilityDashboardUpdatesModeledImport(t *testing.T) {
 func TestResourceObservabilityDashboardRejectsUnmodeledImportUpdateDuringPlan(t *testing.T) {
 	root := template.RootElementDashboard
 	record := template.Template{
-		ID: "imported-dashboard", Type: observabilityTemplateRecordType,
+		ID: "imported-dashboard", Type: fwdashify.ObservabilityTemplateRecordType,
 		Title: "Imported", Spec: json.RawMessage(`{"<Dashboard>":[],"futureField":true}`),
 		Metadata: &template.Metadata{RootElement: &root},
 	}
@@ -385,7 +343,7 @@ func TestResourceObservabilityDashboardGeneratedConfig(t *testing.T) {
 				http.Error(w, "invalid request", http.StatusBadRequest)
 				return
 			}
-			assert.Equal(t, observabilityTemplateRecordType, write.Type)
+			assert.Equal(t, fwdashify.ObservabilityTemplateRecordType, write.Type)
 			var record *template.Template
 			switch {
 			case write.Metadata.RootElement != nil && *write.Metadata.RootElement == chartRoot:
@@ -433,7 +391,7 @@ func TestResourceObservabilityDashboardGeneratedConfig(t *testing.T) {
 		ProtoV6ProviderFactories: fwtest.NewMockProto6Server(
 			t,
 			handlers,
-			fwtest.WithMockResources(NewResourceObservabilityDashboard, NewResourceObservabilityTemplate),
+			fwtest.WithMockResources(NewResourceObservabilityDashboard, fwdashify.NewResourceObservabilityTemplate),
 		),
 		Steps: []testresource.TestStep{
 			{
@@ -442,7 +400,7 @@ func TestResourceObservabilityDashboardGeneratedConfig(t *testing.T) {
 					testresource.TestCheckResourceAttr("signalfx_observability_dashboard.dashboard_layout", "title", "Complete layout"),
 					testresource.TestCheckResourceAttr("signalfx_observability_dashboard.dashboard_layout", "control_bar.time_range.default_variable_value", "-PT15M"),
 					testresource.TestCheckResourceAttr("signalfx_observability_dashboard.dashboard_layout", "control_bar.pinned_filter.#", "2"),
-					testresource.TestCheckResourceAttr("signalfx_observability_dashboard.dashboard_layout", "container.0.section.container.0.group.container.0.layout.width", "1/2"),
+					testresource.TestCheckResourceAttr("signalfx_observability_dashboard.dashboard_layout", "container.0.layout.width", "1/2"),
 				),
 			},
 			{
@@ -513,111 +471,21 @@ func TestResourceObservabilityDashboardInlineContentLifecycleAndGeneratedConfig(
 	})
 }
 
-func TestResourceObservabilityDashboardUntitledContainers(t *testing.T) {
-	root := template.RootElementDashboard
-	var record *template.Template
-	handlers := map[string]http.Handler{
-		"POST /v2/template": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			var write template.CreateUpdateTemplateRequest
-			if err := json.NewDecoder(r.Body).Decode(&write); err != nil {
-				t.Errorf("decode dashboard create request: %v", err)
-				http.Error(w, "invalid create request", http.StatusBadRequest)
-				return
-			}
-			assert.Equal(t, "Untitled containers", write.Title)
-			assert.Equal(t, &root, write.Metadata.RootElement)
-			assert.Contains(t, string(write.Spec), "Section")
-			assert.Contains(t, string(write.Spec), "Group")
-			record = &template.Template{ID: "dashboard-untitled", Type: write.Type, Title: write.Title, Spec: write.Spec, Metadata: &template.Metadata{RootElement: &root}}
-			w.WriteHeader(http.StatusCreated)
-			assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: record}))
-		}),
-		"GET /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Equal(t, "dashboard-untitled", r.PathValue("id"))
-			assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: record}))
-		}),
-		"DELETE /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Equal(t, "dashboard-untitled", r.PathValue("id"))
-			w.WriteHeader(http.StatusNoContent)
-		}),
-	}
-	testresource.UnitTest(t, testresource.TestCase{
-		IsUnitTest: true,
-		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(tfversion.Version1_5_0),
-		},
-		ProtoV6ProviderFactories: fwtest.NewMockProto6Server(
-			t,
-			handlers,
-			fwtest.WithMockResources(NewResourceObservabilityDashboard),
-		),
-		Steps: []testresource.TestStep{{
-			Config: `
-resource "signalfx_observability_dashboard" "untitled" {
-  title = "Untitled containers"
-
-  container = [{
-    section = {
-      container = [{
-        group = {
-          container = [{
-            template_content = jsonencode({ "<Chart>" = [] })
-          }]
-        }
-      }]
-    }
-  }]
-}
-`,
-			Check: testresource.ComposeAggregateTestCheckFunc(
-				testresource.TestCheckResourceAttr("signalfx_observability_dashboard.untitled", "container.0.section.title", ""),
-				testresource.TestCheckResourceAttr("signalfx_observability_dashboard.untitled", "container.0.section.container.0.group.title", ""),
-			),
-		}},
-	})
-}
-
 func TestValidateDashifyTemplate(t *testing.T) {
 	t.Parallel()
-
 	tests := map[string]struct {
-		model       dashifyTemplateModel
+		model       dashifyDashboardContainerModel
 		wantError   bool
 		wantMessage string
 	}{
-		"empty template id": {
-			model:       dashifyTemplateModel{TemplateID: types.StringValue(""), Content: jsontypes.NewNormalizedNull()},
-			wantError:   true,
-			wantMessage: "non-empty",
-		},
-		"malformed content": {
-			model:       dashifyTemplateModel{TemplateID: types.StringNull(), Content: jsontypes.NewNormalizedValue(`{"<Chart>":`)},
-			wantError:   true,
-			wantMessage: "valid JSON",
-		},
-		"non-object content": {
-			model:       dashifyTemplateModel{TemplateID: types.StringNull(), Content: jsontypes.NewNormalizedValue(`[]`)},
-			wantError:   true,
-			wantMessage: "JSON object",
-		},
-		"content with multiple elements": {
-			model:       dashifyTemplateModel{TemplateID: types.StringNull(), Content: jsontypes.NewNormalizedValue(`{"<Chart>":[],"<Dashboard>":[]}`)},
-			wantError:   true,
-			wantMessage: "multiple dashboard element keys",
-		},
-		"content import element": {
-			model:       dashifyTemplateModel{TemplateID: types.StringNull(), Content: jsontypes.NewNormalizedValue(`{"<$import.widget0>":[]}`)},
-			wantError:   true,
-			wantMessage: "use template_id",
-		},
-		"unknown template id": {
-			model: dashifyTemplateModel{TemplateID: types.StringUnknown(), Content: jsontypes.NewNormalizedNull()},
-		},
-		"known id with unknown content": {
-			model: dashifyTemplateModel{TemplateID: types.StringValue("chart-id"), Content: jsontypes.NewNormalizedUnknown()},
-		},
+		"empty template id":              {model: dashifyDashboardContainerModel{TemplateID: types.StringValue("")}, wantError: true, wantMessage: "non-empty"},
+		"malformed content":              {model: dashifyDashboardContainerModel{TemplateContent: jsontypes.NewNormalizedValue(`{"<Chart>":`)}, wantError: true, wantMessage: "valid JSON"},
+		"non-object content":             {model: dashifyDashboardContainerModel{TemplateContent: jsontypes.NewNormalizedValue(`[]`)}, wantError: true, wantMessage: "JSON object"},
+		"content with multiple elements": {model: dashifyDashboardContainerModel{TemplateContent: jsontypes.NewNormalizedValue(`{"<Chart>":[],"<Dashboard>":[]}`)}, wantError: true, wantMessage: "multiple dashboard element keys"},
+		"content import element":         {model: dashifyDashboardContainerModel{TemplateContent: jsontypes.NewNormalizedValue(`{"<$import.widget0>":[]}`)}, wantError: true, wantMessage: "use template_id"},
+		"unknown template id":            {model: dashifyDashboardContainerModel{TemplateID: types.StringUnknown()}},
+		"known id with unknown content":  {model: dashifyDashboardContainerModel{TemplateID: types.StringValue("chart-id"), TemplateContent: jsontypes.NewNormalizedUnknown()}},
 	}
-
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
@@ -634,98 +502,32 @@ func TestValidateDashifyTemplate(t *testing.T) {
 
 func TestDashifyDashboardSpecRoundTrip(t *testing.T) {
 	t.Parallel()
-
 	model := observabilityDashboardModel{
 		Title: types.StringValue("Service overview"),
-		Layout: &dashifyLayoutOptionsModel{
-			Gap:  types.Float64Value(0),
-			Step: types.Float64Value(1),
-			Defaults: &dashifyLayoutDefaultsModel{
-				MinWidth:  types.StringValue("4"),
-				MinHeight: types.StringValue("2"),
-			},
-		},
 		Container: []dashifyDashboardContainerModel{
-			{
-				Layout: &dashifyLayoutModel{
-					Width:     types.StringValue("1/2"),
-					Height:    types.StringValue("20"),
-					MinWidth:  types.StringValue("4"),
-					MaxWidth:  types.StringValue("100%"),
-					MinHeight: types.StringValue("2"),
-					MaxHeight: types.StringValue("30"),
-				},
-				TemplateID: types.StringValue("chart-a"),
-			},
-			{
-				Section: &dashifySectionModel{
-					Title:       types.StringValue("Latency"),
-					Collapse:    types.BoolValue(false),
-					Collapsible: types.BoolValue(true),
-					Layout: &dashifyLayoutOptionsModel{
-						Gap:  types.Float64Value(8),
-						Step: types.Float64Value(8),
-					},
-					Container: []dashifySectionContainerModel{
-						{
-							Group: &dashifyGroupModel{
-								Title:      types.StringValue("By service"),
-								Headerless: types.BoolValue(true),
-								Layout: &dashifyLayoutOptionsModel{
-									Defaults: &dashifyLayoutDefaultsModel{Width: types.StringValue("1/2")},
-								},
-								Container: []dashifyGroupContainerModel{{TemplateID: types.StringValue("chart-b")}},
-							},
-						},
-					},
-				},
-			},
-			{
-				Group: &dashifyGroupModel{
-					Title:      types.StringValue("Root group"),
-					Headerless: types.BoolValue(false),
-					Container: []dashifyGroupContainerModel{
-						{
-							Layout:     &dashifyLayoutModel{Width: types.StringValue("1/2")},
-							TemplateID: types.StringValue("chart-c"),
-						},
-					},
-				},
-			},
+			{Layout: &dashifyLayoutModel{Width: types.StringValue("1/2"), Height: types.StringValue("20"), MinWidth: types.StringValue("4"), MinHeight: types.StringValue("2")}, TemplateID: types.StringValue("chart-a")},
+			{TemplateID: types.StringValue("chart-b")},
 		},
 	}
-
 	spec, imports, err := buildDashboardSpec(model)
 	require.NoError(t, err)
-	assert.Equal(t, []string{"/v2/template/chart-a", "/v2/template/chart-b", "/v2/template/chart-c"}, imports)
+	assert.Equal(t, []string{"/v2/template/chart-a", "/v2/template/chart-b"}, imports)
 	var document map[string]any
 	require.NoError(t, json.Unmarshal(spec, &document))
-	assert.Len(t, document[dashifyDashboardElement], 3)
+	assert.Len(t, document[dashifyDashboardElement], 2)
 	assert.Contains(t, document, "$import:widget0")
-	assert.Contains(t, document, "$import:widget1_0_0")
-	assert.Contains(t, document, "$import:widget2_0")
+	assert.Contains(t, document, "$import:widget1")
 	layout := document["layout"].(map[string]any)
-	assert.Equal(t, float64(0), layout["gap"])
-	assert.Equal(t, float64(1), layout["step"])
 	saved := layout["saved"].(map[string]any)
-	rootItems := saved["_"].(map[string]any)["items"].([]any)
-	assert.NotContains(t, rootItems[0].(map[string]any), "order")
-	assert.NotContains(t, rootItems[0].(map[string]any), "absolute")
-	assert.NotContains(t, rootItems[0].(map[string]any), "x")
-	sectionMetadata := saved["_.1"].(map[string]any)["section"].(map[string]any)
-	assert.Equal(t, false, sectionMetadata["collapse"])
-	assert.Equal(t, true, sectionMetadata["collapsible"])
-	groupMetadata := saved["_.1.0"].(map[string]any)["group"].(map[string]any)
-	assert.Equal(t, true, groupMetadata["headerless"])
-	dashboardChildren := document[dashifyDashboardElement].([]any)
-	sectionElement := dashboardChildren[1].(map[string]any)
-	assert.Equal(t, float64(8), sectionElement["layout"].(map[string]any)["gap"])
-
+	items := saved["_"].(map[string]any)["items"].([]any)
+	assert.Equal(t, "_.0", items[0].(map[string]any)["id"])
+	assert.Equal(t, "1/2", items[0].(map[string]any)["w"])
+	assert.NotContains(t, items[0].(map[string]any), "order")
+	assert.NotContains(t, layout, "gap")
 	root := template.RootElementDashboard
 	parsed, diags := parseDashboardTemplate(&template.Template{ID: "dashboard-id", Title: "Service overview", Spec: spec, Metadata: &template.Metadata{RootElement: &root}})
 	require.Empty(t, diags, diags)
 	assert.Equal(t, model.Title, parsed.Title)
-	assert.Equal(t, model.Layout, parsed.Layout)
 	assert.Equal(t, model.Container, parsed.Container)
 }
 
@@ -760,7 +562,7 @@ func TestDashifyDashboardInlineContentRoundTrip(t *testing.T) {
 
 			root := template.RootElementDashboard
 			parsed, diags := parseDashboardTemplate(&template.Template{
-				Type:     observabilityTemplateRecordType,
+				Type:     fwdashify.ObservabilityTemplateRecordType,
 				Title:    "Dashboard",
 				Spec:     spec,
 				Metadata: &template.Metadata{RootElement: &root},
@@ -780,53 +582,25 @@ func TestDashifyDashboardInlineContentRoundTrip(t *testing.T) {
 
 func TestDashifyDashboardSpecWarnsAboutUnmodeledFields(t *testing.T) {
 	t.Parallel()
-
 	root := template.RootElementDashboard
 	spec := json.RawMessage(`{
 		"title":"Dashboard",
-		"<Dashboard>":[
-			{"<Section>":[
-				{"<Group>":[
-					{"<Panel>":[{"<$import.widget0>":[],"futureContent":{"preserve":true}}],"futureContainer":true}
-				]}
-			]}
-		],
-		"layout":{"saved":{
-			"_":{"items":[{"id":"_.0","order":0,"absolute":true,"x":[1,2],"w":{"value":"1/2","min":4},"rootMinW":1}]},
-			"_.0":{"items":[{"id":"_.0.0","order":0}],"section":{"title":"Section","futureSection":true}},
-			"_.0.0":{"items":[{"id":"_.0.0.0","order":0,"minW":2,"futureConstraint":3}],"group":{"title":"Group","futureGroup":true}}
-		}},
+		"<Dashboard>":[{"<Panel>":[{"<$import.widget0>":[] ,"futureContent":{"preserve":true}}],"futureContainer":true,"futureEmpty":{}}],
+		"layout":{"gap":{},"saved":{"_":{"items":[{"id":"_.0","order":0,"absolute":true,"x":[1,2],"w":{"value":"1/2","futureEmpty":{}},"minW":2}]}}},
 		"$import:widget0":"/v2/template/chart-id"
 	}`)
-	model, diags := parseDashboardTemplate(&template.Template{
-		Type:     observabilityTemplateRecordType,
-		Title:    "Dashboard",
-		Spec:     spec,
-		Metadata: &template.Metadata{RootElement: &root},
-	})
+	model, diags := parseDashboardTemplate(&template.Template{Title: "Dashboard", Spec: spec, Metadata: &template.Metadata{RootElement: &root}})
 	require.False(t, diags.HasError(), diags)
 	require.Len(t, model.Container, 1)
-	require.NotNil(t, model.Container[0].Section)
-	nestedLayout := model.Container[0].Section.Container[0].Group.Container[0].Layout
-	require.NotNil(t, nestedLayout)
-	assert.Equal(t, "2", nestedLayout.MinWidth.ValueString())
-
+	require.NotNil(t, model.Container[0].Layout)
+	assert.Equal(t, "2", model.Container[0].Layout.MinWidth.ValueString())
 	warnings := diags.Warnings()
 	require.Len(t, warnings, 1)
-	for _, path := range []string{
-		"container.0.section.container.0.group.container.0.futureContainer",
-		"container.0.section.container.0.group.container.0.futureContent.preserve",
-		"layout._.0.rootMinW",
-		"layout._.0.absolute",
-		"layout._.0.x",
-		"layout._.0.w.value",
-		"layout._.0.0.0.futureConstraint",
-		"layout.saved._.0.section.futureSection",
-		"layout.saved._.0.0.group.futureGroup",
-	} {
+	assert.Nil(t, dashboardKnownWriteMarker(diags))
+	for _, path := range []string{"container.0.futureContainer", "container.0.futureContent.preserve", "container.0.futureEmpty", "layout._.0.order", "layout._.0.absolute", "layout._.0.x", "layout._.0.w.value", "layout._.0.w.futureEmpty", "layout.gap"} {
 		assert.Contains(t, warnings[0].Detail(), path)
 	}
-	assert.NotContains(t, warnings[0].Detail(), "layout._.0.0.0.minW")
+	assert.NotContains(t, warnings[0].Detail(), "layout._.0.minW")
 }
 
 func TestDashifyDashboardSpecAllowsMissingLayout(t *testing.T) {
@@ -841,36 +615,32 @@ func TestDashifyDashboardSpecAllowsMissingLayout(t *testing.T) {
 	assert.Equal(t, "chart-id", model.Container[0].TemplateID.ValueString())
 }
 
-func TestDashifyDashboardSpecAllowsUntitledSectionsAndGroups(t *testing.T) {
+func TestDashifyDashboardSpecAllowsEmptyLayoutScaffold(t *testing.T) {
 	t.Parallel()
-
-	for name, layout := range map[string]string{
-		"missing metadata": "",
-		"missing titles":   `,"layout":{"saved":{"_":{"items":[{"id":"_.0"}]},"_.0":{"items":[{"id":"_.0.0"}],"section":{}},"_.0.0":{"items":[{"id":"_.0.0.0"}],"group":{}}}}`,
-		"empty titles":     `,"layout":{"saved":{"_":{"items":[{"id":"_.0"}]},"_.0":{"items":[{"id":"_.0.0"}],"section":{"title":""}},"_.0.0":{"items":[{"id":"_.0.0.0"}],"group":{"title":""}}}}`,
-		"null titles":      `,"layout":{"saved":{"_":{"items":[{"id":"_.0"}]},"_.0":{"items":[{"id":"_.0.0"}],"section":{"title":null}},"_.0.0":{"items":[{"id":"_.0.0.0"}],"group":{"title":null}}}}`,
-	} {
-		t.Run(name, func(t *testing.T) {
+	for _, layout := range []string{`{}`, `{"saved":{}}`, `{"saved":{"_":{}}}`} {
+		t.Run(layout, func(t *testing.T) {
 			t.Parallel()
-
 			root := template.RootElementDashboard
-			spec := json.RawMessage(`{"title":"Dashboard","<Dashboard>":[{"<Section>":[{"<Group>":[{"<Panel>":[{"<$import.widget0>":[]}]}]}]}]` + layout + `,"$import:widget0":"/v2/template/chart-id"}`)
+			spec := json.RawMessage(`{"<Dashboard>":[{"<Panel>":[{"<$import.widget0>":[]}]}],"layout":` + layout + `,"$import:widget0":"/v2/template/chart-id"}`)
 			model, diags := parseDashboardTemplate(&template.Template{Title: "Dashboard", Spec: spec, Metadata: &template.Metadata{RootElement: &root}})
 			require.Empty(t, diags, diags)
 			require.Len(t, model.Container, 1)
-			require.NotNil(t, model.Container[0].Section)
-			assert.False(t, model.Container[0].Section.Title.IsNull())
-			assert.Empty(t, model.Container[0].Section.Title.ValueString())
-			require.Len(t, model.Container[0].Section.Container, 1)
-			require.NotNil(t, model.Container[0].Section.Container[0].Group)
-			assert.False(t, model.Container[0].Section.Container[0].Group.Title.IsNull())
-			assert.Empty(t, model.Container[0].Section.Container[0].Group.Title.ValueString())
+			assert.Nil(t, model.Container[0].Layout)
+		})
+	}
+}
 
-			rebuilt, _, err := buildDashboardSpec(model)
-			require.NoError(t, err)
-			reparsed, reparsedDiags := parseDashboardTemplate(&template.Template{Title: "Dashboard", Spec: rebuilt, Metadata: &template.Metadata{RootElement: &root}})
-			require.Empty(t, reparsedDiags, reparsedDiags)
-			assert.Equal(t, model.Container, reparsed.Container)
+func TestDashifyDashboardSpecRejectsNestedContainers(t *testing.T) {
+	t.Parallel()
+	for _, tag := range []string{"<Section>", "<Group>"} {
+		t.Run(tag, func(t *testing.T) {
+			t.Parallel()
+			root := template.RootElementDashboard
+			spec := json.RawMessage(`{"title":"Dashboard","<Dashboard>":[{"` + tag + `":[{"<Panel>":[{"<$import.widget0>":[]}]}]}],"$import:widget0":"/v2/template/chart-id"}`)
+			_, diags := parseDashboardTemplate(&template.Template{Title: "Dashboard", Spec: spec, Metadata: &template.Metadata{RootElement: &root}})
+			require.True(t, diags.HasError(), diags)
+			assert.Contains(t, diags.Errors()[0].Detail(), tag)
+			assert.Contains(t, diags.Errors()[0].Detail(), "signalfx_observability_template")
 		})
 	}
 }
@@ -931,10 +701,6 @@ func TestDashifyDashboardSpecRejectsInvalidLayoutValues(t *testing.T) {
 			layout: `{"saved":{"_":{"items":[{"id":"_.0","x":{}}]}}}`,
 			want:   "unsupported empty x layout object",
 		},
-		"gap is not numeric": {
-			layout: `{"gap":"8","saved":{"_":{"items":[{"id":"_.0"}]}}}`,
-			want:   "rather than a finite number",
-		},
 	}
 
 	for name, test := range tests {
@@ -949,26 +715,7 @@ func TestDashifyDashboardSpecRejectsInvalidLayoutValues(t *testing.T) {
 	}
 }
 
-func TestDashifyDashboardSpecRejectsInvalidGroupMetadata(t *testing.T) {
-	t.Parallel()
-
-	root := template.RootElementDashboard
-	spec := json.RawMessage(`{
-		"title":"Dashboard",
-		"<Dashboard>":[{"<Group>":[{"<Panel>":[{"<$import.widget0>":[]}]}]}],
-		"layout":{"saved":{
-			"_":{"items":[{"id":"_.0"}]},
-			"_.0":{"items":[{"id":"_.0.0"}],"group":{"title":"Group","headerless":"yes"}}
-		}},
-		"$import:widget0":"/v2/template/chart-id"
-	}`)
-	_, diags := parseDashboardTemplate(&template.Template{Title: "Dashboard", Spec: spec, Metadata: &template.Metadata{RootElement: &root}})
-	require.True(t, diags.HasError(), diags)
-	assert.Contains(t, diags.Errors()[0].Detail(), "headerless")
-	assert.Contains(t, diags.Errors()[0].Detail(), "rather than a boolean")
-}
-
-func TestDashifyDashboardSpecPreservesUIOrder(t *testing.T) {
+func TestDashifyDashboardSpecMatchesLayoutByID(t *testing.T) {
 	t.Parallel()
 
 	root := template.RootElementDashboard
@@ -982,8 +729,8 @@ func TestDashifyDashboardSpecPreservesUIOrder(t *testing.T) {
 			"at":"2026-09-11T00:00:00Z",
 			"parent":"dashboard-id",
 			"items":[
-				{"id":"_.1","order":0.5,"absolute":false,"w":4},
-				{"id":"_.0","order":9,"w":8}
+				{"id":"_.1","absolute":false,"w":4},
+				{"id":"_.0","w":8}
 			]
 		}}},
 		"$import:widget0":"/v2/template/chart-a",
@@ -994,13 +741,9 @@ func TestDashifyDashboardSpecPreservesUIOrder(t *testing.T) {
 	require.Len(t, model.Container, 2)
 	assert.Equal(t, "8", model.Container[0].Layout.Width.ValueString())
 	assert.Equal(t, "4", model.Container[1].Layout.Width.ValueString())
-	assert.Equal(t, 9.0, model.Container[0].Layout.Order.ValueFloat64())
-	assert.Equal(t, 0.5, model.Container[1].Layout.Order.ValueFloat64())
 
 	rebuilt, _, err := buildDashboardSpec(model)
 	require.NoError(t, err)
-	assert.Contains(t, string(rebuilt), `"order":9`)
-	assert.Contains(t, string(rebuilt), `"order":0.5`)
 	assert.NotContains(t, string(rebuilt), `"parent"`)
 	assert.NotContains(t, string(rebuilt), `"at"`)
 }
@@ -1017,7 +760,7 @@ func TestResourceObservabilityDashboardUnitTest(t *testing.T) {
 				http.Error(w, "invalid create request", http.StatusBadRequest)
 				return
 			}
-			assert.Equal(t, observabilityTemplateRecordType, write.Type)
+			assert.Equal(t, fwdashify.ObservabilityTemplateRecordType, write.Type)
 			var record *template.Template
 			switch {
 			case write.Metadata.RootElement != nil && *write.Metadata.RootElement == chartRoot:
@@ -1079,7 +822,7 @@ func TestResourceObservabilityDashboardUnitTest(t *testing.T) {
 			ProtoV6ProviderFactories: fwtest.NewMockProto6Server(
 				t,
 				handlers,
-				fwtest.WithMockResources(NewResourceObservabilityDashboard, NewResourceObservabilityTemplate),
+				fwtest.WithMockResources(NewResourceObservabilityDashboard, fwdashify.NewResourceObservabilityTemplate),
 			),
 			Steps: []testresource.TestStep{
 				{
@@ -1194,7 +937,7 @@ func TestResourceObservabilityDashboardReadRejectsMismatchedID(t *testing.T) {
 			assert.Equal(t, "template-1", r.PathValue("id"))
 			if mismatched {
 				assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: &template.Template{
-					ID: "another-dashboard", Type: observabilityTemplateRecordType,
+					ID: "another-dashboard", Type: fwdashify.ObservabilityTemplateRecordType,
 					Title: "Service overview", Metadata: &template.Metadata{RootElement: &root},
 				}}))
 				return
@@ -1238,17 +981,17 @@ func TestObservabilityDashboardRejectsInvalidAPIRecords(t *testing.T) {
 	}{
 		{
 			name:   "missing root",
-			record: template.Template{ID: "dashboard-1", Type: observabilityTemplateRecordType, Spec: json.RawMessage(`{"<Dashboard>":[]}`)},
+			record: template.Template{ID: "dashboard-1", Type: fwdashify.ObservabilityTemplateRecordType, Spec: json.RawMessage(`{"<Dashboard>":[]}`)},
 			want:   "no Dashboard root element metadata",
 		},
 		{
 			name:   "wrong root",
-			record: template.Template{ID: "dashboard-1", Type: observabilityTemplateRecordType, Metadata: &template.Metadata{RootElement: &chartRoot}, Spec: json.RawMessage(`{"<Dashboard>":[]}`)},
+			record: template.Template{ID: "dashboard-1", Type: fwdashify.ObservabilityTemplateRecordType, Metadata: &template.Metadata{RootElement: &chartRoot}, Spec: json.RawMessage(`{"<Dashboard>":[]}`)},
 			want:   "not \"Dashboard\"",
 		},
 		{
 			name:   "missing spec",
-			record: template.Template{ID: "dashboard-1", Type: observabilityTemplateRecordType, Metadata: &template.Metadata{RootElement: &root}},
+			record: template.Template{ID: "dashboard-1", Type: fwdashify.ObservabilityTemplateRecordType, Metadata: &template.Metadata{RootElement: &root}},
 			want:   "EOF",
 		},
 	} {
@@ -1287,7 +1030,7 @@ func TestResourceObservabilityDashboardCreateReportsMissingEndpoint(t *testing.T
 func TestResourceObservabilityDashboardUpdateReportsNotFound(t *testing.T) {
 	root := template.RootElementDashboard
 	record := &template.Template{
-		ID: "template-1", Type: observabilityTemplateRecordType, Title: "Service overview",
+		ID: "template-1", Type: fwdashify.ObservabilityTemplateRecordType, Title: "Service overview",
 		Spec: json.RawMessage(`{"<Dashboard>":[]}`), Metadata: &template.Metadata{RootElement: &root},
 	}
 	handlers := map[string]http.Handler{

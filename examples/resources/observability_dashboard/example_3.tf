@@ -24,59 +24,16 @@ resource "signalfx_observability_template" "latency" {
   })
 }
 
-resource "signalfx_observability_dashboard" "nested_layout" {
+resource "signalfx_observability_dashboard" "service_layout" {
   title = "Service layout"
 
-  layout = {
-    gap  = 8
-    step = 8
-
-    defaults = {
-      min_width  = "4"
-      height     = "40"
-      min_height = "32"
-    }
-  }
-
   container = [{
-    section = {
-      title       = "Service health"
-      collapse    = false
-      collapsible = true
-
-      layout = {
-        gap  = 4
-        step = 4
-      }
-
-      container = [{
-        group = {
-          title      = "Latency details"
-          headerless = true
-
-          layout = {
-            gap  = 8
-            step = 1
-
-            defaults = {
-              height     = "228"
-              min_height = "168"
-            }
-          }
-
-          container = [{
-            layout = {
-              width      = "1/2"
-              height     = "228"
-              min_height = "168"
-              min_width  = "4"
-              max_width  = "100%"
-            }
-
-            template_id = signalfx_observability_template.latency.id
-          }]
-        }
-      }]
+    template_id = signalfx_observability_template.latency.id
+    layout = {
+      width      = "1/2"
+      height     = "228"
+      min_width  = "4"
+      min_height = "168"
     }
   }]
 }
