@@ -93,7 +93,7 @@ check-docs: gen-docs
 
 
 gen-docs:
-	$(WEBSITE_PLUGIN) generate --provider-name signalfx
+	$(WEBSITE_PLUGIN)
 
 test-docs:
 	$(WEBSITE_PLUGIN) validate 
