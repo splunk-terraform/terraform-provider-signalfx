@@ -11,14 +11,6 @@ Use this resource for a Template, such as a chart. Set `title`, `root_element`, 
 ## Example
 
 ```terraform
-terraform {
-  required_providers {
-    signalfx = {
-      source = "splunk-terraform/signalfx"
-    }
-  }
-}
-
 resource "signalfx_observability_template" "chart" {
   title        = "Request rate"
   root_element = "Chart"

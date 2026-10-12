@@ -1,11 +1,3 @@
-terraform {
-  required_providers {
-    signalfx = {
-      source = "splunk-terraform/signalfx"
-    }
-  }
-}
-
 resource "signalfx_observability_dashboard" "inline_content" {
   title = "Inline dashboard content"
 

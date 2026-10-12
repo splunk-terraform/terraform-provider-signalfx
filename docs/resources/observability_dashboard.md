@@ -13,14 +13,6 @@ To place the dashboard in a folder, add its ID to a Directory resource's `templa
 ## Example
 
 ```terraform
-terraform {
-  required_providers {
-    signalfx = {
-      source = "splunk-terraform/signalfx"
-    }
-  }
-}
-
 resource "signalfx_observability_template" "chart" {
   title        = "Request rate"
   root_element = "Chart"
@@ -55,14 +47,6 @@ resource "signalfx_observability_dashboard" "service" {
 ## Inline content
 
 ```terraform
-terraform {
-  required_providers {
-    signalfx = {
-      source = "splunk-terraform/signalfx"
-    }
-  }
-}
-
 resource "signalfx_observability_dashboard" "inline_content" {
   title = "Inline dashboard content"
 
@@ -92,14 +76,6 @@ resource "signalfx_observability_dashboard" "inline_content" {
 ## Panel sizing
 
 ```terraform
-terraform {
-  required_providers {
-    signalfx = {
-      source = "splunk-terraform/signalfx"
-    }
-  }
-}
-
 resource "signalfx_observability_template" "latency" {
   title        = "Service latency"
   root_element = "Chart"
@@ -136,14 +112,6 @@ resource "signalfx_observability_dashboard" "service_layout" {
 ## Dashboard controls
 
 ```terraform
-terraform {
-  required_providers {
-    signalfx = {
-      source = "splunk-terraform/signalfx"
-    }
-  }
-}
-
 resource "signalfx_observability_template" "control_chart" {
   title        = "Request rate"
   root_element = "Chart"

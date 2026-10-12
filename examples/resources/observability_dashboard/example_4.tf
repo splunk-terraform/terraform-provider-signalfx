@@ -1,11 +1,3 @@
-terraform {
-  required_providers {
-    signalfx = {
-      source = "splunk-terraform/signalfx"
-    }
-  }
-}
-
 resource "signalfx_observability_template" "control_chart" {
   title        = "Request rate"
   root_element = "Chart"
