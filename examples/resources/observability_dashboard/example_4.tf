@@ -57,6 +57,11 @@ resource "signalfx_observability_dashboard" "controls" {
   }
 
   container = [{
+    layout = {
+      width      = "6/12"
+      height     = "30"
+      min_height = "22"
+    }
     template_id = signalfx_observability_template.control_chart.id
   }]
 }

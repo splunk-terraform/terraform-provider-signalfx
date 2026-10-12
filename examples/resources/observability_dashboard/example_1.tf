@@ -29,8 +29,8 @@ resource "signalfx_observability_dashboard" "service" {
 
   container = [{
     layout = {
-      width  = "6/12"
-      height = "2"
+      width  = "50%"
+      height = "30"
     }
     template_id = signalfx_observability_template.chart.id
   }]

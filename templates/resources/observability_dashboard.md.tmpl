@@ -1,14 +1,14 @@
 ---
 page_title: "Splunk Observability Cloud: signalfx_observability_dashboard"
 description: |-
-  Manages a Modern Dashboard Template with containers, controls, and layout.
+  Manages a modern dashboard.
 ---
 
 # Resource: signalfx_observability_dashboard
 
-This resource manages a complete Dashboard Template document. Its ordered containers can reference existing Template IDs or hold opaque inline JSON. Sections, groups, layout, time range, density, pinned filters, and filter sets are supported. Typed chart attributes will be added separately.
+Use this resource to manage a modern dashboard's charts, sections, controls, and layout. Each container can reference a Template or hold inline JSON.
 
-To place the dashboard in a Directory, include `signalfx_observability_dashboard.service.id` in the Directory resource's complete `templates` list. Dashboard updates replace the complete document. Imported dashboards may contain write metadata the API cannot return, and stored dashboards may have fields this resource cannot represent. This resource blocks updates in either case to avoid removing those fields. Import such a dashboard as `signalfx_observability_template` with the complete specification and explicit metadata to manage it.
+To place the dashboard in a folder, add its ID to a Directory resource's `templates` list. Updates replace the saved dashboard content, so copy UI changes you want to keep into Terraform before applying.
 
 ## Example
 
@@ -16,21 +16,21 @@ To place the dashboard in a Directory, include `signalfx_observability_dashboard
 
 ## Inline content
 
-{{tffile "examples/resources/observability_dashboard/example_7.tf"}}
+{{tffile "examples/resources/observability_dashboard/example_2.tf"}}
 
-## Advanced layout
+## Nested layout
 
-{{tffile "examples/resources/observability_dashboard/example_5.tf"}}
+{{tffile "examples/resources/observability_dashboard/example_3.tf"}}
 
 ## Dashboard controls
 
-{{tffile "examples/resources/observability_dashboard/example_6.tf"}}
+{{tffile "examples/resources/observability_dashboard/example_4.tf"}}
 
-Within each `container`, set exactly one content source. Use `template_id` to reference a reusable Observability Template, or `template_content` for a JSON object containing exactly one dashboard element key. Inline content is preserved without converting unknown chart fields.
+Each `container` needs one content source: `template_id`, `template_content`, `section`, or `group`. Use `template_id` for a reusable Template or `template_content` for inline JSON.
 
-Root, section, and group `layout` attributes arrange their immediate containers. A container's own `layout` sets its placement. Length arguments accept values such as `"4"`, `"6/12"`, or `"50%"`; use `jsonencode` for clamped lengths or a multi-part `x` or `y` coordinate.
+A `layout` arranges the containers directly inside it. A container's own `layout` sets its size and display order. Numeric sizes are layout values, not pixels. With the default root layout, `height = "30"` makes a card about 224 pixels tall, and `min_height = "22"` gives a minimum near 160 pixels. `step` and `gap` are pixel values; nested layouts can override them. Simple fractions and percentages are supported as size strings. For absolute positioning, coordinates, or clamped JSON sizes, use `signalfx_observability_template` with the full `spec`.
 
-Terraform list order controls container order. Use a `for` expression to generate one container per item, for example `container = [for id in var.chart_ids : { template_id = id }]`. Controls are written in the order time range, density, pinned filters, then filter set. Complete document updates can remove UI changes that are absent from Terraform configuration.
+Terraform list order controls container order. Use a `for` expression to generate containers from a list, for example `container = [for id in var.chart_ids : { template_id = id }]`.
 
 {{ .SchemaMarkdown | trimspace }}
 
@@ -42,4 +42,4 @@ After adding a matching resource block, import an existing Dashboard by its Temp
 terraform import signalfx_observability_dashboard.service G47WjI1AABc
 ```
 
-An imported dashboard can be read by this resource, but cannot be updated. To manage it, import it as `signalfx_observability_template` with its complete specification and explicit metadata instead.
+Terraform can update an imported dashboard when this resource supports everything in its saved content. Otherwise, it blocks the update to avoid losing fields. Use `signalfx_observability_template` with the full `spec` for those dashboards, and review its advanced metadata note first. For a legacy dashboard whose Template has an empty spec, use Save As in the UI and import the new Template ID.

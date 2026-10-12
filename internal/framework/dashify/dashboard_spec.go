@@ -254,7 +254,7 @@ func parseDashboardTemplate(record *template.Template) (observabilityDashboardMo
 		diags.AddWarning(
 			dashifyUnmodeledFieldsSummary,
 			fmt.Sprintf(
-				"The stored dashboard contains %d field(s) this provider does not model:\n  %s\n\nThese fields are absent from Terraform state, so this resource blocks updates that would remove them. To manage this dashboard, import it as signalfx_observability_template with its complete specification and explicit metadata instead.",
+				"The stored dashboard contains %d field(s) this provider does not model:\n  %s\n\nThese fields are absent from Terraform state, so this resource blocks updates that would remove them. To manage this dashboard, import it as signalfx_observability_template with its complete specification instead.",
 				len(leftovers),
 				strings.Join(truncateDashifyLeftovers(leftovers, dashifyLeftoverLimit), "\n  "),
 			),

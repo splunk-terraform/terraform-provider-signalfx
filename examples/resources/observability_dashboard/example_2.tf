@@ -11,8 +11,9 @@ resource "signalfx_observability_dashboard" "inline_content" {
 
   container = [{
     layout = {
-      width  = "6/12"
-      height = "2"
+      width      = "6/12"
+      height     = "30"
+      min_height = "22"
     }
 
     template_content = jsonencode({

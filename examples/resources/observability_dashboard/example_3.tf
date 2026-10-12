@@ -24,8 +24,8 @@ resource "signalfx_observability_template" "latency" {
   })
 }
 
-resource "signalfx_observability_dashboard" "advanced_layout" {
-  title = "Advanced service layout"
+resource "signalfx_observability_dashboard" "nested_layout" {
+  title = "Service layout"
 
   layout = {
     gap  = 8
@@ -33,7 +33,8 @@ resource "signalfx_observability_dashboard" "advanced_layout" {
 
     defaults = {
       min_width  = "4"
-      min_height = "2"
+      height     = "40"
+      min_height = "32"
     }
   }
 
@@ -54,23 +55,22 @@ resource "signalfx_observability_dashboard" "advanced_layout" {
           headerless = true
 
           layout = {
-            gap  = 0
+            gap  = 8
             step = 1
 
             defaults = {
-              height = "20"
+              height     = "228"
+              min_height = "168"
             }
           }
 
           container = [{
             layout = {
-              absolute  = true
-              width     = jsonencode({ value = "1/2", min = 4, max = "100%" })
-              height    = "20"
-              min_width = "4"
-              max_width = "100%"
-              x         = jsonencode(["1/4", 8])
-              y         = "12"
+              width      = "1/2"
+              height     = "228"
+              min_height = "168"
+              min_width  = "4"
+              max_width  = "100%"
             }
 
             template_id = signalfx_observability_template.latency.id

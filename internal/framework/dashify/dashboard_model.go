@@ -70,15 +70,12 @@ type dashifyFilterSetEntryModel struct {
 
 type dashifyLayoutModel struct {
 	Order     types.Float64 `tfsdk:"order"`
-	Absolute  types.Bool    `tfsdk:"absolute"`
 	Width     types.String  `tfsdk:"width"`
 	Height    types.String  `tfsdk:"height"`
 	MinWidth  types.String  `tfsdk:"min_width"`
 	MaxWidth  types.String  `tfsdk:"max_width"`
 	MinHeight types.String  `tfsdk:"min_height"`
 	MaxHeight types.String  `tfsdk:"max_height"`
-	X         types.String  `tfsdk:"x"`
-	Y         types.String  `tfsdk:"y"`
 }
 
 type dashifyLayoutOptionsModel struct {
@@ -88,7 +85,6 @@ type dashifyLayoutOptionsModel struct {
 }
 
 type dashifyLayoutDefaultsModel struct {
-	Absolute  types.Bool   `tfsdk:"absolute"`
 	Width     types.String `tfsdk:"width"`
 	Height    types.String `tfsdk:"height"`
 	MinWidth  types.String `tfsdk:"min_width"`

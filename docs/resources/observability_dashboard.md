@@ -1,14 +1,14 @@
 ---
 page_title: "Splunk Observability Cloud: signalfx_observability_dashboard"
 description: |-
-  Manages a Modern Dashboard Template with containers, controls, and layout.
+  Manages a modern dashboard.
 ---
 
 # Resource: signalfx_observability_dashboard
 
-This resource manages a complete Dashboard Template document. Its ordered containers can reference existing Template IDs or hold opaque inline JSON. Sections, groups, layout, time range, density, pinned filters, and filter sets are supported. Typed chart attributes will be added separately.
+Use this resource to manage a modern dashboard's charts, sections, controls, and layout. Each container can reference a Template or hold inline JSON.
 
-To place the dashboard in a Directory, include `signalfx_observability_dashboard.service.id` in the Directory resource's complete `templates` list. Dashboard updates replace the complete document. Imported dashboards may contain write metadata the API cannot return, and stored dashboards may have fields this resource cannot represent. This resource blocks updates in either case to avoid removing those fields. Import such a dashboard as `signalfx_observability_template` with the complete specification and explicit metadata to manage it.
+To place the dashboard in a folder, add its ID to a Directory resource's `templates` list. Updates replace the saved dashboard content, so copy UI changes you want to keep into Terraform before applying.
 
 ## Example
 
@@ -44,8 +44,8 @@ resource "signalfx_observability_dashboard" "service" {
 
   container = [{
     layout = {
-      width  = "6/12"
-      height = "2"
+      width  = "50%"
+      height = "30"
     }
     template_id = signalfx_observability_template.chart.id
   }]
@@ -68,8 +68,9 @@ resource "signalfx_observability_dashboard" "inline_content" {
 
   container = [{
     layout = {
-      width  = "6/12"
-      height = "2"
+      width      = "6/12"
+      height     = "30"
+      min_height = "22"
     }
 
     template_content = jsonencode({
@@ -88,7 +89,7 @@ resource "signalfx_observability_dashboard" "inline_content" {
 }
 ```
 
-## Advanced layout
+## Nested layout
 
 ```terraform
 terraform {
@@ -117,8 +118,8 @@ resource "signalfx_observability_template" "latency" {
   })
 }
 
-resource "signalfx_observability_dashboard" "advanced_layout" {
-  title = "Advanced service layout"
+resource "signalfx_observability_dashboard" "nested_layout" {
+  title = "Service layout"
 
   layout = {
     gap  = 8
@@ -126,7 +127,8 @@ resource "signalfx_observability_dashboard" "advanced_layout" {
 
     defaults = {
       min_width  = "4"
-      min_height = "2"
+      height     = "40"
+      min_height = "32"
     }
   }
 
@@ -147,23 +149,22 @@ resource "signalfx_observability_dashboard" "advanced_layout" {
           headerless = true
 
           layout = {
-            gap  = 0
+            gap  = 8
             step = 1
 
             defaults = {
-              height = "20"
+              height     = "228"
+              min_height = "168"
             }
           }
 
           container = [{
             layout = {
-              absolute  = true
-              width     = jsonencode({ value = "1/2", min = 4, max = "100%" })
-              height    = "20"
-              min_width = "4"
-              max_width = "100%"
-              x         = jsonencode(["1/4", 8])
-              y         = "12"
+              width      = "1/2"
+              height     = "228"
+              min_height = "168"
+              min_width  = "4"
+              max_width  = "100%"
             }
 
             template_id = signalfx_observability_template.latency.id
@@ -237,16 +238,21 @@ resource "signalfx_observability_dashboard" "controls" {
   }
 
   container = [{
+    layout = {
+      width      = "6/12"
+      height     = "30"
+      min_height = "22"
+    }
     template_id = signalfx_observability_template.control_chart.id
   }]
 }
 ```
 
-Within each `container`, set exactly one content source. Use `template_id` to reference a reusable Observability Template, or `template_content` for a JSON object containing exactly one dashboard element key. Inline content is preserved without converting unknown chart fields.
+Each `container` needs one content source: `template_id`, `template_content`, `section`, or `group`. Use `template_id` for a reusable Template or `template_content` for inline JSON.
 
-Root, section, and group `layout` attributes arrange their immediate containers. A container's own `layout` sets its placement. Length arguments accept values such as `"4"`, `"6/12"`, or `"50%"`; use `jsonencode` for clamped lengths or a multi-part `x` or `y` coordinate.
+A `layout` arranges the containers directly inside it. A container's own `layout` sets its size and display order. Numeric sizes are layout values, not pixels. With the default root layout, `height = "30"` makes a card about 224 pixels tall, and `min_height = "22"` gives a minimum near 160 pixels. `step` and `gap` are pixel values; nested layouts can override them. Simple fractions and percentages are supported as size strings. For absolute positioning, coordinates, or clamped JSON sizes, use `signalfx_observability_template` with the full `spec`.
 
-Terraform list order controls container order. Use a `for` expression to generate one container per item, for example `container = [for id in var.chart_ids : { template_id = id }]`. Controls are written in the order time range, density, pinned filters, then filter set. Complete document updates can remove UI changes that are absent from Terraform configuration.
+Terraform list order controls container order. Use a `for` expression to generate containers from a list, for example `container = [for id in var.chart_ids : { template_id = id }]`.
 
 <!-- schema generated by tfplugindocs -->
 ## Schema
@@ -259,7 +265,7 @@ Terraform list order controls container order. Use a `for` expression to generat
 
 - `container` (Attributes List) Ordered dashboard contents. Terraform declaration order is authoritative. (see [below for nested schema](#nestedatt--container))
 - `control_bar` (Attributes) Optional controls applied to the dashboard and its charts. (see [below for nested schema](#nestedatt--control_bar))
-- `layout` (Attributes) Settings for the layout that arranges this level's containers. (see [below for nested schema](#nestedatt--layout))
+- `layout` (Attributes) Controls the size and spacing of this layout's containers. (see [below for nested schema](#nestedatt--layout))
 
 ### Read-Only
 
@@ -271,7 +277,7 @@ Terraform list order controls container order. Use a `for` expression to generat
 Optional:
 
 - `group` (Attributes) A group containing related containers. (see [below for nested schema](#nestedatt--container--group))
-- `layout` (Attributes) Placement and size of this container inside its parent layout. Lengths accept numbers or relative strings; clamped values and coordinate arrays can be supplied with jsonencode. (see [below for nested schema](#nestedatt--container--layout))
+- `layout` (Attributes) Size and display order in the parent layout. Numeric sizes are layout values, not pixels. (see [below for nested schema](#nestedatt--container--layout))
 - `section` (Attributes) A section containing containers and optional groups. (see [below for nested schema](#nestedatt--container--section))
 - `template_content` (String) Self-contained dashboard JSON object rendered inline in this container.
 - `template_id` (String) ID of a reusable Observability Template rendered in this container.
@@ -286,7 +292,7 @@ Required:
 Optional:
 
 - `headerless` (Boolean) Whether to hide the group header.
-- `layout` (Attributes) Settings for the layout that arranges this level's containers. (see [below for nested schema](#nestedatt--container--group--layout))
+- `layout` (Attributes) Controls the size and spacing of this layout's containers. (see [below for nested schema](#nestedatt--container--group--layout))
 - `title` (String) Optional group title. Omit it for an untitled group.
 
 <a id="nestedatt--container--group--container"></a>
@@ -294,7 +300,7 @@ Optional:
 
 Optional:
 
-- `layout` (Attributes) Placement and size of this container inside its parent layout. Lengths accept numbers or relative strings; clamped values and coordinate arrays can be supplied with jsonencode. (see [below for nested schema](#nestedatt--container--group--container--layout))
+- `layout` (Attributes) Size and display order in the parent layout. Numeric sizes are layout values, not pixels. (see [below for nested schema](#nestedatt--container--group--container--layout))
 - `template_content` (String) Self-contained dashboard JSON object rendered inline in this container.
 - `template_id` (String) ID of a reusable Observability Template rendered in this container.
 
@@ -303,16 +309,13 @@ Optional:
 
 Optional:
 
-- `absolute` (Boolean) Whether to position the container independently using its x and y coordinates.
 - `height` (String) Starting height of the container.
 - `max_height` (String) Maximum height of the container.
 - `max_width` (String) Maximum width of the container.
 - `min_height` (String) Minimum height of the container.
 - `min_width` (String) Minimum width of the container.
-- `order` (Number) Display order of the container within its parent layout, overriding declaration order. Reordering in the UI sets this on every container in the layout.
+- `order` (Number) Display order within the parent layout. Overrides declaration order.
 - `width` (String) Starting width of the container.
-- `x` (String) Horizontal coordinate. A jsonencoded array is treated as a sum of lengths.
-- `y` (String) Vertical coordinate. A jsonencoded array is treated as a sum of lengths.
 
 
 
@@ -321,16 +324,15 @@ Optional:
 
 Optional:
 
-- `defaults` (Attributes) Default placement and size constraints inherited by every container in this layout. (see [below for nested schema](#nestedatt--container--group--layout--defaults))
-- `gap` (Number) Visual gap between adjacent containers in pixels.
-- `step` (Number) Layout resolution in pixels. Lengths are rounded to multiples of this value.
+- `defaults` (Attributes) Default size for containers in this layout. (see [below for nested schema](#nestedatt--container--group--layout--defaults))
+- `gap` (Number) Space between containers in pixels. Defaults to 16.
+- `step` (Number) Pixels per grid unit. Defaults to 16.
 
 <a id="nestedatt--container--group--layout--defaults"></a>
 ### Nested Schema for `container.group.layout.defaults`
 
 Optional:
 
-- `absolute` (Boolean) Default absolute-positioning behavior.
 - `height` (String) Default starting height.
 - `max_height` (String) Default maximum height.
 - `max_width` (String) Default maximum width.
@@ -346,16 +348,13 @@ Optional:
 
 Optional:
 
-- `absolute` (Boolean) Whether to position the container independently using its x and y coordinates.
 - `height` (String) Starting height of the container.
 - `max_height` (String) Maximum height of the container.
 - `max_width` (String) Maximum width of the container.
 - `min_height` (String) Minimum height of the container.
 - `min_width` (String) Minimum width of the container.
-- `order` (Number) Display order of the container within its parent layout, overriding declaration order. Reordering in the UI sets this on every container in the layout.
+- `order` (Number) Display order within the parent layout. Overrides declaration order.
 - `width` (String) Starting width of the container.
-- `x` (String) Horizontal coordinate. A jsonencoded array is treated as a sum of lengths.
-- `y` (String) Vertical coordinate. A jsonencoded array is treated as a sum of lengths.
 
 
 <a id="nestedatt--container--section"></a>
@@ -369,7 +368,7 @@ Optional:
 
 - `collapse` (Boolean) Whether the section is currently collapsed.
 - `collapsible` (Boolean) Whether the section can be collapsed.
-- `layout` (Attributes) Settings for the layout that arranges this level's containers. (see [below for nested schema](#nestedatt--container--section--layout))
+- `layout` (Attributes) Controls the size and spacing of this layout's containers. (see [below for nested schema](#nestedatt--container--section--layout))
 - `title` (String) Optional section title. Omit it for an untitled section.
 
 <a id="nestedatt--container--section--container"></a>
@@ -378,7 +377,7 @@ Optional:
 Optional:
 
 - `group` (Attributes) A group containing related containers. (see [below for nested schema](#nestedatt--container--section--container--group))
-- `layout` (Attributes) Placement and size of this container inside its parent layout. Lengths accept numbers or relative strings; clamped values and coordinate arrays can be supplied with jsonencode. (see [below for nested schema](#nestedatt--container--section--container--layout))
+- `layout` (Attributes) Size and display order in the parent layout. Numeric sizes are layout values, not pixels. (see [below for nested schema](#nestedatt--container--section--container--layout))
 - `template_content` (String) Self-contained dashboard JSON object rendered inline in this container.
 - `template_id` (String) ID of a reusable Observability Template rendered in this container.
 
@@ -392,7 +391,7 @@ Required:
 Optional:
 
 - `headerless` (Boolean) Whether to hide the group header.
-- `layout` (Attributes) Settings for the layout that arranges this level's containers. (see [below for nested schema](#nestedatt--container--section--container--group--layout))
+- `layout` (Attributes) Controls the size and spacing of this layout's containers. (see [below for nested schema](#nestedatt--container--section--container--group--layout))
 - `title` (String) Optional group title. Omit it for an untitled group.
 
 <a id="nestedatt--container--section--container--group--container"></a>
@@ -400,7 +399,7 @@ Optional:
 
 Optional:
 
-- `layout` (Attributes) Placement and size of this container inside its parent layout. Lengths accept numbers or relative strings; clamped values and coordinate arrays can be supplied with jsonencode. (see [below for nested schema](#nestedatt--container--section--container--group--container--layout))
+- `layout` (Attributes) Size and display order in the parent layout. Numeric sizes are layout values, not pixels. (see [below for nested schema](#nestedatt--container--section--container--group--container--layout))
 - `template_content` (String) Self-contained dashboard JSON object rendered inline in this container.
 - `template_id` (String) ID of a reusable Observability Template rendered in this container.
 
@@ -409,16 +408,13 @@ Optional:
 
 Optional:
 
-- `absolute` (Boolean) Whether to position the container independently using its x and y coordinates.
 - `height` (String) Starting height of the container.
 - `max_height` (String) Maximum height of the container.
 - `max_width` (String) Maximum width of the container.
 - `min_height` (String) Minimum height of the container.
 - `min_width` (String) Minimum width of the container.
-- `order` (Number) Display order of the container within its parent layout, overriding declaration order. Reordering in the UI sets this on every container in the layout.
+- `order` (Number) Display order within the parent layout. Overrides declaration order.
 - `width` (String) Starting width of the container.
-- `x` (String) Horizontal coordinate. A jsonencoded array is treated as a sum of lengths.
-- `y` (String) Vertical coordinate. A jsonencoded array is treated as a sum of lengths.
 
 
 
@@ -427,16 +423,15 @@ Optional:
 
 Optional:
 
-- `defaults` (Attributes) Default placement and size constraints inherited by every container in this layout. (see [below for nested schema](#nestedatt--container--section--container--group--layout--defaults))
-- `gap` (Number) Visual gap between adjacent containers in pixels.
-- `step` (Number) Layout resolution in pixels. Lengths are rounded to multiples of this value.
+- `defaults` (Attributes) Default size for containers in this layout. (see [below for nested schema](#nestedatt--container--section--container--group--layout--defaults))
+- `gap` (Number) Space between containers in pixels. Defaults to 16.
+- `step` (Number) Pixels per grid unit. Defaults to 16.
 
 <a id="nestedatt--container--section--container--group--layout--defaults"></a>
 ### Nested Schema for `container.section.container.group.layout.defaults`
 
 Optional:
 
-- `absolute` (Boolean) Default absolute-positioning behavior.
 - `height` (String) Default starting height.
 - `max_height` (String) Default maximum height.
 - `max_width` (String) Default maximum width.
@@ -452,16 +447,13 @@ Optional:
 
 Optional:
 
-- `absolute` (Boolean) Whether to position the container independently using its x and y coordinates.
 - `height` (String) Starting height of the container.
 - `max_height` (String) Maximum height of the container.
 - `max_width` (String) Maximum width of the container.
 - `min_height` (String) Minimum height of the container.
 - `min_width` (String) Minimum width of the container.
-- `order` (Number) Display order of the container within its parent layout, overriding declaration order. Reordering in the UI sets this on every container in the layout.
+- `order` (Number) Display order within the parent layout. Overrides declaration order.
 - `width` (String) Starting width of the container.
-- `x` (String) Horizontal coordinate. A jsonencoded array is treated as a sum of lengths.
-- `y` (String) Vertical coordinate. A jsonencoded array is treated as a sum of lengths.
 
 
 
@@ -470,16 +462,15 @@ Optional:
 
 Optional:
 
-- `defaults` (Attributes) Default placement and size constraints inherited by every container in this layout. (see [below for nested schema](#nestedatt--container--section--layout--defaults))
-- `gap` (Number) Visual gap between adjacent containers in pixels.
-- `step` (Number) Layout resolution in pixels. Lengths are rounded to multiples of this value.
+- `defaults` (Attributes) Default size for containers in this layout. (see [below for nested schema](#nestedatt--container--section--layout--defaults))
+- `gap` (Number) Space between containers in pixels. Defaults to 16.
+- `step` (Number) Pixels per grid unit. Defaults to 16.
 
 <a id="nestedatt--container--section--layout--defaults"></a>
 ### Nested Schema for `container.section.layout.defaults`
 
 Optional:
 
-- `absolute` (Boolean) Default absolute-positioning behavior.
 - `height` (String) Default starting height.
 - `max_height` (String) Default maximum height.
 - `max_width` (String) Default maximum width.
@@ -576,16 +567,15 @@ Optional:
 
 Optional:
 
-- `defaults` (Attributes) Default placement and size constraints inherited by every container in this layout. (see [below for nested schema](#nestedatt--layout--defaults))
-- `gap` (Number) Visual gap between adjacent containers in pixels.
-- `step` (Number) Layout resolution in pixels. Lengths are rounded to multiples of this value.
+- `defaults` (Attributes) Default size for containers in this layout. (see [below for nested schema](#nestedatt--layout--defaults))
+- `gap` (Number) Space between containers in pixels. Defaults to 16.
+- `step` (Number) Pixels per grid unit. Defaults to 16.
 
 <a id="nestedatt--layout--defaults"></a>
 ### Nested Schema for `layout.defaults`
 
 Optional:
 
-- `absolute` (Boolean) Default absolute-positioning behavior.
 - `height` (String) Default starting height.
 - `max_height` (String) Default maximum height.
 - `max_width` (String) Default maximum width.
@@ -601,4 +591,4 @@ After adding a matching resource block, import an existing Dashboard by its Temp
 terraform import signalfx_observability_dashboard.service G47WjI1AABc
 ```
 
-An imported dashboard can be read by this resource, but cannot be updated. To manage it, import it as `signalfx_observability_template` with its complete specification and explicit metadata instead.
+Terraform can update an imported dashboard when this resource supports everything in its saved content. Otherwise, it blocks the update to avoid losing fields. Use `signalfx_observability_template` with the full `spec` for those dashboards, and review its advanced metadata note first. For a legacy dashboard whose Template has an empty spec, use Save As in the UI and import the new Template ID.

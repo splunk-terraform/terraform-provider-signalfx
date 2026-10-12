@@ -35,8 +35,8 @@ type observabilityDashboardResource struct {
 
 const (
 	observabilityDashboardCompleteWriteKnownKey = "complete_write_known"
-	observabilityDashboardUnsafeUpdateSummary   = "Cannot safely update imported or unmodeled dashboard"
-	observabilityDashboardUnsafeUpdateDetail    = "The dashboard may contain fields or write metadata this resource cannot recover. Updating it would replace the complete document and could remove them. To manage this dashboard, import it as signalfx_observability_template with its complete specification and explicit metadata instead."
+	observabilityDashboardUnsafeUpdateSummary   = "Cannot safely update unmodeled dashboard"
+	observabilityDashboardUnsafeUpdateDetail    = "The stored dashboard contains fields this resource cannot represent. Updating it would replace the complete document and remove them. To manage this dashboard, import it as signalfx_observability_template with its complete specification instead."
 )
 
 var (
@@ -168,18 +168,15 @@ func dashifyOptionalTitleAttribute(description string) schema.StringAttribute {
 func dashifyItemLayoutAttribute() schema.SingleNestedAttribute {
 	return schema.SingleNestedAttribute{
 		Optional:    true,
-		Description: "Placement and size of this container inside its parent layout. Lengths accept numbers or relative strings; clamped values and coordinate arrays can be supplied with jsonencode.",
+		Description: "Size and display order in the parent layout. Numeric sizes are layout values, not pixels.",
 		Attributes: map[string]schema.Attribute{
-			"order":      schema.Float64Attribute{Optional: true, Description: "Display order of the container within its parent layout, overriding declaration order. Reordering in the UI sets this on every container in the layout."},
-			"absolute":   schema.BoolAttribute{Optional: true, Description: "Whether to position the container independently using its x and y coordinates."},
+			"order":      schema.Float64Attribute{Optional: true, Description: "Display order within the parent layout. Overrides declaration order."},
 			"width":      dashifyLayoutLengthAttribute("Starting width of the container."),
 			"height":     dashifyLayoutLengthAttribute("Starting height of the container."),
 			"min_width":  dashifyLayoutLengthAttribute("Minimum width of the container."),
 			"max_width":  dashifyLayoutLengthAttribute("Maximum width of the container."),
 			"min_height": dashifyLayoutLengthAttribute("Minimum height of the container."),
 			"max_height": dashifyLayoutLengthAttribute("Maximum height of the container."),
-			"x":          dashifyLayoutLengthAttribute("Horizontal coordinate. A jsonencoded array is treated as a sum of lengths."),
-			"y":          dashifyLayoutLengthAttribute("Vertical coordinate. A jsonencoded array is treated as a sum of lengths."),
 		},
 	}
 }
@@ -187,21 +184,21 @@ func dashifyItemLayoutAttribute() schema.SingleNestedAttribute {
 func dashifyLayoutOptionsAttribute() schema.SingleNestedAttribute {
 	return schema.SingleNestedAttribute{
 		Optional:    true,
-		Description: "Settings for the layout that arranges this level's containers.",
+		Description: "Controls the size and spacing of this layout's containers.",
 		Attributes: map[string]schema.Attribute{
 			"gap": schema.Float64Attribute{
 				Optional:    true,
-				Description: "Visual gap between adjacent containers in pixels.",
+				Description: "Space between containers in pixels. Defaults to 16.",
 				Validators:  []validator.Float64{float64validator.AtLeast(0)},
 			},
 			"step": schema.Float64Attribute{
 				Optional:    true,
-				Description: "Layout resolution in pixels. Lengths are rounded to multiples of this value.",
+				Description: "Pixels per grid unit. Defaults to 16.",
 				Validators:  []validator.Float64{float64validator.AtLeast(1)},
 			},
 			"defaults": schema.SingleNestedAttribute{
 				Optional:    true,
-				Description: "Default placement and size constraints inherited by every container in this layout.",
+				Description: "Default size for containers in this layout.",
 				Attributes:  dashifyLayoutDefaultAttributes(),
 			},
 		},
@@ -210,7 +207,6 @@ func dashifyLayoutOptionsAttribute() schema.SingleNestedAttribute {
 
 func dashifyLayoutDefaultAttributes() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
-		"absolute":   schema.BoolAttribute{Optional: true, Description: "Default absolute-positioning behavior."},
 		"width":      dashifyLayoutLengthAttribute("Default starting width."),
 		"height":     dashifyLayoutLengthAttribute("Default starting height."),
 		"min_width":  dashifyLayoutLengthAttribute("Default minimum width."),
@@ -337,7 +333,7 @@ func validateDashifyLayout(resp *resource.ValidateConfigResponse, layoutPath pat
 		return
 	}
 	for _, field := range dashifyLayoutModelFields(layout) {
-		validateDashifyLayoutValue(resp, layoutPath.AtName(field.name), *field.value, field.coordinate)
+		validateDashifyLayoutValue(resp, layoutPath.AtName(field.name), *field.value)
 	}
 }
 
@@ -358,22 +354,22 @@ func validateDashifyLayoutOptions(resp *resource.ValidateConfigResponse, layoutP
 		return
 	}
 	for _, field := range dashifyLayoutDefaultsModelFields(layout.Defaults) {
-		validateDashifyLayoutValue(resp, defaultsPath.AtName(field.name), *field.value, field.coordinate)
+		validateDashifyLayoutValue(resp, defaultsPath.AtName(field.name), *field.value)
 	}
 }
 
-func validateDashifyLayoutValue(resp *resource.ValidateConfigResponse, valuePath path.Path, value types.String, coordinate bool) {
-	if _, _, err := dashifyLayoutValue(value, coordinate); err != nil {
+func validateDashifyLayoutValue(resp *resource.ValidateConfigResponse, valuePath path.Path, value types.String) {
+	if _, _, err := dashifyLayoutValue(value); err != nil {
 		resp.Diagnostics.AddAttributeError(valuePath, "Invalid layout value", err.Error())
 	}
 }
 
 func dashifyLayoutIsEmpty(layout *dashifyLayoutModel) bool {
-	return layout.Order.IsNull() && dashifyLayoutFieldsEmpty(layout.Absolute, dashifyLayoutModelFields(layout))
+	return layout.Order.IsNull() && dashifyLayoutFieldsEmpty(dashifyLayoutModelFields(layout))
 }
 
 func dashifyLayoutDefaultsAreEmpty(defaults *dashifyLayoutDefaultsModel) bool {
-	return dashifyLayoutFieldsEmpty(defaults.Absolute, dashifyLayoutDefaultsModelFields(defaults))
+	return dashifyLayoutFieldsEmpty(dashifyLayoutDefaultsModelFields(defaults))
 }
 
 func validateDashifyTemplate(resp *resource.ValidateConfigResponse, containerPath path.Path, model *dashifyTemplateModel) {
@@ -457,8 +453,8 @@ func (r *observabilityDashboardResource) Read(ctx context.Context, req resource.
 	}
 	model.ID = state.ID
 	resp.Diagnostics.Append(resp.State.Set(ctx, &model)...)
-	if !resp.Diagnostics.HasError() && dashboardHasUnmodeledFields(resultDiags) {
-		resp.Diagnostics.Append(resp.Private.SetKey(ctx, observabilityDashboardCompleteWriteKnownKey, nil)...)
+	if !resp.Diagnostics.HasError() {
+		resp.Diagnostics.Append(resp.Private.SetKey(ctx, observabilityDashboardCompleteWriteKnownKey, dashboardKnownWriteMarker(resultDiags))...)
 	}
 }
 

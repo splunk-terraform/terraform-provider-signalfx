@@ -54,8 +54,11 @@ func TestResourceObservabilityDashboardMetadataAndSchema(t *testing.T) {
 		{path.Root("control_bar").AtName("filter_set").AtName("filter").AtListIndex(0).AtName("match_missing"), true},
 		{path.Root("layout").AtName("defaults").AtName("max_height"), true},
 		{path.Root("layout").AtName("defaults").AtName("x"), false},
+		{path.Root("layout").AtName("defaults").AtName("absolute"), false},
 		{root.AtName("template_content"), true},
 		{root.AtName("layout").AtName("order"), true},
+		{root.AtName("layout").AtName("x"), false},
+		{root.AtName("layout").AtName("absolute"), false},
 		{root.AtName("group").AtName("headerless"), true},
 		{section.AtName("collapsible"), true},
 		{section.AtName("layout").AtName("gap"), true},
@@ -142,7 +145,7 @@ func TestResourceObservabilityDashboardRejectsInvalidPlans(t *testing.T) {
     layout = { width = jsonencode([1, 2]) }
   }]
 }`,
-			want: "JSON arrays are supported only for x and y",
+			want: "JSON objects and arrays are not supported",
 		},
 		{
 			name: "duplicate pinned control",
@@ -210,7 +213,7 @@ resource "signalfx_observability_dashboard" "test" {
 	})
 }
 
-func TestResourceObservabilityDashboardRejectsImportedUpdate(t *testing.T) {
+func TestResourceObservabilityDashboardUpdatesModeledImport(t *testing.T) {
 	root := template.RootElementDashboard
 	imported := template.Template{
 		ID: "imported-dashboard", Type: observabilityTemplateRecordType,
@@ -220,6 +223,18 @@ func TestResourceObservabilityDashboardRejectsImportedUpdate(t *testing.T) {
 	handlers := map[string]http.Handler{
 		"GET /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			assert.Equal(t, imported.ID, r.PathValue("id"))
+			assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: &imported}))
+		}),
+		"PUT /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, imported.ID, r.PathValue("id"))
+			var write template.CreateUpdateTemplateRequest
+			require.NoError(t, json.NewDecoder(r.Body).Decode(&write))
+			assert.Equal(t, "Changed", write.Title)
+			assert.Equal(t, &root, write.Metadata.RootElement)
+			assert.Empty(t, write.Metadata.Imports)
+			assert.Nil(t, write.Metadata.Datasource)
+			imported.Title = write.Title
+			imported.Spec = write.Spec
 			assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: &imported}))
 		}),
 		"DELETE /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -232,12 +247,6 @@ func TestResourceObservabilityDashboardRejectsImportedUpdate(t *testing.T) {
 }`
 	const changedConfig = `resource "signalfx_observability_dashboard" "test" {
   title = "Changed"
-}`
-	const computedTitleConfig = `resource "terraform_data" "title" {
-  input = "Changed"
-}
-resource "signalfx_observability_dashboard" "test" {
-  title = terraform_data.title.output
 }`
 	testresource.UnitTest(t, testresource.TestCase{
 		IsUnitTest: true,
@@ -254,14 +263,14 @@ resource "signalfx_observability_dashboard" "test" {
 }
 ` + importedConfig},
 			{Config: importedConfig, PlanOnly: true},
-			{Config: changedConfig, PlanOnly: true, ExpectError: regexp.MustCompile(observabilityDashboardUnsafeUpdateSummary)},
-			{Config: computedTitleConfig, PlanOnly: true, ExpectError: regexp.MustCompile(observabilityDashboardUnsafeUpdateSummary)},
-			{Config: importedConfig, Destroy: true},
+			{Config: changedConfig, Check: testresource.TestCheckResourceAttr("signalfx_observability_dashboard.test", "title", "Changed")},
+			{Config: changedConfig, PlanOnly: true},
+			{Config: changedConfig, Destroy: true},
 		},
 	})
 }
 
-func TestResourceObservabilityDashboardUpdateRejectsImportedResource(t *testing.T) {
+func TestResourceObservabilityDashboardUpdateRejectsUnknownWriteState(t *testing.T) {
 	managed := NewResourceObservabilityDashboard().(*observabilityDashboardResource)
 	var schemaResponse resource.SchemaResponse
 	managed.Schema(t.Context(), resource.SchemaRequest{}, &schemaResponse)
@@ -349,7 +358,7 @@ func TestResourceObservabilityDashboardGeneratedConfig(t *testing.T) {
 					testresource.TestCheckResourceAttr("signalfx_observability_dashboard.dashboard_layout", "title", "Complete layout"),
 					testresource.TestCheckResourceAttr("signalfx_observability_dashboard.dashboard_layout", "control_bar.time_range.default_variable_value", "-PT15M"),
 					testresource.TestCheckResourceAttr("signalfx_observability_dashboard.dashboard_layout", "control_bar.pinned_filter.#", "2"),
-					testresource.TestCheckResourceAttr("signalfx_observability_dashboard.dashboard_layout", "container.0.section.container.0.group.container.0.layout.x", `["1/4",8]`),
+					testresource.TestCheckResourceAttr("signalfx_observability_dashboard.dashboard_layout", "container.0.section.container.0.group.container.0.layout.width", "1/2"),
 				),
 			},
 			{
@@ -697,12 +706,12 @@ func TestValidateDashifyLayoutBlocks(t *testing.T) {
 		var resp resource.ValidateConfigResponse
 		validateDashifyLayout(&resp, path.Root("layout"), &dashifyLayoutModel{Width: types.StringValue(`{"min":1}`)})
 		require.True(t, resp.Diagnostics.HasError())
-		assert.Contains(t, resp.Diagnostics.Errors()[0].Detail(), "must contain value")
+		assert.Contains(t, resp.Diagnostics.Errors()[0].Detail(), "JSON objects and arrays are not supported")
 	})
 
-	t.Run("coordinate array", func(t *testing.T) {
+	t.Run("simple fractional width", func(t *testing.T) {
 		var resp resource.ValidateConfigResponse
-		validateDashifyLayout(&resp, path.Root("layout"), &dashifyLayoutModel{X: types.StringValue(`["1/4",8]`)})
+		validateDashifyLayout(&resp, path.Root("layout"), &dashifyLayoutModel{Width: types.StringValue("1/2")})
 		assert.False(t, resp.Diagnostics.HasError(), resp.Diagnostics)
 	})
 
@@ -730,7 +739,6 @@ func TestDashifyDashboardSpecRoundTrip(t *testing.T) {
 			Gap:  types.Float64Value(0),
 			Step: types.Float64Value(1),
 			Defaults: &dashifyLayoutDefaultsModel{
-				Absolute:  types.BoolValue(false),
 				MinWidth:  types.StringValue("4"),
 				MinHeight: types.StringValue("2"),
 			},
@@ -738,15 +746,12 @@ func TestDashifyDashboardSpecRoundTrip(t *testing.T) {
 		Container: []dashifyDashboardContainerModel{
 			{
 				Layout: &dashifyLayoutModel{
-					Absolute:  types.BoolValue(true),
-					Width:     types.StringValue(`{"max":"100%","min":4,"value":"1/2"}`),
+					Width:     types.StringValue("1/2"),
 					Height:    types.StringValue("20"),
 					MinWidth:  types.StringValue("4"),
 					MaxWidth:  types.StringValue("100%"),
 					MinHeight: types.StringValue("2"),
 					MaxHeight: types.StringValue("30"),
-					X:         types.StringValue(`["1/4",8]`),
-					Y:         types.StringValue("12"),
 				},
 				TemplateID: types.StringValue("chart-a"),
 			},
@@ -803,8 +808,8 @@ func TestDashifyDashboardSpecRoundTrip(t *testing.T) {
 	saved := layout["saved"].(map[string]any)
 	rootItems := saved["_"].(map[string]any)["items"].([]any)
 	assert.NotContains(t, rootItems[0].(map[string]any), "order")
-	assert.Equal(t, true, rootItems[0].(map[string]any)["absolute"])
-	assert.Equal(t, []any{"1/4", float64(8)}, rootItems[0].(map[string]any)["x"])
+	assert.NotContains(t, rootItems[0].(map[string]any), "absolute")
+	assert.NotContains(t, rootItems[0].(map[string]any), "x")
 	sectionMetadata := saved["_.1"].(map[string]any)["section"].(map[string]any)
 	assert.Equal(t, false, sectionMetadata["collapse"])
 	assert.Equal(t, true, sectionMetadata["collapsible"])
@@ -885,7 +890,7 @@ func TestDashifyDashboardSpecWarnsAboutUnmodeledFields(t *testing.T) {
 			]}
 		],
 		"layout":{"saved":{
-			"_":{"items":[{"id":"_.0","order":0,"rootMinW":1}]},
+			"_":{"items":[{"id":"_.0","order":0,"absolute":true,"x":[1,2],"w":{"value":"1/2","min":4},"rootMinW":1}]},
 			"_.0":{"items":[{"id":"_.0.0","order":0}],"section":{"title":"Section","futureSection":true}},
 			"_.0.0":{"items":[{"id":"_.0.0.0","order":0,"minW":2,"futureConstraint":3}],"group":{"title":"Group","futureGroup":true}}
 		}},
@@ -910,6 +915,9 @@ func TestDashifyDashboardSpecWarnsAboutUnmodeledFields(t *testing.T) {
 		"container.0.section.container.0.group.container.0.futureContainer",
 		"container.0.section.container.0.group.container.0.futureContent.preserve",
 		"layout._.0.rootMinW",
+		"layout._.0.absolute",
+		"layout._.0.x",
+		"layout._.0.w.value",
 		"layout._.0.0.0.futureConstraint",
 		"layout.saved._.0.section.futureSection",
 		"layout.saved._.0.0.group.futureGroup",
@@ -1013,21 +1021,13 @@ func TestDashifyDashboardSpecRejectsInvalidLayoutValues(t *testing.T) {
 		layout string
 		want   string
 	}{
-		"absolute is not boolean": {
-			layout: `{"saved":{"_":{"items":[{"id":"_.0","absolute":"yes"}]}}}`,
-			want:   "rather than a boolean",
+		"empty advanced width object": {
+			layout: `{"saved":{"_":{"items":[{"id":"_.0","w":{}}]}}}`,
+			want:   "unsupported empty w layout object",
 		},
-		"width is coordinate array": {
-			layout: `{"saved":{"_":{"items":[{"id":"_.0","w":[1,2]}]}}}`,
-			want:   "only for x and y",
-		},
-		"clamped width lacks value": {
-			layout: `{"saved":{"_":{"items":[{"id":"_.0","w":{"min":1}}]}}}`,
-			want:   "must contain value",
-		},
-		"coordinate contains boolean": {
-			layout: `{"saved":{"_":{"items":[{"id":"_.0","x":[1,true]}]}}}`,
-			want:   "coordinate part 1",
+		"empty coordinate object": {
+			layout: `{"saved":{"_":{"items":[{"id":"_.0","x":{}}]}}}`,
+			want:   "unsupported empty x layout object",
 		},
 		"gap is not numeric": {
 			layout: `{"gap":"8","saved":{"_":{"items":[{"id":"_.0"}]}}}`,
@@ -1080,7 +1080,7 @@ func TestDashifyDashboardSpecPreservesUIOrder(t *testing.T) {
 			"at":"2026-09-11T00:00:00Z",
 			"parent":"dashboard-id",
 			"items":[
-				{"id":"_.1","order":0.5,"w":4},
+				{"id":"_.1","order":0.5,"absolute":false,"w":4},
 				{"id":"_.0","order":9,"w":8}
 			]
 		}}},

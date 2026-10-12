@@ -13,20 +13,17 @@ import (
 
 // dashifyLayoutField describes one placement/size field shared by build,
 // parse, validate, and empty-check logic, so the field set (schema name,
-// Dashify key, coordinate handling) is declared once per model instance
+// Dashify key) is declared once per model instance
 // instead of separately in each of those four places. value points directly
 // at the field on the caller's model, so no generics or get/set closures are
 // needed to share this across dashifyLayoutModel and dashifyLayoutDefaultsModel.
 type dashifyLayoutField struct {
-	name       string
-	key        string
-	coordinate bool
-	value      *types.String
+	name  string
+	key   string
+	value *types.String
 }
 
-// dashifyLayoutModelFields lists layout's placement/size fields, including
-// x/y which only exist on a container's own layout, never on inherited
-// defaults.
+// dashifyLayoutModelFields lists the supported size fields on a container.
 func dashifyLayoutModelFields(layout *dashifyLayoutModel) []dashifyLayoutField {
 	return []dashifyLayoutField{
 		{name: "width", key: "w", value: &layout.Width},
@@ -35,13 +32,10 @@ func dashifyLayoutModelFields(layout *dashifyLayoutModel) []dashifyLayoutField {
 		{name: "max_width", key: "maxW", value: &layout.MaxWidth},
 		{name: "min_height", key: "minH", value: &layout.MinHeight},
 		{name: "max_height", key: "maxH", value: &layout.MaxHeight},
-		{name: "x", key: "x", coordinate: true, value: &layout.X},
-		{name: "y", key: "y", coordinate: true, value: &layout.Y},
 	}
 }
 
-// dashifyLayoutDefaultsModelFields lists the same placement/size fields as
-// dashifyLayoutModelFields, minus x/y.
+// dashifyLayoutDefaultsModelFields lists the same size fields for defaults.
 func dashifyLayoutDefaultsModelFields(defaults *dashifyLayoutDefaultsModel) []dashifyLayoutField {
 	return []dashifyLayoutField{
 		{name: "width", key: "w", value: &defaults.Width},
@@ -53,10 +47,7 @@ func dashifyLayoutDefaultsModelFields(defaults *dashifyLayoutDefaultsModel) []da
 	}
 }
 
-func dashifyLayoutFieldsEmpty(absolute types.Bool, fields []dashifyLayoutField) bool {
-	if !absolute.IsNull() {
-		return false
-	}
+func dashifyLayoutFieldsEmpty(fields []dashifyLayoutField) bool {
 	for _, field := range fields {
 		if !field.value.IsNull() {
 			return false
@@ -68,7 +59,7 @@ func dashifyLayoutFieldsEmpty(absolute types.Bool, fields []dashifyLayoutField) 
 // Writes shared layout fields into their Dashify representation.
 func buildDashifyLayoutFields(target map[string]any, fields []dashifyLayoutField, errPrefix string) error {
 	for _, field := range fields {
-		value, ok, err := dashifyLayoutValue(*field.value, field.coordinate)
+		value, ok, err := dashifyLayoutValue(*field.value)
 		if err != nil {
 			return fmt.Errorf("%s%s: %w", errPrefix, field.key, err)
 		}
@@ -82,11 +73,18 @@ func buildDashifyLayoutFields(target map[string]any, fields []dashifyLayoutField
 // Reads shared Dashify layout fields into a Terraform model.
 func parseDashifyLayoutFields(source map[string]any, fields []dashifyLayoutField) error {
 	for _, field := range fields {
-		value, err := dashifyLayoutString(source, field.key, field.coordinate)
+		value, err := dashifyLayoutString(source, field.key)
 		if err != nil {
 			return err
 		}
 		*field.value = value
+	}
+	// The generic leftover walker skips empty objects because modeled objects
+	// are drained in place. Reject an unknown empty layout object explicitly.
+	for key, value := range source {
+		if object, ok := value.(map[string]any); ok && len(object) == 0 {
+			return fmt.Errorf("has unsupported empty %s layout object", key)
+		}
 	}
 	return nil
 }
@@ -98,9 +96,6 @@ func buildDashifyLayoutItem(id string, layout *dashifyLayoutModel) (map[string]a
 	}
 	if !layout.Order.IsNull() && !layout.Order.IsUnknown() {
 		item["order"] = layout.Order.ValueFloat64()
-	}
-	if !layout.Absolute.IsNull() && !layout.Absolute.IsUnknown() {
-		item["absolute"] = layout.Absolute.ValueBool()
 	}
 	if err := buildDashifyLayoutFields(item, dashifyLayoutModelFields(layout), ""); err != nil {
 		return nil, err
@@ -124,9 +119,6 @@ func buildDashifyLayoutOptions(options *dashifyLayoutOptionsModel) (map[string]a
 	}
 
 	defaults := map[string]any{}
-	if !options.Defaults.Absolute.IsNull() && !options.Defaults.Absolute.IsUnknown() {
-		defaults["absolute"] = options.Defaults.Absolute.ValueBool()
-	}
 	if err := buildDashifyLayoutFields(defaults, dashifyLayoutDefaultsModelFields(options.Defaults), "defaults."); err != nil {
 		return nil, err
 	}
@@ -229,11 +221,8 @@ func dashifyLayoutFromItem(item map[string]any) (*dashifyLayoutModel, error) {
 	if err != nil {
 		return nil, err
 	}
-	absolute, err := dashifyLayoutBool(item, "absolute")
-	if err != nil {
-		return nil, err
-	}
-	model := &dashifyLayoutModel{Order: order, Absolute: absolute}
+	takeDashifyNonAbsoluteLayout(item)
+	model := &dashifyLayoutModel{Order: order}
 	if err := parseDashifyLayoutFields(item, dashifyLayoutModelFields(model)); err != nil {
 		return nil, err
 	}
@@ -283,11 +272,8 @@ func parseDashifyLayoutDefaults(layout map[string]any) (*dashifyLayoutDefaultsMo
 	if !ok {
 		return nil, fmt.Errorf("layout.defaults is %T rather than an object", raw)
 	}
-	absolute, err := dashifyLayoutBool(defaults, "absolute")
-	if err != nil {
-		return nil, fmt.Errorf("layout.defaults: %w", err)
-	}
-	model := &dashifyLayoutDefaultsModel{Absolute: absolute}
+	takeDashifyNonAbsoluteLayout(defaults)
+	model := &dashifyLayoutDefaultsModel{}
 	if err := parseDashifyLayoutFields(defaults, dashifyLayoutDefaultsModelFields(model)); err != nil {
 		return nil, fmt.Errorf("layout.defaults: %w", err)
 	}
@@ -298,6 +284,14 @@ func parseDashifyLayoutDefaults(layout map[string]any) (*dashifyLayoutDefaultsMo
 		return nil, nil
 	}
 	return model, nil
+}
+
+// The UI may write absolute:false for a normal flow layout. It has the same
+// behavior as omitting the field; true or an invalid value stays unmodeled.
+func takeDashifyNonAbsoluteLayout(item map[string]any) {
+	if absolute, ok := item["absolute"].(bool); ok && !absolute {
+		delete(item, "absolute")
+	}
 }
 
 func dashifyLayoutFloat(object map[string]any, key string) (types.Float64, bool, error) {

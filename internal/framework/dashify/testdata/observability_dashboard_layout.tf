@@ -109,13 +109,10 @@ resource "signalfx_observability_dashboard" "dashboard_layout" {
 
           container = [{
             layout = {
-              absolute  = true
-              width     = jsonencode({ value = "1/2", min = 4, max = "100%" })
+              width     = "1/2"
               height    = "20"
               min_width = "4"
               max_width = "100%"
-              x         = jsonencode(["1/4", 8])
-              y         = "12"
             }
 
             template_id = signalfx_observability_template.dashboard_layout_chart.id
