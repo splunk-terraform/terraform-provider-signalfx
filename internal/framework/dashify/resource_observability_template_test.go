@@ -769,7 +769,11 @@ func TestResourceObservabilityTemplateImportedUpdateDerivesMetadata(t *testing.T
 		"PUT /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			assert.Equal(t, imported.ID, r.PathValue("id"))
 			var write template.CreateUpdateTemplateRequest
-			require.NoError(t, json.NewDecoder(r.Body).Decode(&write))
+			if err := json.NewDecoder(r.Body).Decode(&write); err != nil {
+				t.Errorf("decode update request: %v", err)
+				http.Error(w, "invalid update request", http.StatusBadRequest)
+				return
+			}
 			assert.Equal(t, "Changed", write.Title)
 			assert.Equal(t, &root, write.Metadata.RootElement)
 			assert.Equal(t, []string{"/v2/template/child"}, write.Metadata.Imports)
