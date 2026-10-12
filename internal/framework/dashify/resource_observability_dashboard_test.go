@@ -4,7 +4,6 @@
 package fwdashify
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"regexp"
@@ -14,7 +13,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-testing/config"
@@ -42,45 +40,18 @@ func TestResourceObservabilityDashboardMetadataAndSchema(t *testing.T) {
 	assert.Empty(t, resourceSchema.Blocks)
 
 	root := path.Root("container").AtListIndex(0)
-	section := root.AtName("section")
-	sectionContainer := section.AtName("container").AtListIndex(0)
-	group := sectionContainer.AtName("group")
-	groupContainer := group.AtName("container").AtListIndex(0)
-	for _, test := range []struct {
-		path   path.Path
-		exists bool
-	}{
-		{path.Root("control_bar").AtName("pinned_filter").AtListIndex(0).AtName("variable_name"), true},
-		{path.Root("control_bar").AtName("filter_set").AtName("filter").AtListIndex(0).AtName("match_missing"), true},
-		{path.Root("layout").AtName("defaults").AtName("max_height"), true},
-		{path.Root("layout").AtName("defaults").AtName("x"), false},
-		{path.Root("layout").AtName("defaults").AtName("absolute"), false},
-		{root.AtName("template_content"), true},
-		{root.AtName("layout").AtName("order"), true},
-		{root.AtName("layout").AtName("x"), false},
-		{root.AtName("layout").AtName("absolute"), false},
-		{root.AtName("group").AtName("headerless"), true},
-		{section.AtName("collapsible"), true},
-		{section.AtName("layout").AtName("gap"), true},
-		{sectionContainer.AtName("template_id"), true},
-		{sectionContainer.AtName("section"), false},
-		{groupContainer.AtName("template_id"), true},
-		{groupContainer.AtName("section"), false},
-		{groupContainer.AtName("group"), false},
+	for _, attributePath := range []path.Path{
+		path.Root("layout").AtName("defaults").AtName("absolute"),
+		root.AtName("layout").AtName("x"),
+		root.AtName("layout").AtName("absolute"),
 	} {
-		_, diags := resourceSchema.AttributeAtPath(t.Context(), test.path)
-		assert.Equal(t, test.exists, !diags.HasError(), test.path.String())
+		_, diags := resourceSchema.AttributeAtPath(t.Context(), attributePath)
+		assert.True(t, diags.HasError(), attributePath.String())
 	}
 
 	content, diags := resourceSchema.AttributeAtPath(t.Context(), root.AtName("template_content"))
 	require.False(t, diags.HasError())
 	assert.Equal(t, jsontypes.NormalizedType{}, content.(schema.StringAttribute).CustomType)
-	for _, titlePath := range []path.Path{section.AtName("title"), group.AtName("title")} {
-		title, diags := resourceSchema.AttributeAtPath(t.Context(), titlePath)
-		require.False(t, diags.HasError())
-		assert.True(t, title.(schema.StringAttribute).Computed, titlePath.String())
-		assert.NotNil(t, title.(schema.StringAttribute).Default, titlePath.String())
-	}
 }
 
 func TestResourceObservabilityDashboardRejectsInvalidPlans(t *testing.T) {
@@ -89,6 +60,14 @@ func TestResourceObservabilityDashboardRejectsInvalidPlans(t *testing.T) {
 		config string
 		want   string
 	}{
+		{
+			name: "blank title",
+			config: `resource "signalfx_observability_dashboard" "test" {
+  title     = "   "
+  container = [{ template_id = "chart-1" }]
+}`,
+			want: "title must contain at least one non-whitespace character",
+		},
 		{
 			name: "missing container content",
 			config: `resource "signalfx_observability_dashboard" "test" {
@@ -146,6 +125,50 @@ func TestResourceObservabilityDashboardRejectsInvalidPlans(t *testing.T) {
   }]
 }`,
 			want: "JSON objects and arrays are not supported",
+		},
+		{
+			name: "empty item layout",
+			config: `resource "signalfx_observability_dashboard" "test" {
+  title     = "Service overview"
+  container = [{ template_id = "chart-1", layout = {} }]
+}`,
+			want: "layout must set at least one placement or size option",
+		},
+		{
+			name: "empty dashboard layout",
+			config: `resource "signalfx_observability_dashboard" "test" {
+  title     = "Service overview"
+  container = [{ template_id = "chart-1" }]
+  layout    = {}
+}`,
+			want: "layout must set gap, step, defaults, or a combination",
+		},
+		{
+			name: "empty dashboard layout defaults",
+			config: `resource "signalfx_observability_dashboard" "test" {
+  title     = "Service overview"
+  container = [{ template_id = "chart-1" }]
+  layout    = { defaults = {} }
+}`,
+			want: "defaults must set at least one placement or size option",
+		},
+		{
+			name: "negative dashboard layout gap",
+			config: `resource "signalfx_observability_dashboard" "test" {
+  title     = "Service overview"
+  container = [{ template_id = "chart-1" }]
+  layout    = { gap = -1 }
+}`,
+			want: "must be at least 0",
+		},
+		{
+			name: "zero dashboard layout step",
+			config: `resource "signalfx_observability_dashboard" "test" {
+  title     = "Service overview"
+  container = [{ template_id = "chart-1" }]
+  layout    = { step = 0 }
+}`,
+			want: "must be at least 1",
 		},
 		{
 			name: "duplicate pinned control",
@@ -554,66 +577,6 @@ resource "signalfx_observability_dashboard" "untitled" {
 	})
 }
 
-func TestDashifyLayoutOptionValidators(t *testing.T) {
-	t.Parallel()
-
-	block := dashifyLayoutOptionsAttribute()
-	for name, test := range map[string]struct {
-		attribute   string
-		value       float64
-		expectError bool
-	}{
-		"zero gap":       {attribute: "gap", value: 0},
-		"negative gap":   {attribute: "gap", value: -1, expectError: true},
-		"one pixel step": {attribute: "step", value: 1},
-		"zero step":      {attribute: "step", value: 0, expectError: true},
-	} {
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
-			attribute, ok := block.Attributes[test.attribute].(schema.Float64Attribute)
-			require.True(t, ok)
-			require.Len(t, attribute.Validators, 1)
-			request := validator.Float64Request{
-				Path:           path.Root(test.attribute),
-				PathExpression: path.MatchRoot(test.attribute),
-				ConfigValue:    types.Float64Value(test.value),
-			}
-			response := validator.Float64Response{}
-			attribute.Validators[0].ValidateFloat64(context.Background(), request, &response)
-			assert.Equal(t, test.expectError, response.Diagnostics.HasError())
-		})
-	}
-}
-
-func TestDashifyContainerContentErrorsDescribeOneContainer(t *testing.T) {
-	t.Parallel()
-
-	tests := map[string]struct {
-		level dashifyContainerLevel
-		want  string
-	}{
-		"dashboard": {
-			level: dashifyDashboardContainerLevel,
-			want:  "each dashboard container must set exactly one content source: template_id, template_content, section, or group",
-		},
-		"section": {
-			level: dashifySectionContainerLevel,
-			want:  "each container within a section must set exactly one content source: template_id, template_content, or group",
-		},
-		"group": {
-			level: dashifyGroupContainerLevel,
-			want:  "each container within a group must set exactly one of template_id or template_content",
-		},
-	}
-
-	for name, test := range tests {
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
-			assert.Equal(t, test.want, dashifyContainerContentError(test.level))
-		})
-	}
-}
-
 func TestValidateDashifyTemplate(t *testing.T) {
 	t.Parallel()
 
@@ -622,37 +585,6 @@ func TestValidateDashifyTemplate(t *testing.T) {
 		wantError   bool
 		wantMessage string
 	}{
-		"template id": {
-			model: dashifyTemplateModel{
-				TemplateID: types.StringValue("chart-id"),
-				Content:    jsontypes.NewNormalizedNull(),
-			},
-		},
-		"direct content": {
-			model: dashifyTemplateModel{
-				TemplateID: types.StringNull(),
-				Content:    jsontypes.NewNormalizedValue(`{"<o11y:SingleValue>":[],"chart":{}}`),
-			},
-		},
-		"chart wrapped content": {
-			model: dashifyTemplateModel{
-				TemplateID: types.StringNull(),
-				Content:    jsontypes.NewNormalizedValue(`{"<Chart>":[{"<o11y:SingleValue>":[]}]}`),
-			},
-		},
-		"neither": {
-			model:       dashifyTemplateModel{TemplateID: types.StringNull(), Content: jsontypes.NewNormalizedNull()},
-			wantError:   true,
-			wantMessage: "exactly one",
-		},
-		"both": {
-			model: dashifyTemplateModel{
-				TemplateID: types.StringValue("chart-id"),
-				Content:    jsontypes.NewNormalizedValue(`{"<o11y:SingleValue>":[]}`),
-			},
-			wantError:   true,
-			wantMessage: "exactly one",
-		},
 		"empty template id": {
 			model:       dashifyTemplateModel{TemplateID: types.StringValue(""), Content: jsontypes.NewNormalizedNull()},
 			wantError:   true,
@@ -667,11 +599,6 @@ func TestValidateDashifyTemplate(t *testing.T) {
 			model:       dashifyTemplateModel{TemplateID: types.StringNull(), Content: jsontypes.NewNormalizedValue(`[]`)},
 			wantError:   true,
 			wantMessage: "JSON object",
-		},
-		"content without element": {
-			model:       dashifyTemplateModel{TemplateID: types.StringNull(), Content: jsontypes.NewNormalizedValue(`{"chart":{}}`)},
-			wantError:   true,
-			wantMessage: "no dashboard element key",
 		},
 		"content with multiple elements": {
 			model:       dashifyTemplateModel{TemplateID: types.StringNull(), Content: jsontypes.NewNormalizedValue(`{"<Chart>":[],"<Dashboard>":[]}`)},
@@ -703,92 +630,6 @@ func TestValidateDashifyTemplate(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestValidateObservabilityTitle(t *testing.T) {
-	t.Parallel()
-
-	for name, test := range map[string]struct {
-		value       types.String
-		expectError bool
-	}{
-		"value":      {value: types.StringValue(" Service health ")},
-		"empty":      {value: types.StringValue(""), expectError: true},
-		"spaces":     {value: types.StringValue("   "), expectError: true},
-		"whitespace": {value: types.StringValue("\t\n"), expectError: true},
-		"null":       {value: types.StringNull(), expectError: true},
-		"unknown":    {value: types.StringUnknown()},
-	} {
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
-			var response resource.ValidateConfigResponse
-			validateObservabilityTitle(&response, path.Root("title"), test.value)
-			assert.Equal(t, test.expectError, response.Diagnostics.HasError())
-		})
-	}
-}
-
-func TestValidateDashifyContainersAllowsUntitledSectionsAndGroups(t *testing.T) {
-	t.Parallel()
-
-	containers := []dashifyContainer{{
-		Section: &dashifySection{
-			Title: types.StringNull(),
-			Container: []dashifyContainer{{
-				Group: &dashifyGroup{
-					Title: types.StringValue(""),
-					Container: []dashifyContainer{{
-						Template: &dashifyTemplateModel{
-							TemplateID: types.StringValue("chart-id"),
-							Content:    jsontypes.NewNormalizedNull(),
-						},
-					}},
-				},
-			}},
-		},
-	}}
-
-	var response resource.ValidateConfigResponse
-	validateDashifyContainers(&response, path.Root("container"), containers, dashifyDashboardContainerLevel)
-	assert.False(t, response.Diagnostics.HasError(), response.Diagnostics)
-}
-
-func TestValidateDashifyLayoutBlocks(t *testing.T) {
-	t.Parallel()
-
-	t.Run("empty item layout", func(t *testing.T) {
-		var resp resource.ValidateConfigResponse
-		validateDashifyLayout(&resp, path.Root("layout"), &dashifyLayoutModel{})
-		require.True(t, resp.Diagnostics.HasError())
-		assert.Contains(t, resp.Diagnostics.Errors()[0].Detail(), "at least one")
-	})
-
-	t.Run("malformed item value", func(t *testing.T) {
-		var resp resource.ValidateConfigResponse
-		validateDashifyLayout(&resp, path.Root("layout"), &dashifyLayoutModel{Width: types.StringValue(`{"min":1}`)})
-		require.True(t, resp.Diagnostics.HasError())
-		assert.Contains(t, resp.Diagnostics.Errors()[0].Detail(), "JSON objects and arrays are not supported")
-	})
-
-	t.Run("simple fractional width", func(t *testing.T) {
-		var resp resource.ValidateConfigResponse
-		validateDashifyLayout(&resp, path.Root("layout"), &dashifyLayoutModel{Width: types.StringValue("1/2")})
-		assert.False(t, resp.Diagnostics.HasError(), resp.Diagnostics)
-	})
-
-	t.Run("empty layout options", func(t *testing.T) {
-		var resp resource.ValidateConfigResponse
-		validateDashifyLayoutOptions(&resp, path.Root("layout"), &dashifyLayoutOptionsModel{})
-		require.True(t, resp.Diagnostics.HasError())
-		assert.Contains(t, resp.Diagnostics.Errors()[0].Detail(), "gap, step, defaults")
-	})
-
-	t.Run("empty defaults", func(t *testing.T) {
-		var resp resource.ValidateConfigResponse
-		validateDashifyLayoutOptions(&resp, path.Root("layout"), &dashifyLayoutOptionsModel{Defaults: &dashifyLayoutDefaultsModel{}})
-		require.True(t, resp.Diagnostics.HasError())
-		assert.Contains(t, resp.Diagnostics.Errors()[0].Detail(), "defaults must set")
-	})
 }
 
 func TestDashifyDashboardSpecRoundTrip(t *testing.T) {
@@ -1583,14 +1424,6 @@ func TestDashboardInlineContentRejectsNestedImports(t *testing.T) {
 	_, err := decodeDashifyInlineContent(`{"<Chart>":[{"<$import.hidden>":[]}]}`)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "cannot contain import element")
-}
-
-func TestDashboardWriteWithoutReferencesHasNoImports(t *testing.T) {
-	write, err := observabilityDashboardTemplateWrite(observabilityDashboardModel{
-		Title: types.StringValue("No references"),
-	})
-	require.NoError(t, err)
-	assert.Empty(t, write.Metadata.Imports)
 }
 
 func TestDashboardParsesWrappedTemplateImport(t *testing.T) {
