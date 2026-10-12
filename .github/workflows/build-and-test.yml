@@ -52,6 +52,11 @@ jobs:
             ~/go/pkg/mod
             ~/go/bin
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: '1.16.0'
+          terraform_wrapper: false
       - name: Test
         run: make test-with-cover
       - name: Upload coverage to Codecov
