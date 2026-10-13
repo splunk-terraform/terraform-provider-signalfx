@@ -398,8 +398,8 @@ func observabilityTemplateWrite(ctx context.Context, model observabilityTemplate
 }
 
 // The Template API's read-side imports are empty on a default GET and can be
-// transitive on an expanded GET. The root spec contains the direct imports
-// Olly sends when it saves a Template, so derive the write list from there.
+// transitive on an expanded GET. Derive the write list from the direct imports
+// in the root spec.
 func observabilityTemplateImportsFromSpec(raw string) ([]string, error) {
 	var spec map[string]json.RawMessage
 	if err := json.Unmarshal([]byte(raw), &spec); err != nil {

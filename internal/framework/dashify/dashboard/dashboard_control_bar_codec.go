@@ -15,8 +15,8 @@ const (
 	dashifyFilterSetVariableName = "FILTERS"
 )
 
-// encodes a Terraform control_bar model into the Dashify controls
-// list; parseDashifyControlBar performs the inverse decode.
+// encodes a Terraform control_bar model into the Dashify controls list
+// parseDashifyControlBar performs the inverse decode.
 func buildDashifyControlBar(model *dashifyControlBarModel) map[string]any {
 	controls := make([]any, 0)
 	if model.TimeRange != nil {
@@ -141,9 +141,8 @@ func parseDashifyControlBar(spec map[string]any) (*dashifyControlBarModel, []str
 	}
 
 	// The UI dedupes controls by variableName with last-occurrence-wins
-	// (olly ControlBar.ts builds a Map keyed by variableName from the
-	// array, which overwrites earlier entries). Pre-scan to find each
-	// variableName's last index so the main loop can match that behavior.
+	// Pre-scan to find each variableName's last index so the main loop
+	// can match that behavior.
 	latestVariableIndex := map[string]int{}
 	for i, rawControl := range controls {
 		control, ok := rawControl.(map[string]any)
