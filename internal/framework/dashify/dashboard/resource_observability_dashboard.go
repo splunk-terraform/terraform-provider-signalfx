@@ -32,16 +32,9 @@ type observabilityDashboardResource struct {
 	fwembed.ResourceIDImporter
 }
 
-const (
-	observabilityDashboardCompleteWriteKnownKey = "complete_write_known"
-	observabilityDashboardUnsafeUpdateSummary   = "Cannot safely update unmodeled dashboard"
-	observabilityDashboardUnsafeUpdateDetail    = "The stored dashboard contains fields this resource cannot represent. Updating it would replace the complete document and remove them. To manage this dashboard, import it as signalfx_observability_template with its complete specification instead."
-)
-
 var (
-	_ resource.Resource               = (*observabilityDashboardResource)(nil)
-	_ resource.ResourceWithConfigure  = (*observabilityDashboardResource)(nil)
-	_ resource.ResourceWithModifyPlan = (*observabilityDashboardResource)(nil)
+	_ resource.Resource              = (*observabilityDashboardResource)(nil)
+	_ resource.ResourceWithConfigure = (*observabilityDashboardResource)(nil)
 )
 
 func NewResourceObservabilityDashboard() resource.Resource {
@@ -54,7 +47,7 @@ func (r *observabilityDashboardResource) Metadata(_ context.Context, req resourc
 
 func (r *observabilityDashboardResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Manages an Observability dashboard Template using reusable Template references or raw inline dashboard content. Typed chart attributes are coming soon; Directory placement is managed by signalfx_observability_directory.",
+		Description: "Manages an Observability dashboard Template using reusable Template references or raw inline dashboard content. Updates replace the saved dashboard content and discard unsupported fields. Typed chart attributes are coming soon; Directory placement is managed by signalfx_observability_directory.",
 		Attributes: map[string]schema.Attribute{
 			"id": fwshared.ResourceIDAttribute(),
 			"title": schema.StringAttribute{
@@ -142,22 +135,6 @@ func validateDashboardModel(model observabilityDashboardModel) diag.Diagnostics 
 	return resp.Diagnostics
 }
 
-func (r *observabilityDashboardResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
-	if req.Plan.Raw.IsNull() || req.State.Raw.IsNull() || req.Plan.Raw.Equal(req.State.Raw) {
-		return
-	}
-	var knownWrite []byte
-	if req.Private != nil {
-		var diags diag.Diagnostics
-		knownWrite, diags = req.Private.GetKey(ctx, observabilityDashboardCompleteWriteKnownKey)
-		resp.Diagnostics.Append(diags...)
-	}
-	if resp.Diagnostics.HasError() || len(knownWrite) > 0 {
-		return
-	}
-	resp.Diagnostics.AddError(observabilityDashboardUnsafeUpdateSummary, observabilityDashboardUnsafeUpdateDetail)
-}
-
 func validateDashifyLayout(resp *resource.ValidateConfigResponse, layoutPath path.Path, layout *dashifyLayoutModel) {
 	if layout == nil {
 		return
@@ -228,9 +205,6 @@ func (r *observabilityDashboardResource) Create(ctx context.Context, req resourc
 	}
 	model.ID = types.StringValue(record.ID)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &model)...)
-	if !resp.Diagnostics.HasError() {
-		resp.Diagnostics.Append(resp.Private.SetKey(ctx, observabilityDashboardCompleteWriteKnownKey, dashboardKnownWriteMarker(resultDiags))...)
-	}
 }
 
 func (r *observabilityDashboardResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
@@ -254,9 +228,6 @@ func (r *observabilityDashboardResource) Read(ctx context.Context, req resource.
 	}
 	model.ID = state.ID
 	resp.Diagnostics.Append(resp.State.Set(ctx, &model)...)
-	if !resp.Diagnostics.HasError() {
-		resp.Diagnostics.Append(resp.Private.SetKey(ctx, observabilityDashboardCompleteWriteKnownKey, dashboardKnownWriteMarker(resultDiags))...)
-	}
 }
 
 func (r *observabilityDashboardResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -272,19 +243,6 @@ func (r *observabilityDashboardResource) Update(ctx context.Context, req resourc
 	var state observabilityDashboardModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
-		return
-	}
-	var knownWrite []byte
-	if req.Private != nil {
-		var diags diag.Diagnostics
-		knownWrite, diags = req.Private.GetKey(ctx, observabilityDashboardCompleteWriteKnownKey)
-		resp.Diagnostics.Append(diags...)
-	}
-	if resp.Diagnostics.HasError() {
-		return
-	}
-	if len(knownWrite) == 0 {
-		resp.Diagnostics.AddError(observabilityDashboardUnsafeUpdateSummary, observabilityDashboardUnsafeUpdateDetail)
 		return
 	}
 	model.ID = state.ID
@@ -307,9 +265,6 @@ func (r *observabilityDashboardResource) Update(ctx context.Context, req resourc
 		return
 	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, &model)...)
-	if !resp.Diagnostics.HasError() {
-		resp.Diagnostics.Append(resp.Private.SetKey(ctx, observabilityDashboardCompleteWriteKnownKey, dashboardKnownWriteMarker(resultDiags))...)
-	}
 }
 
 func (r *observabilityDashboardResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
@@ -338,15 +293,6 @@ func observabilityDashboardFromResult(result *template.Result, expectedID string
 	}
 	model, diags := parseDashboardTemplate(record)
 	return record, model, diags
-}
-
-func dashboardKnownWriteMarker(diags diag.Diagnostics) []byte {
-	for _, diagnostic := range diags {
-		if diagnostic.Summary() == dashifyUnmodeledFieldsSummary {
-			return nil
-		}
-	}
-	return []byte("true")
 }
 
 func observabilityDashboardTemplateWrite(model observabilityDashboardModel) (*template.CreateUpdateTemplateRequest, error) {

@@ -14,7 +14,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-testing/config"
 	testresource "github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -259,10 +258,17 @@ func TestResourceObservabilityDashboardUpdatesModeledImport(t *testing.T) {
 				http.Error(w, "invalid update request", http.StatusBadRequest)
 				return
 			}
-			assert.Equal(t, "Changed", write.Title)
+			wantTitle := "Changed"
+			if writes == 2 {
+				wantTitle = "Changed again"
+			}
+			assert.Equal(t, wantTitle, write.Title)
 			assert.Equal(t, &root, write.Metadata.RootElement)
 			assert.Empty(t, write.Metadata.Imports)
 			assert.Nil(t, write.Metadata.Datasource)
+			var spec map[string]json.RawMessage
+			assert.NoError(t, json.Unmarshal(write.Spec, &spec))
+			assert.NotContains(t, spec, "futureField")
 			imported.Title = write.Title
 			imported.Spec = write.Spec
 			assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: &imported}))
@@ -277,6 +283,9 @@ func TestResourceObservabilityDashboardUpdatesModeledImport(t *testing.T) {
 }`
 	const changedConfig = `resource "signalfx_observability_dashboard" "test" {
   title = "Changed"
+}`
+	const changedAgainConfig = `resource "signalfx_observability_dashboard" "test" {
+  title = "Changed again"
 }`
 	testresource.UnitTest(t, testresource.TestCase{
 		IsUnitTest: true,
@@ -300,97 +309,17 @@ func TestResourceObservabilityDashboardUpdatesModeledImport(t *testing.T) {
 					assert.Equal(t, 1, writes)
 					imported.Spec = json.RawMessage(`{"<Dashboard>":[],"futureField":true}`)
 				},
-				Config: `resource "signalfx_observability_dashboard" "test" {
-  title = "Changed again"
-}`,
-				PlanOnly: true,
-				// The non-refresh plan still sees the old write marker; only the refresh plan revokes it.
-				ExpectNonEmptyPlan: true,
-				ExpectError:        regexp.MustCompile(observabilityDashboardUnsafeUpdateSummary),
+				Config: changedAgainConfig,
+				Check:  testresource.TestCheckResourceAttr("signalfx_observability_dashboard.test", "title", "Changed again"),
 			},
-			{Config: changedConfig, Destroy: true},
+			{Config: changedAgainConfig, PlanOnly: true},
+			{Config: changedAgainConfig, Destroy: true},
 		},
 	})
-	assert.Equal(t, 1, writes, "refresh must revoke permission to overwrite newly unmodeled fields")
+	assert.Equal(t, 2, writes, "updates must succeed after refresh discovers unmodeled fields")
 }
 
-func TestResourceObservabilityDashboardRejectsUnmodeledImportUpdateDuringPlan(t *testing.T) {
-	root := template.RootElementDashboard
-	record := template.Template{
-		ID: "imported-dashboard", Type: fwdashify.ObservabilityTemplateRecordType,
-		Title: "Imported", Spec: json.RawMessage(`{"<Dashboard>":[],"futureField":true}`),
-		Metadata: &template.Metadata{RootElement: &root},
-	}
-	const importedConfig = `resource "signalfx_observability_dashboard" "test" {
-  title = "Imported"
-}`
-	for _, test := range []struct {
-		name   string
-		config string
-	}{
-		{name: "known title", config: `resource "signalfx_observability_dashboard" "test" {
-  title = "Changed"
-}`},
-		{name: "computed title", config: `resource "terraform_data" "title" {
-  input = "Changed"
-}
-resource "signalfx_observability_dashboard" "test" {
-  title = terraform_data.title.output
-}`},
-	} {
-		t.Run(test.name, func(t *testing.T) {
-			handlers := map[string]http.Handler{
-				"GET /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					assert.Equal(t, record.ID, r.PathValue("id"))
-					assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: &record}))
-				}),
-				"DELETE /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					assert.Equal(t, record.ID, r.PathValue("id"))
-					w.WriteHeader(http.StatusNoContent)
-				}),
-			}
-			testresource.UnitTest(t, testresource.TestCase{
-				IsUnitTest: true,
-				TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-					tfversion.SkipBelow(tfversion.Version1_5_0),
-				},
-				ProtoV6ProviderFactories: fwtest.NewMockProto6Server(
-					t, handlers, fwtest.WithMockResources(NewResourceObservabilityDashboard),
-				),
-				Steps: []testresource.TestStep{
-					{Config: `import {
-  to = signalfx_observability_dashboard.test
-  id = "imported-dashboard"
-}
-` + importedConfig},
-					{Config: importedConfig, PlanOnly: true},
-					{Config: test.config, PlanOnly: true, ExpectError: regexp.MustCompile(observabilityDashboardUnsafeUpdateSummary)},
-				},
-			})
-		})
-	}
-}
-
-func TestResourceObservabilityDashboardUpdateRejectsUnknownWriteState(t *testing.T) {
-	managed := NewResourceObservabilityDashboard().(*observabilityDashboardResource)
-	var schemaResponse resource.SchemaResponse
-	managed.Schema(t.Context(), resource.SchemaRequest{}, &schemaResponse)
-	prior := observabilityDashboardModel{
-		ID: types.StringValue("imported-dashboard"), Title: types.StringValue("Imported"),
-	}
-	planned := prior
-	planned.Title = types.StringValue("Changed")
-	state := tfsdk.State{Schema: schemaResponse.Schema}
-	require.False(t, state.Set(t.Context(), prior).HasError())
-	plan := tfsdk.Plan{Schema: schemaResponse.Schema}
-	require.False(t, plan.Set(t.Context(), planned).HasError())
-	response := resource.UpdateResponse{State: state}
-	managed.Update(t.Context(), resource.UpdateRequest{Plan: plan, State: state}, &response)
-	require.True(t, response.Diagnostics.HasError())
-	assert.Equal(t, observabilityDashboardUnsafeUpdateSummary, response.Diagnostics.Errors()[0].Summary())
-}
-
-func TestResourceObservabilityDashboardImportsUIEmptyControlStrings(t *testing.T) {
+func TestResourceObservabilityDashboardImportsAndUpdatesUIEmptyControlStrings(t *testing.T) {
 	root := template.RootElementDashboard
 	record := template.Template{
 		ID: "imported-dashboard", Type: fwdashify.ObservabilityTemplateRecordType,
@@ -416,7 +345,20 @@ func TestResourceObservabilityDashboardImportsUIEmptyControlStrings(t *testing.T
 		}),
 		"PUT /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			writes++
-			http.Error(w, "import must not update the dashboard", http.StatusInternalServerError)
+			assert.Equal(t, record.ID, r.PathValue("id"))
+			var write template.CreateUpdateTemplateRequest
+			if err := json.NewDecoder(r.Body).Decode(&write); err != nil {
+				t.Errorf("decode dashboard update: %v", err)
+				http.Error(w, "invalid update request", http.StatusBadRequest)
+				return
+			}
+			assert.Equal(t, "Changed", write.Title)
+			assert.Equal(t, []string{"/v2/template/chart-id"}, write.Metadata.Imports)
+			var spec map[string]json.RawMessage
+			assert.NoError(t, json.Unmarshal(write.Spec, &spec))
+			assert.NotContains(t, spec, "futureField")
+			record.Title, record.Spec = write.Title, write.Spec
+			assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: &record}))
 		}),
 		"DELETE /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusNoContent)
@@ -453,12 +395,13 @@ func TestResourceObservabilityDashboardImportsUIEmptyControlStrings(t *testing.T
 				GenerateConfig: true,
 			},
 			{
-				Config:   strings.Replace(importedConfig, `title = "Imported"`, `title = "Changed"`, 1),
-				PlanOnly: true, ExpectError: regexp.MustCompile(observabilityDashboardUnsafeUpdateSummary),
+				Config: strings.Replace(importedConfig, `title = "Imported"`, `title = "Changed"`, 1),
+				Check:  testresource.TestCheckResourceAttr("signalfx_observability_dashboard.test", "title", "Changed"),
 			},
+			{Config: strings.Replace(importedConfig, `title = "Imported"`, `title = "Changed"`, 1), PlanOnly: true},
 		},
 	})
-	assert.Zero(t, writes, "reading and importing UI defaults must never overwrite unmodeled fields")
+	assert.Equal(t, 1, writes, "only the title change must write; import and no-change plans must leave unmodeled fields untouched")
 }
 
 func TestResourceObservabilityDashboardInlineContentLifecycleAndGeneratedConfig(t *testing.T) {
@@ -637,7 +580,7 @@ func TestDashifyDashboardSpecWarnsAboutUnmodeledFields(t *testing.T) {
 	spec := json.RawMessage(`{
 		"title":"Dashboard",
 		"<Dashboard>":[{"<Panel>":[{"<$import.widget0>":[{"key":"env","value":"prod"}],"futureContent":{"preserve":true}}],"futureContainer":true,"futureEmpty":{}}],
-		"layout":{"gap":{},"saved":{"_":{"items":[{"id":"_.0","order":0,"absolute":true,"x":[1,2],"w":{"value":"1/2","futureEmpty":{}},"minW":2}]}}},
+		"layout":{"gap":{},"saved":{"_":{"items":[{"id":"_.0","order":0,"absolute":true,"x":{},"w":{"value":"1/2","futureEmpty":{}},"minW":2,"maxW":{}}]}}},
 		"$import:widget0":"/v2/template/chart-id",
 		"$import:orphan":"/v2/template/orphan-id"
 	}`)
@@ -648,8 +591,9 @@ func TestDashifyDashboardSpecWarnsAboutUnmodeledFields(t *testing.T) {
 	assert.Equal(t, "2", model.Container[0].Layout.MinWidth.ValueString())
 	warnings := diags.Warnings()
 	require.Len(t, warnings, 1)
-	assert.Nil(t, dashboardKnownWriteMarker(diags))
-	for _, path := range []string{"container.0.futureContainer", "container.0.futureContent.preserve", "container.0.futureEmpty", "container.0.<$import.widget0>", "$import:orphan", "layout._.0.order", "layout._.0.x", "layout._.0.w.value", "layout._.0.w.futureEmpty", "layout.gap"} {
+	assert.Contains(t, warnings[0].Detail(), "Any update, including a title-only change")
+	assert.Contains(t, warnings[0].Detail(), "will discard them")
+	for _, path := range []string{"container.0.futureContainer", "container.0.futureContent.preserve", "container.0.futureEmpty", "container.0.<$import.widget0>", "$import:orphan", "layout._.0.order", "layout._.0.x", "layout._.0.w.value", "layout._.0.w.futureEmpty", "layout._.0.maxW", "layout.gap"} {
 		assert.Contains(t, warnings[0].Detail(), path)
 	}
 	assert.NotContains(t, warnings[0].Detail(), "layout._.0.minW")
@@ -723,35 +667,6 @@ func TestDashifyDashboardSpecRejectsAmbiguousLayouts(t *testing.T) {
 		"two items place one container": {
 			layout: `{"saved":{"_":{"items":[{"id":"_.0"},{"id":"_.0"}]}}}`,
 			want:   "both place container 0",
-		},
-	}
-
-	for name, test := range tests {
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
-			root := template.RootElementDashboard
-			spec := json.RawMessage(`{"title":"Dashboard","<Dashboard>":[{"<Panel>":[{"<$import.widget0>":[]}]}],"layout":` + test.layout + `,"$import:widget0":"/v2/template/chart-id"}`)
-			_, diags := parseDashboardTemplate(&template.Template{Title: "Dashboard", Spec: spec, Metadata: &template.Metadata{RootElement: &root}})
-			require.True(t, diags.HasError(), diags)
-			assert.Contains(t, diags.Errors()[0].Detail(), test.want)
-		})
-	}
-}
-
-func TestDashifyDashboardSpecRejectsInvalidLayoutValues(t *testing.T) {
-	t.Parallel()
-
-	tests := map[string]struct {
-		layout string
-		want   string
-	}{
-		"empty advanced width object": {
-			layout: `{"saved":{"_":{"items":[{"id":"_.0","w":{}}]}}}`,
-			want:   "unsupported empty w layout object",
-		},
-		"empty coordinate object": {
-			layout: `{"saved":{"_":{"items":[{"id":"_.0","x":{}}]}}}`,
-			want:   "unsupported empty x layout object",
 		},
 	}
 

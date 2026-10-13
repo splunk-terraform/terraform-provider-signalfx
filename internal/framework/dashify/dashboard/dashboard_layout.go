@@ -177,11 +177,6 @@ func parseDashifyLayouts(spec map[string]any, count int) ([]*dashifyLayoutModel,
 			}
 			*field.value = value
 		}
-		for key, value := range item {
-			if object, ok := value.(map[string]any); ok && len(object) == 0 {
-				return nil, nil, fmt.Errorf("layout %s has unsupported empty %s layout object", id, key)
-			}
-		}
 		if !model.Absolute.IsNull() || !dashifyLayoutFieldsEmpty(dashifyLayoutModelFields(model)) {
 			layouts[position] = model
 		}

@@ -170,7 +170,7 @@ func parseDashboardTemplate(record *template.Template) (observabilityDashboardMo
 		if child == nil {
 			// UI deletion leaves a null child and removes its layout entry. Those
 			// placeholders have no rendered content and can be compacted safely.
-			// Retain the update guard when a placeholder still carries layout data.
+			// Report layout data that will be discarded with an omitted placeholder.
 			if layouts[i] != nil {
 				leftovers = append(leftovers, fmt.Sprintf("container.%d (null element; matching layout %s omitted)", i, id))
 			}
@@ -211,7 +211,7 @@ func parseDashboardTemplate(record *template.Template) (observabilityDashboardMo
 		diags.AddWarning(
 			dashifyUnmodeledFieldsSummary,
 			fmt.Sprintf(
-				"The stored dashboard contains %d field(s) this provider does not model:\n  %s\n\nThese fields are absent from Terraform state, so this resource blocks updates that would remove them. To manage this dashboard, import it as signalfx_observability_template with its complete specification instead.",
+				"The stored dashboard contains %d field(s) this provider does not model:\n  %s\n\nThese fields are absent from Terraform state. Any update, including a title-only change, replaces the complete dashboard document and will discard them. To preserve these fields, manage this dashboard as signalfx_observability_template with its complete specification instead.",
 				len(leftovers),
 				strings.Join(leftovers, "\n  "),
 			),
