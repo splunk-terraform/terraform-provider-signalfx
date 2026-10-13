@@ -66,6 +66,9 @@ type dashifyFilterSetEntryModel struct {
 }
 
 type dashifyLayoutModel struct {
+	Absolute  types.Bool   `tfsdk:"absolute"`
+	X         types.String `tfsdk:"x"`
+	Y         types.String `tfsdk:"y"`
 	Width     types.String `tfsdk:"width"`
 	Height    types.String `tfsdk:"height"`
 	MinWidth  types.String `tfsdk:"min_width"`

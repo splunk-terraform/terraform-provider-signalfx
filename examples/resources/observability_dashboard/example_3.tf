@@ -22,6 +22,9 @@ resource "signalfx_observability_dashboard" "service_layout" {
   container = [{
     template_id = signalfx_observability_template.latency.id
     layout = {
+      absolute   = true
+      x          = "1/2"
+      y          = "26"
       width      = "1/2"
       height     = "228"
       min_width  = "4"

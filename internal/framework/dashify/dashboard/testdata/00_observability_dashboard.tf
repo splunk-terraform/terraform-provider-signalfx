@@ -72,6 +72,7 @@ resource "signalfx_observability_dashboard" "test" {
   container = [{
     template_id = signalfx_observability_template.chart.id
     layout = {
+      x          = "0"
       width      = "1/2"
       height     = "20"
       min_width  = "4"

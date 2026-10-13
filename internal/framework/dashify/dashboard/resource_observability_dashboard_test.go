@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
@@ -48,8 +49,6 @@ func TestResourceObservabilityDashboardMetadataAndSchema(t *testing.T) {
 		path.Root("layout"),
 		root.AtName("section"),
 		root.AtName("group"),
-		root.AtName("layout").AtName("x"),
-		root.AtName("layout").AtName("absolute"),
 		root.AtName("layout").AtName("max_width"),
 	} {
 		_, diags := resourceSchema.AttributeAtPath(t.Context(), attributePath)
@@ -59,6 +58,9 @@ func TestResourceObservabilityDashboardMetadataAndSchema(t *testing.T) {
 	content, diags := resourceSchema.AttributeAtPath(t.Context(), root.AtName("inline_content"))
 	require.False(t, diags.HasError())
 	assert.Equal(t, jsontypes.NormalizedType{}, content.(schema.StringAttribute).CustomType)
+	horizontalPosition, diags := resourceSchema.AttributeAtPath(t.Context(), root.AtName("layout").AtName("x"))
+	require.False(t, diags.HasError())
+	assert.True(t, horizontalPosition.(schema.StringAttribute).Optional)
 }
 
 func TestResourceObservabilityDashboardRejectsInvalidPlans(t *testing.T) {
@@ -129,7 +131,7 @@ func TestResourceObservabilityDashboardRejectsInvalidPlans(t *testing.T) {
   title     = "Service overview"
   container = [{ template_id = "chart-1", layout = {} }]
 }`,
-			want: "layout must set at least one size option",
+			want: "layout must set at least one size or position option",
 		},
 		{
 			name: "duplicate pinned control",
@@ -388,6 +390,77 @@ func TestResourceObservabilityDashboardUpdateRejectsUnknownWriteState(t *testing
 	assert.Equal(t, observabilityDashboardUnsafeUpdateSummary, response.Diagnostics.Errors()[0].Summary())
 }
 
+func TestResourceObservabilityDashboardImportsUIEmptyControlStrings(t *testing.T) {
+	root := template.RootElementDashboard
+	record := template.Template{
+		ID: "imported-dashboard", Type: fwdashify.ObservabilityTemplateRecordType,
+		Title: "Imported", Metadata: &template.Metadata{RootElement: &root},
+		Spec: json.RawMessage(`{
+			"<Dashboard>":[{"<Panel>":[{"<$import.chart0>":[]}]},null],
+			"futureField":true,
+			"$import:chart0":"/v2/template/chart-id",
+			"layout":{"saved":{"_":{"items":[{"id":"_.0","w":"1/2","h":26,"x":0}]}}},
+			"controlBar":{"controls":[
+				{"type":"TimeRange","variableName":"TIME","label":"","description":"","defaultVariableValue":"-PT15M"},
+				{"type":"Density","variableName":"DENSITY","label":"","description":"","defaultVariableValue":60},
+				{"type":"FilterSet","variableName":"FILTERS","label":"","description":"","defaultVariableValue":[]},
+				{"type":"PinnedFilter","variableName":"service.name","key":"service.name","label":"","description":""}
+			]}
+		}`),
+	}
+	writes := 0
+	handlers := map[string]http.Handler{
+		"GET /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, record.ID, r.PathValue("id"))
+			assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: &record}))
+		}),
+		"PUT /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			writes++
+			http.Error(w, "import must not update the dashboard", http.StatusInternalServerError)
+		}),
+		"DELETE /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusNoContent)
+		}),
+	}
+	const importedConfig = `resource "signalfx_observability_dashboard" "test" {
+  title = "Imported"
+  container = [{ template_id = "chart-id", layout = { x = "0", width = "1/2", height = "26" } }]
+  control_bar = {
+    time_range = { default = "-PT15M" }
+    density = { default = 60 }
+    filter_set = {}
+    pinned_filter = [{ property = "service.name" }]
+  }
+}`
+	testresource.UnitTest(t, testresource.TestCase{
+		IsUnitTest: true,
+		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
+			tfversion.SkipBelow(tfversion.Version1_5_0),
+		},
+		ProtoV6ProviderFactories: fwtest.NewMockProto6Server(
+			t, handlers, fwtest.WithMockResources(NewResourceObservabilityDashboard),
+		),
+		Steps: []testresource.TestStep{
+			{Config: `import {
+  to = signalfx_observability_dashboard.test
+  id = "imported-dashboard"
+}
+` + importedConfig},
+			{Config: importedConfig, PlanOnly: true},
+			{
+				ResourceName: "signalfx_observability_dashboard.test",
+				ImportState:  true, ImportStateKind: testresource.ImportBlockWithID,
+				GenerateConfig: true,
+			},
+			{
+				Config:   strings.Replace(importedConfig, `title = "Imported"`, `title = "Changed"`, 1),
+				PlanOnly: true, ExpectError: regexp.MustCompile(observabilityDashboardUnsafeUpdateSummary),
+			},
+		},
+	})
+	assert.Zero(t, writes, "reading and importing UI defaults must never overwrite unmodeled fields")
+}
+
 func TestResourceObservabilityDashboardInlineContentLifecycleAndGeneratedConfig(t *testing.T) {
 	root := template.RootElementDashboard
 	var record *template.Template
@@ -481,8 +554,8 @@ func TestDashifyDashboardSpecRoundTrip(t *testing.T) {
 	model := observabilityDashboardModel{
 		Title: types.StringValue("Service overview"),
 		Container: []dashifyDashboardContainerModel{
-			{Layout: &dashifyLayoutModel{Width: types.StringValue("1/2"), Height: types.StringValue("20"), MinWidth: types.StringValue("4"), MinHeight: types.StringValue("2")}, TemplateID: types.StringValue("chart-a")},
-			{TemplateID: types.StringValue("chart-b")},
+			{Layout: &dashifyLayoutModel{X: types.StringValue("0"), Width: types.StringValue("1/2"), Height: types.StringValue("20"), MinWidth: types.StringValue("4"), MinHeight: types.StringValue("2")}, TemplateID: types.StringValue("chart-a")},
+			{Layout: &dashifyLayoutModel{X: types.StringValue("50%")}, TemplateID: types.StringValue("chart-b")},
 		},
 	}
 	spec, imports, err := buildDashboardSpec(model)
@@ -498,6 +571,8 @@ func TestDashifyDashboardSpecRoundTrip(t *testing.T) {
 	items := saved["_"].(map[string]any)["items"].([]any)
 	assert.Equal(t, "_.0", items[0].(map[string]any)["id"])
 	assert.Equal(t, "1/2", items[0].(map[string]any)["w"])
+	assert.Equal(t, float64(0), items[0].(map[string]any)["x"])
+	assert.Equal(t, "50%", items[1].(map[string]any)["x"])
 	assert.NotContains(t, items[0].(map[string]any), "order")
 	assert.NotContains(t, layout, "gap")
 	root := template.RootElementDashboard
@@ -574,7 +649,7 @@ func TestDashifyDashboardSpecWarnsAboutUnmodeledFields(t *testing.T) {
 	warnings := diags.Warnings()
 	require.Len(t, warnings, 1)
 	assert.Nil(t, dashboardKnownWriteMarker(diags))
-	for _, path := range []string{"container.0.futureContainer", "container.0.futureContent.preserve", "container.0.futureEmpty", "container.0.<$import.widget0>", "$import:orphan", "layout._.0.order", "layout._.0.absolute", "layout._.0.x", "layout._.0.w.value", "layout._.0.w.futureEmpty", "layout.gap"} {
+	for _, path := range []string{"container.0.futureContainer", "container.0.futureContent.preserve", "container.0.futureEmpty", "container.0.<$import.widget0>", "$import:orphan", "layout._.0.order", "layout._.0.x", "layout._.0.w.value", "layout._.0.w.futureEmpty", "layout.gap"} {
 		assert.Contains(t, warnings[0].Detail(), path)
 	}
 	assert.NotContains(t, warnings[0].Detail(), "layout._.0.minW")
@@ -822,6 +897,7 @@ func TestResourceObservabilityDashboardUnitTest(t *testing.T) {
 						testresource.TestCheckResourceAttr("signalfx_observability_dashboard.test", "control_bar.pinned_filter.1.property", "deployment.environment"),
 						testresource.TestCheckResourceAttr("signalfx_observability_dashboard.test", "control_bar.filter_set.filter.#", "2"),
 						testresource.TestCheckResourceAttr("signalfx_observability_dashboard.test", "container.0.layout.width", "1/2"),
+						testresource.TestCheckResourceAttr("signalfx_observability_dashboard.test", "container.0.layout.x", "0"),
 						testresource.TestCheckResourceAttr("signalfx_observability_dashboard.test", "container.0.layout.height", "20"),
 						testresource.TestCheckResourceAttr("signalfx_observability_dashboard.test", "container.0.layout.min_width", "4"),
 						testresource.TestCheckResourceAttr("signalfx_observability_dashboard.test", "container.0.layout.min_height", "2"),
@@ -857,6 +933,7 @@ func TestResourceObservabilityDashboardUnitTest(t *testing.T) {
 						testresource.TestCheckResourceAttr("signalfx_observability_dashboard.test", "title", "Updated service overview"),
 						testresource.TestCheckNoResourceAttr("signalfx_observability_dashboard.test", "control_bar.time_range.default"),
 						testresource.TestCheckNoResourceAttr("signalfx_observability_dashboard.test", "container.0.layout.width"),
+						testresource.TestCheckNoResourceAttr("signalfx_observability_dashboard.test", "container.0.layout.x"),
 						testresource.TestCheckResourceAttrPair(
 							"signalfx_observability_dashboard.test", "container.0.template_id",
 							"signalfx_observability_template.chart", "id",

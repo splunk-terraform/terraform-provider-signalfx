@@ -21,6 +21,8 @@ type dashifyLayoutField struct {
 
 func dashifyLayoutModelFields(layout *dashifyLayoutModel) []dashifyLayoutField {
 	return []dashifyLayoutField{
+		{name: "x", key: "x", value: &layout.X},
+		{name: "y", key: "y", value: &layout.Y},
 		{name: "width", key: "w", value: &layout.Width},
 		{name: "height", key: "h", value: &layout.Height},
 		{name: "min_width", key: "minW", value: &layout.MinWidth},
@@ -37,7 +39,7 @@ func dashifyLayoutFieldsEmpty(fields []dashifyLayoutField) bool {
 	return true
 }
 
-// Simple sizes are finite numbers or strings such as "1/2" and "100%".
+// Simple sizes and positions are finite numbers or strings such as "1/2" and "100%".
 func dashifyLayoutValue(value types.String) (any, bool, error) {
 	if value.IsNull() || value.IsUnknown() {
 		return nil, false, nil
@@ -45,7 +47,7 @@ func dashifyLayoutValue(value types.String) (any, bool, error) {
 	text := value.ValueString()
 	trimmed := strings.TrimSpace(text)
 	if strings.HasPrefix(trimmed, "{") || strings.HasPrefix(trimmed, "[") {
-		return nil, false, fmt.Errorf("JSON objects and arrays are not supported in typed layout sizes; use signalfx_observability_template for advanced layout")
+		return nil, false, fmt.Errorf("JSON objects and arrays are not supported in typed layout values; use signalfx_observability_template for advanced layout")
 	}
 	if number, err := strconv.ParseFloat(trimmed, 64); err == nil && !math.IsNaN(number) && !math.IsInf(number, 0) {
 		return number, true, nil
@@ -79,6 +81,9 @@ func buildDashifyLayoutItem(id string, layout *dashifyLayoutModel) (map[string]a
 	item := map[string]any{"id": id}
 	if layout == nil {
 		return item, nil
+	}
+	if !layout.Absolute.IsNull() && !layout.Absolute.IsUnknown() {
+		item["absolute"] = layout.Absolute.ValueBool()
 	}
 	for _, field := range dashifyLayoutModelFields(layout) {
 		value, set, err := dashifyLayoutValue(*field.value)
@@ -160,10 +165,11 @@ func parseDashifyLayouts(spec map[string]any, count int) ([]*dashifyLayoutModel,
 			return nil, nil, fmt.Errorf("layout items %s and %s both place container %d", previous, id, position)
 		}
 		claimed[position] = id
-		if absolute, ok := item["absolute"].(bool); ok && !absolute {
+		model := &dashifyLayoutModel{}
+		if absolute, ok := item["absolute"].(bool); ok {
+			model.Absolute = types.BoolValue(absolute)
 			delete(item, "absolute")
 		}
-		model := &dashifyLayoutModel{}
 		for _, field := range dashifyLayoutModelFields(model) {
 			value, err := dashifyLayoutString(item, field.key)
 			if err != nil {
@@ -176,7 +182,7 @@ func parseDashifyLayouts(spec map[string]any, count int) ([]*dashifyLayoutModel,
 				return nil, nil, fmt.Errorf("layout %s has unsupported empty %s layout object", id, key)
 			}
 		}
-		if !dashifyLayoutFieldsEmpty(dashifyLayoutModelFields(model)) {
+		if !model.Absolute.IsNull() || !dashifyLayoutFieldsEmpty(dashifyLayoutModelFields(model)) {
 			layouts[position] = model
 		}
 		leftovers = append(leftovers, dashifyLeftovers("layout."+id, item)...)

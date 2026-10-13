@@ -6,7 +6,7 @@ description: |-
 
 # Resource: signalfx_observability_dashboard
 
-Use this resource to manage a modern dashboard's flat panels, controls, and basic panel sizing. Each panel can reference a Template or hold inline JSON.
+Use this resource to manage a modern dashboard's flat panels, controls, panel sizes, and positions. Each panel can reference a Template or hold inline JSON.
 
 To place the dashboard in a folder, add its ID to a Directory resource's `templates` list. Updates replace the saved dashboard content, so copy UI changes you want to keep into Terraform before applying.
 
@@ -73,7 +73,7 @@ resource "signalfx_observability_dashboard" "inline_content" {
 }
 ```
 
-## Panel sizing
+## Panel layout
 
 ```terraform
 resource "signalfx_observability_template" "latency" {
@@ -100,6 +100,9 @@ resource "signalfx_observability_dashboard" "service_layout" {
   container = [{
     template_id = signalfx_observability_template.latency.id
     layout = {
+      absolute   = true
+      x          = "1/2"
+      y          = "26"
       width      = "1/2"
       height     = "228"
       min_width  = "4"
@@ -175,7 +178,11 @@ A pinned filter's required `property` names the dimension or property to filter.
 
 Each `container` represents one panel and needs exactly one content source: `template_id` for a reusable Template or `inline_content` for inline JSON.
 
-A panel's `layout` supports `width`, `height`, `min_width`, and `min_height`. Numeric sizes are layout values, not pixels; simple fractions and percentages are also supported. Terraform list order controls panel order. Use a `for` expression to generate panels from a list, for example `container = [for id in var.chart_ids : { template_id = id }]`.
+A panel's `layout` supports `x`, `y`, `absolute`, `width`, `height`, `min_width`, and `min_height`. Use `x = "0"` for the left edge and `x = "1/2"` or `x = "50%"` to start halfway across the dashboard. Omit `x` for automatic horizontal placement. Numeric values are layout units, not pixels; simple fractions and percentages are also supported. Terraform list order controls panel order and row flow. Use a `for` expression to generate panels from a list, for example `container = [for id in var.chart_ids : { template_id = id }]`.
+
+Set `absolute = true` to position a panel outside normal row flow using both `x` and `y`. For example, `x = "1/2"` and `y = "26"` starts the panel halfway across and 26 layout units down. Absolute panels are placed independently and can overlap. Set `absolute = false` or omit it to use normal row flow, where the UI calculates vertical placement and ignores `y`. The UI resolves fractions and percentages against canvas width for both axes, so `y = "50%"` is half the canvas width in layout units, not half the dashboard height.
+
+Deleted UI content can leave null panel slots in the saved dashboard. Import omits slots that have no saved layout data and keeps the surviving panels' positions and sizes. Null slots that still carry layout data trigger the same update guard as other unsupported fields.
 
 For sections, groups, and advanced layout, use `signalfx_observability_template` with the full `spec`. Importing a nested dashboard into this resource returns an error. A flat dashboard with other unsupported fields can be read, but this resource blocks updates that would discard those fields.
 
@@ -201,7 +208,7 @@ For sections, groups, and advanced layout, use `signalfx_observability_template`
 Optional:
 
 - `inline_content` (String) Self-contained dashboard JSON object rendered inline in this panel.
-- `layout` (Attributes) Basic panel sizing. Numeric sizes are layout values, not pixels. (see [below for nested schema](#nestedatt--container--layout))
+- `layout` (Attributes) Panel sizing and position. Numeric values are layout units, not pixels. (see [below for nested schema](#nestedatt--container--layout))
 - `template_id` (String) ID of a reusable Observability Template rendered in this panel.
 
 <a id="nestedatt--container--layout"></a>
@@ -209,10 +216,13 @@ Optional:
 
 Optional:
 
+- `absolute` (Boolean) Position the panel outside normal row flow using x and y. Defaults to normal flow when omitted. Absolute panels can overlap.
 - `height` (String) Starting height of the panel.
 - `min_height` (String) Minimum height of the panel.
 - `min_width` (String) Minimum width of the panel.
 - `width` (String) Starting width of the panel.
+- `x` (String) Starting horizontal position of the panel. Use 0 for the left edge, or a fraction or percentage such as 1/2 or 50%.
+- `y` (String) Starting vertical position in layout units. Takes effect when absolute is true; normal row flow calculates vertical placement automatically. Fractions and percentages are relative to canvas width, not height.
 
 
 

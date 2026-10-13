@@ -168,7 +168,12 @@ func parseDashboardTemplate(record *template.Template) (observabilityDashboardMo
 	for i, child := range children {
 		id := fmt.Sprintf("_.%d", i)
 		if child == nil {
-			leftovers = append(leftovers, fmt.Sprintf("container.%d (null element; matching layout %s omitted)", i, id))
+			// UI deletion leaves a null child and removes its layout entry. Those
+			// placeholders have no rendered content and can be compacted safely.
+			// Retain the update guard when a placeholder still carries layout data.
+			if layouts[i] != nil {
+				leftovers = append(leftovers, fmt.Sprintf("container.%d (null element; matching layout %s omitted)", i, id))
+			}
 			continue
 		}
 		node, ok := child.(map[string]any)

@@ -93,8 +93,11 @@ func dashifyContainerListAttribute() schema.ListNestedAttribute {
 func dashifyItemLayoutAttribute() schema.SingleNestedAttribute {
 	return schema.SingleNestedAttribute{
 		Optional:    true,
-		Description: "Basic panel sizing. Numeric sizes are layout values, not pixels.",
+		Description: "Panel sizing and position. Numeric values are layout units, not pixels.",
 		Attributes: map[string]schema.Attribute{
+			"absolute":   schema.BoolAttribute{Optional: true, Description: "Position the panel outside normal row flow using x and y. Defaults to normal flow when omitted. Absolute panels can overlap."},
+			"x":          schema.StringAttribute{Optional: true, Description: "Starting horizontal position of the panel. Use 0 for the left edge, or a fraction or percentage such as 1/2 or 50%."},
+			"y":          schema.StringAttribute{Optional: true, Description: "Starting vertical position in layout units. Takes effect when absolute is true; normal row flow calculates vertical placement automatically. Fractions and percentages are relative to canvas width, not height."},
 			"width":      schema.StringAttribute{Optional: true, Description: "Starting width of the panel."},
 			"height":     schema.StringAttribute{Optional: true, Description: "Starting height of the panel."},
 			"min_width":  schema.StringAttribute{Optional: true, Description: "Minimum width of the panel."},
@@ -159,8 +162,8 @@ func validateDashifyLayout(resp *resource.ValidateConfigResponse, layoutPath pat
 	if layout == nil {
 		return
 	}
-	if dashifyLayoutFieldsEmpty(dashifyLayoutModelFields(layout)) {
-		resp.Diagnostics.AddAttributeError(layoutPath, "Empty layout", "layout must set at least one size option")
+	if layout.Absolute.IsNull() && dashifyLayoutFieldsEmpty(dashifyLayoutModelFields(layout)) {
+		resp.Diagnostics.AddAttributeError(layoutPath, "Empty layout", "layout must set at least one size or position option")
 		return
 	}
 	for _, field := range dashifyLayoutModelFields(layout) {

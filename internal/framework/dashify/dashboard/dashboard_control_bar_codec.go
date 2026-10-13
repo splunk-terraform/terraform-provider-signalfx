@@ -190,8 +190,8 @@ func parseDashifyControlBar(spec map[string]any) (*dashifyControlBarModel, []str
 				continue
 			}
 			model.TimeRange = &dashifyTimeRangeControlModel{
-				Label:       reader.string("label"),
-				Description: reader.string("description"),
+				Label:       reader.optionalString("label"),
+				Description: reader.optionalString("description"),
 				Hidden:      reader.bool("hidden"),
 				Default:     reader.string("defaultVariableValue"),
 			}
@@ -201,8 +201,8 @@ func parseDashifyControlBar(spec map[string]any) (*dashifyControlBarModel, []str
 				continue
 			}
 			model.Density = &dashifyDensityControlModel{
-				Label:       reader.string("label"),
-				Description: reader.string("description"),
+				Label:       reader.optionalString("label"),
+				Description: reader.optionalString("description"),
 				Hidden:      reader.bool("hidden"),
 				Default:     reader.int64("defaultVariableValue"),
 			}
@@ -213,8 +213,8 @@ func parseDashifyControlBar(spec map[string]any) (*dashifyControlBarModel, []str
 			}
 			value := dashifyPinnedFilterControlModel{
 				VariableName:               variableName,
-				Label:                      reader.string("label"),
-				Description:                reader.string("description"),
+				Label:                      reader.optionalString("label"),
+				Description:                reader.optionalString("description"),
 				Hidden:                     reader.bool("hidden"),
 				Property:                   reader.string("key"),
 				Default:                    reader.stringList("defaultVariableValue"),
@@ -234,8 +234,8 @@ func parseDashifyControlBar(spec map[string]any) (*dashifyControlBarModel, []str
 				continue
 			}
 			value := &dashifyFilterSetControlModel{
-				Label:       reader.string("label"),
-				Description: reader.string("description"),
+				Label:       reader.optionalString("label"),
+				Description: reader.optionalString("description"),
 				Hidden:      reader.bool("hidden"),
 			}
 			filters, filterLeftovers := reader.filterSetEntries("defaultVariableValue")
@@ -275,6 +275,16 @@ func (r *dashifyControlReader) string(key string) types.String {
 	}
 	delete(r.object, key)
 	return types.StringValue(value)
+}
+
+// The UI saves empty optional labels and descriptions. Treat them as omitted
+// so read state matches the non-empty schema and generated import config.
+func (r *dashifyControlReader) optionalString(key string) types.String {
+	value := r.string(key)
+	if value.ValueString() == "" {
+		return types.StringNull()
+	}
+	return value
 }
 
 func (r *dashifyControlReader) bool(key string) types.Bool {
