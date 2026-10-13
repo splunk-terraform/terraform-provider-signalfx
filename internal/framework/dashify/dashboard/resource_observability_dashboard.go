@@ -337,18 +337,11 @@ func observabilityDashboardFromResult(result *template.Result, expectedID string
 	return record, model, diags
 }
 
-func dashboardHasUnmodeledFields(diags diag.Diagnostics) bool {
+func dashboardKnownWriteMarker(diags diag.Diagnostics) []byte {
 	for _, diagnostic := range diags {
 		if diagnostic.Summary() == dashifyUnmodeledFieldsSummary {
-			return true
+			return nil
 		}
-	}
-	return false
-}
-
-func dashboardKnownWriteMarker(diags diag.Diagnostics) []byte {
-	if dashboardHasUnmodeledFields(diags) {
-		return nil
 	}
 	return []byte("true")
 }

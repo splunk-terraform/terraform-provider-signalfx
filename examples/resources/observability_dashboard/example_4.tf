@@ -21,29 +21,27 @@ resource "signalfx_observability_dashboard" "controls" {
 
   control_bar = {
     time_range = {
-      label                  = "Time Range"
-      default_variable_value = "-15m"
+      label   = "Time Range"
+      default = "-15m"
     }
 
     density = {
-      default_variable_value = 60
+      default = 60
     }
 
     pinned_filter = [{
-      variable_name          = "service"
-      key                    = "service.name"
-      default_variable_value = ["checkout"]
-      suggested_values       = ["checkout", "payments"]
-      required               = true
-      application_mode       = "add"
+      property         = "service.name"
+      label            = "Service"
+      default          = ["checkout"]
+      suggested_values = ["checkout", "payments"]
+      required         = true
+      application_mode = "add"
     }]
 
     filter_set = {
-      hidden = false
-
       filter = [{
-        key    = "deployment.environment"
-        values = ["prod"]
+        property = "deployment.environment"
+        values   = ["prod"]
       }]
     }
   }

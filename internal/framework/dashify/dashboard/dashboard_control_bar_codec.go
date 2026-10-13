@@ -27,7 +27,7 @@ func buildDashifyControlBar(model *dashifyControlBarModel) map[string]any {
 		setDashifyControlString(control, "label", model.TimeRange.Label)
 		setDashifyControlString(control, "description", model.TimeRange.Description)
 		setDashifyControlBool(control, "hidden", model.TimeRange.Hidden)
-		setDashifyControlString(control, "defaultVariableValue", model.TimeRange.DefaultVariableValue)
+		setDashifyControlString(control, "defaultVariableValue", model.TimeRange.Default)
 		controls = append(controls, control)
 	}
 	if model.Density != nil {
@@ -38,21 +38,21 @@ func buildDashifyControlBar(model *dashifyControlBarModel) map[string]any {
 		setDashifyControlString(control, "label", model.Density.Label)
 		setDashifyControlString(control, "description", model.Density.Description)
 		setDashifyControlBool(control, "hidden", model.Density.Hidden)
-		if !model.Density.DefaultVariableValue.IsNull() && !model.Density.DefaultVariableValue.IsUnknown() {
-			control["defaultVariableValue"] = model.Density.DefaultVariableValue.ValueInt64()
+		if !model.Density.Default.IsNull() && !model.Density.Default.IsUnknown() {
+			control["defaultVariableValue"] = model.Density.Default.ValueInt64()
 		}
 		controls = append(controls, control)
 	}
 	for _, filter := range model.PinnedFilter {
 		control := map[string]any{
 			"type":         "PinnedFilter",
-			"variableName": filter.VariableName.ValueString(),
+			"variableName": filter.effectiveVariableName().ValueString(),
 		}
 		setDashifyControlString(control, "label", filter.Label)
 		setDashifyControlString(control, "description", filter.Description)
 		setDashifyControlBool(control, "hidden", filter.Hidden)
-		setDashifyControlString(control, "key", filter.Key)
-		setDashifyControlStringList(control, "defaultVariableValue", filter.DefaultVariableValue)
+		setDashifyControlString(control, "key", filter.Property)
+		setDashifyControlStringList(control, "defaultVariableValue", filter.Default)
 		setDashifyControlStringList(control, "preferablySuggestedValues", filter.SuggestedValues)
 		setDashifyControlBool(control, "onlySuggestPreferredValues", filter.OnlySuggestPreferredValues)
 		setDashifyControlBool(control, "matchMissing", filter.MatchMissing)
@@ -71,7 +71,7 @@ func buildDashifyControlBar(model *dashifyControlBarModel) map[string]any {
 		entries := make([]any, len(model.FilterSet.Filter))
 		for i, filter := range model.FilterSet.Filter {
 			entry := map[string]any{
-				"key":    filter.Key.ValueString(),
+				"key":    filter.Property.ValueString(),
 				"values": dashifyControlStringsToAny(filter.Values),
 			}
 			setDashifyControlBool(entry, "negated", filter.Negated)
@@ -165,13 +165,11 @@ func parseDashifyControlBar(spec map[string]any) (*dashifyControlBarModel, []str
 		if !ok {
 			return nil, nil, fmt.Errorf("%s is %T rather than an object", controlPath, rawControl)
 		}
-		controlType, err := takeDashifyControlString(control, "type", controlPath)
-		if err != nil {
-			return nil, nil, err
-		}
-		variableName, err := takeDashifyControlString(control, "variableName", controlPath)
-		if err != nil {
-			return nil, nil, err
+		reader := dashifyControlReader{object: control, path: controlPath}
+		controlType := reader.string("type")
+		variableName := reader.string("variableName")
+		if reader.err != nil {
+			return nil, nil, reader.err
 		}
 		if variableName.IsNull() || variableName.ValueString() == "" {
 			return nil, nil, fmt.Errorf("%s.variableName must be a non-empty string", controlPath)
@@ -191,100 +189,65 @@ func parseDashifyControlBar(spec map[string]any) (*dashifyControlBarModel, []str
 				leftovers = append(leftovers, controlPath)
 				continue
 			}
-			value := &dashifyTimeRangeControlModel{}
-			if value.Label, err = takeDashifyControlString(control, "label", controlPath); err != nil {
-				return nil, nil, err
+			model.TimeRange = &dashifyTimeRangeControlModel{
+				Label:       reader.string("label"),
+				Description: reader.string("description"),
+				Hidden:      reader.bool("hidden"),
+				Default:     reader.string("defaultVariableValue"),
 			}
-			if value.Description, err = takeDashifyControlString(control, "description", controlPath); err != nil {
-				return nil, nil, err
-			}
-			if value.Hidden, err = takeDashifyControlBool(control, "hidden", controlPath); err != nil {
-				return nil, nil, err
-			}
-			if value.DefaultVariableValue, err = takeDashifyControlString(control, "defaultVariableValue", controlPath); err != nil {
-				return nil, nil, err
-			}
-			model.TimeRange = value
 		case "Density":
 			if variableName.ValueString() != dashifyDensityVariableName {
 				leftovers = append(leftovers, controlPath)
 				continue
 			}
-			value := &dashifyDensityControlModel{}
-			if value.Label, err = takeDashifyControlString(control, "label", controlPath); err != nil {
-				return nil, nil, err
+			model.Density = &dashifyDensityControlModel{
+				Label:       reader.string("label"),
+				Description: reader.string("description"),
+				Hidden:      reader.bool("hidden"),
+				Default:     reader.int64("defaultVariableValue"),
 			}
-			if value.Description, err = takeDashifyControlString(control, "description", controlPath); err != nil {
-				return nil, nil, err
-			}
-			if value.Hidden, err = takeDashifyControlBool(control, "hidden", controlPath); err != nil {
-				return nil, nil, err
-			}
-			if value.DefaultVariableValue, err = takeDashifyControlInt64(control, "defaultVariableValue", controlPath); err != nil {
-				return nil, nil, err
-			}
-			model.Density = value
 		case "PinnedFilter":
 			if variableName.ValueString() == dashifyTimeRangeVariableName || variableName.ValueString() == dashifyDensityVariableName || variableName.ValueString() == dashifyFilterSetVariableName {
 				leftovers = append(leftovers, controlPath)
 				continue
 			}
-			value := &dashifyPinnedFilterControlModel{VariableName: variableName}
-			if value.Label, err = takeDashifyControlString(control, "label", controlPath); err != nil {
-				return nil, nil, err
+			value := dashifyPinnedFilterControlModel{
+				VariableName:               variableName,
+				Label:                      reader.string("label"),
+				Description:                reader.string("description"),
+				Hidden:                     reader.bool("hidden"),
+				Property:                   reader.string("key"),
+				Default:                    reader.stringList("defaultVariableValue"),
+				SuggestedValues:            reader.stringList("preferablySuggestedValues"),
+				OnlySuggestPreferredValues: reader.bool("onlySuggestPreferredValues"),
+				MatchMissing:               reader.bool("matchMissing"),
+				Required:                   reader.bool("required"),
+				ApplicationMode:            reader.string("applicationMode"),
 			}
-			if value.Description, err = takeDashifyControlString(control, "description", controlPath); err != nil {
-				return nil, nil, err
+			if value.Property.IsNull() {
+				value.Property = variableName
 			}
-			if value.Hidden, err = takeDashifyControlBool(control, "hidden", controlPath); err != nil {
-				return nil, nil, err
-			}
-			if value.Key, err = takeDashifyControlString(control, "key", controlPath); err != nil {
-				return nil, nil, err
-			}
-			if value.DefaultVariableValue, err = takeDashifyControlStringList(control, "defaultVariableValue", controlPath); err != nil {
-				return nil, nil, err
-			}
-			if value.SuggestedValues, err = takeDashifyControlStringList(control, "preferablySuggestedValues", controlPath); err != nil {
-				return nil, nil, err
-			}
-			if value.OnlySuggestPreferredValues, err = takeDashifyControlBool(control, "onlySuggestPreferredValues", controlPath); err != nil {
-				return nil, nil, err
-			}
-			if value.MatchMissing, err = takeDashifyControlBool(control, "matchMissing", controlPath); err != nil {
-				return nil, nil, err
-			}
-			if value.Required, err = takeDashifyControlBool(control, "required", controlPath); err != nil {
-				return nil, nil, err
-			}
-			if value.ApplicationMode, err = takeDashifyControlString(control, "applicationMode", controlPath); err != nil {
-				return nil, nil, err
-			}
-			model.PinnedFilter = append(model.PinnedFilter, *value)
+			model.PinnedFilter = append(model.PinnedFilter, value)
 		case "FilterSet":
 			if variableName.ValueString() != dashifyFilterSetVariableName {
 				leftovers = append(leftovers, controlPath)
 				continue
 			}
-			value := &dashifyFilterSetControlModel{}
-			if value.Label, err = takeDashifyControlString(control, "label", controlPath); err != nil {
-				return nil, nil, err
+			value := &dashifyFilterSetControlModel{
+				Label:       reader.string("label"),
+				Description: reader.string("description"),
+				Hidden:      reader.bool("hidden"),
 			}
-			if value.Description, err = takeDashifyControlString(control, "description", controlPath); err != nil {
-				return nil, nil, err
-			}
-			if value.Hidden, err = takeDashifyControlBool(control, "hidden", controlPath); err != nil {
-				return nil, nil, err
-			}
-			var filterLeftovers []string
-			if value.Filter, filterLeftovers, err = takeDashifyFilterSetEntries(control, "defaultVariableValue", controlPath); err != nil {
-				return nil, nil, err
-			}
+			filters, filterLeftovers := reader.filterSetEntries("defaultVariableValue")
+			value.Filter = filters
 			model.FilterSet = value
 			leftovers = append(leftovers, filterLeftovers...)
 		default:
 			leftovers = append(leftovers, controlPath)
 			continue
+		}
+		if reader.err != nil {
+			return nil, nil, reader.err
 		}
 		leftovers = append(leftovers, dashifyLeftovers(controlPath, control)...)
 	}
@@ -292,115 +255,120 @@ func parseDashifyControlBar(spec map[string]any) (*dashifyControlBarModel, []str
 	return model, leftovers, nil
 }
 
-func takeDashifyControlString(object map[string]any, key, path string) (types.String, error) {
-	raw, ok := object[key]
-	if !ok {
-		return types.StringNull(), nil
+// A reader consumes modeled fields and retains the first error, so callers can
+// read a complete control while preserving field-order diagnostics.
+type dashifyControlReader struct {
+	object map[string]any
+	path   string
+	err    error
+}
+
+func (r *dashifyControlReader) string(key string) types.String {
+	raw, ok := r.object[key]
+	if !ok || r.err != nil {
+		return types.StringNull()
 	}
 	value, ok := raw.(string)
 	if !ok {
-		return types.StringNull(), fmt.Errorf("%s.%s is %v (%T) rather than a string", path, key, raw, raw)
+		r.err = fmt.Errorf("%s.%s is %v (%T) rather than a string", r.path, key, raw, raw)
+		return types.StringNull()
 	}
-	delete(object, key)
-	return types.StringValue(value), nil
+	delete(r.object, key)
+	return types.StringValue(value)
 }
 
-func takeDashifyControlBool(object map[string]any, key, path string) (types.Bool, error) {
-	raw, ok := object[key]
-	if !ok {
-		return types.BoolNull(), nil
+func (r *dashifyControlReader) bool(key string) types.Bool {
+	raw, ok := r.object[key]
+	if !ok || r.err != nil {
+		return types.BoolNull()
 	}
 	value, ok := raw.(bool)
 	if !ok {
-		return types.BoolNull(), fmt.Errorf("%s.%s is %v (%T) rather than a boolean", path, key, raw, raw)
+		r.err = fmt.Errorf("%s.%s is %v (%T) rather than a boolean", r.path, key, raw, raw)
+		return types.BoolNull()
 	}
-	delete(object, key)
-	return types.BoolValue(value), nil
+	delete(r.object, key)
+	return types.BoolValue(value)
 }
 
-func takeDashifyControlInt64(object map[string]any, key, path string) (types.Int64, error) {
-	raw, ok := object[key]
-	if !ok {
-		return types.Int64Null(), nil
+func (r *dashifyControlReader) int64(key string) types.Int64 {
+	raw, ok := r.object[key]
+	if !ok || r.err != nil {
+		return types.Int64Null()
 	}
 	value, valid := dashifyExactInt64(raw)
 	if !valid {
-		return types.Int64Null(), fmt.Errorf("%s.%s is %v (%T) rather than an integer", path, key, raw, raw)
+		r.err = fmt.Errorf("%s.%s is %v (%T) rather than an integer", r.path, key, raw, raw)
+		return types.Int64Null()
 	}
-	delete(object, key)
-	return types.Int64Value(value), nil
+	delete(r.object, key)
+	return types.Int64Value(value)
 }
 
-func takeDashifyControlStringList(object map[string]any, key, path string) ([]types.String, error) {
-	raw, ok := object[key]
-	if !ok {
-		return nil, nil
+func (r *dashifyControlReader) stringList(key string) []types.String {
+	raw, ok := r.object[key]
+	if !ok || r.err != nil {
+		return nil
 	}
 	values, ok := raw.([]any)
 	if !ok {
-		return nil, fmt.Errorf("%s.%s is %v (%T) rather than a list", path, key, raw, raw)
+		r.err = fmt.Errorf("%s.%s is %v (%T) rather than a list", r.path, key, raw, raw)
+		return nil
 	}
 	result := make([]types.String, len(values))
 	for i, rawValue := range values {
 		value, ok := rawValue.(string)
 		if !ok {
-			return nil, fmt.Errorf("%s.%s.%d is %v (%T) rather than a string", path, key, i, rawValue, rawValue)
+			r.err = fmt.Errorf("%s.%s.%d is %v (%T) rather than a string", r.path, key, i, rawValue, rawValue)
+			return nil
 		}
 		result[i] = types.StringValue(value)
 	}
-	delete(object, key)
-	return result, nil
+	delete(r.object, key)
+	return result
 }
 
-func takeDashifyFilterSetEntries(object map[string]any, key, path string) ([]dashifyFilterSetEntryModel, []string, error) {
-	raw, ok := object[key]
-	if !ok {
-		return nil, nil, nil
+func (r *dashifyControlReader) filterSetEntries(key string) ([]dashifyFilterSetEntryModel, []string) {
+	raw, ok := r.object[key]
+	if !ok || r.err != nil {
+		return nil, nil
 	}
 	values, ok := raw.([]any)
 	if !ok {
-		return nil, nil, fmt.Errorf("%s.%s is %v (%T) rather than a list", path, key, raw, raw)
+		r.err = fmt.Errorf("%s.%s is %v (%T) rather than a list", r.path, key, raw, raw)
+		return nil, nil
 	}
-	if len(values) == 0 {
-		delete(object, key)
-		return nil, nil, nil
-	}
-	result := make([]dashifyFilterSetEntryModel, len(values))
+	var result []dashifyFilterSetEntryModel
 	var leftovers []string
 	for i, rawValue := range values {
-		entryPath := fmt.Sprintf("%s.%s.%d", path, key, i)
+		entryPath := fmt.Sprintf("%s.%s.%d", r.path, key, i)
 		entry, ok := rawValue.(map[string]any)
 		if !ok {
-			return nil, nil, fmt.Errorf("%s is %T rather than an object", entryPath, rawValue)
+			r.err = fmt.Errorf("%s is %T rather than an object", entryPath, rawValue)
+			return nil, nil
 		}
+		reader := dashifyControlReader{object: entry, path: entryPath}
 		filter := dashifyFilterSetEntryModel{}
-		var err error
-		if filter.Key, err = takeDashifyControlString(entry, "key", entryPath); err != nil {
-			return nil, nil, err
+		filter.Property = reader.string("key")
+		if reader.err == nil && filter.Property.ValueString() == "" {
+			reader.err = fmt.Errorf("%s.key must be a non-empty string", entryPath)
 		}
-		if filter.Key.IsNull() || filter.Key.ValueString() == "" {
-			return nil, nil, fmt.Errorf("%s.key must be a non-empty string", entryPath)
+		filter.Values = reader.stringList("values")
+		if reader.err == nil && filter.Values == nil {
+			reader.err = fmt.Errorf("%s.values must be a list", entryPath)
 		}
-		if filter.Values, err = takeDashifyControlStringList(entry, "values", entryPath); err != nil {
-			return nil, nil, err
-		}
-		if filter.Values == nil {
-			return nil, nil, fmt.Errorf("%s.values must be a list", entryPath)
-		}
-		if filter.Negated, err = takeDashifyControlBool(entry, "negated", entryPath); err != nil {
-			return nil, nil, err
-		}
-		if filter.Disabled, err = takeDashifyControlBool(entry, "disabled", entryPath); err != nil {
-			return nil, nil, err
-		}
-		if filter.MatchMissing, err = takeDashifyControlBool(entry, "matchMissing", entryPath); err != nil {
-			return nil, nil, err
+		filter.Negated = reader.bool("negated")
+		filter.Disabled = reader.bool("disabled")
+		filter.MatchMissing = reader.bool("matchMissing")
+		if reader.err != nil {
+			r.err = reader.err
+			return nil, nil
 		}
 		// The filter entry itself is an independently modeled object, so its
 		// unknown fields are reported at the precise nested path.
-		result[i] = filter
+		result = append(result, filter)
 		leftovers = append(leftovers, dashifyLeftovers(entryPath, entry)...)
 	}
-	delete(object, key)
-	return result, leftovers, nil
+	delete(r.object, key)
+	return result, leftovers
 }

@@ -23,17 +23,17 @@ type dashifyControlBarModel struct {
 }
 
 type dashifyTimeRangeControlModel struct {
-	Label                types.String `tfsdk:"label"`
-	Description          types.String `tfsdk:"description"`
-	Hidden               types.Bool   `tfsdk:"hidden"`
-	DefaultVariableValue types.String `tfsdk:"default_variable_value"`
+	Label       types.String `tfsdk:"label"`
+	Description types.String `tfsdk:"description"`
+	Hidden      types.Bool   `tfsdk:"hidden"`
+	Default     types.String `tfsdk:"default"`
 }
 
 type dashifyDensityControlModel struct {
-	Label                types.String `tfsdk:"label"`
-	Description          types.String `tfsdk:"description"`
-	Hidden               types.Bool   `tfsdk:"hidden"`
-	DefaultVariableValue types.Int64  `tfsdk:"default_variable_value"`
+	Label       types.String `tfsdk:"label"`
+	Description types.String `tfsdk:"description"`
+	Hidden      types.Bool   `tfsdk:"hidden"`
+	Default     types.Int64  `tfsdk:"default"`
 }
 
 type dashifyPinnedFilterControlModel struct {
@@ -41,8 +41,8 @@ type dashifyPinnedFilterControlModel struct {
 	Label                      types.String   `tfsdk:"label"`
 	Description                types.String   `tfsdk:"description"`
 	Hidden                     types.Bool     `tfsdk:"hidden"`
-	Key                        types.String   `tfsdk:"key"`
-	DefaultVariableValue       []types.String `tfsdk:"default_variable_value"`
+	Property                   types.String   `tfsdk:"property"`
+	Default                    []types.String `tfsdk:"default"`
 	SuggestedValues            []types.String `tfsdk:"suggested_values"`
 	OnlySuggestPreferredValues types.Bool     `tfsdk:"only_suggest_preferred_values"`
 	MatchMissing               types.Bool     `tfsdk:"match_missing"`
@@ -58,7 +58,7 @@ type dashifyFilterSetControlModel struct {
 }
 
 type dashifyFilterSetEntryModel struct {
-	Key          types.String   `tfsdk:"key"`
+	Property     types.String   `tfsdk:"property"`
 	Values       []types.String `tfsdk:"values"`
 	Negated      types.Bool     `tfsdk:"negated"`
 	Disabled     types.Bool     `tfsdk:"disabled"`
@@ -76,4 +76,11 @@ type dashifyDashboardContainerModel struct {
 	Layout        *dashifyLayoutModel  `tfsdk:"layout"`
 	TemplateID    types.String         `tfsdk:"template_id"`
 	InlineContent jsontypes.Normalized `tfsdk:"inline_content"`
+}
+
+func (m dashifyPinnedFilterControlModel) effectiveVariableName() types.String {
+	if m.VariableName.IsNull() {
+		return m.Property
+	}
+	return m.VariableName
 }

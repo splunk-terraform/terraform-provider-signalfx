@@ -135,29 +135,27 @@ resource "signalfx_observability_dashboard" "controls" {
 
   control_bar = {
     time_range = {
-      label                  = "Time Range"
-      default_variable_value = "-15m"
+      label   = "Time Range"
+      default = "-15m"
     }
 
     density = {
-      default_variable_value = 60
+      default = 60
     }
 
     pinned_filter = [{
-      variable_name          = "service"
-      key                    = "service.name"
-      default_variable_value = ["checkout"]
-      suggested_values       = ["checkout", "payments"]
-      required               = true
-      application_mode       = "add"
+      property         = "service.name"
+      label            = "Service"
+      default          = ["checkout"]
+      suggested_values = ["checkout", "payments"]
+      required         = true
+      application_mode = "add"
     }]
 
     filter_set = {
-      hidden = false
-
       filter = [{
-        key    = "deployment.environment"
-        values = ["prod"]
+        property = "deployment.environment"
+        values   = ["prod"]
       }]
     }
   }
@@ -172,6 +170,8 @@ resource "signalfx_observability_dashboard" "controls" {
   }]
 }
 ```
+
+A pinned filter's required `property` names the dimension or property to filter. Its optional `variable_name` defaults to `property` and provides a separate control identity when set explicitly. Control identities must be unique, so duplicate properties without identity overrides are rejected. Distinct identities can target the same property, but their selections do not combine: the later active filter wins.
 
 Each `container` represents one panel and needs exactly one content source: `template_id` for a reusable Template or `inline_content` for inline JSON.
 
@@ -231,7 +231,7 @@ Optional:
 
 Optional:
 
-- `default_variable_value` (Number) Default chart resolution in seconds. Supported values are 30, 60, 120, and 240.
+- `default` (Number) Default chart resolution in seconds. Supported values are 30, 60, 120, and 240.
 - `description` (String) The density control description.
 - `hidden` (Boolean) Whether to hide the density control.
 - `label` (String) The density control label.
@@ -252,7 +252,7 @@ Optional:
 
 Required:
 
-- `key` (String) Property to filter.
+- `property` (String) Property to filter.
 - `values` (List of String) Values for the filter. An empty list has no effect.
 
 Optional:
@@ -268,20 +268,20 @@ Optional:
 
 Required:
 
-- `variable_name` (String) Unique control identity. TIME, DENSITY, and FILTERS are reserved.
+- `property` (String) Telemetry property to filter, such as service.name or sf_service.
 
 Optional:
 
 - `application_mode` (String) How the filter is applied: add, override, or ignore.
-- `default_variable_value` (List of String) Default selected filter values.
+- `default` (List of String) Default selected filter values.
 - `description` (String) Control description.
 - `hidden` (Boolean) Whether to hide this control.
-- `key` (String) Property to filter. Defaults to variable_name.
 - `label` (String) Control label.
 - `match_missing` (Boolean) Whether values missing the property should match.
 - `only_suggest_preferred_values` (Boolean) Whether only preferred suggestions should be offered.
 - `required` (Boolean) Whether a visible filter must have a selected value before charts render.
 - `suggested_values` (List of String) Preferred filter suggestions.
+- `variable_name` (String) Unique control identity. Defaults to property. TIME, DENSITY, and FILTERS are reserved.
 
 
 <a id="nestedatt--control_bar--time_range"></a>
@@ -289,7 +289,7 @@ Optional:
 
 Optional:
 
-- `default_variable_value` (String) Default time-range value, such as -15m, -PT15M, or an absolute time range.
+- `default` (String) Default time-range value, such as -15m, -PT15M, or an absolute time range.
 - `description` (String) The time-range control description.
 - `hidden` (Boolean) Whether to hide the time-range control.
 - `label` (String) The time-range control label.

@@ -17,6 +17,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-testing/config"
 	testresource "github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/tfjsonpath"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 	"github.com/signalfx/signalfx-go/template"
 	"github.com/stretchr/testify/assert"
@@ -134,10 +137,26 @@ func TestResourceObservabilityDashboardRejectsInvalidPlans(t *testing.T) {
   title = "Service overview"
   control_bar = {
     pinned_filter = [
-      { variable_name = "service" },
-      { variable_name = "service" },
+      { property = "service.name", variable_name = "service" },
+      { property = "service.component", variable_name = "service" },
     ]
   }
+}`,
+			want: "Duplicate control variable name",
+		},
+		{
+			name: "duplicate defaulted pinned identities",
+			config: `resource "signalfx_observability_dashboard" "test" {
+  title = "Service overview"
+  control_bar = { pinned_filter = [{ property = "service.name" }, { property = "service.name" }] }
+}`,
+			want: "Duplicate control variable name",
+		},
+		{
+			name: "explicit and defaulted identity collision",
+			config: `resource "signalfx_observability_dashboard" "test" {
+  title = "Service overview"
+  control_bar = { pinned_filter = [{ property = "service.name" }, { property = "service.component", variable_name = "service.name" }] }
 }`,
 			want: "Duplicate control variable name",
 		},
@@ -159,13 +178,20 @@ func TestResourceObservabilityDashboardRejectsInvalidPlans(t *testing.T) {
 }
 
 func TestResourceObservabilityDashboardPlansWithUnknownValues(t *testing.T) {
+	writes := 0
+	handlers := map[string]http.Handler{
+		"POST /v2/template": http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			writes++
+			http.Error(w, "invalid computed Template ID must be rejected before writing", http.StatusInternalServerError)
+		}),
+	}
 	testresource.UnitTest(t, testresource.TestCase{
 		IsUnitTest: true,
 		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
 			tfversion.SkipBelow(tfversion.Version1_5_0),
 		},
 		ProtoV6ProviderFactories: fwtest.NewMockProto6Server(
-			t, nil, fwtest.WithMockResources(NewResourceObservabilityDashboard),
+			t, handlers, fwtest.WithMockResources(NewResourceObservabilityDashboard),
 		),
 		Steps: []testresource.TestStep{
 			{
@@ -177,7 +203,11 @@ func TestResourceObservabilityDashboardPlansWithUnknownValues(t *testing.T) {
 resource "signalfx_observability_dashboard" "test" {
   title     = "Unknown containers"
   container = [for id in terraform_data.ids.output : { template_id = id }]
+  control_bar = { pinned_filter = [{ property = terraform_data.ids.output[0] }] }
 }`,
+				ConfigPlanChecks: testresource.ConfigPlanChecks{PostApplyPreRefresh: []plancheck.PlanCheck{
+					plancheck.ExpectUnknownValue("signalfx_observability_dashboard.test", tfjsonpath.New("control_bar").AtMapKey("pinned_filter").AtSliceIndex(0).AtMapKey("variable_name")),
+				}},
 			},
 			{
 				PlanOnly: true,
@@ -190,8 +220,19 @@ resource "signalfx_observability_dashboard" "test" {
 }`,
 				ExpectError: regexp.MustCompile("Invalid panel content"),
 			},
+			{
+				Config: `resource "terraform_data" "id" {
+  input = ""
+}
+resource "signalfx_observability_dashboard" "test" {
+  title = "Computed panel content"
+  container = [{ template_id = terraform_data.id.output }]
+}`,
+				ExpectError: regexp.MustCompile("template_id must be non-empty when set"),
+			},
 		},
 	})
+	assert.Zero(t, writes)
 }
 
 func TestResourceObservabilityDashboardUpdatesModeledImport(t *testing.T) {
@@ -201,12 +242,14 @@ func TestResourceObservabilityDashboardUpdatesModeledImport(t *testing.T) {
 		Title: "Imported", Spec: json.RawMessage(`{"<Dashboard>":[],"layout":{"saved":{"_":{"items":[]}}}}`),
 		Metadata: &template.Metadata{RootElement: &root},
 	}
+	writes := 0
 	handlers := map[string]http.Handler{
 		"GET /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			assert.Equal(t, imported.ID, r.PathValue("id"))
 			assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: &imported}))
 		}),
 		"PUT /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			writes++
 			assert.Equal(t, imported.ID, r.PathValue("id"))
 			var write template.CreateUpdateTemplateRequest
 			if err := json.NewDecoder(r.Body).Decode(&write); err != nil {
@@ -250,9 +293,23 @@ func TestResourceObservabilityDashboardUpdatesModeledImport(t *testing.T) {
 			{Config: importedConfig, PlanOnly: true},
 			{Config: changedConfig, Check: testresource.TestCheckResourceAttr("signalfx_observability_dashboard.test", "title", "Changed")},
 			{Config: changedConfig, PlanOnly: true},
+			{
+				PreConfig: func() {
+					assert.Equal(t, 1, writes)
+					imported.Spec = json.RawMessage(`{"<Dashboard>":[],"futureField":true}`)
+				},
+				Config: `resource "signalfx_observability_dashboard" "test" {
+  title = "Changed again"
+}`,
+				PlanOnly: true,
+				// The non-refresh plan still sees the old write marker; only the refresh plan revokes it.
+				ExpectNonEmptyPlan: true,
+				ExpectError:        regexp.MustCompile(observabilityDashboardUnsafeUpdateSummary),
+			},
 			{Config: changedConfig, Destroy: true},
 		},
 	})
+	assert.Equal(t, 1, writes, "refresh must revoke permission to overwrite newly unmodeled fields")
 }
 
 func TestResourceObservabilityDashboardRejectsUnmodeledImportUpdateDuringPlan(t *testing.T) {
@@ -331,88 +388,6 @@ func TestResourceObservabilityDashboardUpdateRejectsUnknownWriteState(t *testing
 	assert.Equal(t, observabilityDashboardUnsafeUpdateSummary, response.Diagnostics.Errors()[0].Summary())
 }
 
-func TestResourceObservabilityDashboardGeneratedConfig(t *testing.T) {
-	chartRoot := template.RootElementChart
-	dashboardRoot := template.RootElementDashboard
-	var chart, dashboard *template.Template
-	handlers := map[string]http.Handler{
-		"POST /v2/template": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			var write template.CreateUpdateTemplateRequest
-			if err := json.NewDecoder(r.Body).Decode(&write); err != nil {
-				t.Errorf("decode create request: %v", err)
-				http.Error(w, "invalid request", http.StatusBadRequest)
-				return
-			}
-			assert.Equal(t, fwdashify.ObservabilityTemplateRecordType, write.Type)
-			var record *template.Template
-			switch {
-			case write.Metadata.RootElement != nil && *write.Metadata.RootElement == chartRoot:
-				assert.Equal(t, "Request rate", write.Title)
-				record = &template.Template{ID: "chart-1", Type: write.Type, Title: write.Title, Spec: write.Spec, Metadata: &template.Metadata{RootElement: &chartRoot}}
-				chart = record
-			case write.Metadata.RootElement != nil && *write.Metadata.RootElement == dashboardRoot:
-				assert.Equal(t, "Complete layout", write.Title)
-				assert.Contains(t, string(write.Spec), `"controlBar"`)
-				assert.Equal(t, []string{"/v2/template/chart-1"}, write.Metadata.Imports)
-				record = &template.Template{ID: "dashboard-1", Type: write.Type, Title: write.Title, Spec: write.Spec, Metadata: &template.Metadata{RootElement: &dashboardRoot, Imports: write.Metadata.Imports}}
-				dashboard = record
-			default:
-				t.Errorf("unexpected root element %v", write.Metadata.RootElement)
-				http.Error(w, "unexpected root element", http.StatusBadRequest)
-				return
-			}
-			w.WriteHeader(http.StatusCreated)
-			assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: record}))
-		}),
-		"GET /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			var record *template.Template
-			switch r.PathValue("id") {
-			case "chart-1":
-				record = chart
-			case "dashboard-1":
-				record = dashboard
-			}
-			if record == nil {
-				http.Error(w, "template not found", http.StatusNotFound)
-				return
-			}
-			assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: record}))
-		}),
-		"DELETE /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Contains(t, []string{"chart-1", "dashboard-1"}, r.PathValue("id"))
-			w.WriteHeader(http.StatusNoContent)
-		}),
-	}
-	testresource.UnitTest(t, testresource.TestCase{
-		IsUnitTest: true,
-		TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-			tfversion.SkipBelow(tfversion.Version1_5_0),
-		},
-		ProtoV6ProviderFactories: fwtest.NewMockProto6Server(
-			t,
-			handlers,
-			fwtest.WithMockResources(NewResourceObservabilityDashboard, fwdashify.NewResourceObservabilityTemplate),
-		),
-		Steps: []testresource.TestStep{
-			{
-				ConfigFile: config.StaticFile("testdata/observability_dashboard_layout.tf"),
-				Check: testresource.ComposeAggregateTestCheckFunc(
-					testresource.TestCheckResourceAttr("signalfx_observability_dashboard.dashboard_layout", "title", "Complete layout"),
-					testresource.TestCheckResourceAttr("signalfx_observability_dashboard.dashboard_layout", "control_bar.time_range.default_variable_value", "-PT15M"),
-					testresource.TestCheckResourceAttr("signalfx_observability_dashboard.dashboard_layout", "control_bar.pinned_filter.#", "2"),
-					testresource.TestCheckResourceAttr("signalfx_observability_dashboard.dashboard_layout", "container.0.layout.width", "1/2"),
-				),
-			},
-			{
-				ResourceName:    "signalfx_observability_dashboard.dashboard_layout",
-				ImportState:     true,
-				ImportStateKind: testresource.ImportBlockWithID,
-				GenerateConfig:  true,
-			},
-		},
-	})
-}
-
 func TestResourceObservabilityDashboardInlineContentLifecycleAndGeneratedConfig(t *testing.T) {
 	root := template.RootElementDashboard
 	var record *template.Template
@@ -480,6 +455,7 @@ func TestValidateDashifyTemplate(t *testing.T) {
 	}{
 		"empty template id":              {model: dashifyDashboardContainerModel{TemplateID: types.StringValue("")}, wantError: true, wantMessage: "non-empty"},
 		"malformed content":              {model: dashifyDashboardContainerModel{InlineContent: jsontypes.NewNormalizedValue(`{"<Chart>":`)}, wantError: true, wantMessage: "valid JSON"},
+		"multiple JSON values":           {model: dashifyDashboardContainerModel{InlineContent: jsontypes.NewNormalizedValue(`{"<Chart>":[]} {}`)}, wantError: true, wantMessage: "multiple JSON values"},
 		"non-object content":             {model: dashifyDashboardContainerModel{InlineContent: jsontypes.NewNormalizedValue(`[]`)}, wantError: true, wantMessage: "JSON object"},
 		"content with multiple elements": {model: dashifyDashboardContainerModel{InlineContent: jsontypes.NewNormalizedValue(`{"<Chart>":[],"<Dashboard>":[]}`)}, wantError: true, wantMessage: "multiple dashboard element keys"},
 		"content import element":         {model: dashifyDashboardContainerModel{InlineContent: jsontypes.NewNormalizedValue(`{"<$import.widget0>":[]}`)}, wantError: true, wantMessage: "use template_id"},
@@ -585,9 +561,10 @@ func TestDashifyDashboardSpecWarnsAboutUnmodeledFields(t *testing.T) {
 	root := template.RootElementDashboard
 	spec := json.RawMessage(`{
 		"title":"Dashboard",
-		"<Dashboard>":[{"<Panel>":[{"<$import.widget0>":[] ,"futureContent":{"preserve":true}}],"futureContainer":true,"futureEmpty":{}}],
+		"<Dashboard>":[{"<Panel>":[{"<$import.widget0>":[{"key":"env","value":"prod"}],"futureContent":{"preserve":true}}],"futureContainer":true,"futureEmpty":{}}],
 		"layout":{"gap":{},"saved":{"_":{"items":[{"id":"_.0","order":0,"absolute":true,"x":[1,2],"w":{"value":"1/2","futureEmpty":{}},"minW":2}]}}},
-		"$import:widget0":"/v2/template/chart-id"
+		"$import:widget0":"/v2/template/chart-id",
+		"$import:orphan":"/v2/template/orphan-id"
 	}`)
 	model, diags := parseDashboardTemplate(&template.Template{Title: "Dashboard", Spec: spec, Metadata: &template.Metadata{RootElement: &root}})
 	require.False(t, diags.HasError(), diags)
@@ -597,7 +574,7 @@ func TestDashifyDashboardSpecWarnsAboutUnmodeledFields(t *testing.T) {
 	warnings := diags.Warnings()
 	require.Len(t, warnings, 1)
 	assert.Nil(t, dashboardKnownWriteMarker(diags))
-	for _, path := range []string{"container.0.futureContainer", "container.0.futureContent.preserve", "container.0.futureEmpty", "layout._.0.order", "layout._.0.absolute", "layout._.0.x", "layout._.0.w.value", "layout._.0.w.futureEmpty", "layout.gap"} {
+	for _, path := range []string{"container.0.futureContainer", "container.0.futureContent.preserve", "container.0.futureEmpty", "container.0.<$import.widget0>", "$import:orphan", "layout._.0.order", "layout._.0.absolute", "layout._.0.x", "layout._.0.w.value", "layout._.0.w.futureEmpty", "layout.gap"} {
 		assert.Contains(t, warnings[0].Detail(), path)
 	}
 	assert.NotContains(t, warnings[0].Detail(), "layout._.0.minW")
@@ -769,6 +746,7 @@ func TestResourceObservabilityDashboardUnitTest(t *testing.T) {
 				record = chart
 			case write.Metadata.RootElement != nil && *write.Metadata.RootElement == dashboardRoot:
 				assert.Equal(t, "Service overview", write.Title)
+				assert.Contains(t, string(write.Spec), `"controlBar"`)
 				assert.Equal(t, []string{"/v2/template/chart-1"}, write.Metadata.Imports)
 				dashboard = &template.Template{ID: "dashboard-1", Type: write.Type, Title: write.Title, Spec: write.Spec, Metadata: &template.Metadata{RootElement: &dashboardRoot, Imports: write.Metadata.Imports}}
 				record = dashboard
@@ -802,7 +780,12 @@ func TestResourceObservabilityDashboardUnitTest(t *testing.T) {
 				http.Error(w, "invalid update request", http.StatusBadRequest)
 				return
 			}
-			assert.Equal(t, "Updated service overview", write.Title)
+			if write.Title == "Service overview" {
+				assert.Contains(t, string(write.Spec), `"variableName":"service.component"`)
+			} else {
+				assert.Equal(t, "Updated service overview", write.Title)
+				assert.NotContains(t, string(write.Spec), `"controlBar"`)
+			}
 			assert.Equal(t, []string{"/v2/template/chart-1"}, write.Metadata.Imports)
 			dashboard = &template.Template{ID: "dashboard-1", Type: write.Type, Title: write.Title, Spec: write.Spec, Metadata: &template.Metadata{RootElement: &dashboardRoot, Imports: write.Metadata.Imports}}
 			assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: dashboard}))
@@ -817,7 +800,7 @@ func TestResourceObservabilityDashboardUnitTest(t *testing.T) {
 		testresource.TestCase{
 			IsUnitTest: true,
 			TerraformVersionChecks: []tfversion.TerraformVersionCheck{
-				tfversion.RequireAbove(tfversion.Version0_12_26),
+				tfversion.SkipBelow(tfversion.Version1_5_0),
 			},
 			ProtoV6ProviderFactories: fwtest.NewMockProto6Server(
 				t,
@@ -830,7 +813,18 @@ func TestResourceObservabilityDashboardUnitTest(t *testing.T) {
 					Check: testresource.ComposeAggregateTestCheckFunc(
 						testresource.TestCheckResourceAttrSet("signalfx_observability_dashboard.test", "id"),
 						testresource.TestCheckResourceAttr("signalfx_observability_dashboard.test", "title", "Service overview"),
-						testresource.TestCheckResourceAttr("signalfx_observability_dashboard.test", "container.0.layout.width", "6/12"),
+						testresource.TestCheckResourceAttr("signalfx_observability_dashboard.test", "control_bar.time_range.default", "-PT15M"),
+						testresource.TestCheckResourceAttr("signalfx_observability_dashboard.test", "control_bar.density.default", "60"),
+						testresource.TestCheckResourceAttr("signalfx_observability_dashboard.test", "control_bar.pinned_filter.#", "2"),
+						testresource.TestCheckResourceAttr("signalfx_observability_dashboard.test", "control_bar.pinned_filter.0.variable_name", "service.name"),
+						testresource.TestCheckResourceAttr("signalfx_observability_dashboard.test", "control_bar.pinned_filter.0.property", "service.name"),
+						testresource.TestCheckResourceAttr("signalfx_observability_dashboard.test", "control_bar.pinned_filter.1.variable_name", "environment"),
+						testresource.TestCheckResourceAttr("signalfx_observability_dashboard.test", "control_bar.pinned_filter.1.property", "deployment.environment"),
+						testresource.TestCheckResourceAttr("signalfx_observability_dashboard.test", "control_bar.filter_set.filter.#", "2"),
+						testresource.TestCheckResourceAttr("signalfx_observability_dashboard.test", "container.0.layout.width", "1/2"),
+						testresource.TestCheckResourceAttr("signalfx_observability_dashboard.test", "container.0.layout.height", "20"),
+						testresource.TestCheckResourceAttr("signalfx_observability_dashboard.test", "container.0.layout.min_width", "4"),
+						testresource.TestCheckResourceAttr("signalfx_observability_dashboard.test", "container.0.layout.min_height", "2"),
 						testresource.TestCheckResourceAttrPair(
 							"signalfx_observability_dashboard.test", "container.0.template_id",
 							"signalfx_observability_template.chart", "id",
@@ -838,10 +832,30 @@ func TestResourceObservabilityDashboardUnitTest(t *testing.T) {
 					),
 				},
 				{
+					ResourceName:    "signalfx_observability_dashboard.test",
+					ImportState:     true,
+					ImportStateKind: testresource.ImportBlockWithID,
+					GenerateConfig:  true,
+					ImportPlanChecks: testresource.ImportPlanChecks{PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectKnownValue("signalfx_observability_dashboard.generated", tfjsonpath.New("control_bar").AtMapKey("pinned_filter").AtSliceIndex(0).AtMapKey("variable_name"), knownvalue.StringExact("service.name")),
+						plancheck.ExpectKnownValue("signalfx_observability_dashboard.generated", tfjsonpath.New("control_bar").AtMapKey("pinned_filter").AtSliceIndex(1).AtMapKey("variable_name"), knownvalue.StringExact("environment")),
+					}},
+				},
+				{
+					ConfigFile:      config.StaticFile("testdata/00_observability_dashboard.tf"),
+					ConfigVariables: config.Variables{"filter_property": config.StringVariable("service.component")},
+					Check: testresource.ComposeAggregateTestCheckFunc(
+						testresource.TestCheckResourceAttr("signalfx_observability_dashboard.test", "control_bar.pinned_filter.0.property", "service.component"),
+						testresource.TestCheckResourceAttr("signalfx_observability_dashboard.test", "control_bar.pinned_filter.0.variable_name", "service.component"),
+						testresource.TestCheckResourceAttr("signalfx_observability_dashboard.test", "control_bar.pinned_filter.1.variable_name", "environment"),
+					),
+				},
+				{
 					ConfigFile: config.StaticFile("testdata/01_observability_dashboard_updated.tf"),
 					Check: testresource.ComposeAggregateTestCheckFunc(
 						testresource.TestCheckResourceAttrSet("signalfx_observability_dashboard.test", "id"),
 						testresource.TestCheckResourceAttr("signalfx_observability_dashboard.test", "title", "Updated service overview"),
+						testresource.TestCheckNoResourceAttr("signalfx_observability_dashboard.test", "control_bar.time_range.default"),
 						testresource.TestCheckNoResourceAttr("signalfx_observability_dashboard.test", "container.0.layout.width"),
 						testresource.TestCheckResourceAttrPair(
 							"signalfx_observability_dashboard.test", "container.0.template_id",

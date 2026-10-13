@@ -4,6 +4,7 @@
 package dashboard
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
@@ -12,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
@@ -26,7 +28,7 @@ func dashifyControlBarAttribute() schema.SingleNestedAttribute {
 				Description: "The dashboard time-range control. Its reserved variable name is always TIME.",
 				Attributes: func() map[string]schema.Attribute {
 					attributes := dashifyCommonControlAttributes("time-range")
-					attributes["default_variable_value"] = schema.StringAttribute{
+					attributes["default"] = schema.StringAttribute{
 						Optional:    true,
 						Description: "Default time-range value, such as -15m, -PT15M, or an absolute time range.",
 						Validators:  []validator.String{stringvalidator.LengthAtLeast(1)},
@@ -39,7 +41,7 @@ func dashifyControlBarAttribute() schema.SingleNestedAttribute {
 				Description: "The chart density control. Its reserved variable name is always DENSITY.",
 				Attributes: func() map[string]schema.Attribute {
 					attributes := dashifyCommonControlAttributes("density")
-					attributes["default_variable_value"] = schema.Int64Attribute{
+					attributes["default"] = schema.Int64Attribute{
 						Optional:    true,
 						Description: "Default chart resolution in seconds. Supported values are 30, 60, 120, and 240.",
 						Validators:  []validator.Int64{int64validator.OneOf(30, 60, 120, 240)},
@@ -54,20 +56,22 @@ func dashifyControlBarAttribute() schema.SingleNestedAttribute {
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"variable_name": schema.StringAttribute{
-							Required:    true,
-							Description: "Unique control identity. TIME, DENSITY, and FILTERS are reserved.",
-							Validators:  []validator.String{stringvalidator.LengthAtLeast(1)},
+							Optional:      true,
+							Computed:      true,
+							Description:   "Unique control identity. Defaults to property. TIME, DENSITY, and FILTERS are reserved.",
+							Validators:    []validator.String{stringvalidator.LengthAtLeast(1)},
+							PlanModifiers: []planmodifier.String{pinnedFilterVariableNameDefault{}},
 						},
 						"label":       optionalControlString("Control label."),
 						"description": optionalControlString("Control description."),
 						"hidden":      schema.BoolAttribute{Optional: true, Description: "Whether to hide this control."},
-						"key": schema.StringAttribute{
-							Optional:    true,
-							Description: "Property to filter. Defaults to variable_name.",
+						"property": schema.StringAttribute{
+							Required:    true,
+							Description: "Telemetry property to filter, such as service.name or sf_service.",
 							Validators:  []validator.String{stringvalidator.LengthAtLeast(1)},
 						},
-						"default_variable_value": optionalStringList("Default selected filter values."),
-						"suggested_values":       optionalStringList("Preferred filter suggestions."),
+						"default":          optionalStringList("Default selected filter values."),
+						"suggested_values": optionalStringList("Preferred filter suggestions."),
 						"only_suggest_preferred_values": schema.BoolAttribute{
 							Optional:    true,
 							Description: "Whether only preferred suggestions should be offered.",
@@ -99,7 +103,7 @@ func dashifyControlBarAttribute() schema.SingleNestedAttribute {
 						Validators:  []validator.List{listvalidator.SizeAtLeast(1)},
 						NestedObject: schema.NestedAttributeObject{
 							Attributes: map[string]schema.Attribute{
-								"key": schema.StringAttribute{
+								"property": schema.StringAttribute{
 									Required:    true,
 									Description: "Property to filter.",
 									Validators:  []validator.String{stringvalidator.LengthAtLeast(1)},
@@ -168,21 +172,51 @@ func validateDashifyControlBar(resp *resource.ValidateConfigResponse, controlBar
 
 	seen := make(map[string]struct{}, len(model.PinnedFilter))
 	for i, pinned := range model.PinnedFilter {
-		namePath := controlBarPath.AtName("pinned_filter").AtListIndex(i).AtName("variable_name")
-		if pinned.VariableName.IsNull() || pinned.VariableName.IsUnknown() || pinned.VariableName.ValueString() == "" {
+		filterPath := controlBarPath.AtName("pinned_filter").AtListIndex(i)
+		if !pinned.Property.IsUnknown() && pinned.Property.ValueString() == "" {
+			resp.Diagnostics.AddAttributeError(filterPath.AtName("property"), "Invalid filter property", "property must be non-empty")
 			continue
 		}
-		name := pinned.VariableName.ValueString()
+		namePath := filterPath.AtName("variable_name")
+		if pinned.VariableName.IsNull() {
+			namePath = filterPath.AtName("property")
+		}
+		variableName := pinned.effectiveVariableName()
+		if variableName.IsUnknown() {
+			continue
+		}
+		name := variableName.ValueString()
+		if name == "" {
+			resp.Diagnostics.AddAttributeError(namePath, "Invalid control variable name", "variable_name must be non-empty when set")
+			continue
+		}
 		if name == dashifyTimeRangeVariableName || name == dashifyDensityVariableName || name == dashifyFilterSetVariableName {
 			resp.Diagnostics.AddAttributeError(namePath, "Reserved control variable name", fmt.Sprintf("%q is reserved for the dashboard singleton controls", name))
 			continue
 		}
 		if _, exists := seen[name]; exists {
-			resp.Diagnostics.AddAttributeError(namePath, "Duplicate control variable name", fmt.Sprintf("another pinned_filter already uses variable_name %q", name))
+			resp.Diagnostics.AddAttributeError(namePath, "Duplicate control variable name", fmt.Sprintf("another pinned_filter already uses control identity %q; variable_name defaults to property", name))
 			continue
 		}
 		seen[name] = struct{}{}
 	}
+}
+
+type pinnedFilterVariableNameDefault struct{}
+
+func (pinnedFilterVariableNameDefault) Description(context.Context) string {
+	return "Defaults the control identity to its property."
+}
+
+func (m pinnedFilterVariableNameDefault) MarkdownDescription(ctx context.Context) string {
+	return m.Description(ctx)
+}
+
+func (pinnedFilterVariableNameDefault) PlanModifyString(ctx context.Context, req planmodifier.StringRequest, resp *planmodifier.StringResponse) {
+	if !req.ConfigValue.IsNull() || req.Plan.Raw.IsNull() {
+		return
+	}
+	resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, req.Path.ParentPath().AtName("property"), &resp.PlanValue)...)
 }
 
 func dashboardNonEmptyStringListValidators() []validator.List {

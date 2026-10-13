@@ -50,7 +50,7 @@ func buildDashboardSpec(model observabilityDashboardModel) (json.RawMessage, []s
 	var imports []string
 	for i := range model.Container {
 		id := fmt.Sprintf("_.%d", i)
-		child, reference, err := buildDashifyPanelChild(spec, &model.Container[i], id)
+		child, reference, err := buildDashifyPanelChild(spec, model.Container[i], id)
 		if err != nil {
 			return nil, nil, fmt.Errorf("container %s template: %w", id, err)
 		}
@@ -67,18 +67,12 @@ func buildDashboardSpec(model observabilityDashboardModel) (json.RawMessage, []s
 	spec[dashifyDashboardElement] = children
 	spec["layout"] = map[string]any{"saved": map[string]any{"_": map[string]any{"items": items}}}
 	raw, err := json.Marshal(spec)
-	if err != nil {
-		return nil, nil, fmt.Errorf("marshal dashboard spec: %w", err)
-	}
-	return raw, imports, nil
+	return raw, imports, err
 }
 
 // Wraps an imported Template or opaque inline content in a Panel; only
 // imports add API metadata, signaled by a non-empty reference.
-func buildDashifyPanelChild(spec map[string]any, model *dashifyDashboardContainerModel, id string) (map[string]any, string, error) {
-	if model == nil {
-		return nil, "", fmt.Errorf("template_id or inline_content is required")
-	}
+func buildDashifyPanelChild(spec map[string]any, model dashifyDashboardContainerModel, id string) (map[string]any, string, error) {
 	if model.TemplateID.IsUnknown() || model.InlineContent.IsUnknown() {
 		return nil, "", fmt.Errorf("template_id and inline_content must be known before writing")
 	}
