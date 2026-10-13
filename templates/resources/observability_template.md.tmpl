@@ -1,12 +1,12 @@
 ---
 page_title: "Splunk Observability Cloud: signalfx_observability_template"
 description: |-
-  Manages a chart or other Observability Template.
+  Manages an Observability Template using a JSON specification.
 ---
 
 # Resource: signalfx_observability_template
 
-Use this resource for a Template, such as a chart. Set `title`, `root_element`, and `spec`. The provider finds referenced Template IDs in the top-level `$import:*` entries in `spec`. Templates saved in the dashboard UI usually need no `metadata`.
+Use this resource when the provider's dedicated resources do not support the chart or dashboard features you need. Set `title`, `root_element`, and `spec`. The provider finds referenced Template IDs in the top-level `$import:*` entries in `spec`. Templates saved in the dashboard UI usually need no `metadata`.
 
 ## Example
 
