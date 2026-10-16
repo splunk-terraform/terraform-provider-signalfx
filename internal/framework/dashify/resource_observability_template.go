@@ -414,7 +414,7 @@ func observabilityTemplateImportsFromSpec(raw string) ([]string, error) {
 	sort.Strings(keys)
 
 	imports := make([]string, 0, len(keys))
-	seen := make(map[string]bool, len(keys))
+	seen := make(map[string]struct{}, len(keys))
 	for _, key := range keys {
 		var reference string
 		if err := json.Unmarshal(spec[key], &reference); err != nil {
@@ -423,9 +423,9 @@ func observabilityTemplateImportsFromSpec(raw string) ([]string, error) {
 		if _, ok := ObservabilityTemplateIDFromReference(reference); !ok {
 			return nil, fmt.Errorf("%q must reference a Template at %s<ID>, got %q", key, observabilityTemplateReferencePrefix, reference)
 		}
-		if !seen[reference] {
+		if _, exists := seen[reference]; !exists {
 			imports = append(imports, reference)
-			seen[reference] = true
+			seen[reference] = struct{}{}
 		}
 	}
 	return imports, nil
