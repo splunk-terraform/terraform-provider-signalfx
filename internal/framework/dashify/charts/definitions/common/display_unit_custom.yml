@@ -1,0 +1,28 @@
+# Copyright Splunk, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
+version: 1
+
+# ClusterMap intentionally accepts only a literal prefix/suffix object. Unlike
+# the shared display_unit union, its Olly contract does not accept a named
+# scaling-unit string.
+properties:
+  display_unit_custom:
+    type: block
+    description: >-
+      A literal prefix and/or suffix to attach to displayed values. At least
+      one of prefix or suffix must be set when this object is present.
+    at_least_one_of: [prefix, suffix]
+    properties:
+      prefix:
+        type: string
+        optional: true
+        description: Text shown immediately before each displayed value.
+        mapping:
+          path: ['prefix']
+      suffix:
+        type: string
+        optional: true
+        description: Text shown immediately after each displayed value.
+        mapping:
+          path: ['suffix']

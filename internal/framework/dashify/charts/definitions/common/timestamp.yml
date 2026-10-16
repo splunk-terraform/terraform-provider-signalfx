@@ -1,0 +1,19 @@
+# Copyright Splunk, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
+version: 1
+
+# Shared timestamp-footer toggle. Confirmed identical (same field name,
+# mapping path, and default) across SingleValue, List, and Table - the
+# "Show timestamp in footer" control is the same editor component for all
+# three, not a per-chart-type reimplementation.
+properties:
+  show_timestamp:
+    type: bool
+    optional: true
+    default: true
+    description: >-
+      Whether to show the latest data point's timestamp in the chart
+      footer.
+    mapping:
+      path: ['chart', 'showTimestamp']

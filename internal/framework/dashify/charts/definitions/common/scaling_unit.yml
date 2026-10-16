@@ -1,0 +1,55 @@
+# Copyright Splunk, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
+version: 1
+
+# The named units Splunk Observability Cloud can scale a raw value by.
+#
+# Mirrors Dashify's `ScalingUnit`, which is derived from the SCALING_UNIT_TYPES
+# const in @splunk/olly-react-ui/formatValue. Schema contract checks validate every value
+# against the pinned Olly product contracts in charts/contracts.
+#
+# Referenced (not `extends`ed) wherever a single unit is selected:
+#
+#   value_unit:
+#     ref: common/scaling_unit.yml#scaling_unit
+#     mapping:
+#       path: ['valueUnit']
+#
+# The referencing site supplies mapping.path and may override any other key.
+properties:
+  scaling_unit:
+    type: enum
+    description: >-
+      A named unit Splunk Observability Cloud scales the raw value by (e.g.
+      1000 bytes displays as "1 Kilobyte" when the unit is Byte).
+    values:
+      # bits
+      - Bit
+      - Kilobit
+      - Megabit
+      - Gigabit
+      - Terabit
+      - Petabit
+      - Exabit
+      - Zettabit
+      - Yottabit
+      # bytes
+      - Byte
+      - Kibibyte
+      - Mebibyte
+      - Gibibyte
+      - Tebibyte
+      - Pebibyte
+      - Exbibyte
+      - Zebibyte
+      - Yobibyte
+      # time
+      - Nanosecond
+      - Microsecond
+      - Millisecond
+      - Second
+      - Minute
+      - Hour
+      - Day
+      - Week

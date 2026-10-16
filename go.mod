@@ -19,10 +19,12 @@ require (
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.40.1
 	github.com/hashicorp/terraform-plugin-testing v1.16.0
 	github.com/mitchellh/go-homedir v1.1.0
+	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2
 	github.com/signalfx/signalfx-go v1.65.0
 	github.com/stretchr/testify v1.12.1
 	github.com/tilinna/clock v1.1.0
 	go.uber.org/multierr v1.11.0
+	go.yaml.in/yaml/v3 v3.0.5
 	golang.org/x/sync v0.23.0
 )
 
@@ -74,7 +76,6 @@ require (
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	github.com/zclconf/go-cty v1.18.1 // indirect
-	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/crypto v0.57.0 // indirect
 	golang.org/x/mod v0.41.0 // indirect
 	golang.org/x/net v0.60.0 // indirect

@@ -1,0 +1,89 @@
+# Copyright Splunk, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
+type: metrics_table
+version: 1
+description: >-
+  A table of metric values with configurable columns and grouping. This is the
+  Dashify equivalent of the classic `signalfx_table_chart` resource.
+
+extends:
+  - common/widget.yml
+  - common/signalfx_datasource.yml
+  - common/precision.yml
+  - common/timestamp.yml
+
+element: 'o11y:TableChart'
+
+properties:
+  group_by:
+    type: list
+    optional: true
+    # The editor allows one grouping property, while its wire format also
+    # represents no grouping as an empty array.
+    max_items: 1
+    description: Metadata property to group table rows by. Use an empty list for no grouping; at most one property is supported.
+    mapping:
+      path: ['chart', 'groupBy']
+    item:
+      type: string
+
+  hide_missing_values:
+    type: bool
+    optional: true
+    default: false
+    description: >-
+      Whether to exclude a series whose most recent value is missing, and
+      any series whose latest timestamp is older than the newest remaining
+      series.
+    mapping:
+      path: ['chart', 'hideMissingValues']
+
+  disable_sampling:
+    type: bool
+    optional: true
+    default: false
+    # Unlike the other chart types, TableChart has a genuine boolean
+    # disableSampling prop rather than a numeric sampleSize cap.
+    description: >-
+      Whether to disable sampling and show more of the matched time series.
+      Enabling this can make the chart load more slowly. The Dashify UI does
+      not write this property back when saving, so a UI edit drops it.
+    mapping:
+      path: ['chart', 'disableSampling']
+
+  columns:
+    type: list
+    optional: true
+    # Per-column display comes from here, keyed by SignalFlow publish label,
+    # not from the shared published_streams map.
+    description: >-
+      Per-column display overrides. Each entry corresponds to one SignalFlow
+      publish label.
+    mapping:
+      path: ['chart', 'columns']
+    item:
+      properties:
+        field:
+          type: string
+          required: true
+          description: The SignalFlow publish label this column shows.
+          mapping:
+            path: ['field']
+        header_name:
+          type: string
+          optional: true
+          description: An alternate column header, in place of the raw publish label.
+          mapping:
+            path: ['headerName']
+        display_unit:
+          ref: common/display_unit.yml#display_unit
+          optional: true
+          mapping:
+            path: ['displayUnit']
+        enabled:
+          type: bool
+          optional: true
+          description: Whether this column is shown.
+          mapping:
+            path: ['enabled']

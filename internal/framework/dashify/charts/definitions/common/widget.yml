@@ -1,0 +1,9 @@
+# Copyright Splunk, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
+version: 1
+
+# Shared metric-widget presentation, including header drilldown links.
+extends:
+  - common/widget_chrome.yml
+  - common/widget_links.yml

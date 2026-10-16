@@ -24,11 +24,11 @@ resource "signalfx_observability_dashboard" "service_layout" {
     layout = {
       absolute   = true
       x          = "1/2"
-      y          = "26"
+      y          = "2"
       width      = "1/2"
-      height     = "228"
+      height     = "15"
       min_width  = "4"
-      min_height = "168"
+      min_height = "11"
     }
   }]
 }

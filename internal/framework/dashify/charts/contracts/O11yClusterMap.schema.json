@@ -1,0 +1,248 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schema.splunkdev.com/dashify/v1/elements/o11y-cluster-map.json",
+  "title": "o11y:ClusterMap",
+  "description": "Configuration for the o11y:ClusterMap dashboard element.",
+  "type": "object",
+  "properties": {
+    "chart": {
+      "$ref": "#/definitions/O11yClusterMapChartConfig"
+    },
+    "datasource": {
+      "$ref": "#/definitions/O11ySignalFlowDatasourceConfig"
+    },
+    "widget": {
+      "$ref": "#/definitions/O11yTemplateWidget"
+    }
+  },
+  "required": ["chart", "datasource", "widget"],
+  "additionalProperties": false,
+  "definitions": {
+    "O11yClusterMapChartConfig": {
+      "type": "object",
+      "properties": {
+        "colorBy": {
+          "type": "string",
+          "enum": ["Range", "Scale"]
+        },
+        "colorScale": {
+          "$ref": "#/definitions/O11yColorScale"
+        },
+        "colorRange": {
+          "$ref": "#/definitions/O11yColorRange"
+        },
+        "groupBy": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "showTimestamp": {
+          "type": "boolean"
+        },
+        "maxPrecision": {
+          "type": "number",
+          "deprecated": true,
+          "description": "Use maximumSignificantDigits instead."
+        },
+        "maximumFractionDigits": {
+          "type": "number"
+        },
+        "maximumSignificantDigits": {
+          "type": "number"
+        },
+        "displayUnit": {
+          "$ref": "#/definitions/O11yDisplayUnitCustom"
+        },
+        "noDataOptions": {
+          "$ref": "#/definitions/O11yNoDataOptions"
+        }
+      },
+      "additionalProperties": false
+    },
+    "O11yColorScale": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/O11yColorScaleItem"
+      }
+    },
+    "O11yColorScaleItem": {
+      "type": "object",
+      "properties": {
+        "paletteIndex": {
+          "type": "number"
+        },
+        "color": {
+          "type": "string"
+        },
+        "hashKey": {
+          "type": "string"
+        },
+        "gt": {
+          "type": ["number", "null"]
+        },
+        "gte": {
+          "type": ["number", "null"]
+        },
+        "lt": {
+          "type": ["number", "null"]
+        },
+        "lte": {
+          "type": ["number", "null"]
+        }
+      },
+      "additionalProperties": false
+    },
+    "O11yColorRange": {
+      "type": "object",
+      "properties": {
+        "palette": {
+          "$ref": "#/definitions/SequentialPaletteKey"
+        },
+        "max": {
+          "type": "number"
+        },
+        "min": {
+          "type": "number"
+        }
+      },
+      "required": ["palette"],
+      "additionalProperties": false
+    },
+    "SequentialPaletteKey": {
+      "type": "string",
+      "enum": ["temperature", "purple", "cyan"]
+    },
+    "O11yDisplayUnitCustom": {
+      "type": "object",
+      "properties": {
+        "prefix": {
+          "type": ["string", "null"]
+        },
+        "suffix": {
+          "type": ["string", "null"]
+        }
+      },
+      "additionalProperties": false
+    },
+    "O11yNoDataOptions": {
+      "type": "object",
+      "properties": {
+        "linkText": {
+          "type": "string"
+        },
+        "linkUrl": {
+          "type": "string"
+        },
+        "noDataMessage": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "O11ySignalFlowDatasourceConfig": {
+      "type": "object",
+      "properties": {
+        "program": {
+          "type": "string"
+        },
+        "maxDelay": {
+          "type": ["number", "null"]
+        },
+        "resolution": {
+          "type": ["number", "null"]
+        },
+        "minimumResolution": {
+          "type": ["number", "null"]
+        },
+        "sampleSize": {
+          "type": "number"
+        },
+        "backfillSliceCount": {
+          "type": "number"
+        },
+        "preferredEditor": {
+          "type": "string"
+        },
+        "time": {
+          "$ref": "#/definitions/O11yTimeRange"
+        },
+        "events": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "O11yTimeRange": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["absolute", "relative"]
+        },
+        "range": {
+          "type": "number"
+        },
+        "rangeEnd": {
+          "type": "number"
+        },
+        "start": {
+          "type": "number"
+        },
+        "end": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false
+    },
+    "O11yTemplateWidget": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "aiGenerated": {
+          "type": "boolean"
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/O11yLink"
+          }
+        },
+        "headerless": {
+          "type": "boolean"
+        },
+        "borderless": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "O11yLink": {
+      "type": "object",
+      "properties": {
+        "external": {
+          "type": "boolean"
+        },
+        "label": {
+          "type": "string"
+        },
+        "url": {
+          "type": "string"
+        }
+      },
+      "required": ["url"],
+      "additionalProperties": false
+    }
+  }
+}

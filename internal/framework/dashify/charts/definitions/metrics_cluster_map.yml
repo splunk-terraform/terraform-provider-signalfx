@@ -1,0 +1,154 @@
+# Copyright Splunk, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
+type: metrics_cluster_map
+version: 1
+description: >-
+  A grid of colored cells, one cell per source, colored by the metric value.
+  This is the Dashify equivalent of the classic `signalfx_heatmap_chart`
+  resource. Cells are laid out in query-result order and there is no
+  chart-level sort option, so encode any required ordering in the SignalFlow
+  `program` itself, for example with `top()`.
+
+element: 'o11y:ClusterMap'
+
+extends:
+  - common/widget.yml
+  - common/signalfx_datasource.yml
+  - common/precision.yml
+  - common/timestamp.yml
+
+properties:
+  maximum_significant_digits:
+    ref: common/precision.yml#maximum_significant_digits
+    description: >-
+      The number of significant digits to display for values in this chart.
+      Unset lets Splunk Observability Cloud adjust precision to fit the
+      available space. The chart renders this setting, but saving the chart
+      in the UI drops it.
+
+  display_unit:
+    ref: common/display_unit_custom.yml#display_unit_custom
+    optional: true
+    mapping:
+      path: ['chart', 'displayUnit']
+
+  group_by:
+    type: list
+    optional: true
+    max_items: 2
+    # The editor caps selections at MAX_GROUP_BY_SELECTIONS = 2.
+    description: >-
+      Metadata properties to group cells by (in nesting order). At most two.
+    mapping:
+      path: ['chart', 'groupBy']
+    item:
+      type: string
+
+  color_by:
+    type: enum
+    optional: true
+    default: Range
+    values: [Range, Scale]
+    description: >-
+      How to color each cell: by threshold buckets (`color_scale`) or by a
+      continuous palette range (`color_range`). Must be set to `Scale`
+      for `color_scale` to have any visible effect - it is not inferred
+      from `color_scale` being present.
+    mapping:
+      path: ['chart', 'colorBy']
+
+  color_range:
+    type: block
+    optional: true
+    conflicts_with: [color_scale]
+    # The Range-side counterpart to color_scale. Dashify has no free-color
+    # range, only three named sequential palettes.
+    description: >-
+      A continuous color palette applied across the cells' actual value
+      range. Only meaningful when `color_by` is `Range`.
+    mapping:
+      path: ['chart', 'colorRange']
+    properties:
+      palette:
+        type: enum
+        required: true
+        values: [temperature, purple, cyan]
+        description: The named color palette to shade cells with, light to dark.
+        mapping:
+          path: ['palette']
+      min:
+        type: float
+        optional: true
+        description: >-
+          The value at the bottom of the palette range. Unset means Auto
+          (derived from the live data's minimum each refresh).
+        mapping:
+          path: ['min']
+      max:
+        type: float
+        optional: true
+        description: >-
+          The value at the top of the palette range. Unset means Auto
+          (derived from the live data's maximum each refresh).
+        mapping:
+          path: ['max']
+
+  color_scale:
+    type: list
+    optional: true
+    max_items: 5
+    conflicts_with: [color_range]
+    requires_value:
+      field: color_by
+      value: Scale
+    required_when:
+      field: color_by
+      value: Scale
+    description: >-
+      Color bands applied to each cell's value based on which threshold
+      range it falls in. Only meaningful when `color_by` is `Scale`.
+    mapping:
+      path: ['chart', 'colorScale']
+    item:
+      properties:
+        gt:
+          type: float
+          optional: true
+          conflicts_with: [gte]
+          description: This bucket's lower bound, exclusive. Mutually exclusive with `gte`.
+          mapping:
+            path: ['gt']
+        gte:
+          type: float
+          optional: true
+          conflicts_with: [gt]
+          description: This bucket's lower bound, inclusive. Mutually exclusive with `gt`.
+          mapping:
+            path: ['gte']
+        lt:
+          type: float
+          optional: true
+          conflicts_with: [lte]
+          description: >-
+            This bucket's upper bound, exclusive. Mutually exclusive with
+            `lte`. Not settable in the Dashify editor.
+          mapping:
+            path: ['lt']
+        lte:
+          type: float
+          optional: true
+          conflicts_with: [lt]
+          description: >-
+            This bucket's upper bound, inclusive. Mutually exclusive with
+            `lt`. Not settable in the Dashify editor.
+          mapping:
+            path: ['lte']
+        palette_index:
+          type: number
+          optional: true
+          min: 0
+          max: 21
+          description: The palette color index (0-21) to draw this bucket in.
+          mapping:
+            path: ['paletteIndex']

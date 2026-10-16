@@ -1,0 +1,359 @@
+# Copyright Splunk, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
+type: metrics_time_series
+version: 1
+description: >-
+  A time-series chart plotting SignalFlow output over time. Supports line,
+  area, and column rendering, stacking, legends, markers, two Y axes, and
+  per-series display overrides. This is the Dashify equivalent of the classic
+  `signalfx_time_chart` resource. Chart properties outside this set are not
+  modeled here; use `signalfx_observability_template` to author them directly.
+
+element: 'o11y:TimeSeriesChart'
+
+extends:
+  - common/widget.yml
+  - common/signalfx_datasource.yml
+
+properties:
+  visualization:
+    type: enum
+    optional: true
+    default: line
+    # These are the serialized Dashify values. Stacking is represented in the
+    # type itself, which avoids a lossy type + stacked combination on read.
+    values: [line, area, bar, stacked-area, stacked-bar]
+    description: >-
+      The chart's rendering style. `stacked-area` and `stacked-bar` draw the
+      same area/column shapes as `area`/`bar` but stack series values rather
+      than overlaying them.
+    mapping:
+      path: ['chart', 'chartOptions', 'type']
+
+  show_data_markers:
+    type: bool
+    optional: true
+    default: false
+    description: >-
+      Whether to draw a marker at each data point instead of an unmarked
+      line or area.
+    mapping:
+      path: ['chart', 'chartOptions', 'showDataMarkers']
+
+  show_event_lines:
+    type: bool
+    optional: true
+    default: false
+    description: >-
+      Whether to draw a vertical line on the chart at each point where a
+      matching event occurred.
+    mapping:
+      path: ['chart', 'chartOptions', 'showEventLines']
+
+  hide_missing_values:
+    type: bool
+    optional: true
+    default: false
+    description: >-
+      Whether to exclude a series entirely when every one of its values in
+      the current window is missing. A series with at least one real value
+      stays visible.
+    mapping:
+      path: ['chart', 'hideMissingValues']
+
+  color_by:
+    type: enum
+    optional: true
+    default: Dimension
+    values: [Dimension, Metric]
+    description: >-
+      Whether series are colored by their dimension values or uniformly by
+      their metric name, when no explicit `series.palette_index` is set.
+    mapping:
+      path: ['chart', 'chartOptions', 'colorBy']
+
+
+  use_binary_units:
+    type: bool
+    optional: true
+    default: false
+    description: >-
+      Whether to scale byte-based values using 1024-based (binary) units
+      instead of 1000-based (decimal) units.
+    mapping:
+      path: ['chart', 'chartOptions', 'useKmg2']
+
+  max_series:
+    type: number
+    optional: true
+    description: The maximum number of series to draw before the rest are omitted.
+    mapping:
+      path: ['chart', 'chartOptions', 'maxSeries']
+
+  maximum_significant_digits:
+    type: number
+    optional: true
+    min: 1
+    max: 20
+    # Chart-level chartOptions precision, distinct from each y_axes entry's
+    # own maximum_significant_digits below. The Dashify editor persists only
+    # the per-axis form on save, so setting this chart-level field and later
+    # editing an axis in the UI relocates the value to that axis alone.
+    description: >-
+      Chart-wide significant-digit precision applied to every Y axis that
+      doesn't set its own `maximum_significant_digits`.
+    mapping:
+      path: ['chart', 'chartOptions', 'maximumSignificantDigits']
+
+  maximum_fraction_digits:
+    type: number
+    optional: true
+    min: 0
+    max: 20
+    description: >-
+      Chart-wide fraction-digit precision applied to every Y axis that
+      doesn't set its own `maximum_fraction_digits`.
+    mapping:
+      path: ['chart', 'chartOptions', 'maximumFractionDigits']
+
+  show_legend:
+    type: bool
+    optional: true
+    default: true
+    # Dashify stores the inverse (`legend.hide`). The transform applies in
+    # both serialization and read-back.
+    description: Whether to show the legend below the chart.
+    mapping:
+      path: ['chart', 'legend', 'hide']
+      transform: negate
+
+  legend_position:
+    type: enum
+    optional: true
+    # Upstream's legend.position is a two-value union, so a free string here let
+    # a typo through to a silently mis-rendered chart.
+    values: [bottom, right]
+    description: Where to place the legend relative to the chart.
+    mapping:
+      path: ['chart', 'legend', 'position']
+
+  show_series_value:
+    type: bool
+    optional: true
+    description: >-
+      Whether to show each series' current value next to its legend entry
+      when hovering over the chart.
+    mapping:
+      path: ['chart', 'legend', 'showSeriesValue']
+
+  can_toggle_series_visibility:
+    type: bool
+    optional: true
+    description: Whether clicking a legend entry toggles that series' visibility.
+    mapping:
+      path: ['chart', 'legend', 'canToggleSeriesVisibility']
+
+  legend_dimension:
+    type: string
+    optional: true
+    description: >-
+      Which metadata dimension to display in the legend, such as a specific
+      property name shared by every matched series.
+    mapping:
+      path: ['chart', 'chartOptions', 'dimensionInLegend']
+
+  preferred_editor:
+    type: enum
+    optional: true
+    values: [builder, json, signalflow]
+    description: >-
+      Which editor mode this chart's query was last authored in. Cosmetic:
+      it selects which tab the Dashify UI opens to and has no effect on how
+      the chart renders.
+    mapping:
+      path: ['datasource', 'preferredEditor']
+
+  no_data_message:
+    type: string
+    optional: true
+    description: >-
+      A custom message to display when no data matches this chart's query,
+      in place of the default empty-chart state.
+    mapping:
+      path: ['chart', 'noDataOptions', 'noDataMessage']
+
+  y_axes:
+    type: list
+    optional: true
+    max_items: 2
+    description: >-
+      Up to two Y axes; the first entry is the left axis, the second the
+      right. A series is drawn against whichever axis its `y_axis` index
+      selects.
+    mapping:
+      path: ['chart', 'yAxes']
+    item:
+      properties:
+        label:
+          type: string
+          optional: true
+          description: The axis label shown alongside its values.
+          mapping:
+            path: ['label']
+        minimum:
+          type: float
+          optional: true
+          description: >-
+            The smallest value the axis displays; data points below this
+            are clipped.
+          mapping:
+            path: ['min']
+        maximum:
+          type: float
+          optional: true
+          description: >-
+            The largest value the axis displays; data points above this are
+            clipped.
+          mapping:
+            path: ['max']
+        low_watermark:
+          type: float
+          optional: true
+          description: >-
+            A value at which to draw a horizontal reference line marking
+            the low end of the range of interest.
+          mapping:
+            path: ['lowWatermark']
+        low_watermark_label:
+          type: string
+          optional: true
+          description: A label shown next to the low watermark line.
+          mapping:
+            path: ['lowWatermarkLabel']
+        high_watermark:
+          type: float
+          optional: true
+          description: >-
+            A value at which to draw a horizontal reference line marking
+            the high end of the range of interest.
+          mapping:
+            path: ['highWatermark']
+        high_watermark_label:
+          type: string
+          optional: true
+          description: A label shown next to the high watermark line.
+          mapping:
+            path: ['highWatermarkLabel']
+        maximum_significant_digits:
+          type: number
+          optional: true
+          min: 1
+          max: 20
+          description: The number of significant digits to display for values on this axis.
+          mapping:
+            path: ['maximumSignificantDigits']
+        maximum_fraction_digits:
+          type: number
+          optional: true
+          min: 0
+          max: 20
+          description: >-
+            The number of digits to display after the decimal point for
+            values on this axis.
+          mapping:
+            path: ['maximumFractionDigits']
+
+  additional_properties:
+    type: list
+    optional: true
+    description: Which metadata properties to show as columns in the chart's data table.
+    mapping:
+      path: ['chart', 'additionalProperties']
+    item:
+      properties:
+        property:
+          type: string
+          required: true
+          description: The metadata property's key name.
+          mapping:
+            path: ['property']
+        enabled:
+          type: bool
+          required: true
+          description: Whether this property's column is shown.
+          mapping:
+            path: ['enabled']
+
+  series:
+    type: map
+    optional: true
+    # Keys are SignalFlow publish labels. Keeping them as map keys gives a
+    # stable identity and avoids positional drift when a query changes.
+    description: >-
+      Per-series display overrides, keyed by the SignalFlow publish label
+      each override applies to.
+    mapping:
+      path: ['chart', 'seriesOptions']
+    item:
+      properties:
+        name:
+          type: string
+          optional: true
+          description: An alternate display name for this series.
+          mapping:
+            path: ['name']
+
+        y_axis:
+          type: number
+          optional: true
+          min: 0
+          max: 1
+          description: Which Y axis (0 for left, 1 for right) this series is plotted against.
+          mapping:
+            path: ['yAxis']
+
+        palette_index:
+          type: number
+          optional: true
+          min: 0
+          max: 15
+          description: The palette color index (0-15) to draw this series in.
+          mapping:
+            path: ['paletteIndex']
+
+        visualization:
+          type: enum
+          optional: true
+          # A per-series override; stacked and heatmap behavior is deliberately
+          # left to the raw path for the initial model.
+          values: [line, area, bar]
+          description: >-
+            A rendering style override for this series alone, taking
+            precedence over the chart's own `visualization`.
+          mapping:
+            path: ['plotType']
+
+        display_unit:
+          ref: common/display_unit.yml#display_unit
+          optional: true
+          mapping:
+            path: ['displayUnit']
+
+        maximum_significant_digits:
+          type: number
+          optional: true
+          min: 1
+          max: 20
+          description: The maximum number of significant digits to display for this series.
+          mapping:
+            path: ['maximumSignificantDigits']
+
+        maximum_fraction_digits:
+          type: number
+          optional: true
+          min: 0
+          max: 20
+          description: The maximum number of digits to display after the decimal point for this series.
+          mapping:
+            path: ['maximumFractionDigits']

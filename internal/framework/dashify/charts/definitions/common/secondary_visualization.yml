@@ -1,0 +1,20 @@
+# Copyright Splunk, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
+version: 1
+
+# Shared secondary-visualization select. Confirmed as the literal same
+# SecondaryVisualizationSelect editor component, same enum values, same
+# default, reused by both SingleValue and List. Table has no equivalent
+# concept - don't extend this for chart types without a matching UI control.
+properties:
+  secondary_visualization:
+    type: enum
+    optional: true
+    default: None
+    values: [Linear, None, Radial, Sparkline]
+    description: >-
+      An additional visualization (a sparkline or a radial/linear gauge)
+      shown alongside the chart's primary value.
+    mapping:
+      path: ['chart', 'secondaryVisualization']

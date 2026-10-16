@@ -96,9 +96,12 @@ gen-docs:
 	$(WEBSITE_PLUGIN)
 
 test-docs:
-	$(WEBSITE_PLUGIN) validate 
+	$(WEBSITE_PLUGIN) validate
 
 check-schema-docs:
 	./scripts/check-schema-docs.sh
 
-.PHONY: build test testacc vet fmt fmtcheck errcheck gen-docs check-docs test-docs check-schema-docs
+scaffold-chart:
+	go run ./internal/framework/dashify/charts/contracts/cmd/scaffoldchart
+
+.PHONY: build test testacc vet fmt fmtcheck errcheck gen-docs check-docs test-docs check-schema-docs scaffold-chart

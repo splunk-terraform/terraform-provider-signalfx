@@ -1,0 +1,396 @@
+// Copyright Splunk, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
+package interpreter
+
+import (
+	"context"
+	"encoding/json"
+	"math"
+	"reflect"
+	"testing"
+
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+)
+
+func testProperty(kind string, path ...string) Property {
+	return Property{Type: kind, Optional: true, Description: "Test field.", Mapping: Mapping{Path: path}}
+}
+func testEngine(t *testing.T, properties map[string]Property) *Engine {
+	t.Helper()
+	e, err := NewFromDefinitions([]Definition{{Type: "test", Version: 1, Element: "o11y:Test", Properties: properties}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return e
+}
+func testValue(t *testing.T, e *Engine, overrides map[string]attr.Value) types.Object {
+	t.Helper()
+	attributes, _ := e.Attributes("test")
+	attributeTypes := AttributeTypes(attributes)
+	values := map[string]attr.Value{}
+	for name, typ := range attributeTypes {
+		switch v := typ.(type) {
+		case basetypes.StringType:
+			values[name] = types.StringNull()
+		case basetypes.BoolType:
+			values[name] = types.BoolNull()
+		case basetypes.Int64Type:
+			values[name] = types.Int64Null()
+		case basetypes.Float64Type:
+			values[name] = types.Float64Null()
+		case types.ObjectType:
+			values[name] = types.ObjectNull(v.AttrTypes)
+		case types.ListType:
+			values[name] = types.ListNull(v.ElemType)
+		case types.MapType:
+			values[name] = types.MapNull(v.ElemType)
+		default:
+			t.Fatalf("unsupported fixture type %T", typ)
+		}
+	}
+	for name, value := range overrides {
+		values[name] = value
+	}
+	value, d := types.ObjectValue(attributeTypes, values)
+	if d.HasError() {
+		t.Fatal(d)
+	}
+	return value
+}
+
+func TestValidationDefersUnknownAndEnforcesConditionalCollections(t *testing.T) {
+	mode := testProperty("enum", "chart", "mode")
+	mode.Values = []string{"Scale", "None"}
+	scale := testProperty("list", "chart", "scale")
+	scale.Item = &Item{Type: "string"}
+	scale.RequiredWhen = &Condition{Field: "mode", Value: "Scale"}
+	scale.RequiresValue = &Condition{Field: "mode", Value: "Scale"}
+	e := testEngine(t, map[string]Property{"mode": mode, "scale": scale})
+	unknown := testValue(t, e, map[string]attr.Value{"mode": types.StringValue("Scale"), "scale": types.ListUnknown(types.StringType)})
+	if d := e.Validate(context.Background(), "test", unknown, false); d.HasError() {
+		t.Fatal("unknown rejected during plan", d)
+	}
+	if d := e.Validate(context.Background(), "test", unknown, true); !d.HasError() {
+		t.Fatal("unknown accepted during apply")
+	}
+	empty := testValue(t, e, map[string]attr.Value{"mode": types.StringValue("Scale"), "scale": types.ListValueMust(types.StringType, []attr.Value{})})
+	if d := e.Validate(context.Background(), "test", empty, false); !d.HasError() {
+		t.Fatal("conditional empty collection accepted")
+	}
+	wrong := testValue(t, e, map[string]attr.Value{"mode": types.StringValue("None"), "scale": types.ListValueMust(types.StringType, []attr.Value{types.StringValue("red")})})
+	if d := e.Validate(context.Background(), "test", wrong, false); !d.HasError() {
+		t.Fatal("required sibling value ignored")
+	}
+}
+
+func TestUnicodeLengthAndFiniteFloats(t *testing.T) {
+	minimum := 2
+	title := testProperty("string", "widget", "title")
+	title.MinLength = &minimum
+	e := testEngine(t, map[string]Property{"title": title, "limit": testProperty("float", "chart", "limit")})
+	for _, limit := range []float64{math.Inf(1), math.Inf(-1)} {
+		value := testValue(t, e, map[string]attr.Value{"title": types.StringValue("你好"), "limit": types.Float64Value(limit)})
+		if _, d := e.Encode(context.Background(), "test", value); !d.HasError() {
+			t.Fatal("nonfinite write accepted")
+		}
+	}
+	value := testValue(t, e, map[string]attr.Value{"title": types.StringValue("你")})
+	if d := e.Validate(context.Background(), "test", value, false); !d.HasError() {
+		t.Fatal("UTF-8 bytes counted as characters")
+	}
+}
+
+func TestTopLevelDurationKeepsConfiguredSpelling(t *testing.T) {
+	time := testProperty("string", "datasource", "time")
+	time.Mapping.Transform = "relative_duration"
+	e := testEngine(t, map[string]Property{"time_range": time})
+	prior := testValue(t, e, map[string]attr.Value{"time_range": types.StringValue("60m")})
+	spec, diagnostics := e.Encode(t.Context(), "test", prior)
+	if diagnostics.HasError() {
+		t.Fatal(diagnostics)
+	}
+	decoded, leftovers, diagnostics := e.Decode(t.Context(), "test", spec, prior)
+	if diagnostics.HasError() || len(leftovers) != 0 || !decoded.Equal(prior) {
+		t.Fatalf("top-level duration spelling changed: %v %v", leftovers, diagnostics)
+	}
+}
+
+func TestNestedCollectionsRoundTrip(t *testing.T) {
+	label := testProperty("string", "label")
+	list := testProperty("list", "chart", "windows")
+	list.Item = &Item{Properties: map[string]Property{"label": label}}
+	items := testProperty("map", "chart", "namedWindows")
+	items.Item = list.Item
+	e := testEngine(t, map[string]Property{"windows": list, "named_windows": items})
+	attributes, _ := e.Attributes("test")
+	objectType := attributes["windows"].GetType().(types.ListType).ElemType.(types.ObjectType)
+	window := types.ObjectValueMust(objectType.AttrTypes, map[string]attr.Value{"label": types.StringValue("sample")})
+	configured := testValue(t, e, map[string]attr.Value{"windows": types.ListValueMust(objectType, []attr.Value{window}), "named_windows": types.MapValueMust(objectType, map[string]attr.Value{"a": window})})
+	spec, d := e.Encode(context.Background(), "test", configured)
+	if d.HasError() {
+		t.Fatal(d)
+	}
+	decoded, leftovers, d := e.Decode(context.Background(), "test", spec, types.ObjectNull(nil))
+	if d.HasError() || len(leftovers) > 0 || !decoded.Equal(configured) {
+		t.Fatalf("nested collections changed: %v %v", leftovers, d)
+	}
+	empty := testValue(t, e, map[string]attr.Value{"windows": types.ListValueMust(objectType, []attr.Value{}), "named_windows": types.MapValueMust(objectType, map[string]attr.Value{})})
+	spec, d = e.Encode(context.Background(), "test", empty)
+	if d.HasError() {
+		t.Fatal(d)
+	}
+	decoded, leftovers, d = e.Decode(context.Background(), "test", spec, empty)
+	if d.HasError() || len(leftovers) > 0 || !decoded.Equal(empty) {
+		t.Fatal("empty collections lost", leftovers, d)
+	}
+}
+
+func TestTableGroupingDecodesCurrentArrays(t *testing.T) {
+	e, err := New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, test := range []struct {
+		name     string
+		wire     any
+		want     []attr.Value
+		wantWire []any
+	}{
+		{name: "no grouping", wire: []any{}, want: []attr.Value{}, wantWire: []any{}},
+		{name: "one grouping", wire: []any{"host"}, want: []attr.Value{types.StringValue("host")}, wantWire: []any{"host"}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			spec := map[string]any{
+				"<o11y:TableChart>": []any{},
+				"widget":            map[string]any{},
+				"datasource":        map[string]any{"program": "A"},
+				"chart":             map[string]any{"groupBy": test.wire},
+			}
+			value, leftovers, diagnostics := e.Decode(t.Context(), "metrics_table", spec, types.ObjectNull(nil))
+			if diagnostics.HasError() || len(leftovers) != 0 {
+				t.Fatalf("decode: leftovers %v, diagnostics %v", leftovers, diagnostics)
+			}
+			grouping := value.Attributes()["group_by"].(types.List)
+			if grouping.IsNull() || !grouping.Equal(types.ListValueMust(types.StringType, test.want)) {
+				t.Fatalf("unexpected grouping: %v", grouping)
+			}
+			encoded, diagnostics := e.Encode(t.Context(), "metrics_table", value)
+			if diagnostics.HasError() {
+				t.Fatal(diagnostics)
+			}
+			if got := encoded["chart"].(map[string]any)["groupBy"].([]any); !reflect.DeepEqual(got, test.wantWire) {
+				t.Fatalf("encoded grouping %v, want %v", got, test.wantWire)
+			}
+		})
+	}
+	tooMany := map[string]any{
+		"<o11y:TableChart>": []any{},
+		"widget":            map[string]any{},
+		"datasource":        map[string]any{"program": "A"},
+		"chart":             map[string]any{"groupBy": []any{"host", "region"}},
+	}
+	if _, _, diagnostics := e.Decode(t.Context(), "metrics_table", tooMany, types.ObjectNull(nil)); !diagnostics.HasError() {
+		t.Fatal("Table grouping accepted more than one property")
+	}
+	tooMany["chart"].(map[string]any)["groupBy"] = "host"
+	if _, _, diagnostics := e.Decode(t.Context(), "metrics_table", tooMany, types.ObjectNull(nil)); !diagnostics.HasError() {
+		t.Fatal("Table grouping accepted the obsolete scalar form")
+	}
+}
+
+func TestDecodeRejectsUnsafeNumericsAndElementArgs(t *testing.T) {
+	e := testEngine(t, map[string]Property{"count": testProperty("number", "chart", "count"), "fraction": testProperty("float", "chart", "fraction")})
+	for _, number := range []struct {
+		wire json.Number
+		want int64
+	}{{"9007199254740993", 9007199254740993}, {"1.0", 1}, {"1e0", 1}, {"-0", 0}} {
+		spec := map[string]any{"<o11y:Test>": []any{}, "chart": map[string]any{"count": number.wire, "fraction": json.Number("0.125")}}
+		value, leftovers, diagnostics := e.Decode(t.Context(), "test", spec, types.ObjectNull(nil))
+		if diagnostics.HasError() || len(leftovers) != 0 || value.Attributes()["count"].(types.Int64).ValueInt64() != number.want || value.Attributes()["fraction"].(types.Float64).ValueFloat64() != 0.125 {
+			t.Fatal("exact numeric value changed", value, leftovers, diagnostics)
+		}
+	}
+	for _, fieldValue := range []struct {
+		field string
+		value any
+	}{{"count", json.Number("1.1")}, {"count", json.Number("9223372036854775808")}, {"fraction", json.Number("0.1000000000000000001")}, {"fraction", math.NaN()}} {
+		spec := map[string]any{"<o11y:Test>": []any{}, "chart": map[string]any{fieldValue.field: fieldValue.value}, "widget": map[string]any{}, "datasource": map[string]any{}}
+		if _, _, d := e.Decode(context.Background(), "test", spec, types.ObjectNull(nil)); !d.HasError() {
+			t.Fatalf("unsafe number accepted: %v", fieldValue.value)
+		}
+	}
+	spec := map[string]any{"<o11y:Test>": []any{"argument"}, "chart": map[string]any{}, "widget": map[string]any{}, "datasource": map[string]any{}}
+	if _, _, d := e.Decode(context.Background(), "test", spec, types.ObjectNull(nil)); !d.HasError() {
+		t.Fatal("element arguments accepted")
+	}
+}
+
+func TestDefinitionRejectsUnenforceableAndAmbiguousFields(t *testing.T) {
+	for _, name := range []string{"id", "title"} {
+		_, err := NewFromDefinitions([]Definition{{Type: name, Version: 1, Element: "o11y:Reserved", Properties: map[string]Property{"program": testProperty("string", "datasource", "program")}}})
+		if err == nil {
+			t.Fatalf("chart %s can overwrite a resource attribute", name)
+		}
+	}
+	minimum := 1
+	for name, properties := range map[string]map[string]Property{
+		"overlap":        {"a": testProperty("string", "chart", "a"), "b": testProperty("string", "chart", "a", "b")},
+		"ignored bounds": {"a": func() Property { p := testProperty("bool", "chart", "a"); p.Min = &minimum; return p }()},
+		"ignored values": {"a": func() Property { p := testProperty("string", "chart", "a"); p.Values = []string{"allowed"}; return p }()},
+		"empty values on string": {"a": func() Property {
+			p := testProperty("string", "chart", "a")
+			p.Values = []string{}
+			return p
+		}()},
+		"string map": {"a": func() Property { p := testProperty("map", "chart", "a"); p.Item = &Item{Type: "string"}; return p }()},
+		"unknown condition": {"a": func() Property {
+			p := testProperty("string", "chart", "a")
+			p.RequiredWhen = &Condition{Field: "missing", Value: "x"}
+			return p
+		}()},
+		"missing presence": {"a": {Type: "string", Description: "Test.", Mapping: Mapping{Path: []string{"chart", "a"}}}},
+	} {
+		t.Run(name, func(t *testing.T) {
+			_, err := NewFromDefinitions([]Definition{{Type: "test", Version: 1, Element: "T", Properties: properties}})
+			if err == nil {
+				t.Fatal("invalid definition accepted")
+			}
+		})
+	}
+}
+
+func TestOneOfRejectsUnsupportedWireAlternatives(t *testing.T) {
+	for name, variants := range map[string]map[string]Property{
+		"bool":                 {"flag": {Type: "bool", Description: "Flag."}},
+		"ambiguous strings":    {"a": {Type: "string", Description: "A."}, "b": {Type: "string", Description: "B."}},
+		"required block child": {"unit": {Type: "enum", Description: "Unit.", Values: []string{"Byte"}}, "custom": {Type: "block", Properties: map[string]Property{"prefix": {Type: "string", Required: true, Description: "Prefix.", Mapping: Mapping{Path: []string{"prefix"}}}}}},
+	} {
+		t.Run(name, func(t *testing.T) {
+			choice := testProperty("oneof", "chart", "choice")
+			choice.Variants = variants
+			_, err := NewFromDefinitions([]Definition{{Type: "test", Version: 1, Element: "T", Properties: map[string]Property{"choice": choice}}})
+			if err == nil {
+				t.Fatal("unsupported oneof accepted")
+			}
+		})
+	}
+}
+
+func TestOneOfRejectsIgnoredBlockVariantMetadata(t *testing.T) {
+	for name, change := range map[string]func(*Property){
+		"presence":     func(p *Property) { p.Optional = true },
+		"mapping":      func(p *Property) { p.Mapping.Path = []string{"custom"} },
+		"at least one": func(p *Property) { p.AtLeastOneOf = []string{"prefix"} },
+		"condition":    func(p *Property) { p.RequiredWhen = &Condition{Field: "unit", Value: "Byte"} },
+		"bounds":       func(p *Property) { minimum := 1; p.Min = &minimum },
+		"default":      func(p *Property) { p.Default = "ignored" },
+	} {
+		t.Run(name, func(t *testing.T) {
+			variant := Property{Type: "block", Properties: map[string]Property{"prefix": testProperty("string", "prefix")}}
+			change(&variant)
+			choice := testProperty("oneof", "chart", "choice")
+			choice.Variants = map[string]Property{"custom": variant}
+			if _, err := NewFromDefinitions([]Definition{{Type: "test", Version: 1, Element: "o11y:Test", Properties: map[string]Property{"choice": choice}}}); err == nil {
+				t.Fatal("ignored block-variant metadata accepted")
+			}
+		})
+	}
+}
+
+func TestOneOfDecodeSelectsWireShapeAndPreservesUnmodeledFields(t *testing.T) {
+	choice := testProperty("oneof", "chart", "choice")
+	choice.AtLeastOneOf = []string{"unit", "prefix", "suffix"}
+	choice.Variants = map[string]Property{
+		"unit": {Type: "enum", Description: "Named unit.", Values: []string{"Byte"}},
+		"custom": {Type: "block", Properties: map[string]Property{
+			"prefix": testProperty("string", "prefix"),
+			"suffix": testProperty("string", "suffix"),
+		}},
+	}
+	e := testEngine(t, map[string]Property{"choice": choice})
+	attributes, _ := e.Attributes("test")
+	objectType := attributes["choice"].GetType().(types.ObjectType)
+	// A prior scalar variant must not leak into a subsequent custom object.
+	prior := testValue(t, e, map[string]attr.Value{"choice": types.ObjectValueMust(objectType.AttrTypes, map[string]attr.Value{"unit": types.StringValue("Byte"), "prefix": types.StringNull(), "suffix": types.StringNull()})})
+	for name, test := range map[string]struct {
+		wire, rebuilt any
+		leftovers     []string
+		unit, prefix  types.String
+		invalid       bool
+	}{
+		"scalar":                            {wire: "Byte", rebuilt: "Byte", unit: types.StringValue("Byte"), prefix: types.StringNull()},
+		"object with unmodeled scalar name": {wire: map[string]any{"prefix": "$", "unit": "Byte"}, rebuilt: map[string]any{"prefix": "$"}, leftovers: []string{"chart.choice.unit"}, unit: types.StringNull(), prefix: types.StringValue("$")},
+		"unmodeled scalar name alone":       {wire: map[string]any{"unit": "Byte"}, invalid: true},
+		"invalid shape":                     {wire: true, invalid: true},
+	} {
+		t.Run(name, func(t *testing.T) {
+			spec := map[string]any{"<o11y:Test>": []any{}, "chart": map[string]any{"choice": test.wire}}
+			value, leftovers, diagnostics := e.Decode(t.Context(), "test", spec, prior)
+			if test.invalid {
+				if !diagnostics.HasError() {
+					t.Fatal("invalid union shape accepted")
+				}
+				return
+			}
+			if diagnostics.HasError() || !reflect.DeepEqual(leftovers, test.leftovers) {
+				t.Fatal("incorrect union import", leftovers, diagnostics)
+			}
+			fields := value.Attributes()["choice"].(types.Object).Attributes()
+			if !fields["unit"].Equal(test.unit) || !fields["prefix"].Equal(test.prefix) {
+				t.Fatal("inactive variant claimed fields", fields)
+			}
+			rebuilt, diagnostics := e.Encode(t.Context(), "test", value)
+			if diagnostics.HasError() || !reflect.DeepEqual(rebuilt["chart"].(map[string]any)["choice"], test.rebuilt) {
+				t.Fatal("incorrect union reconstruction", rebuilt, diagnostics)
+			}
+		})
+	}
+}
+
+func TestEngineOwnsDefinitionsAndReturnsIndependentViews(t *testing.T) {
+	minimum := 1
+	name := testProperty("string", "name")
+	name.MinLength = &minimum
+	style := testProperty("enum", "style")
+	style.Values = []string{"line", "area"}
+	options := testProperty("block", "chart", "options")
+	options.Properties = map[string]Property{"name": name, "style": style}
+	properties := map[string]Property{"options": options}
+	e := testEngine(t, properties)
+	attributes, _ := e.Attributes("test")
+	objectType := attributes["options"].GetType().(types.ObjectType)
+	value := testValue(t, e, map[string]attr.Value{"options": types.ObjectValueMust(objectType.AttrTypes, map[string]attr.Value{"name": types.StringValue("x"), "style": types.StringValue("line")})})
+
+	// Change the constructor inputs, including nested maps, slices, and pointers.
+	minimum = 10
+	style.Values[0] = "bar"
+	options.Mapping.Path[0] = "other"
+	delete(options.Properties, "name")
+	delete(properties, "options")
+	// Change the public definition and Framework attribute view too.
+	definition, _ := e.Definition("test")
+	definition.Properties["options"].Properties["style"].Values[0] = "pie"
+	definition.Properties["options"].Mapping.Path[0] = "third"
+	delete(attributes["options"].(schema.SingleNestedAttribute).Attributes, "style")
+	delete(attributes, "options")
+
+	if d := e.Validate(t.Context(), "test", value, true); d.HasError() {
+		t.Fatal("caller changed the engine's validation contract", d)
+	}
+	spec, d := e.Encode(t.Context(), "test", value)
+	if d.HasError() || spec["chart"] == nil || spec["other"] != nil || spec["third"] != nil {
+		t.Fatal("caller changed the engine's wire mappings", spec, d)
+	}
+	fresh, _ := e.Attributes("test")
+	if len(fresh["options"].(schema.SingleNestedAttribute).Attributes) != 2 {
+		t.Fatal("caller changed the engine's schema")
+	}
+	wrong := types.ObjectValueMust(map[string]attr.Type{"name": types.StringType}, map[string]attr.Value{"name": types.StringValue("x")})
+	if d := e.Validate(t.Context(), "test", wrong, false); !d.HasError() {
+		t.Fatal("mismatched Terraform object type accepted")
+	}
+}

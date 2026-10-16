@@ -1,0 +1,18 @@
+# Copyright Splunk, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
+version: 1
+
+# Shared numeric precision control. Significant digits only.
+properties:
+  maximum_significant_digits:
+    type: number
+    optional: true
+    min: 1
+    max: 20
+    description: >-
+      The number of significant digits to display for values in this chart.
+      Unset lets Splunk Observability Cloud adjust precision to fit the
+      available space.
+    mapping:
+      path: ['chart', 'maximumSignificantDigits']
