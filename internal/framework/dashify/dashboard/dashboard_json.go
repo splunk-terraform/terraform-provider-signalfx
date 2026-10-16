@@ -6,25 +6,13 @@ package dashboard
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
-	"io"
 	"math"
 )
 
 func decodeDashifyJSON(raw []byte, target any) error {
 	decoder := json.NewDecoder(bytes.NewReader(raw))
 	decoder.UseNumber()
-	if err := decoder.Decode(target); err != nil {
-		return err
-	}
-	var extra any
-	if err := decoder.Decode(&extra); err != io.EOF {
-		if err == nil {
-			return fmt.Errorf("contains multiple JSON values")
-		}
-		return err
-	}
-	return nil
+	return decoder.Decode(target)
 }
 
 // Decoded Dashify JSON always uses json.Number, and JSON cannot encode NaN, so

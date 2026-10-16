@@ -106,6 +106,16 @@ func TestResourceObservabilityDashboardRejectsInvalidPlans(t *testing.T) {
 			want: "no dashboard element key",
 		},
 		{
+			name: "multiple JSON values",
+			config: `resource "signalfx_observability_dashboard" "test" {
+  title = "Service overview"
+  container = [{
+    inline_content = "{\"<Chart>\":[]} {}"
+  }]
+}`,
+			want: "Invalid JSON String Value",
+		},
+		{
 			name: "empty container list",
 			config: `resource "signalfx_observability_dashboard" "test" {
   title     = "Service overview"
@@ -471,7 +481,6 @@ func TestValidateDashifyTemplate(t *testing.T) {
 	}{
 		"empty template id":              {model: dashifyDashboardContainerModel{TemplateID: types.StringValue("")}, wantError: true, wantMessage: "non-empty"},
 		"malformed content":              {model: dashifyDashboardContainerModel{InlineContent: jsontypes.NewNormalizedValue(`{"<Chart>":`)}, wantError: true, wantMessage: "valid JSON"},
-		"multiple JSON values":           {model: dashifyDashboardContainerModel{InlineContent: jsontypes.NewNormalizedValue(`{"<Chart>":[]} {}`)}, wantError: true, wantMessage: "multiple JSON values"},
 		"non-object content":             {model: dashifyDashboardContainerModel{InlineContent: jsontypes.NewNormalizedValue(`[]`)}, wantError: true, wantMessage: "JSON object"},
 		"content with multiple elements": {model: dashifyDashboardContainerModel{InlineContent: jsontypes.NewNormalizedValue(`{"<Chart>":[],"<Dashboard>":[]}`)}, wantError: true, wantMessage: "multiple dashboard element keys"},
 		"content import element":         {model: dashifyDashboardContainerModel{InlineContent: jsontypes.NewNormalizedValue(`{"<$import.widget0>":[]}`)}, wantError: true, wantMessage: "use template_id"},
