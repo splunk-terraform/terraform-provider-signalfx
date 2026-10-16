@@ -52,7 +52,7 @@ resource "signalfx_observability_dashboard" "inline_content" {
 
   container = [{
     layout = {
-      width      = "6/12"
+      width      = "100%"
       height     = "30"
       min_height = "22"
     }
@@ -165,7 +165,7 @@ resource "signalfx_observability_dashboard" "controls" {
 
   container = [{
     layout = {
-      width      = "6/12"
+      width      = "1/2"
       height     = "30"
       min_height = "22"
     }

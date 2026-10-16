@@ -48,7 +48,7 @@ resource "signalfx_observability_dashboard" "controls" {
 
   container = [{
     layout = {
-      width      = "6/12"
+      width      = "1/2"
       height     = "30"
       min_height = "22"
     }
