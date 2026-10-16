@@ -97,6 +97,15 @@ func (r *observabilityChartResource) Create(ctx context.Context, req resource.Cr
 	if resp.Diagnostics.Append(fwerr.ErrorHandler(ctx, resp.State, err)...); resp.Diagnostics.HasError() || err != nil {
 		return
 	}
+	// The POST has created the chart. Keep a usable ID even if the returned
+	// document fails validation, so Terraform can track and delete the chart.
+	if result != nil && result.Data != nil && fwdashify.ObservabilityTemplateIDValid(result.Data.ID) {
+		model.ID = types.StringValue(result.Data.ID)
+		resp.Diagnostics.Append(r.setState(ctx, &resp.State, model)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+	}
 	parsed, diags := r.fromResult(ctx, result, "", model)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -106,8 +115,6 @@ func (r *observabilityChartResource) Create(ctx context.Context, req resource.Cr
 		resp.Diagnostics.AddError("Invalid Chart API response", fmt.Sprintf("Template API returned chart type %q for configured %q.", parsed.Name, model.Name))
 		return
 	}
-	model.ID = parsed.ID
-	resp.Diagnostics.Append(r.setState(ctx, &resp.State, model)...)
 }
 
 func (r *observabilityChartResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {

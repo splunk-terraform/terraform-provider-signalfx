@@ -8,14 +8,17 @@ description: >-
   Dashify equivalent of the classic `signalfx_table_chart` resource.
 
 extends:
-  - common/widget.yml
-  - common/signalfx_datasource.yml
-  - common/precision.yml
-  - common/timestamp.yml
+  - common/metric_chart.yml
 
 element: 'o11y:TableChart'
 
 properties:
+  maximum_significant_digits:
+    ref: common/fields.yml#maximum_significant_digits
+
+  show_timestamp:
+    ref: common/fields.yml#show_timestamp
+
   group_by:
     type: list
     optional: true
@@ -56,7 +59,7 @@ properties:
     type: list
     optional: true
     # Per-column display comes from here, keyed by SignalFlow publish label,
-    # not from the shared published_streams map.
+    # not from a publishedStreams map like the list chart's.
     description: >-
       Per-column display overrides. Each entry corresponds to one SignalFlow
       publish label.
@@ -77,7 +80,7 @@ properties:
           mapping:
             path: ['headerName']
         display_unit:
-          ref: common/display_unit.yml#display_unit
+          ref: common/fields.yml#display_unit
           optional: true
           mapping:
             path: ['displayUnit']

@@ -11,7 +11,7 @@ description: >-
 element: 'o11y:Text'
 
 extends:
-  - common/widget_chrome.yml
+  - common/widget.yml
 
 properties:
   markdown:

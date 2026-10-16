@@ -104,15 +104,33 @@ func TestParseObservabilityChartSpecRejectsUnsupportedShapes(t *testing.T) {
 		{"missing chart group", `{"<Chart>":[{"<o11y:TimeSeriesChart>":[],"datasource":{"program":"A"},"widget":{}}]}`, "chart must be an object"},
 		{"missing widget group", `{"<Chart>":[{"<o11y:TimeSeriesChart>":[],"datasource":{"program":"A"},"chart":{}}]}`, "widget must be an object"},
 		{"null group", `{"<Chart>":[{"<o11y:TimeSeriesChart>":[],"datasource":{"program":"A"},"chart":null,"widget":{}}]}`, "chart must be an object"},
-		{"missing program", `{"<Chart>":[{"<o11y:TimeSeriesChart>":[],"datasource":{},"chart":{},"widget":{}}]}`, "program: must be set"},
 		{"wrong program type", `{"<Chart>":[{"<o11y:TimeSeriesChart>":[],"datasource":{"program":42},"chart":{},"widget":{}}]}`, "program"},
-		{"invalid visualization", `{"<Chart>":[{"<o11y:TimeSeriesChart>":[],"datasource":{"program":"A"},"chart":{"chartOptions":{"type":"pie"}},"widget":{}}]}`, "must be one of"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 			_, diags := managed.modelFromRecord(t.Context(), &template.Template{ID: "chart-1", Spec: json.RawMessage(test.spec), Metadata: &template.Metadata{RootElement: &root}}, observabilityChartModel{})
 			require.True(t, diags.HasError(), diags)
 			assert.Contains(t, diags.Errors()[0].Detail(), test.want)
+		})
+	}
+}
+
+func TestObservabilityChartReadsConfigurationViolations(t *testing.T) {
+	t.Parallel()
+	managed := NewResourceObservabilityChart().(*observabilityChartResource)
+	root := template.RootElementChart
+	for _, test := range []struct{ name, spec, want string }{
+		{"missing program", `{"<Chart>":[{"<o11y:TimeSeriesChart>":[],"datasource":{},"chart":{},"widget":{}}]}`, "program: must be set"},
+		{"invalid visualization", `{"<Chart>":[{"<o11y:TimeSeriesChart>":[],"datasource":{"program":"A"},"chart":{"chartOptions":{"type":"pie"}},"widget":{}}]}`, "must be one of"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			model, diags := managed.modelFromRecord(t.Context(), &template.Template{ID: "chart-1", Title: "Chart", Spec: json.RawMessage(test.spec), Metadata: &template.Metadata{RootElement: &root}}, observabilityChartModel{})
+			require.False(t, diags.HasError(), diags)
+			require.Len(t, diags.Warnings(), 1)
+			assert.Contains(t, diags.Warnings()[0].Detail(), test.want)
+			assert.Equal(t, "chart-1", model.ID.ValueString())
+			_, diags = managed.write(t.Context(), model)
+			assert.True(t, diags.HasError(), "configuration rules must still apply to writes")
 		})
 	}
 }

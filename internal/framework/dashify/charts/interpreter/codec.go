@@ -129,7 +129,11 @@ func (e *Engine) Decode(ctx context.Context, name string, spec map[string]any, p
 		diagnostics.AddError("Invalid chart document", err.Error())
 		return null, nil, diagnostics
 	}
-	diagnostics.Append(e.Validate(ctx, name, value, true)...)
+	// Server-side drift must not block refresh or deletion when its values can
+	// still be represented in Terraform. Configuration and writes stay strict.
+	for _, violation := range e.Validate(ctx, name, value, true) {
+		diagnostics.AddWarning("Stored chart violates configuration rules", violation.Detail()+"\n\nThe stored chart was decoded. Its configuration must satisfy these rules before it can be written.")
+	}
 	for _, group := range e.roots[name] {
 		if remaining, ok := work[group].(map[string]any); ok && len(remaining) == 0 {
 			delete(work, group)
@@ -214,11 +218,7 @@ func decodeValue(ctx context.Context, p Property, valueType attr.Type, spec map[
 			if err != nil || values == nil {
 				return types.ListNull(types.StringType), err
 			}
-			items := make([]attr.Value, len(values))
-			for i, v := range values {
-				items[i] = v
-			}
-			value, d := types.ListValue(types.StringType, items)
+			value, d := types.ListValue(types.StringType, values)
 			if d.HasError() {
 				return value, fmt.Errorf("list conversion: %v", d)
 			}
@@ -227,34 +227,26 @@ func decodeValue(ctx context.Context, p Property, valueType attr.Type, spec map[
 		children := p.Item.Properties
 		if p.Type == "list" {
 			objectType := valueType.(types.ListType).ElemType.(types.ObjectType)
-			values, err := TakeObjectList(spec, p.Mapping.Path, func(_ int, raw map[string]any) (types.Object, error) {
+			values, err := TakeObjectList(spec, p.Mapping.Path, func(raw map[string]any) (attr.Value, error) {
 				return decodeObject(ctx, children, objectType.AttrTypes, raw, nil)
 			})
 			if err != nil || values == nil {
 				return types.ListNull(objectType), err
 			}
-			items := make([]attr.Value, len(values))
-			for i, v := range values {
-				items[i] = v
-			}
-			value, d := types.ListValue(objectType, items)
+			value, d := types.ListValue(objectType, values)
 			if d.HasError() {
 				return value, fmt.Errorf("list conversion: %v", d)
 			}
 			return value, nil
 		}
 		objectType := valueType.(types.MapType).ElemType.(types.ObjectType)
-		values, err := TakeObjectMap(spec, p.Mapping.Path, func(_ string, raw map[string]any) (types.Object, error) {
+		values, err := TakeObjectMap(spec, p.Mapping.Path, func(raw map[string]any) (attr.Value, error) {
 			return decodeObject(ctx, children, objectType.AttrTypes, raw, nil)
 		})
 		if err != nil || values == nil {
 			return types.MapNull(objectType), err
 		}
-		items := map[string]attr.Value{}
-		for key, v := range values {
-			items[key] = v
-		}
-		value, d := types.MapValue(objectType, items)
+		value, d := types.MapValue(objectType, values)
 		if d.HasError() {
 			return value, fmt.Errorf("map conversion: %v", d)
 		}

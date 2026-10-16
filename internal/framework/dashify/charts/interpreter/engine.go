@@ -54,10 +54,10 @@ type Engine struct {
 	roots       map[string][]string
 }
 
-func NewFromDefinitions(definitions []Definition) (*Engine, error) {
+// newEngine takes ownership of definitions decoded by Load.
+func newEngine(definitions []Definition) (*Engine, error) {
 	e := &Engine{definitions: map[string]Definition{}, attributes: map[string]map[string]schema.Attribute{}, roots: map[string][]string{}}
 	for _, definition := range definitions {
-		definition = copyDefinition(definition)
 		if definition.Type == "id" || definition.Type == "title" {
 			return nil, fmt.Errorf("chart name %q is reserved by the resource", definition.Type)
 		}
@@ -102,12 +102,6 @@ func (e *Engine) Attributes(name string) (map[string]schema.Attribute, error) {
 	// Framework attributes contain mutable maps, slices, and validators. Build
 	// an independent view so a caller cannot change the cached runtime contract.
 	return buildAttributes(copyProperties(definition.Properties))
-}
-
-// Definition returns an independent copy of the resolved authored contract.
-func (e *Engine) Definition(name string) (Definition, bool) {
-	d, exists := e.definitions[name]
-	return copyDefinition(d), exists
 }
 
 func buildAttributes(properties map[string]Property) (map[string]schema.Attribute, error) {

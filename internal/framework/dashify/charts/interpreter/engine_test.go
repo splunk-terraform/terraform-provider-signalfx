@@ -21,7 +21,7 @@ func testProperty(kind string, path ...string) Property {
 }
 func testEngine(t *testing.T, properties map[string]Property) *Engine {
 	t.Helper()
-	e, err := NewFromDefinitions([]Definition{{Type: "test", Version: 1, Element: "o11y:Test", Properties: properties}})
+	e, err := newEngine([]Definition{{Type: "test", Version: 1, Element: "o11y:Test", Properties: properties}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -193,8 +193,12 @@ func TestTableGroupingDecodesCurrentArrays(t *testing.T) {
 		"datasource":        map[string]any{"program": "A"},
 		"chart":             map[string]any{"groupBy": []any{"host", "region"}},
 	}
-	if _, _, diagnostics := e.Decode(t.Context(), "metrics_table", tooMany, types.ObjectNull(nil)); !diagnostics.HasError() {
-		t.Fatal("Table grouping accepted more than one property")
+	value, _, diagnostics := e.Decode(t.Context(), "metrics_table", tooMany, types.ObjectNull(nil))
+	if diagnostics.HasError() || len(diagnostics.Warnings()) != 1 {
+		t.Fatal("stored grouping outside the configured limit should warn", diagnostics)
+	}
+	if _, diagnostics := e.Encode(t.Context(), "metrics_table", value); !diagnostics.HasError() {
+		t.Fatal("Table grouping configuration accepted more than one property")
 	}
 	tooMany["chart"].(map[string]any)["groupBy"] = "host"
 	if _, _, diagnostics := e.Decode(t.Context(), "metrics_table", tooMany, types.ObjectNull(nil)); !diagnostics.HasError() {
@@ -231,7 +235,7 @@ func TestDecodeRejectsUnsafeNumericsAndElementArgs(t *testing.T) {
 
 func TestDefinitionRejectsUnenforceableAndAmbiguousFields(t *testing.T) {
 	for _, name := range []string{"id", "title"} {
-		_, err := NewFromDefinitions([]Definition{{Type: name, Version: 1, Element: "o11y:Reserved", Properties: map[string]Property{"program": testProperty("string", "datasource", "program")}}})
+		_, err := newEngine([]Definition{{Type: name, Version: 1, Element: "o11y:Reserved", Properties: map[string]Property{"program": testProperty("string", "datasource", "program")}}})
 		if err == nil {
 			t.Fatalf("chart %s can overwrite a resource attribute", name)
 		}
@@ -255,7 +259,7 @@ func TestDefinitionRejectsUnenforceableAndAmbiguousFields(t *testing.T) {
 		"missing presence": {"a": {Type: "string", Description: "Test.", Mapping: Mapping{Path: []string{"chart", "a"}}}},
 	} {
 		t.Run(name, func(t *testing.T) {
-			_, err := NewFromDefinitions([]Definition{{Type: "test", Version: 1, Element: "T", Properties: properties}})
+			_, err := newEngine([]Definition{{Type: "test", Version: 1, Element: "T", Properties: properties}})
 			if err == nil {
 				t.Fatal("invalid definition accepted")
 			}
@@ -272,7 +276,7 @@ func TestOneOfRejectsUnsupportedWireAlternatives(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			choice := testProperty("oneof", "chart", "choice")
 			choice.Variants = variants
-			_, err := NewFromDefinitions([]Definition{{Type: "test", Version: 1, Element: "T", Properties: map[string]Property{"choice": choice}}})
+			_, err := newEngine([]Definition{{Type: "test", Version: 1, Element: "T", Properties: map[string]Property{"choice": choice}}})
 			if err == nil {
 				t.Fatal("unsupported oneof accepted")
 			}
@@ -294,7 +298,7 @@ func TestOneOfRejectsIgnoredBlockVariantMetadata(t *testing.T) {
 			change(&variant)
 			choice := testProperty("oneof", "chart", "choice")
 			choice.Variants = map[string]Property{"custom": variant}
-			if _, err := NewFromDefinitions([]Definition{{Type: "test", Version: 1, Element: "o11y:Test", Properties: map[string]Property{"choice": choice}}}); err == nil {
+			if _, err := newEngine([]Definition{{Type: "test", Version: 1, Element: "o11y:Test", Properties: map[string]Property{"choice": choice}}}); err == nil {
 				t.Fatal("ignored block-variant metadata accepted")
 			}
 		})
@@ -321,10 +325,11 @@ func TestOneOfDecodeSelectsWireShapeAndPreservesUnmodeledFields(t *testing.T) {
 		leftovers     []string
 		unit, prefix  types.String
 		invalid       bool
+		warning       bool
 	}{
 		"scalar":                            {wire: "Byte", rebuilt: "Byte", unit: types.StringValue("Byte"), prefix: types.StringNull()},
 		"object with unmodeled scalar name": {wire: map[string]any{"prefix": "$", "unit": "Byte"}, rebuilt: map[string]any{"prefix": "$"}, leftovers: []string{"chart.choice.unit"}, unit: types.StringNull(), prefix: types.StringValue("$")},
-		"unmodeled scalar name alone":       {wire: map[string]any{"unit": "Byte"}, invalid: true},
+		"unmodeled scalar name alone":       {wire: map[string]any{"unit": "Byte"}, leftovers: []string{"chart.choice.unit"}, unit: types.StringNull(), prefix: types.StringNull(), warning: true},
 		"invalid shape":                     {wire: true, invalid: true},
 	} {
 		t.Run(name, func(t *testing.T) {
@@ -343,6 +348,12 @@ func TestOneOfDecodeSelectsWireShapeAndPreservesUnmodeledFields(t *testing.T) {
 			if !fields["unit"].Equal(test.unit) || !fields["prefix"].Equal(test.prefix) {
 				t.Fatal("inactive variant claimed fields", fields)
 			}
+			if test.warning {
+				if len(diagnostics.Warnings()) != 1 || !e.Validate(t.Context(), "test", value, true).HasError() {
+					t.Fatal("stored union should warn while configuration stays invalid", diagnostics)
+				}
+				return
+			}
 			rebuilt, diagnostics := e.Encode(t.Context(), "test", value)
 			if diagnostics.HasError() || !reflect.DeepEqual(rebuilt["chart"].(map[string]any)["choice"], test.rebuilt) {
 				t.Fatal("incorrect union reconstruction", rebuilt, diagnostics)
@@ -351,7 +362,7 @@ func TestOneOfDecodeSelectsWireShapeAndPreservesUnmodeledFields(t *testing.T) {
 	}
 }
 
-func TestEngineOwnsDefinitionsAndReturnsIndependentViews(t *testing.T) {
+func TestEngineReturnsIndependentSchemaViews(t *testing.T) {
 	minimum := 1
 	name := testProperty("string", "name")
 	name.MinLength = &minimum
@@ -365,24 +376,21 @@ func TestEngineOwnsDefinitionsAndReturnsIndependentViews(t *testing.T) {
 	objectType := attributes["options"].GetType().(types.ObjectType)
 	value := testValue(t, e, map[string]attr.Value{"options": types.ObjectValueMust(objectType.AttrTypes, map[string]attr.Value{"name": types.StringValue("x"), "style": types.StringValue("line")})})
 
-	// Change the constructor inputs, including nested maps, slices, and pointers.
-	minimum = 10
-	style.Values[0] = "bar"
-	options.Mapping.Path[0] = "other"
-	delete(options.Properties, "name")
-	delete(properties, "options")
-	// Change the public definition and Framework attribute view too.
-	definition, _ := e.Definition("test")
-	definition.Properties["options"].Properties["style"].Values[0] = "pie"
-	definition.Properties["options"].Mapping.Path[0] = "third"
-	delete(attributes["options"].(schema.SingleNestedAttribute).Attributes, "style")
+	// Changes to a returned schema, including its validators, must not affect
+	// the shared engine.
+	view := attributes["options"].(schema.SingleNestedAttribute)
+	validation := view.Validators[0].(objectValidation).property
+	validation.Properties["style"].Values[0] = "pie"
+	*validation.Properties["name"].MinLength = 10
+	validation.Mapping.Path[0] = "other"
+	delete(view.Attributes, "style")
 	delete(attributes, "options")
 
 	if d := e.Validate(t.Context(), "test", value, true); d.HasError() {
 		t.Fatal("caller changed the engine's validation contract", d)
 	}
 	spec, d := e.Encode(t.Context(), "test", value)
-	if d.HasError() || spec["chart"] == nil || spec["other"] != nil || spec["third"] != nil {
+	if d.HasError() || spec["chart"] == nil || spec["other"] != nil {
 		t.Fatal("caller changed the engine's wire mappings", spec, d)
 	}
 	fresh, _ := e.Attributes("test")

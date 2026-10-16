@@ -13,14 +13,14 @@ description: >-
 element: 'o11y:ClusterMap'
 
 extends:
-  - common/widget.yml
-  - common/signalfx_datasource.yml
-  - common/precision.yml
-  - common/timestamp.yml
+  - common/metric_chart.yml
 
 properties:
+  show_timestamp:
+    ref: common/fields.yml#show_timestamp
+
   maximum_significant_digits:
-    ref: common/precision.yml#maximum_significant_digits
+    ref: common/fields.yml#maximum_significant_digits
     description: >-
       The number of significant digits to display for values in this chart.
       Unset lets Splunk Observability Cloud adjust precision to fit the
@@ -28,7 +28,7 @@ properties:
       in the UI drops it.
 
   display_unit:
-    ref: common/display_unit_custom.yml#display_unit_custom
+    ref: common/fields.yml#display_unit_custom
     optional: true
     mapping:
       path: ['chart', 'displayUnit']

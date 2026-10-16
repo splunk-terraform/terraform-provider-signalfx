@@ -169,14 +169,9 @@ func (r *observabilityChartResource) parseSpec(raw []byte) (string, map[string]a
 
 func (r *observabilityChartResource) setState(ctx context.Context, state *tfsdk.State, model observabilityChartModel) diag.Diagnostics {
 	values := map[string]attr.Value{"id": model.ID, "title": model.Title}
-	attributeTypes := map[string]attr.Type{"id": types.StringType, "title": types.StringType}
+	attributeTypes := state.Schema.Type().(types.ObjectType).AttrTypes
 	for _, chart := range r.engine.Charts() {
-		attributes, err := r.engine.Attributes(chart.Name)
-		if err != nil {
-			return diag.Diagnostics{diag.NewErrorDiagnostic("Invalid chart schema", err.Error())}
-		}
-		objectType := types.ObjectType{AttrTypes: interpreter.AttributeTypes(attributes)}
-		attributeTypes[chart.Name] = objectType
+		objectType := attributeTypes[chart.Name].(types.ObjectType)
 		values[chart.Name] = types.ObjectNull(objectType.AttrTypes)
 		if chart.Name == model.Name {
 			values[chart.Name] = model.Content

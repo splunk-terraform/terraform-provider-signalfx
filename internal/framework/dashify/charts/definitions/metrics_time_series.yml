@@ -13,8 +13,7 @@ description: >-
 element: 'o11y:TimeSeriesChart'
 
 extends:
-  - common/widget.yml
-  - common/signalfx_datasource.yml
+  - common/metric_chart.yml
 
 properties:
   visualization:
@@ -335,7 +334,7 @@ properties:
             path: ['plotType']
 
         display_unit:
-          ref: common/display_unit.yml#display_unit
+          ref: common/fields.yml#display_unit
           optional: true
           mapping:
             path: ['displayUnit']

@@ -55,14 +55,8 @@ type Property struct {
 	Variants      map[string]Property `yaml:"variants"`
 }
 
-// Definitions and public schema views must not share mutable authored data
-// with the cached engine, which serves concurrent resource operations.
-func copyDefinition(d Definition) Definition {
-	d.Extends = slices.Clone(d.Extends)
-	d.Properties = copyProperties(d.Properties)
-	return d
-}
-
+// Public schema views must not share mutable authored data with the cached
+// engine, which serves concurrent resource operations.
 func copyProperties(properties map[string]Property) map[string]Property {
 	if properties == nil {
 		return nil

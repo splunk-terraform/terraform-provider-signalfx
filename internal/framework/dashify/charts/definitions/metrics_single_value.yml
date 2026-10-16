@@ -11,13 +11,18 @@ description: >-
 element: 'o11y:SingleValue'
 
 extends:
-  - common/widget.yml
-  - common/signalfx_datasource.yml
-  - common/precision.yml
-  - common/timestamp.yml
-  - common/secondary_visualization.yml
+  - common/metric_chart.yml
 
 properties:
+  maximum_significant_digits:
+    ref: common/fields.yml#maximum_significant_digits
+
+  show_timestamp:
+    ref: common/fields.yml#show_timestamp
+
+  secondary_visualization:
+    ref: common/fields.yml#secondary_visualization
+
   maximum_fraction_digits:
     type: number
     optional: true
@@ -30,7 +35,7 @@ properties:
   display_unit:
     # Chart-level rather than per-plot: SingleValueProps.displayUnit is the
     # only display-unit control SingleValue has.
-    ref: common/display_unit.yml#display_unit
+    ref: common/fields.yml#display_unit
     optional: true
     mapping:
       path: ['chart', 'displayUnit']

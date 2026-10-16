@@ -58,7 +58,7 @@ func Load(files fs.FS) (*Engine, error) {
 		}
 		definitions = append(definitions, definition)
 	}
-	return NewFromDefinitions(definitions)
+	return newEngine(definitions)
 }
 
 type loader struct {

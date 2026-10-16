@@ -14,14 +14,62 @@ description: >-
 element: 'o11y:List'
 
 extends:
-  - common/widget.yml
-  - common/signalfx_datasource.yml
-  - common/precision.yml
-  - common/timestamp.yml
-  - common/secondary_visualization.yml
-  - common/published_streams.yml
+  - common/metric_chart.yml
 
 properties:
+  maximum_significant_digits:
+    ref: common/fields.yml#maximum_significant_digits
+
+  show_timestamp:
+    ref: common/fields.yml#show_timestamp
+
+  secondary_visualization:
+    ref: common/fields.yml#secondary_visualization
+
+  # List-only: SingleValue has no publishedStreams concept, and TableChart
+  # types it but never reads or writes it, so modeling it there would write
+  # JSON Dashify silently ignores.
+  published_streams:
+    # A map keyed by publish label ("A", "B"), not a list - the key must match
+    # a `publish(label=...)` in `program`, so it's user-chosen rather than
+    # positional. `item` describes the map's value shape.
+    type: map
+    optional: true
+    description: >-
+      Per-plot display overrides, keyed by the SignalFlow publish label each
+      override applies to.
+    mapping:
+      path: ['chart', 'publishedStreams']
+    item:
+      properties:
+        name:
+          type: string
+          optional: true
+          description: >-
+            An alternate display name for this plot, shown in the legend and
+            data table in place of its raw SignalFlow label.
+          mapping:
+            path: ['name']
+
+        display_unit:
+          ref: common/fields.yml#display_unit
+          optional: true
+          mapping:
+            path: ['displayUnit']
+
+        palette_index:
+          type: number
+          optional: true
+          min: 0
+          max: 15
+          # An index, not a color string: Dashify's color picker only ever
+          # emits paletteIndex.
+          description: >-
+            The palette color index (0-15) to draw this plot in, overriding
+            the chart's automatic color assignment.
+          mapping:
+            path: ['paletteIndex']
+
   hide_missing_values:
     type: bool
     optional: true

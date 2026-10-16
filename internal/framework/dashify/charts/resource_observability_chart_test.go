@@ -19,6 +19,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	testresource "github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
 	"github.com/signalfx/signalfx-go/template"
@@ -178,119 +179,6 @@ resource "signalfx_observability_chart" "test" {
 	}
 }
 
-func TestResourceObservabilityChartLifecycleAndGeneratedConfig(t *testing.T) {
-	root := template.RootElementChart
-	var record *template.Template
-	writes, deletes := 0, 0
-	handlers := map[string]http.Handler{
-		"POST /v2/template": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			var write template.CreateUpdateTemplateRequest
-			if !assert.NoError(t, json.NewDecoder(r.Body).Decode(&write)) {
-				http.Error(w, "invalid request", 400)
-				return
-			}
-			writes++
-			assert.Equal(t, &root, write.Metadata.RootElement)
-			assert.Empty(t, write.Metadata.Imports)
-			assert.Nil(t, write.Metadata.Datasource)
-			assert.JSONEq(t, observabilityChartFixture, string(write.Spec))
-			record = &template.Template{ID: "chart-1", Type: write.Type, Title: write.Title, Spec: write.Spec, Metadata: &template.Metadata{RootElement: &root}}
-			w.WriteHeader(http.StatusCreated)
-			assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: record}))
-		}),
-		"GET /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Equal(t, "chart-1", r.PathValue("id"))
-			assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: record}))
-		}),
-		"PUT /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Equal(t, "chart-1", r.PathValue("id"))
-			var write template.CreateUpdateTemplateRequest
-			if !assert.NoError(t, json.NewDecoder(r.Body).Decode(&write)) {
-				http.Error(w, "invalid request", 400)
-				return
-			}
-			writes++
-			assert.Equal(t, "Updated rate", write.Title)
-			assert.Equal(t, &root, write.Metadata.RootElement)
-			assert.Contains(t, string(write.Spec), `"type":"area"`)
-			record.Title, record.Spec = write.Title, write.Spec
-			assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: record}))
-		}),
-		"DELETE /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Equal(t, "chart-1", r.PathValue("id"))
-			deletes++
-			w.WriteHeader(http.StatusNoContent)
-		}),
-	}
-	updated := strings.Replace(strings.Replace(observabilityChartConfig, "Request rate", "Updated rate", 1), `visualization = "line"`, `visualization = "area"`, 1)
-	testresource.UnitTest(t, testresource.TestCase{
-		IsUnitTest: true, TerraformVersionChecks: []tfversion.TerraformVersionCheck{tfversion.SkipBelow(tfversion.Version1_5_0)},
-		ProtoV6ProviderFactories: fwtest.NewMockProto6Server(t, handlers, fwtest.WithMockResources(NewResourceObservabilityChart)),
-		Steps: []testresource.TestStep{
-			{Config: observabilityChartConfig, Check: testresource.ComposeAggregateTestCheckFunc(
-				testresource.TestCheckResourceAttr("signalfx_observability_chart.test", "id", "chart-1"),
-				testresource.TestCheckResourceAttr("signalfx_observability_chart.test", "metrics_time_series.time_range", "60m"),
-			)},
-			{Config: observabilityChartConfig, PlanOnly: true},
-			{ResourceName: "signalfx_observability_chart.test", ImportState: true, ImportStateKind: testresource.ImportBlockWithID, GenerateConfig: true},
-			{Config: strings.Replace(updated, `time_range = "60m"`, `time_range = "1h"`, 1), Check: testresource.TestCheckResourceAttr("signalfx_observability_chart.test", "metrics_time_series.time_range", "1h")},
-			{Config: updated, Check: testresource.TestCheckResourceAttr("signalfx_observability_chart.test", "metrics_time_series.time_range", "60m")},
-			{Config: updated, PlanOnly: true},
-		},
-	})
-	assert.Equal(t, 3, writes)
-	assert.Equal(t, 1, deletes)
-}
-
-func TestResourceObservabilityChartComputedContentLifecycle(t *testing.T) {
-	root := template.RootElementChart
-	var record *template.Template
-	writes := 0
-	handlers := map[string]http.Handler{
-		"POST /v2/template": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			var write template.CreateUpdateTemplateRequest
-			if !assert.NoError(t, json.NewDecoder(r.Body).Decode(&write)) {
-				http.Error(w, "invalid request", http.StatusBadRequest)
-				return
-			}
-			writes++
-			assert.Equal(t, "Computed chart", write.Title)
-			assert.JSONEq(t, `{"<Chart>":[{"<o11y:TimeSeriesChart>":[],"datasource":{"program":"A"},"chart":{"seriesOptions":{"A":{"name":"Requests"}}},"widget":{"links":[{"url":"https://example.com"}]}}]}`, string(write.Spec))
-			record = &template.Template{ID: "chart-1", Title: write.Title, Spec: write.Spec, Metadata: &template.Metadata{RootElement: &root}}
-			w.WriteHeader(http.StatusCreated)
-			assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: record}))
-		}),
-		"GET /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Equal(t, "chart-1", r.PathValue("id"))
-			assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: record}))
-		}),
-		"DELETE /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Equal(t, "chart-1", r.PathValue("id"))
-			w.WriteHeader(http.StatusNoContent)
-		}),
-	}
-	const computedConfig = `resource "terraform_data" "title" { input = "Computed chart" }
-resource "terraform_data" "chart" {
-  input = {
-    program = "A"
-    links = [{ url = "https://example.com" }]
-    series = { A = { name = "Requests" } }
-  }
-}
-resource "signalfx_observability_chart" "test" {
-  title = terraform_data.title.output
-  metrics_time_series = terraform_data.chart.output
-}`
-	testresource.UnitTest(t, testresource.TestCase{
-		IsUnitTest: true, ProtoV6ProviderFactories: fwtest.NewMockProto6Server(t, handlers, fwtest.WithMockResources(NewResourceObservabilityChart)),
-		Steps: []testresource.TestStep{
-			{Config: computedConfig, Check: testresource.TestCheckResourceAttr("signalfx_observability_chart.test", "metrics_time_series.series.A.name", "Requests")},
-			{Config: computedConfig, PlanOnly: true},
-		},
-	})
-	assert.Equal(t, 1, writes)
-}
-
 func TestResourceObservabilityChartRejectsResolvedInvalidContent(t *testing.T) {
 	for _, test := range []struct{ name, content, want string }{
 		{"metrics_time_series", `{ program = "A", visualization = "pie" }`, "Invalid chart value"},
@@ -381,18 +269,21 @@ func TestResourceObservabilityChartAPIResponses(t *testing.T) {
 		response     *template.Result
 		want         string
 		removed      bool
+		retainedID   string
 	}{
-		{"create missing endpoint", "POST", 404, nil, "endpoint was not found", false},
-		{"create missing data", "POST", 201, &template.Result{}, "no template record", false},
-		{"create wrong chart type", "POST", 201, wrongType, "chart type", false},
-		{"read deleted", "GET", 404, nil, "", true},
-		{"read failure", "GET", 500, nil, "", false},
-		{"read mismatched ID", "GET", 200, &template.Result{Data: &template.Template{ID: "wrong"}}, "for Chart", false},
-		{"update deleted", "PUT", 404, nil, "not found during update", false},
-		{"update mismatched ID", "PUT", 200, &template.Result{Data: &template.Template{ID: "wrong"}}, "for Chart", false},
-		{"update missing data", "PUT", 200, &template.Result{}, "no template record", false},
-		{"update wrong chart type", "PUT", 200, wrongType, "chart type", false},
-		{"delete already missing", "DELETE", 404, nil, "", false},
+		{"create missing endpoint", "POST", 404, nil, "endpoint was not found", false, ""},
+		{"create missing data", "POST", 201, &template.Result{}, "no template record", false, ""},
+		{"create malformed document", "POST", 201, &template.Result{Data: &template.Template{ID: "chart-1", Spec: json.RawMessage(`{}`), Metadata: &template.Metadata{RootElement: &root}}}, "exactly one chart", false, "chart-1"},
+		{"create invalid ID", "POST", 201, &template.Result{Data: &template.Template{ID: "../chart-1"}}, "for Chart", false, ""},
+		{"create wrong chart type", "POST", 201, wrongType, "chart type", false, "chart-1"},
+		{"read deleted", "GET", 404, nil, "", true, ""},
+		{"read failure", "GET", 500, nil, "", false, ""},
+		{"read mismatched ID", "GET", 200, &template.Result{Data: &template.Template{ID: "wrong"}}, "for Chart", false, ""},
+		{"update deleted", "PUT", 404, nil, "not found during update", false, ""},
+		{"update mismatched ID", "PUT", 200, &template.Result{Data: &template.Template{ID: "wrong"}}, "for Chart", false, ""},
+		{"update missing data", "PUT", 200, &template.Result{}, "no template record", false, ""},
+		{"update wrong chart type", "PUT", 200, wrongType, "chart type", false, ""},
+		{"delete already missing", "DELETE", 404, nil, "", false, ""},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			endpoint := test.method + " /v2/template/{id}"
@@ -422,10 +313,19 @@ func TestResourceObservabilityChartAPIResponses(t *testing.T) {
 			var details string
 			switch test.method {
 			case "POST":
-				response := resource.CreateResponse{State: state}
+				require.False(t, plan.SetAttribute(t.Context(), path.Root("id"), types.StringUnknown()).HasError())
+				response := resource.CreateResponse{State: tfsdk.State{Schema: resourceSchema, Raw: tftypes.NewValue(resourceSchema.Type().TerraformType(t.Context()), nil)}}
 				managed.Create(t.Context(), resource.CreateRequest{Plan: plan}, &response)
 				require.True(t, response.Diagnostics.HasError())
 				details = response.Diagnostics.Errors()[0].Detail()
+				if test.retainedID == "" {
+					assert.True(t, response.State.Raw.IsNull())
+				} else {
+					retained, diags := managed.model(t.Context(), response.State)
+					require.False(t, diags.HasError(), diags)
+					assert.Equal(t, test.retainedID, retained.ID.ValueString())
+					assert.True(t, retained.Content.Equal(model.Content), "failed create must preserve planned content")
+				}
 			case "GET":
 				response := resource.ReadResponse{State: state}
 				managed.Read(t.Context(), resource.ReadRequest{State: state}, &response)
@@ -516,11 +416,13 @@ var observabilityChartExamples = []struct {
   program = "A"
   headerless = true
   time_range = "60m"
+  visualization = "line"
+  links = [{ url = "https://example.com" }]
   show_legend = false
   series = { A = { name = "Requests", display_unit = { unit = "Byte" } } }
   y_axes = [{ label = "Rate", minimum = 0.5 }]
   additional_properties = [{ property = "host", enabled = false }]
- }`, `{"<o11y:TimeSeriesChart>":[],"widget":{"headerless":true},"datasource":{"program":"A","time":{"type":"relative","range":3600000,"rangeEnd":0}},"chart":{"legend":{"hide":true},"seriesOptions":{"A":{"name":"Requests","displayUnit":"Byte"}},"yAxes":[{"label":"Rate","min":0.5}],"additionalProperties":[{"property":"host","enabled":false}]}}`, "series.A.display_unit.unit", "Byte"},
+ }`, `{"<o11y:TimeSeriesChart>":[],"widget":{"headerless":true,"links":[{"url":"https://example.com"}]},"datasource":{"program":"A","time":{"type":"relative","range":3600000,"rangeEnd":0}},"chart":{"chartOptions":{"type":"line"},"legend":{"hide":true},"seriesOptions":{"A":{"name":"Requests","displayUnit":"Byte"}},"yAxes":[{"label":"Rate","min":0.5}],"additionalProperties":[{"property":"host","enabled":false}]}}`, "series.A.display_unit.unit", "Byte"},
 	{"metrics_single_value", `{
   program = "A"
   headerless = true
@@ -565,6 +467,7 @@ func TestResourceObservabilityChartAllTypesLifecycleAndComputedContent(t *testin
 			root := template.RootElementChart
 			var record *template.Template
 			writes, deletes := 0, 0
+			updatedChild := strings.NewReplacer(`"headerless":true`, `"headerless":false`, `"type":"line"`, `"type":"area"`).Replace(example.child)
 			handlers := map[string]http.Handler{
 				"POST /v2/template": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					var write template.CreateUpdateTemplateRequest
@@ -574,6 +477,7 @@ func TestResourceObservabilityChartAllTypesLifecycleAndComputedContent(t *testin
 					}
 					writes++
 					assert.JSONEq(t, `{"<Chart>":[`+example.child+`]}`, string(write.Spec))
+					assert.Equal(t, "Saved", write.Title)
 					assert.Equal(t, fwdashify.ObservabilityTemplateRecordType, write.Type)
 					assert.Equal(t, &root, write.Metadata.RootElement)
 					assert.Empty(t, write.Metadata.Imports)
@@ -595,7 +499,7 @@ func TestResourceObservabilityChartAllTypesLifecycleAndComputedContent(t *testin
 					writes++
 					assert.Equal(t, "Updated", write.Title)
 					assert.Equal(t, "chart-1", r.PathValue("id"))
-					assert.JSONEq(t, `{"<Chart>":[`+strings.Replace(example.child, `"headerless":true`, `"headerless":false`, 1)+`]}`, string(write.Spec))
+					assert.JSONEq(t, `{"<Chart>":[`+updatedChild+`]}`, string(write.Spec))
 					record.Title, record.Spec = write.Title, write.Spec
 					assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: record}))
 				}),
@@ -611,22 +515,38 @@ resource "signalfx_observability_chart" "test" {
   title = terraform_data.title.output
   %s = terraform_data.chart.output
 }`, example.content, example.name)
-			updated := strings.Replace(strings.Replace(config, `input = "Saved"`, `input = "Updated"`, 1), "headerless = true", "headerless = false", 1)
+			updated := strings.NewReplacer(`input = "Saved"`, `input = "Updated"`, "headerless = true", "headerless = false", `visualization = "line"`, `visualization = "area"`).Replace(config)
+			check := testresource.ComposeAggregateTestCheckFunc(
+				testresource.TestCheckResourceAttr("signalfx_observability_chart.test", "id", "chart-1"),
+				testresource.TestCheckResourceAttr("signalfx_observability_chart.test", example.name+"."+example.checkPath, example.checkValue),
+			)
+			if example.name == "metrics_time_series" {
+				check = testresource.ComposeAggregateTestCheckFunc(check,
+					testresource.TestCheckResourceAttr("signalfx_observability_chart.test", "metrics_time_series.time_range", "60m"))
+			}
+			steps := []testresource.TestStep{
+				{Config: config, Check: check},
+				{Config: config, PlanOnly: true},
+				{ResourceName: "signalfx_observability_chart.test", ImportState: true, ImportStateKind: testresource.ImportBlockWithID, GenerateConfig: true},
+				{Config: updated, Check: testresource.TestCheckResourceAttr("signalfx_observability_chart.test", example.name+".headerless", "false")},
+			}
+			expectedWrites := 2
+			if example.name == "metrics_time_series" {
+				// Equivalent duration spellings stay stable on refresh and can
+				// each be explicitly configured without changing the wire value.
+				steps = append(steps,
+					testresource.TestStep{Config: strings.Replace(updated, `time_range = "60m"`, `time_range = "1h"`, 1), Check: testresource.TestCheckResourceAttr("signalfx_observability_chart.test", "metrics_time_series.time_range", "1h")},
+					testresource.TestStep{Config: updated, Check: check},
+				)
+				expectedWrites += 2
+			}
+			steps = append(steps, testresource.TestStep{Config: updated, PlanOnly: true})
 			testresource.UnitTest(t, testresource.TestCase{
 				IsUnitTest: true, TerraformVersionChecks: []tfversion.TerraformVersionCheck{tfversion.SkipBelow(tfversion.Version1_5_0)},
 				ProtoV6ProviderFactories: fwtest.NewMockProto6Server(t, handlers, fwtest.WithMockResources(NewResourceObservabilityChart)),
-				Steps: []testresource.TestStep{
-					{Config: config, Check: testresource.ComposeAggregateTestCheckFunc(
-						testresource.TestCheckResourceAttr("signalfx_observability_chart.test", "id", "chart-1"),
-						testresource.TestCheckResourceAttr("signalfx_observability_chart.test", example.name+"."+example.checkPath, example.checkValue),
-					)},
-					{Config: config, PlanOnly: true},
-					{ResourceName: "signalfx_observability_chart.test", ImportState: true, ImportStateKind: testresource.ImportBlockWithID, GenerateConfig: true},
-					{Config: updated, Check: testresource.TestCheckResourceAttr("signalfx_observability_chart.test", example.name+".headerless", "false")},
-					{Config: updated, PlanOnly: true},
-				},
+				Steps:                    steps,
 			})
-			assert.Equal(t, 2, writes)
+			assert.Equal(t, expectedWrites, writes)
 			assert.Equal(t, 1, deletes)
 		})
 	}
@@ -674,6 +594,46 @@ func TestResourceObservabilityChartReadsChangedType(t *testing.T) {
 	var old types.Object
 	require.False(t, response.State.GetAttribute(t.Context(), path.Root("metrics_time_series"), &old).HasError())
 	assert.True(t, old.IsNull(), "an out-of-band chart type change must clear the previous content")
+}
+
+func TestResourceObservabilityChartReadsUnlistedVisualization(t *testing.T) {
+	root := template.RootElementChart
+	deletes := 0
+	managed, resourceSchema := configuredObservabilityChartResource(t, map[string]http.Handler{
+		"GET /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "chart-1", r.PathValue("id"))
+			assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: &template.Template{
+				ID: "chart-1", Title: "Changed in UI", Metadata: &template.Metadata{RootElement: &root},
+				Spec: json.RawMessage(strings.Replace(observabilityChartFixture, `"type":"line"`, `"type":"pie"`, 1)),
+			}}))
+		}),
+		"DELETE /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "chart-1", r.PathValue("id"))
+			deletes++
+			w.WriteHeader(http.StatusNoContent)
+		}),
+	})
+	for _, imported := range []bool{false, true} {
+		state := tfsdk.State{Schema: resourceSchema, Raw: tftypes.NewValue(resourceSchema.Type().TerraformType(t.Context()), nil)}
+		if imported {
+			require.False(t, state.SetAttribute(t.Context(), path.Root("id"), "chart-1").HasError())
+		} else {
+			require.False(t, managed.setState(t.Context(), &state, observabilityChartTestModel(t)).HasError())
+		}
+		response := resource.ReadResponse{State: state}
+		managed.Read(t.Context(), resource.ReadRequest{State: state}, &response)
+		require.False(t, response.Diagnostics.HasError(), response.Diagnostics)
+		require.Len(t, response.Diagnostics.Warnings(), 1)
+		assert.Contains(t, response.Diagnostics.Warnings()[0].Detail(), "visualization")
+		model, diags := managed.model(t.Context(), response.State)
+		require.False(t, diags.HasError(), diags)
+		assert.Equal(t, "chart-1", model.ID.ValueString())
+		assert.Equal(t, "pie", model.Content.Attributes()["visualization"].(types.String).ValueString())
+		deleted := resource.DeleteResponse{State: response.State}
+		managed.Delete(t.Context(), resource.DeleteRequest{State: response.State}, &deleted)
+		require.False(t, deleted.Diagnostics.HasError(), deleted.Diagnostics)
+	}
+	assert.Equal(t, 2, deletes)
 }
 
 func TestResourceObservabilityChartChangesType(t *testing.T) {
