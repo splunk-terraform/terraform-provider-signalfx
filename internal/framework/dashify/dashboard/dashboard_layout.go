@@ -40,19 +40,16 @@ func dashifyLayoutFieldsEmpty(fields []dashifyLayoutField) bool {
 }
 
 // Simple sizes and positions are finite numbers or strings such as "1/2" and "100%".
-func dashifyLayoutValue(value types.String) (any, bool, error) {
+func dashifyLayoutValue(value types.String) (any, bool) {
 	if value.IsNull() || value.IsUnknown() {
-		return nil, false, nil
+		return nil, false
 	}
 	text := value.ValueString()
 	trimmed := strings.TrimSpace(text)
-	if strings.HasPrefix(trimmed, "{") || strings.HasPrefix(trimmed, "[") {
-		return nil, false, fmt.Errorf("JSON objects and arrays are not supported in typed layout values; use signalfx_observability_template for advanced layout")
-	}
 	if number, err := strconv.ParseFloat(trimmed, 64); err == nil && !math.IsNaN(number) && !math.IsInf(number, 0) {
-		return number, true, nil
+		return number, true
 	}
-	return text, true, nil
+	return text, true
 }
 
 // Leave advanced values in the source object so Read can warn about them.
@@ -77,24 +74,21 @@ func dashifyLayoutString(item map[string]any, key string) (types.String, error) 
 	}
 }
 
-func buildDashifyLayoutItem(id string, layout *dashifyLayoutModel) (map[string]any, error) {
+func buildDashifyLayoutItem(id string, layout *dashifyLayoutModel) map[string]any {
 	item := map[string]any{"id": id}
 	if layout == nil {
-		return item, nil
+		return item
 	}
 	if !layout.Absolute.IsNull() && !layout.Absolute.IsUnknown() {
 		item["absolute"] = layout.Absolute.ValueBool()
 	}
 	for _, field := range dashifyLayoutModelFields(layout) {
-		value, set, err := dashifyLayoutValue(*field.value)
-		if err != nil {
-			return nil, fmt.Errorf("%s: %w", field.key, err)
-		}
+		value, set := dashifyLayoutValue(*field.value)
 		if set {
 			item[field.key] = value
 		}
 	}
-	return item, nil
+	return item
 }
 
 // The layout list is keyed by positional IDs rather than the order of its items.

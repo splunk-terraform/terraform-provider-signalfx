@@ -58,11 +58,7 @@ func buildDashboardSpec(model observabilityDashboardModel) (json.RawMessage, []s
 		if reference != "" {
 			imports = append(imports, reference)
 		}
-		item, err := buildDashifyLayoutItem(id, model.Container[i].Layout)
-		if err != nil {
-			return nil, nil, fmt.Errorf("container %s layout: %w", id, err)
-		}
-		items[i] = item
+		items[i] = buildDashifyLayoutItem(id, model.Container[i].Layout)
 	}
 	spec[dashifyDashboardElement] = children
 	spec["layout"] = map[string]any{"saved": map[string]any{"_": map[string]any{"items": items}}}

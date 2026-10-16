@@ -124,17 +124,6 @@ func TestResourceObservabilityDashboardRejectsInvalidPlans(t *testing.T) {
 			want: "must contain at least 1 elements",
 		},
 		{
-			name: "invalid width array",
-			config: `resource "signalfx_observability_dashboard" "test" {
-  title = "Service overview"
-  container = [{
-    inline_content = jsonencode({ "<Chart>" = [] })
-    layout = { width = jsonencode([1, 2]) }
-  }]
-}`,
-			want: "JSON objects and arrays are not supported",
-		},
-		{
 			name: "empty item layout",
 			config: `resource "signalfx_observability_dashboard" "test" {
   title     = "Service overview"

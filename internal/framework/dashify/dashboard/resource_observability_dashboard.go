@@ -141,12 +141,6 @@ func validateDashifyLayout(resp *resource.ValidateConfigResponse, layoutPath pat
 	}
 	if layout.Absolute.IsNull() && dashifyLayoutFieldsEmpty(dashifyLayoutModelFields(layout)) {
 		resp.Diagnostics.AddAttributeError(layoutPath, "Empty layout", "layout must set at least one size or position option")
-		return
-	}
-	for _, field := range dashifyLayoutModelFields(layout) {
-		if _, _, err := dashifyLayoutValue(*field.value); err != nil {
-			resp.Diagnostics.AddAttributeError(layoutPath.AtName(field.name), "Invalid layout value", err.Error())
-		}
 	}
 }
 
