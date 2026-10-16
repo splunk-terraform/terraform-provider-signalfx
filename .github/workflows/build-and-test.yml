@@ -32,9 +32,13 @@ jobs:
         run: make build
   
   test:
-    name: test
+    name: test (Terraform ${{ matrix.terraform-version }})
     runs-on: ubuntu-latest
     needs: [build]
+    strategy:
+      fail-fast: false
+      matrix:
+        terraform-version: ['1.5.7', '1.15.1', '1.16.6']
     steps:
       - name: Check out the codebase.
         uses: actions/checkout@v7
@@ -43,6 +47,16 @@ jobs:
         uses: actions/setup-go@v7
         with:
           go-version: 'stable'
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: ${{ matrix.terraform-version }}
+          terraform_wrapper: false
+
+      - name: Configure Terraform test executable
+        # Reuse the installed binary instead of downloading Terraform for each test case.
+        run: echo "TF_ACC_TERRAFORM_PATH=$(command -v terraform)" >> "$GITHUB_ENV"
 
       - name: Caching dependency
         uses: actions/cache@v6

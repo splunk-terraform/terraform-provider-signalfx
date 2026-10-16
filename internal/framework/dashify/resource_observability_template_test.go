@@ -17,6 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
@@ -82,6 +83,25 @@ func TestResourceObservabilityTemplateMetadataAndSchema(t *testing.T) {
 	assert.True(t, datasource.Attributes["slo_id"].IsOptional())
 	assert.NotContains(t, schemaResponse.Schema.Attributes, "template_contents")
 	assert.NotContains(t, schemaResponse.Schema.Attributes, "imports")
+}
+
+func TestObservabilityTemplateSpecPlanModifier(t *testing.T) {
+	modifier := observabilityTemplateSpecSemanticPlanModifier{}
+	state := types.StringValue(`{"$import:chart":"/v2/template/abc","<Dashboard>":[]}`)
+	request := planmodifier.StringRequest{
+		StateValue: state,
+		PlanValue:  types.StringValue("{\n  \"<Dashboard>\": [],\n  \"$import:chart\": \"/v2/template/abc\"\n}\n"),
+	}
+	response := planmodifier.StringResponse{PlanValue: request.PlanValue}
+	modifier.PlanModifyString(t.Context(), request, &response)
+	require.False(t, response.Diagnostics.HasError(), response.Diagnostics)
+	assert.Equal(t, state, response.PlanValue)
+
+	request.PlanValue = types.StringValue(`{"$import:chart":"/v2/template/other","<Dashboard>":[]}`)
+	response = planmodifier.StringResponse{PlanValue: request.PlanValue}
+	modifier.PlanModifyString(t.Context(), request, &response)
+	require.False(t, response.Diagnostics.HasError(), response.Diagnostics)
+	assert.Equal(t, request.PlanValue, response.PlanValue)
 }
 
 func TestResourceObservabilityTemplateImportsValidation(t *testing.T) {
@@ -282,15 +302,15 @@ func TestResourceObservabilityTemplateRejectsInvalidConfiguration(t *testing.T) 
 func TestResourceObservabilityTemplateLifecycleAndGeneratedConfig(t *testing.T) {
 	root := template.RootElementChart
 	initial := template.Template{
-		ID: "template-1", Type: observabilityTemplateRecordType, Title: "Request rate",
+		ID: "template-1", Type: ObservabilityTemplateRecordType, Title: "Request rate",
 		Spec: json.RawMessage(`{"<Chart>":[]}`), Metadata: &template.Metadata{RootElement: &root},
 	}
 	updated := template.Template{
-		ID: "template-1", Type: observabilityTemplateRecordType, Title: "Request rate (updated)",
+		ID: "template-1", Type: ObservabilityTemplateRecordType, Title: "Request rate (updated)",
 		Spec: json.RawMessage(`{"<Chart>":[]}`), Metadata: &template.Metadata{RootElement: &root, Imports: []string{"/v2/template/shared"}},
 	}
 	managedUpdate := template.Template{
-		ID: "template-1", Type: observabilityTemplateRecordType, Title: "Request rate (managed update)",
+		ID: "template-1", Type: ObservabilityTemplateRecordType, Title: "Request rate (managed update)",
 		Spec: json.RawMessage(`{"<Chart>":[]}`), Metadata: &template.Metadata{RootElement: &root},
 	}
 	readFixture := initial
@@ -302,7 +322,7 @@ func TestResourceObservabilityTemplateLifecycleAndGeneratedConfig(t *testing.T) 
 				http.Error(w, "invalid create request", http.StatusBadRequest)
 				return
 			}
-			assert.Equal(t, observabilityTemplateRecordType, write.Type)
+			assert.Equal(t, ObservabilityTemplateRecordType, write.Type)
 			assert.Equal(t, initial.Title, write.Title)
 			assert.JSONEq(t, string(initial.Spec), string(write.Spec))
 			assert.Equal(t, initial.Metadata.RootElement, write.Metadata.RootElement)
@@ -327,7 +347,7 @@ func TestResourceObservabilityTemplateLifecycleAndGeneratedConfig(t *testing.T) 
 				http.Error(w, "invalid update request", http.StatusBadRequest)
 				return
 			}
-			assert.Equal(t, observabilityTemplateRecordType, write.Type)
+			assert.Equal(t, ObservabilityTemplateRecordType, write.Type)
 			switch write.Title {
 			case managedUpdate.Title:
 				assert.Empty(t, write.Metadata.Imports)
@@ -509,13 +529,13 @@ func TestResourceObservabilityTemplateUpdateReportsNotFound(t *testing.T) {
 		"POST /v2/template": http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 			w.WriteHeader(http.StatusCreated)
 			assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: &template.Template{
-				ID: "template-1", Type: observabilityTemplateRecordType, Title: "Request rate",
+				ID: "template-1", Type: ObservabilityTemplateRecordType, Title: "Request rate",
 				Spec: json.RawMessage(`{"<Chart>":[]}`), Metadata: &template.Metadata{RootElement: &root},
 			}}))
 		}),
 		"GET /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 			assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: &template.Template{
-				ID: "template-1", Type: observabilityTemplateRecordType, Title: "Request rate",
+				ID: "template-1", Type: ObservabilityTemplateRecordType, Title: "Request rate",
 				Spec: json.RawMessage(`{"<Chart>":[]}`), Metadata: &template.Metadata{RootElement: &root},
 			}}))
 		}),
@@ -732,18 +752,34 @@ func TestResourceObservabilityTemplateUpdateRejectsMissingResponseRecord(t *test
 	assert.Equal(t, state.Raw, response.State.Raw)
 }
 
-func TestResourceObservabilityTemplateImportedUpdateRequiresMetadata(t *testing.T) {
+func TestResourceObservabilityTemplateImportedUpdateDerivesMetadata(t *testing.T) {
 	root := template.RootElementChart
 	imported := template.Template{
 		ID:       "imported",
-		Type:     observabilityTemplateRecordType,
+		Type:     ObservabilityTemplateRecordType,
 		Title:    "Imported",
-		Spec:     json.RawMessage(`{"<Chart>":[]}`),
-		Metadata: &template.Metadata{RootElement: &root, Imports: []string{"/v2/template/child"}},
+		Spec:     json.RawMessage(`{"$import:child":"/v2/template/child","<Chart>":[]}`),
+		Metadata: &template.Metadata{RootElement: &root, Imports: []string{"/v2/template/child", "/v2/template/indirect"}},
 	}
 	handlers := map[string]http.Handler{
 		"GET /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			assert.Equal(t, imported.ID, r.PathValue("id"))
+			assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: &imported}))
+		}),
+		"PUT /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, imported.ID, r.PathValue("id"))
+			var write template.CreateUpdateTemplateRequest
+			if err := json.NewDecoder(r.Body).Decode(&write); err != nil {
+				t.Errorf("decode update request: %v", err)
+				http.Error(w, "invalid update request", http.StatusBadRequest)
+				return
+			}
+			assert.Equal(t, "Changed", write.Title)
+			assert.Equal(t, &root, write.Metadata.RootElement)
+			assert.Equal(t, []string{"/v2/template/child"}, write.Metadata.Imports)
+			assert.Nil(t, write.Metadata.Datasource)
+			imported.Title = write.Title
+			imported.Spec = write.Spec
 			assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: &imported}))
 		}),
 		"DELETE /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -754,21 +790,12 @@ func TestResourceObservabilityTemplateImportedUpdateRequiresMetadata(t *testing.
 	const importedConfig = `resource "signalfx_observability_template" "test" {
   title        = "Imported"
   root_element = "Chart"
-  spec         = jsonencode({ "<Chart>" = [] })
+  spec         = jsonencode({ "$import:child" = "/v2/template/child", "<Chart>" = [] })
 }`
 	const changedConfig = `resource "signalfx_observability_template" "test" {
   title        = "Changed"
   root_element = "Chart"
-  spec         = jsonencode({ "<Chart>" = [] })
-}`
-	const computedTitleConfig = `resource "terraform_data" "title" {
-  input = "Changed"
-}
-
-resource "signalfx_observability_template" "test" {
-  title        = terraform_data.title.output
-  root_element = "Chart"
-  spec         = jsonencode({ "<Chart>" = [] })
+  spec         = jsonencode({ "$import:child" = "/v2/template/child", "<Chart>" = [] })
 }`
 	const replacementConfig = `resource "signalfx_observability_template" "test" {
   title        = "Imported"
@@ -798,14 +825,12 @@ import {
 				PlanOnly: true,
 			},
 			{
-				Config:      changedConfig,
-				PlanOnly:    true,
-				ExpectError: regexp.MustCompile("Cannot safely update imported template"),
+				Config: changedConfig,
+				Check:  testresource.TestCheckResourceAttr("signalfx_observability_template.test", "title", "Changed"),
 			},
 			{
-				Config:      computedTitleConfig,
-				PlanOnly:    true,
-				ExpectError: regexp.MustCompile("Cannot safely update imported template"),
+				Config:   changedConfig,
+				PlanOnly: true,
 			},
 			{
 				Config:             replacementConfig,
@@ -813,36 +838,11 @@ import {
 				ExpectNonEmptyPlan: true,
 			},
 			{
-				Config:  importedConfig,
+				Config:  changedConfig,
 				Destroy: true,
 			},
 		},
 	})
-}
-
-func TestResourceObservabilityTemplateUpdateRetainsImportedMetadataGuard(t *testing.T) {
-	managed := NewResourceObservabilityTemplate().(*observabilityTemplateResource)
-	var schemaResponse resource.SchemaResponse
-	managed.Schema(t.Context(), resource.SchemaRequest{}, &schemaResponse)
-
-	prior := observabilityTemplateModel{
-		ID:          types.StringValue("imported"),
-		Title:       types.StringValue("Imported"),
-		RootElement: types.StringValue(string(template.RootElementChart)),
-		Spec:        jsontypes.NewNormalizedValue(`{"<Chart>":[]}`),
-	}
-	planned := prior
-	planned.Title = types.StringValue("Changed")
-
-	state := tfsdk.State{Schema: schemaResponse.Schema}
-	require.False(t, state.Set(t.Context(), prior).HasError())
-	plan := tfsdk.Plan{Schema: schemaResponse.Schema}
-	require.False(t, plan.Set(t.Context(), planned).HasError())
-
-	response := resource.UpdateResponse{State: state}
-	managed.Update(t.Context(), resource.UpdateRequest{Plan: plan, State: state}, &response)
-	require.True(t, response.Diagnostics.HasError())
-	assert.Equal(t, observabilityTemplateUnsafeUpdateSummary, response.Diagnostics.Errors()[0].Summary())
 }
 
 func TestObservabilityTemplateResourceModelMapping(t *testing.T) {
@@ -866,7 +866,7 @@ func TestObservabilityTemplateResourceModelMapping(t *testing.T) {
 
 	write, diags := observabilityTemplateWrite(ctx, model)
 	require.False(t, diags.HasError(), diags)
-	assert.Equal(t, observabilityTemplateRecordType, write.Type)
+	assert.Equal(t, ObservabilityTemplateRecordType, write.Type)
 	assert.Equal(t, "Example", write.Title)
 	assert.JSONEq(t, `{"<Chart>":[]}`, string(write.Spec))
 	assert.Equal(t, []string{"/v2/template/chart"}, write.Metadata.Imports)
@@ -889,6 +889,36 @@ func TestObservabilityTemplateResourceModelMapping(t *testing.T) {
 	require.NotNil(t, state.Metadata)
 	assert.Equal(t, imports, state.Metadata.Imports)
 	assert.Same(t, datasource, state.Metadata.Datasource)
+}
+
+func TestObservabilityTemplateWriteDerivesDirectImports(t *testing.T) {
+	model := observabilityTemplateModel{
+		Title:       types.StringValue("Imported dashboard"),
+		RootElement: types.StringValue("Dashboard"),
+		Spec: jsontypes.NewNormalizedValue(`{
+			"$import:second":"/v2/template/chart-b",
+			"$import:first":"/v2/template/chart-a",
+			"$import:reused":"/v2/template/chart-a",
+			"<Dashboard>":[{"<Panel>":[{"<$import.first>":[]}]}]
+		}`),
+	}
+
+	write, diags := observabilityTemplateWrite(t.Context(), model)
+	require.False(t, diags.HasError(), diags)
+	assert.Equal(t, []string{"/v2/template/chart-a", "/v2/template/chart-b"}, write.Metadata.Imports)
+	assert.Nil(t, write.Metadata.Datasource)
+}
+
+func TestObservabilityTemplateWriteRejectsInvalidDirectImport(t *testing.T) {
+	model := observabilityTemplateModel{
+		Title:       types.StringValue("Imported dashboard"),
+		RootElement: types.StringValue("Dashboard"),
+		Spec:        jsontypes.NewNormalizedValue(`{"$import:chart":"https://another.example/v2/template/chart-a","<Dashboard>":[]}`),
+	}
+
+	_, diags := observabilityTemplateWrite(t.Context(), model)
+	require.True(t, diags.HasError())
+	assert.Equal(t, "Invalid template import", diags.Errors()[0].Summary())
 }
 
 func TestObservabilityTemplateModelFromRecordLeavesOptionalMetadataUnsetOnImport(t *testing.T) {
@@ -941,32 +971,23 @@ func TestObservabilityTemplateRejectsIncompleteAPIRecords(t *testing.T) {
 		})
 	}
 
-	_, err := observabilityTemplateFromResult(nil)
+	_, err := ObservabilityTemplateFromResult(nil)
 	require.ErrorContains(t, err, "no template record")
-	_, err = observabilityTemplateFromResult(&template.Result{})
+	_, err = ObservabilityTemplateFromResult(&template.Result{})
 	require.ErrorContains(t, err, "no template record")
-	_, err = observabilityTemplateFromResult(&template.Result{Data: &template.Template{}})
+	_, err = ObservabilityTemplateFromResult(&template.Result{Data: &template.Template{}})
 	require.ErrorContains(t, err, "without an ID")
 }
 
-func TestResourceObservabilityTemplateDeleteWarnsOnDirectoryMemberships(t *testing.T) {
-	root := template.RootElementChart
-	record := template.Template{
-		ID:               "template-1",
-		Type:             observabilityTemplateRecordType,
-		Title:            "Request rate",
-		Spec:             json.RawMessage(`{"<Chart>":[]}`),
-		Metadata:         &template.Metadata{RootElement: &root},
-		DirectoryEntries: []string{"/v2/directory/~users/example%40example.com/charts"},
-	}
+func TestResourceObservabilityTemplateDeleteSkipsLookup(t *testing.T) {
 	deleteCalled := false
 	handlers := map[string]http.Handler{
-		"GET /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Equal(t, record.ID, r.PathValue("id"))
-			assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: &record}))
+		"GET /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			t.Error("Delete must not fetch the Template first")
+			w.WriteHeader(http.StatusInternalServerError)
 		}),
 		"DELETE /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			assert.Equal(t, record.ID, r.PathValue("id"))
+			assert.Equal(t, "template-1", r.PathValue("id"))
 			deleteCalled = true
 			w.WriteHeader(http.StatusNoContent)
 		}),
@@ -985,19 +1006,12 @@ func TestResourceObservabilityTemplateDeleteWarnsOnDirectoryMemberships(t *testi
 	managed.Delete(t.Context(), resource.DeleteRequest{State: state}, &response)
 
 	require.False(t, response.Diagnostics.HasError(), response.Diagnostics)
-	require.NotEmpty(t, response.Diagnostics.Warnings())
-	assert.Equal(t, "Deleting Template with Directory memberships", response.Diagnostics.Warnings()[0].Summary())
-	assert.Contains(t, response.Diagnostics.Warnings()[0].Detail(), "1 Directory entry")
-	assert.NotContains(t, response.Diagnostics.Warnings()[0].Detail(), "/v2/directory/")
-
+	assert.Empty(t, response.Diagnostics.Warnings())
 	assert.True(t, deleteCalled)
 }
 
 func TestResourceObservabilityTemplateDeleteIgnoresMissingRecord(t *testing.T) {
 	handlers := map[string]http.Handler{
-		"GET /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-			http.Error(w, "template not found", http.StatusNotFound)
-		}),
 		"DELETE /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 			http.Error(w, "template not found", http.StatusNotFound)
 		}),

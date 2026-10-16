@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
@@ -55,18 +56,9 @@ type observabilityTemplateResource struct {
 	fwembed.ResourceIDImporter
 }
 
-const (
-	observabilityTemplateRecordType            = "#/dashify/v1/templates/Record"
-	observabilityTemplateWriteMetadataKnownKey = "write_metadata_known"
-	observabilityTemplateReferencePrefix       = signalfx.TemplateAPIURL + "/"
-	observabilityTemplateUnsafeUpdateSummary   = "Cannot safely update imported template"
-	observabilityTemplateUnsafeUpdateDetail    = "The Template API does not return all write-side metadata, so an update after import could erase existing imports or datasource metadata. Set metadata to the complete desired imports and datasource values before updating this template."
-)
-
 var (
-	_ resource.Resource               = (*observabilityTemplateResource)(nil)
-	_ resource.ResourceWithConfigure  = (*observabilityTemplateResource)(nil)
-	_ resource.ResourceWithModifyPlan = (*observabilityTemplateResource)(nil)
+	_ resource.Resource              = (*observabilityTemplateResource)(nil)
+	_ resource.ResourceWithConfigure = (*observabilityTemplateResource)(nil)
 )
 
 func NewResourceObservabilityTemplate() resource.Resource {
@@ -79,7 +71,7 @@ func (r *observabilityTemplateResource) Metadata(_ context.Context, req resource
 
 func (r *observabilityTemplateResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Manages an Observability Template record using the Template API write model.",
+		Description: "Manages an Observability Template, such as a chart.",
 		Attributes: map[string]schema.Attribute{
 			"id": fwshared.ResourceIDAttribute(),
 			"title": schema.StringAttribute{
@@ -91,7 +83,7 @@ func (r *observabilityTemplateResource) Schema(_ context.Context, _ resource.Sch
 			},
 			"root_element": schema.StringAttribute{
 				Required:    true,
-				Description: "Non-empty root element name represented by the template, such as Chart or Dashboard. Changing this value replaces the resource because the API does not permit root element updates.",
+				Description: "Root element, such as Chart or Dashboard. Changing it replaces the Template.",
 				Validators: []validator.String{
 					stringvalidator.LengthAtLeast(1),
 				},
@@ -101,22 +93,25 @@ func (r *observabilityTemplateResource) Schema(_ context.Context, _ resource.Sch
 			},
 			"spec": schema.StringAttribute{
 				Required:    true,
-				Description: "JSON object containing the polymorphic template specification.",
+				Description: "Template content as a JSON object.",
 				CustomType:  jsontypes.NormalizedType{},
+				PlanModifiers: []planmodifier.String{
+					observabilityTemplateSpecSemanticPlanModifier{},
+				},
 			},
 			"metadata": schema.SingleNestedAttribute{
 				Optional:    true,
-				Description: "Optional metadata extracted from the template specification.",
+				Description: "API metadata. Templates saved in the dashboard UI usually do not need this.",
 				Attributes: map[string]schema.Attribute{
 					"imports": schema.ListAttribute{
 						ElementType: types.StringType,
 						Optional:    true,
-						Description: "Template IDs imported directly by the specification.",
+						Description: "Override the Template IDs found in spec.",
 						Validators:  observabilityTemplateIDListValidators(),
 					},
 					"datasource": schema.SingleNestedAttribute{
 						Optional:    true,
-						Description: "Datasource metadata extracted from the template.",
+						Description: "Separate datasource metadata used by some API clients. The API cannot read it back.",
 						Attributes: map[string]schema.Attribute{
 							"type": schema.StringAttribute{
 								Optional:    true,
@@ -147,10 +142,14 @@ func (r *observabilityTemplateResource) ValidateConfig(ctx context.Context, req 
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	validateObservabilityTitle(resp, path.Root("title"), model.Title)
+	ValidateObservabilityTitle(resp, path.Root("title"), model.Title)
 	if !model.Spec.IsNull() && !model.Spec.IsUnknown() {
 		if err := validateObservabilityTemplateSpec(model.Spec.ValueString()); err != nil {
 			resp.Diagnostics.AddAttributeError(path.Root("spec"), "Invalid template specification", err.Error())
+		} else if model.Metadata == nil || model.Metadata.Imports.IsNull() {
+			if _, err := observabilityTemplateImportsFromSpec(model.Spec.ValueString()); err != nil {
+				resp.Diagnostics.AddAttributeError(path.Root("spec"), "Invalid template import", err.Error())
+			}
 		}
 	}
 	if model.Metadata == nil || model.Metadata.Datasource == nil {
@@ -197,42 +196,6 @@ func validateObservabilityTemplateDatasource(rootElement types.String, datasourc
 	}
 }
 
-func (r *observabilityTemplateResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
-	if req.State.Raw.IsNull() || req.Plan.Raw.IsNull() || req.Plan.Raw.Equal(req.State.Raw) {
-		return
-	}
-
-	// root_element is the only attribute that currently requires replacement.
-	// A replacement creates a new Template and does not risk overwriting the
-	// imported record's unmodeled write metadata. Inspect only the values needed
-	// for this decision: title or spec may still be unknown during planning.
-	var priorRootElement, plannedRootElement types.String
-	resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("root_element"), &priorRootElement)...)
-	resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, path.Root("root_element"), &plannedRootElement)...)
-	if resp.Diagnostics.HasError() || priorRootElement.IsNull() || priorRootElement.IsUnknown() || plannedRootElement.IsNull() || plannedRootElement.IsUnknown() {
-		return
-	}
-	if priorRootElement.ValueString() != plannedRootElement.ValueString() {
-		return
-	}
-
-	if req.Private != nil {
-		knownMetadata, diags := req.Private.GetKey(ctx, observabilityTemplateWriteMetadataKnownKey)
-		resp.Diagnostics.Append(diags...)
-		if resp.Diagnostics.HasError() || len(knownMetadata) > 0 {
-			return
-		}
-	}
-
-	var plannedMetadata types.Object
-	resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, path.Root("metadata"), &plannedMetadata)...)
-	if resp.Diagnostics.HasError() || plannedMetadata.IsUnknown() || !plannedMetadata.IsNull() {
-		return
-	}
-
-	resp.Diagnostics.AddError(observabilityTemplateUnsafeUpdateSummary, observabilityTemplateUnsafeUpdateDetail)
-}
-
 func (r *observabilityTemplateResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var model observabilityTemplateModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &model)...)
@@ -253,16 +216,13 @@ func (r *observabilityTemplateResource) Create(ctx context.Context, req resource
 	if resp.Diagnostics.Append(fwerr.ErrorHandler(ctx, resp.State, err)...); resp.Diagnostics.HasError() || err != nil {
 		return
 	}
-	record, err := observabilityTemplateFromResult(result)
+	record, err := ObservabilityTemplateFromResult(result)
 	if err != nil {
 		resp.Diagnostics.AddError("Error creating template", err.Error())
 		return
 	}
 	model.ID = types.StringValue(record.ID)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &model)...)
-	if !resp.Diagnostics.HasError() {
-		resp.Diagnostics.Append(resp.Private.SetKey(ctx, observabilityTemplateWriteMetadataKnownKey, []byte("true"))...)
-	}
 }
 
 func (r *observabilityTemplateResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
@@ -281,7 +241,7 @@ func (r *observabilityTemplateResource) Read(ctx context.Context, req resource.R
 	if resp.Diagnostics.Append(fwerr.ErrorHandler(ctx, resp.State, err)...); resp.Diagnostics.HasError() || err != nil {
 		return
 	}
-	record, err := observabilityTemplateFromResult(result)
+	record, err := ObservabilityTemplateFromResult(result)
 	if err != nil {
 		resp.Diagnostics.AddError("Error reading template", err.Error())
 		return
@@ -313,20 +273,6 @@ func (r *observabilityTemplateResource) Update(ctx context.Context, req resource
 		return
 	}
 	model.ID = prior.ID
-	var knownMetadata []byte
-	if req.Private != nil {
-		var privateDiags diag.Diagnostics
-		knownMetadata, privateDiags = req.Private.GetKey(ctx, observabilityTemplateWriteMetadataKnownKey)
-		resp.Diagnostics.Append(privateDiags...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-	}
-	if len(knownMetadata) == 0 && model.Metadata == nil {
-		resp.Diagnostics.AddError(observabilityTemplateUnsafeUpdateSummary, observabilityTemplateUnsafeUpdateDetail)
-		return
-	}
-
 	write, diags := observabilityTemplateWrite(ctx, model)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -340,14 +286,11 @@ func (r *observabilityTemplateResource) Update(ctx context.Context, req resource
 	if resp.Diagnostics.Append(fwerr.ErrorHandler(ctx, resp.State, err)...); resp.Diagnostics.HasError() || err != nil {
 		return
 	}
-	if _, err := observabilityTemplateFromResult(result); err != nil {
+	if _, err := ObservabilityTemplateFromResult(result); err != nil {
 		resp.Diagnostics.AddError("Error updating template", err.Error())
 		return
 	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, &model)...)
-	if !resp.Diagnostics.HasError() {
-		resp.Diagnostics.Append(resp.Private.SetKey(ctx, observabilityTemplateWriteMetadataKnownKey, []byte("true"))...)
-	}
 }
 
 func (r *observabilityTemplateResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
@@ -358,41 +301,11 @@ func (r *observabilityTemplateResource) Delete(ctx context.Context, req resource
 	}
 
 	id := model.ID.ValueString()
-	result, lookupErr := r.Details().Client.GetTemplate(ctx, id, nil)
-	if lookupErr == nil && result != nil && result.Data != nil && len(result.Data.DirectoryEntries) > 0 {
-		resp.Diagnostics.AddWarning(
-			"Deleting Template with Directory memberships",
-			fmt.Sprintf(
-				"The Template is referenced by %d Directory entry(s). Deleting it can leave dangling memberships in those Directories; update them after deletion.",
-				len(result.Data.DirectoryEntries),
-			),
-		)
-	}
-
 	err := r.Details().Client.DeleteTemplate(ctx, id)
 	if responseErr, ok := signalfx.AsResponseError(err); ok && responseErr.Code() == http.StatusNotFound {
 		return
 	}
 	resp.Diagnostics.Append(fwerr.ErrorHandler(ctx, resp.State, err)...)
-}
-
-func validateObservabilityTitle(resp *resource.ValidateConfigResponse, titlePath path.Path, title types.String) {
-	if title.IsUnknown() {
-		return
-	}
-	if title.IsNull() || strings.TrimSpace(title.ValueString()) == "" {
-		resp.Diagnostics.AddAttributeError(titlePath, "Missing required value", "title must contain at least one non-whitespace character")
-	}
-}
-
-func observabilityTemplateFromResult(result *template.Result) (*template.Template, error) {
-	if result == nil || result.Data == nil {
-		return nil, errors.New("template API returned no template record")
-	}
-	if result.Data.ID == "" {
-		return nil, errors.New("template API returned a template record without an ID")
-	}
-	return result.Data, nil
 }
 
 func observabilityTemplateWrite(ctx context.Context, model observabilityTemplateModel) (*template.CreateUpdateTemplateRequest, diag.Diagnostics) {
@@ -408,23 +321,34 @@ func observabilityTemplateWrite(ctx context.Context, model observabilityTemplate
 
 	var imports []string
 	var datasource *template.Datasource
-	if model.Metadata != nil {
-		if !model.Metadata.Imports.IsNull() && !model.Metadata.Imports.IsUnknown() {
-			var ids []string
-			diags.Append(model.Metadata.Imports.ElementsAs(ctx, &ids, false)...)
-			if diags.HasError() {
+	if model.Metadata == nil || model.Metadata.Imports.IsNull() {
+		var err error
+		imports, err = observabilityTemplateImportsFromSpec(model.Spec.ValueString())
+		if err != nil {
+			diags.AddAttributeError(path.Root("spec"), "Invalid template import", err.Error())
+			return nil, diags
+		}
+	} else {
+		if model.Metadata.Imports.IsUnknown() {
+			diags.AddAttributeError(path.Root("metadata").AtName("imports"), "Unknown template imports", "metadata.imports must be known before writing a Template.")
+			return nil, diags
+		}
+		var ids []string
+		diags.Append(model.Metadata.Imports.ElementsAs(ctx, &ids, false)...)
+		if diags.HasError() {
+			return nil, diags
+		}
+		imports = make([]string, len(ids))
+		for i, id := range ids {
+			if !ObservabilityTemplateIDValid(id) {
+				diags.AddAttributeError(path.Root("metadata").AtName("imports").AtListIndex(i), "Invalid Template ID", "Use a Template ID without an API path.")
 				return nil, diags
 			}
-			imports = make([]string, len(ids))
-			for i, id := range ids {
-				if !observabilityTemplateIDValid(id) {
-					diags.AddAttributeError(path.Root("metadata").AtName("imports").AtListIndex(i), "Invalid Template ID", "Use a Template ID without an API path.")
-					return nil, diags
-				}
-				imports[i] = observabilityTemplateReference(id)
-			}
+			imports[i] = ObservabilityTemplateReference(id)
 		}
+	}
 
+	if model.Metadata != nil {
 		if model.Metadata.Datasource != nil {
 			datasource = &template.Datasource{
 				Type:        template.DatasourceType(model.Metadata.Datasource.Type.ValueString()),
@@ -436,7 +360,7 @@ func observabilityTemplateWrite(ctx context.Context, model observabilityTemplate
 
 	rootElement := template.RootElement(model.RootElement.ValueString())
 	return &template.CreateUpdateTemplateRequest{
-		Type:  observabilityTemplateRecordType,
+		Type:  ObservabilityTemplateRecordType,
 		Title: model.Title.ValueString(),
 		Spec:  json.RawMessage(model.Spec.ValueString()),
 		Metadata: template.WriteMetadata{
@@ -445,6 +369,40 @@ func observabilityTemplateWrite(ctx context.Context, model observabilityTemplate
 			Datasource:  datasource,
 		},
 	}, diags
+}
+
+// The Template API's read-side imports are empty on a default GET and can be
+// transitive on an expanded GET. Derive the write list from the direct imports
+// in the root spec.
+func observabilityTemplateImportsFromSpec(raw string) ([]string, error) {
+	var spec map[string]json.RawMessage
+	if err := json.Unmarshal([]byte(raw), &spec); err != nil {
+		return nil, err
+	}
+	keys := make([]string, 0, len(spec))
+	for key := range spec {
+		if strings.HasPrefix(key, observabilityTemplateImportPrefix) {
+			keys = append(keys, key)
+		}
+	}
+	sort.Strings(keys)
+
+	imports := make([]string, 0, len(keys))
+	seen := make(map[string]struct{}, len(keys))
+	for _, key := range keys {
+		var reference string
+		if err := json.Unmarshal(spec[key], &reference); err != nil {
+			return nil, fmt.Errorf("%q must contain a Template API reference: %w", key, err)
+		}
+		if _, ok := ObservabilityTemplateIDFromReference(reference); !ok {
+			return nil, fmt.Errorf("%q must reference a Template at %s<ID>, got %q", key, observabilityTemplateReferencePrefix, reference)
+		}
+		if _, exists := seen[reference]; !exists {
+			imports = append(imports, reference)
+			seen[reference] = struct{}{}
+		}
+	}
+	return imports, nil
 }
 
 func observabilityTemplateModelFromRecord(prior observabilityTemplateModel, record *template.Template) (observabilityTemplateModel, error) {
@@ -484,17 +442,4 @@ func observabilityTemplateIDListValidators() []validator.List {
 		),
 		listvalidator.UniqueValues(),
 	}
-}
-
-func observabilityTemplateIDValid(id string) bool {
-	return id != "" && id != "." && id != ".." && !strings.Contains(id, "/")
-}
-
-func observabilityTemplateReference(id string) string {
-	return observabilityTemplateReferencePrefix + id
-}
-
-func observabilityTemplateIDFromReference(reference string) (string, bool) {
-	id, ok := strings.CutPrefix(reference, observabilityTemplateReferencePrefix)
-	return id, ok && observabilityTemplateIDValid(id)
 }

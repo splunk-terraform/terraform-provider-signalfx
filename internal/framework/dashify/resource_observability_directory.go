@@ -358,11 +358,11 @@ func observabilityDirectoryPatch(ctx context.Context, pinned types.Bool, templat
 	}
 	references := make([]string, len(ids))
 	for i, id := range ids {
-		if !observabilityTemplateIDValid(id) {
+		if !ObservabilityTemplateIDValid(id) {
 			diags.AddAttributeError(path.Root("templates").AtListIndex(i), "Invalid Template ID", "Use a Template ID without an API path or slashes.")
 			return nil, diags
 		}
-		references[i] = observabilityTemplateReference(id)
+		references[i] = ObservabilityTemplateReference(id)
 	}
 	patch.Templates = references
 	return patch, diags
@@ -387,7 +387,7 @@ func observabilityDirectoryModelFromEntry(ctx context.Context, expectedPath stri
 	}
 	ids := make([]string, len(entry.Templates))
 	for i, reference := range entry.Templates {
-		id, ok := observabilityTemplateIDFromReference(reference)
+		id, ok := ObservabilityTemplateIDFromReference(reference)
 		if !ok {
 			diags.AddError("Invalid Directory Template reference", fmt.Sprintf("The Directory API returned an unsupported Template reference at position %d.", i+1))
 			return observabilityDirectoryModel{}, diags
