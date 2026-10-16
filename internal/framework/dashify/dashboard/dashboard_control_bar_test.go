@@ -94,7 +94,7 @@ func TestBuildAndParseDashifyControlBar(t *testing.T) {
 	}
 
 	built := buildDashifyControlBar(model)
-	controls, ok := built["controls"].([]any)
+	controls, ok := built["controls"].([]map[string]any)
 	require.True(t, ok)
 	require.Len(t, controls, 5)
 	assert.Equal(t, []any{"TimeRange", "Density", "PinnedFilter", "PinnedFilter", "FilterSet"}, controlTypes(controls))
@@ -171,7 +171,11 @@ func TestDashifyControlBarCodecOmissionAndWarnings(t *testing.T) {
 	assert.Contains(t, leftovers, "controlBar.controls.0.defaultVariableValue.0.futureFilter")
 
 	built := buildDashifyControlBar(&dashifyControlBarModel{FilterSet: &dashifyFilterSetControlModel{}})
-	roundTrip, _, err := parseDashifyControlBar(map[string]any{"controlBar": built})
+	raw, err := json.Marshal(built)
+	require.NoError(t, err)
+	var decoded map[string]any
+	require.NoError(t, decodeDashifyJSON(raw, &decoded))
+	roundTrip, _, err := parseDashifyControlBar(map[string]any{"controlBar": decoded})
 	require.NoError(t, err)
 	require.NotNil(t, roundTrip.FilterSet)
 	assert.Nil(t, roundTrip.FilterSet.Filter, "an omitted filter attribute must read back as null")
@@ -325,18 +329,18 @@ func assertValidatorString(t *testing.T, validators []validator.String, value st
 	assert.Equal(t, wantError, response.Diagnostics.HasError())
 }
 
-func controlTypes(controls []any) []any {
+func controlTypes(controls []map[string]any) []any {
 	result := make([]any, len(controls))
 	for i, control := range controls {
-		result[i] = control.(map[string]any)["type"]
+		result[i] = control["type"]
 	}
 	return result
 }
 
-func controlVariableNames(controls []any) []any {
+func controlVariableNames(controls []map[string]any) []any {
 	result := make([]any, len(controls))
 	for i, control := range controls {
-		result[i] = control.(map[string]any)["variableName"]
+		result[i] = control["variableName"]
 	}
 	return result
 }

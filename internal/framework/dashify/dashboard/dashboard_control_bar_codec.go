@@ -18,7 +18,7 @@ const (
 // encodes a Terraform control_bar model into the Dashify controls list
 // parseDashifyControlBar performs the inverse decode.
 func buildDashifyControlBar(model *dashifyControlBarModel) map[string]any {
-	controls := make([]any, 0)
+	controls := make([]map[string]any, 0)
 	if model.TimeRange != nil {
 		control := map[string]any{
 			"type":         "TimeRange",
