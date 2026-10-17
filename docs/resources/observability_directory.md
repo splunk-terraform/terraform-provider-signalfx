@@ -17,14 +17,6 @@ Destroying the Directory removes its membership links but does not delete the re
 ## Example
 
 ```terraform
-terraform {
-  required_providers {
-    signalfx = {
-      source = "splunk-terraform/signalfx"
-    }
-  }
-}
-
 variable "user_email" {
   type        = string
   description = "Email address of the user whose Directory namespace is managed."

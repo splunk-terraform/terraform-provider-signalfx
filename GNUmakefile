@@ -96,7 +96,7 @@ gen-docs:
 	$(WEBSITE_PLUGIN)
 
 test-docs:
-	$(WEBSITE_PLUGIN) validate 
+	$(WEBSITE_PLUGIN) validate
 
 check-schema-docs:
 	./scripts/check-schema-docs.sh

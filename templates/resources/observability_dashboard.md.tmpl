@@ -1,0 +1,51 @@
+---
+page_title: "Splunk Observability Cloud: signalfx_observability_dashboard"
+description: |-
+  Manages a modern dashboard.
+---
+
+# Resource: signalfx_observability_dashboard
+
+Use this resource to manage a modern dashboard's flat panels, controls, panel sizes, and positions. Each panel can reference a Template or hold inline JSON.
+
+To place the dashboard in a folder, add its ID to a Directory resource's `templates` list. Updates replace the saved dashboard content. Unsupported fields are absent from Terraform state and are discarded on update. Copy UI changes you want to keep into Terraform before applying.
+
+## Example
+
+{{tffile "examples/resources/observability_dashboard/example_1.tf"}}
+
+## Inline content
+
+{{tffile "examples/resources/observability_dashboard/example_2.tf"}}
+
+## Panel layout
+
+{{tffile "examples/resources/observability_dashboard/example_3.tf"}}
+
+## Dashboard controls
+
+{{tffile "examples/resources/observability_dashboard/example_4.tf"}}
+
+A pinned filter's required `property` names the dimension or property to filter. Its optional `variable_name` defaults to `property` and provides a separate control identity when set explicitly. Control identities must be unique, so duplicate properties without identity overrides are rejected. Distinct identities can target the same property, but their selections do not combine: the later active filter wins.
+
+Each `container` represents one panel and needs exactly one content source: `template_id` for a reusable Template or `inline_content` for inline JSON.
+
+A panel's `layout` supports `x`, `y`, `absolute`, `width`, `height`, `min_width`, and `min_height`. Use `x = "0"` for the left edge and `x = "1/2"` or `x = "50%"` to start halfway across the dashboard. Omit `x` for automatic horizontal placement. Numeric values are layout units, not pixels; simple fractions and percentages are also supported. In the current UI, a flat dashboard uses a 16-pixel layout step, so `height = "15"` produces a panel roughly 224 pixels tall after its gap. Terraform list order controls panel order and row flow. Use a `for` expression to generate panels from a list, for example `container = [for id in var.chart_ids : { template_id = id }]`.
+
+Set `absolute = true` to position a panel outside normal row flow using both `x` and `y`. For example, `x = "1/2"` and `y = "2"` starts the panel halfway across and two layout units down. Absolute panels are placed independently and can overlap. Set `absolute = false` or omit it to use normal row flow, where the UI calculates vertical placement and ignores `y`. The UI resolves fractions and percentages against canvas width for both axes, so `y = "50%"` is half the canvas width in layout units, not half the dashboard height.
+
+Deleted UI content can leave null panel slots in the saved dashboard. Import omits these slots and keeps the surviving panels' positions and sizes. Saved layout data attached to omitted slots is reported as unsupported and discarded on update.
+
+For sections, groups, and advanced layout, use `signalfx_observability_template` with the full `spec`. Importing a nested dashboard into this resource returns an error. A flat dashboard with other unsupported fields can be read and updated; the provider warns which fields will be discarded on update.
+
+{{ .SchemaMarkdown | trimspace }}
+
+## Import
+
+After adding a matching resource block, import an existing Dashboard by its Template ID, not a URL or `/v2/template/...` API reference:
+
+```shell
+terraform import signalfx_observability_dashboard.service G47WjI1AABc
+```
+
+Terraform can update an imported flat dashboard even when its saved content includes unsupported fields. The provider warns about those fields, and any update discards them. To preserve them, use `signalfx_observability_template` with the full `spec`, and review its advanced metadata note first. For a legacy dashboard whose Template has an empty spec, use Save As in the UI and import the new Template ID.

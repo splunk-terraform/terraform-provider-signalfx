@@ -1,0 +1,51 @@
+---
+page_title: "Splunk Observability Cloud: signalfx_observability_chart"
+description: |-
+  Manages a reusable modern chart with typed metrics or text settings.
+---
+
+# Resource: signalfx_observability_chart
+
+Use this resource to manage a reusable modern Chart Template. Configure exactly one of `metrics_time_series`, `metrics_single_value`, `metrics_list`, `metrics_table`, `metrics_cluster_map`, or `text`. Reference its `id` from a `signalfx_observability_dashboard` panel to place the chart on a dashboard. Folder placement is managed separately by `signalfx_observability_directory`.
+
+The required resource `title` names the saved Template. The optional `title` inside the selected chart controls its display title. These titles are independent.
+
+Updates replace the complete saved Chart document. Unsupported fields are absent from Terraform state and are discarded on update; the provider warns which fields are affected. Copy UI changes you want to keep into Terraform before applying. For chart types or fields outside the typed schema, use `signalfx_observability_template` with `root_element = "Chart"` and the full `spec`.
+
+## Example
+
+{{tffile "examples/resources/observability_chart/example_1.tf"}}
+
+Each metric chart requires a nonempty SignalFlow `program`. The optional `time_range` accepts a positive whole-number duration such as `15m`, `60m`, or `1h`. A dashboard's selected time range takes precedence when the chart is displayed there. Equivalent duration spellings remain stable on refresh; changing only the configured spelling can cause one in-place update. Text charts use optional `markdown` and do not require a program.
+
+### Single value
+
+{{tffile "examples/resources/observability_chart/example_2.tf"}}
+
+### List
+
+{{tffile "examples/resources/observability_chart/example_3.tf"}}
+
+### Table
+
+{{tffile "examples/resources/observability_chart/example_4.tf"}}
+
+### Cluster map
+
+{{tffile "examples/resources/observability_chart/example_5.tf"}}
+
+### Text
+
+{{tffile "examples/resources/observability_chart/example_6.tf"}}
+
+## Import
+
+Import an existing supported Chart by its bare Template ID, not a URL or `/v2/template/...` API reference:
+
+```shell
+terraform import signalfx_observability_chart.request_rate G47WjI1AABc
+```
+
+Import reads supported fields without changing the saved chart. Any later update discards unsupported fields. The saved Template must have a `Chart` root and one supported chart element. Metric charts must contain a nonempty SignalFlow program. Use the generic Template resource to manage unsupported content.
+
+{{ .SchemaMarkdown | trimspace }}

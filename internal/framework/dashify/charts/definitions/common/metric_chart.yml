@@ -1,0 +1,111 @@
+# Copyright Splunk, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
+version: 1
+
+# Base for every metric chart: widget presentation, header drilldown links,
+# and the SignalFx datasource. Text extends common/widget.yml instead because
+# it has no datasource and ignores links.
+#
+# `program` is a SignalFlow program - the query language the backend
+# executes - not a Splunk SPL/logs query. Dashify's document format doesn't
+# tag a provider type on the datasource block; it's implicit from the
+# widget's chart element, so this file only covers that one provider.
+#
+# `time` is generic across every Dashify chart element (List, SingleValue,
+# TableChart, TimeSeriesChart, Heatmap, ... all resolve datasource.time
+# through the same $utils.resolveTimeRange helper in
+# app-modern-dashboards' src/_templates/O11y*.ts), so it lives here rather
+# than being time-series-specific.
+extends:
+  - common/widget.yml
+
+properties:
+  # Metric widgets render only the first header drilldown link.
+  links:
+    type: list
+    optional: true
+    description: >-
+      Drilldown links for this widget. Only the first entry is rendered, as a
+      magnifier button in the widget header.
+    mapping:
+      path: ['widget', 'links']
+    item:
+      properties:
+        url:
+          type: string
+          required: true
+          description: >-
+            The link target. May contain {{{variable}}} placeholders, which are
+            replaced with the dashboard's current filter values.
+          mapping:
+            path: ['url']
+        label:
+          type: string
+          optional: true
+          description: Tooltip text shown when hovering the drilldown button.
+          mapping:
+            path: ['label']
+        external:
+          type: bool
+          optional: true
+          description: >-
+            Whether to open the link in a new window and show an external-link
+            icon. Implied when the target's origin differs from the app's.
+          mapping:
+            path: ['external']
+
+  program:
+    type: string
+    required: true
+    min_length: 1
+    description: >-
+      The SignalFlow program that produces the chart's data. Multiple
+      statements are separated by semicolons or newlines.
+    mapping:
+      path: ['datasource', 'program']
+
+  max_delay:
+    type: number
+    optional: true
+    description: >-
+      Milliseconds to wait for late-arriving data points before charting
+      what has arrived. Omit this field to use the backend default; zero
+      means no additional delay. The UI rounds to 10-second increments and
+      limits the delay to 15 minutes.
+    mapping:
+      path: ['datasource', 'maxDelay']
+
+  minimum_resolution:
+    type: number
+    optional: true
+    description: >-
+      The lowest resolution, in milliseconds, to use when computing the
+      chart's SignalFlow program. 0 lets Splunk Observability Cloud choose
+      automatically.
+    mapping:
+      path: ['datasource', 'minimumResolution']
+
+  sample_size:
+    type: number
+    optional: true
+    # Dashify stores a numeric cap here rather than a boolean toggle.
+    description: >-
+      The maximum number of time series to sample when a query matches more
+      than this many.
+    mapping:
+      path: ['datasource', 'sampleSize']
+
+  time_range:
+    type: string
+    optional: true
+    # Basic relative override such as "15m" or "1h". The transform writes
+    # {type: "relative", range: <milliseconds>, rangeEnd: 0}. Absolute and
+    # other custom time objects use the raw-template path.
+    description: >-
+      A stored relative time range for this chart, such as "15m" or "1h",
+      resolved together with the dashboard's current time controls. Absolute
+      ranges are not supported here.
+    mapping:
+      path: ['datasource', 'time']
+      transform: relative_duration

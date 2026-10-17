@@ -27,6 +27,8 @@ import (
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/apm"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/builtincontent"
 	fwdashify "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/dashify"
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/dashify/charts"
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/dashify/dashboard"
 	fwdetector "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/detector"
 	internalfunction "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/function"
 	fwintegration "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/integration"
@@ -291,6 +293,8 @@ func (op *ollyProvider) Resources(ctx context.Context) []func() resource.Resourc
 		fwdetector.NewAutoDetectorResource,
 		fwintegration.NewResourceBigPanda,
 		fwdashify.NewResourceObservabilityDirectory,
+		charts.NewResourceObservabilityChart,
+		dashboard.NewResourceObservabilityDashboard,
 		fwdashify.NewResourceObservabilityTemplate,
 	}
 }

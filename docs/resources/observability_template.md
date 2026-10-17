@@ -1,29 +1,16 @@
 ---
 page_title: "Splunk Observability Cloud: signalfx_observability_template"
 description: |-
-  Manages an Observability Template API record.
+  Manages an Observability Template using a JSON specification.
 ---
 
 # Resource: signalfx_observability_template
 
-Terraform owns the Template API write fields, so an update replaces the title, metadata, and specification represented by this resource.
-The provider supplies the Template record schema `type` automatically. SignalView association metadata is not managed.
-Set `metadata.imports` to the IDs of directly imported Templates.
-After importing a Template, specify the complete desired `metadata` object before updating it. The API does not return datasource write metadata and its import list may include indirect imports, so the provider cannot safely reconstruct those fields from a read.
-
-Deleting a Template can leave Directory memberships pointing to a missing Template. When the API reports memberships, the provider warns with their count; update those Directories after deletion.
+Use this resource when the provider's dedicated resources do not support the chart or dashboard features you need. Set `title`, `root_element`, and `spec`. The provider finds referenced Template IDs in the top-level `$import:*` entries in `spec`. Templates saved in the dashboard UI usually need no `metadata`.
 
 ## Example
 
 ```terraform
-terraform {
-  required_providers {
-    signalfx = {
-      source = "splunk-terraform/signalfx"
-    }
-  }
-}
-
 resource "signalfx_observability_template" "chart" {
   title        = "Request rate"
   root_element = "Chart"
@@ -48,13 +35,13 @@ resource "signalfx_observability_template" "chart" {
 
 ### Required
 
-- `root_element` (String) Non-empty root element name represented by the template, such as Chart or Dashboard. Changing this value replaces the resource because the API does not permit root element updates.
-- `spec` (String) JSON object containing the polymorphic template specification.
+- `root_element` (String) Root element, such as Chart or Dashboard. Changing it replaces the Template.
+- `spec` (String) Template content as a JSON object.
 - `title` (String) Template title.
 
 ### Optional
 
-- `metadata` (Attributes) Optional metadata extracted from the template specification. (see [below for nested schema](#nestedatt--metadata))
+- `metadata` (Attributes) API metadata. Templates saved in the dashboard UI usually do not need this. (see [below for nested schema](#nestedatt--metadata))
 
 ### Read-Only
 
@@ -65,8 +52,8 @@ resource "signalfx_observability_template" "chart" {
 
 Optional:
 
-- `datasource` (Attributes) Datasource metadata extracted from the template. (see [below for nested schema](#nestedatt--metadata--datasource))
-- `imports` (List of String) Template IDs imported directly by the specification.
+- `datasource` (Attributes) Separate datasource metadata used by some API clients. The API cannot read it back. (see [below for nested schema](#nestedatt--metadata--datasource))
+- `imports` (List of String) Override the Template IDs found in spec.
 
 <a id="nestedatt--metadata--datasource"></a>
 ### Nested Schema for `metadata.datasource`
@@ -84,3 +71,9 @@ After adding a matching resource block, import an existing Template by its ID, n
 ```shell
 terraform import signalfx_observability_template.chart G47WjI1AABc
 ```
+
+## Advanced metadata
+
+Some Templates created outside the dashboard UI have `metadata.datasource`. The API cannot read that value back. If you know it, set it before updating an imported Template; otherwise the update may erase it. This API metadata is separate from a chart's `spec.datasource`. You can also set `metadata.imports` to override the IDs found in `spec`.
+
+The provider does not manage legacy SignalView associations. Deleting a Template also removes its Directory memberships in the service.

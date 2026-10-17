@@ -1,0 +1,152 @@
+# Copyright Splunk, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
+version: 1
+
+# Shared single fields. Never `extends` this file - that would pull every
+# field into the chart. Select one field with a ref instead:
+#
+#   display_unit:
+#     ref: common/fields.yml#display_unit
+#     mapping:
+#       path: ['displayUnit']
+#
+# Local keys at the referencing site win, so it can supply mapping.path or
+# override the description.
+properties:
+  maximum_significant_digits:
+    type: number
+    optional: true
+    min: 1
+    max: 20
+    description: >-
+      The number of significant digits to display for values in this chart.
+      Unset lets Splunk Observability Cloud adjust precision to fit the
+      available space.
+    mapping:
+      path: ['chart', 'maximumSignificantDigits']
+
+  # Referenced by SingleValue, List, Table and ClusterMap at the same mapping
+  # path and default. For the first three, the "Show timestamp in footer"
+  # control was confirmed to be the same editor component, not a
+  # per-chart-type reimplementation.
+  show_timestamp:
+    type: bool
+    optional: true
+    default: true
+    description: >-
+      Whether to show the latest data point's timestamp in the chart
+      footer.
+    mapping:
+      path: ['chart', 'showTimestamp']
+
+  # The literal same SecondaryVisualizationSelect editor component, same enum
+  # values, same default, reused by both SingleValue and List. Table has no
+  # equivalent concept - don't reference this from chart types without a
+  # matching UI control.
+  secondary_visualization:
+    type: enum
+    optional: true
+    default: None
+    values: [Linear, None, Radial, Sparkline]
+    description: >-
+      An additional visualization (a sparkline or a radial/linear gauge)
+      shown alongside the chart's primary value.
+    mapping:
+      path: ['chart', 'secondaryVisualization']
+
+  # Display-unit union. Units belong to a plot, except on SingleValue, which
+  # has no per-plot concept at all - see the referencing site's own comment.
+  # The referencing site supplies mapping.path (deliberately absent below).
+  display_unit:
+    type: oneof
+    at_least_one_of: [unit, prefix, suffix]
+    description: >-
+      How to scale and label displayed values: either a named unit (bits,
+      bytes, or a time duration) or a custom prefix/suffix pair. Omit for no
+      unit conversion or annotation.
+    # the editor presents these as mutually exclusive: pick a named scaling
+    # unit, or type a custom prefix/suffix pair. Both serialize to the same
+    # displayUnit key - a bare unit string, or a {prefix, suffix} object.
+    variants:
+      unit:
+        ref: common/fields.yml#scaling_unit
+      custom:
+        type: block
+        description: A literal prefix and/or suffix to attach to displayed values.
+        properties:
+          prefix:
+            type: string
+            optional: true
+            description: Text shown immediately before each displayed value.
+            mapping:
+              path: ['prefix']
+          suffix:
+            type: string
+            optional: true
+            description: Text shown immediately after each displayed value.
+            mapping:
+              path: ['suffix']
+
+  # ClusterMap intentionally accepts only a literal prefix/suffix object.
+  # Unlike the display_unit union, its Olly contract does not accept a named
+  # scaling-unit string.
+  display_unit_custom:
+    type: block
+    description: >-
+      A literal prefix and/or suffix to attach to displayed values. At least
+      one of prefix or suffix must be set when this object is present.
+    at_least_one_of: [prefix, suffix]
+    properties:
+      prefix:
+        type: string
+        optional: true
+        description: Text shown immediately before each displayed value.
+        mapping:
+          path: ['prefix']
+      suffix:
+        type: string
+        optional: true
+        description: Text shown immediately after each displayed value.
+        mapping:
+          path: ['suffix']
+
+  # The named units Splunk Observability Cloud can scale a raw value by.
+  # Mirrors Dashify's `ScalingUnit`, which is derived from the
+  # SCALING_UNIT_TYPES const in @splunk/olly-react-ui/formatValue. The
+  # referencing site supplies mapping.path.
+  scaling_unit:
+    type: enum
+    description: >-
+      A named unit Splunk Observability Cloud scales the raw value by (e.g.
+      1000 bytes displays as "1 Kilobyte" when the unit is Byte).
+    values:
+      # bits
+      - Bit
+      - Kilobit
+      - Megabit
+      - Gigabit
+      - Terabit
+      - Petabit
+      - Exabit
+      - Zettabit
+      - Yottabit
+      # bytes
+      - Byte
+      - Kibibyte
+      - Mebibyte
+      - Gibibyte
+      - Tebibyte
+      - Pebibyte
+      - Exbibyte
+      - Zebibyte
+      - Yobibyte
+      # time
+      - Nanosecond
+      - Microsecond
+      - Millisecond
+      - Second
+      - Minute
+      - Hour
+      - Day
+      - Week
