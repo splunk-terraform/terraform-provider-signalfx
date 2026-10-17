@@ -11,13 +11,9 @@ import (
 	"sort"
 	"unicode/utf8"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
-	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
-	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -99,9 +95,8 @@ func (e *Engine) Attributes(name string) (map[string]schema.Attribute, error) {
 	if !exists {
 		return nil, fmt.Errorf("unknown chart %q", name)
 	}
-	// Framework attributes contain mutable maps, slices, and validators. Build
-	// an independent view so a caller cannot change the cached runtime contract.
-	return buildAttributes(copyProperties(definition.Properties))
+	// Build independent nested maps; schema attributes retain no Property metadata.
+	return buildAttributes(definition.Properties)
 }
 
 func buildAttributes(properties map[string]Property) (map[string]schema.Attribute, error) {
@@ -131,28 +126,16 @@ func buildAttributes(properties map[string]Property) (map[string]schema.Attribut
 		}
 		switch p.Type {
 		case "string", "enum":
-			var validators []validator.String
 			if p.Type == "enum" {
 				if len(p.Values) == 0 {
 					return nil, fmt.Errorf("%s: enum has no values", name)
 				}
-				validators = append(validators, stringvalidator.OneOf(p.Values...))
 			}
-			if p.MinLength != nil {
-				validators = append(validators, stringvalidator.LengthAtLeast(*p.MinLength))
-			}
-			attributes[name] = schema.StringAttribute{Required: p.Required, Optional: !p.Required, MarkdownDescription: description, Validators: validators}
+			attributes[name] = schema.StringAttribute{Required: p.Required, Optional: !p.Required, MarkdownDescription: description}
 		case "bool":
 			attributes[name] = schema.BoolAttribute{Required: p.Required, Optional: !p.Required, MarkdownDescription: description}
 		case "number":
-			var validators []validator.Int64
-			if p.Min != nil {
-				validators = append(validators, int64validator.AtLeast(int64(*p.Min)))
-			}
-			if p.Max != nil {
-				validators = append(validators, int64validator.AtMost(int64(*p.Max)))
-			}
-			attributes[name] = schema.Int64Attribute{Required: p.Required, Optional: !p.Required, MarkdownDescription: description, Validators: validators}
+			attributes[name] = schema.Int64Attribute{Required: p.Required, Optional: !p.Required, MarkdownDescription: description}
 		case "float":
 			attributes[name] = schema.Float64Attribute{Required: p.Required, Optional: !p.Required, MarkdownDescription: description}
 		case "block", "oneof", "list", "map":
@@ -161,11 +144,7 @@ func buildAttributes(properties map[string]Property) (map[string]schema.Attribut
 				return nil, fmt.Errorf("%s: %w", name, err)
 			}
 			if p.Type == "list" && p.Item != nil && p.Item.Type == "string" {
-				var validators []validator.List
-				if p.MaxItems != nil {
-					validators = append(validators, listvalidator.SizeAtMost(*p.MaxItems))
-				}
-				attributes[name] = schema.ListAttribute{Required: p.Required, Optional: !p.Required, ElementType: types.StringType, MarkdownDescription: description, Validators: validators}
+				attributes[name] = schema.ListAttribute{Required: p.Required, Optional: !p.Required, ElementType: types.StringType, MarkdownDescription: description}
 				break
 			}
 			nested, err := buildAttributes(children)
@@ -175,13 +154,9 @@ func buildAttributes(properties map[string]Property) (map[string]schema.Attribut
 			object := schema.NestedAttributeObject{Attributes: nested}
 			switch p.Type {
 			case "block", "oneof":
-				attributes[name] = schema.SingleNestedAttribute{Required: p.Required, Optional: !p.Required, Attributes: nested, MarkdownDescription: description, Validators: []validator.Object{objectValidation{property: p}}}
+				attributes[name] = schema.SingleNestedAttribute{Required: p.Required, Optional: !p.Required, Attributes: nested, MarkdownDescription: description}
 			case "list":
-				var validators []validator.List
-				if p.MaxItems != nil {
-					validators = append(validators, listvalidator.SizeAtMost(*p.MaxItems))
-				}
-				attributes[name] = schema.ListNestedAttribute{Required: p.Required, Optional: !p.Required, NestedObject: object, MarkdownDescription: description, Validators: validators}
+				attributes[name] = schema.ListNestedAttribute{Required: p.Required, Optional: !p.Required, NestedObject: object, MarkdownDescription: description}
 			case "map":
 				attributes[name] = schema.MapNestedAttribute{Required: p.Required, Optional: !p.Required, NestedObject: object, MarkdownDescription: description}
 			}
@@ -247,16 +222,6 @@ func childProperties(p Property) (map[string]Property, error) {
 	}
 }
 
-type objectValidation struct{ property Property }
-
-func (v objectValidation) Description(context.Context) string {
-	return "Validate the chart object constraints."
-}
-func (v objectValidation) MarkdownDescription(ctx context.Context) string { return v.Description(ctx) }
-func (v objectValidation) ValidateObject(ctx context.Context, req validator.ObjectRequest, resp *validator.ObjectResponse) {
-	validateValue("", v.property, req.ConfigValue, false, &resp.Diagnostics)
-}
-
 func (e *Engine) Validate(ctx context.Context, name string, value types.Object, requireKnown bool) diag.Diagnostics {
 	var diagnostics diag.Diagnostics
 	d, exists := e.definitions[name]
@@ -295,7 +260,7 @@ func validateValue(path string, p Property, value attr.Value, requireKnown bool,
 			fail(fmt.Sprintf("must be one of %v", p.Values))
 		}
 		if p.Mapping.Transform == "relative_duration" {
-			if _, valid := durationSpec(v.ValueString()); !valid {
+			if _, valid := RelativeDurationSpec(v.ValueString()); !valid {
 				fail("must be a positive whole-number duration such as 15m or 1h")
 			}
 		}

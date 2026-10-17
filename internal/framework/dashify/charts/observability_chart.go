@@ -128,6 +128,23 @@ func (r *observabilityChartResource) modelFromRecord(ctx context.Context, record
 	return model, diags
 }
 
+// Read reports server values outside the configuration rules as one warning.
+// Write responses skip this because state comes from the validated plan.
+func (r *observabilityChartResource) ruleWarning(ctx context.Context, model observabilityChartModel) diag.Diagnostics {
+	violations := r.engine.Validate(ctx, model.Name, model.Content, true)
+	if len(violations) == 0 {
+		return nil
+	}
+	details := make([]string, len(violations))
+	for i, violation := range violations {
+		details[i] = violation.Detail()
+	}
+	return diag.Diagnostics{diag.NewWarningDiagnostic("Stored chart violates configuration rules", fmt.Sprintf(
+		"The stored chart has %d value(s) that Terraform configuration does not allow:\n  %s\n\nThe chart was read into state. Its configuration must satisfy these rules before it can be written.",
+		len(details), strings.Join(details, "\n  "),
+	))}
+}
+
 func (r *observabilityChartResource) parseSpec(raw []byte) (string, map[string]any, []string, error) {
 	spec, err := interpreter.DecodeObject(string(raw))
 	if err != nil {

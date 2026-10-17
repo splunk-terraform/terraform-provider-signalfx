@@ -397,16 +397,6 @@ func typeError(path []string, want string, got any) error {
 	return fmt.Errorf("%s holds %v (%T), want %s", strings.Join(path, "."), got, got, want)
 }
 
-// TakeElement removes an element tag whose argument list is empty, which is
-// the only form BuildSpec produces. A tag carrying arguments is deliberately
-// left in place: nothing in the typed schema represents element arguments, so
-// Leftovers should report it rather than have it vanish.
-func TakeElement(node map[string]any, tag string) {
-	if args, ok := node[tag].([]any); ok && len(args) == 0 {
-		delete(node, tag)
-	}
-}
-
 // Leftovers lists fields the typed parser did not claim, including empty
 // collections and nulls. Decode removes its declared empty root containers
 // first. Residual list items retain indices.

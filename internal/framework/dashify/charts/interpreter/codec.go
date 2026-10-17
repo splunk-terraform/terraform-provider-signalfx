@@ -14,8 +14,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
 
-func durationSpec(value string) (map[string]any, bool) { return RelativeDurationSpec(value) }
-
 func (e *Engine) Encode(ctx context.Context, name string, value types.Object) (map[string]any, diag.Diagnostics) {
 	diagnostics := e.Validate(ctx, name, value, true)
 	if diagnostics.HasError() {
@@ -44,7 +42,7 @@ func encodeObject(properties map[string]Property, value types.Object) map[string
 			wire = !wire.(bool)
 		}
 		if p.Mapping.Transform == "relative_duration" {
-			wire, _ = durationSpec(wire.(string))
+			wire, _ = RelativeDurationSpec(wire.(string))
 		}
 		setPath(result, p.Mapping.Path, wire)
 	}
@@ -123,17 +121,14 @@ func (e *Engine) Decode(ctx context.Context, name string, spec map[string]any, p
 		diagnostics.AddError("Invalid chart document", "Element "+tag+" must have an empty argument list.")
 		return null, nil, diagnostics
 	}
-	TakeElement(work, tag)
+	delete(work, tag)
 	value, err := decodeObject(ctx, e.definitions[name].Properties, AttributeTypes(attributes), work, priorValues)
 	if err != nil {
 		diagnostics.AddError("Invalid chart document", err.Error())
 		return null, nil, diagnostics
 	}
-	// Server-side drift must not block refresh or deletion when its values can
-	// still be represented in Terraform. Configuration and writes stay strict.
-	for _, violation := range e.Validate(ctx, name, value, true) {
-		diagnostics.AddWarning("Stored chart violates configuration rules", violation.Detail()+"\n\nThe stored chart was decoded. Its configuration must satisfy these rules before it can be written.")
-	}
+	// Decode does not apply configuration rules, so representable server drift
+	// never blocks refresh or deletion. Callers decide whether to report it.
 	for _, group := range e.roots[name] {
 		if remaining, ok := work[group].(map[string]any); ok && len(remaining) == 0 {
 			delete(work, group)
@@ -176,8 +171,8 @@ func decodeValue(ctx context.Context, p Property, valueType attr.Type, spec map[
 		if p.Mapping.Transform == "relative_duration" {
 			value, err := TakeRelativeDuration(spec, p.Mapping.Path)
 			if old, ok := prior.(types.String); ok && present(old) && present(value) {
-				oldSpec, valid := durationSpec(old.ValueString())
-				newSpec, _ := durationSpec(value.ValueString())
+				oldSpec, valid := RelativeDurationSpec(old.ValueString())
+				newSpec, _ := RelativeDurationSpec(value.ValueString())
 				if valid && reflect.DeepEqual(oldSpec, newSpec) {
 					value = old
 				}
@@ -298,12 +293,6 @@ func clone(value any) any {
 	switch v := value.(type) {
 	case map[string]any:
 		out := make(map[string]any, len(v))
-		for k, x := range v {
-			out[k] = clone(x)
-		}
-		return out
-	case map[any]any:
-		out := make(map[any]any, len(v))
 		for k, x := range v {
 			out[k] = clone(x)
 		}

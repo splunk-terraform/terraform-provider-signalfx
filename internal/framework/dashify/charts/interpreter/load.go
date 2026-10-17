@@ -46,14 +46,8 @@ func Load(files fs.FS) (*Engine, error) {
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", name, err)
 		}
-		encoded, err := yaml.Marshal(node)
-		if err != nil {
-			return nil, err
-		}
 		var definition Definition
-		decoder := yaml.NewDecoder(bytes.NewReader(encoded))
-		decoder.KnownFields(true)
-		if err := decoder.Decode(&definition); err != nil {
+		if err := node.Decode(&definition); err != nil {
 			return nil, fmt.Errorf("%s: %w", name, err)
 		}
 		definitions = append(definitions, definition)

@@ -119,16 +119,25 @@ func TestObservabilityChartReadsConfigurationViolations(t *testing.T) {
 	t.Parallel()
 	managed := NewResourceObservabilityChart().(*observabilityChartResource)
 	root := template.RootElementChart
-	for _, test := range []struct{ name, spec, want string }{
-		{"missing program", `{"<Chart>":[{"<o11y:TimeSeriesChart>":[],"datasource":{},"chart":{},"widget":{}}]}`, "program: must be set"},
-		{"invalid visualization", `{"<Chart>":[{"<o11y:TimeSeriesChart>":[],"datasource":{"program":"A"},"chart":{"chartOptions":{"type":"pie"}},"widget":{}}]}`, "must be one of"},
+	for _, test := range []struct {
+		name, spec string
+		want       []string
+	}{
+		{"missing program", `{"<Chart>":[{"<o11y:TimeSeriesChart>":[],"datasource":{},"chart":{},"widget":{}}]}`, []string{"1 value(s)", "program: must be set"}},
+		{"invalid visualization", `{"<Chart>":[{"<o11y:TimeSeriesChart>":[],"datasource":{"program":"A"},"chart":{"chartOptions":{"type":"pie"}},"widget":{}}]}`, []string{"1 value(s)", "must be one of"}},
+		{"several violations", `{"<Chart>":[{"<o11y:TimeSeriesChart>":[],"datasource":{},"chart":{"chartOptions":{"type":"pie"}},"widget":{}}]}`, []string{"2 value(s)", "program: must be set", "must be one of"}},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			model, diags := managed.modelFromRecord(t.Context(), &template.Template{ID: "chart-1", Title: "Chart", Spec: json.RawMessage(test.spec), Metadata: &template.Metadata{RootElement: &root}}, observabilityChartModel{})
 			require.False(t, diags.HasError(), diags)
-			require.Len(t, diags.Warnings(), 1)
-			assert.Contains(t, diags.Warnings()[0].Detail(), test.want)
+			assert.Empty(t, diags.Warnings(), "decoding alone must not apply configuration rules")
 			assert.Equal(t, "chart-1", model.ID.ValueString())
+			warnings := managed.ruleWarning(t.Context(), model)
+			require.Len(t, warnings, 1)
+			assert.Equal(t, "Stored chart violates configuration rules", warnings[0].Summary())
+			for _, want := range test.want {
+				assert.Contains(t, warnings[0].Detail(), want)
+			}
 			_, diags = managed.write(t.Context(), model)
 			assert.True(t, diags.HasError(), "configuration rules must still apply to writes")
 		})

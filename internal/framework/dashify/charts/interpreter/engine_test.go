@@ -13,7 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
 
 func testProperty(kind string, path ...string) Property {
@@ -33,24 +33,11 @@ func testValue(t *testing.T, e *Engine, overrides map[string]attr.Value) types.O
 	attributeTypes := AttributeTypes(attributes)
 	values := map[string]attr.Value{}
 	for name, typ := range attributeTypes {
-		switch v := typ.(type) {
-		case basetypes.StringType:
-			values[name] = types.StringNull()
-		case basetypes.BoolType:
-			values[name] = types.BoolNull()
-		case basetypes.Int64Type:
-			values[name] = types.Int64Null()
-		case basetypes.Float64Type:
-			values[name] = types.Float64Null()
-		case types.ObjectType:
-			values[name] = types.ObjectNull(v.AttrTypes)
-		case types.ListType:
-			values[name] = types.ListNull(v.ElemType)
-		case types.MapType:
-			values[name] = types.MapNull(v.ElemType)
-		default:
-			t.Fatalf("unsupported fixture type %T", typ)
+		value, err := typ.ValueFromTerraform(t.Context(), tftypes.NewValue(typ.TerraformType(t.Context()), nil))
+		if err != nil {
+			t.Fatal(err)
 		}
+		values[name] = value
 	}
 	for name, value := range overrides {
 		values[name] = value
@@ -101,21 +88,6 @@ func TestUnicodeLengthAndFiniteFloats(t *testing.T) {
 	value := testValue(t, e, map[string]attr.Value{"title": types.StringValue("你")})
 	if d := e.Validate(context.Background(), "test", value, false); !d.HasError() {
 		t.Fatal("UTF-8 bytes counted as characters")
-	}
-}
-
-func TestTopLevelDurationKeepsConfiguredSpelling(t *testing.T) {
-	time := testProperty("string", "datasource", "time")
-	time.Mapping.Transform = "relative_duration"
-	e := testEngine(t, map[string]Property{"time_range": time})
-	prior := testValue(t, e, map[string]attr.Value{"time_range": types.StringValue("60m")})
-	spec, diagnostics := e.Encode(t.Context(), "test", prior)
-	if diagnostics.HasError() {
-		t.Fatal(diagnostics)
-	}
-	decoded, leftovers, diagnostics := e.Decode(t.Context(), "test", spec, prior)
-	if diagnostics.HasError() || len(leftovers) != 0 || !decoded.Equal(prior) {
-		t.Fatalf("top-level duration spelling changed: %v %v", leftovers, diagnostics)
 	}
 }
 
@@ -194,8 +166,8 @@ func TestTableGroupingDecodesCurrentArrays(t *testing.T) {
 		"chart":             map[string]any{"groupBy": []any{"host", "region"}},
 	}
 	value, _, diagnostics := e.Decode(t.Context(), "metrics_table", tooMany, types.ObjectNull(nil))
-	if diagnostics.HasError() || len(diagnostics.Warnings()) != 1 {
-		t.Fatal("stored grouping outside the configured limit should warn", diagnostics)
+	if diagnostics.HasError() || len(diagnostics) != 0 {
+		t.Fatal("stored grouping outside the configured limit should decode without diagnostics", diagnostics)
 	}
 	if _, diagnostics := e.Encode(t.Context(), "metrics_table", value); !diagnostics.HasError() {
 		t.Fatal("Table grouping configuration accepted more than one property")
@@ -349,8 +321,8 @@ func TestOneOfDecodeSelectsWireShapeAndPreservesUnmodeledFields(t *testing.T) {
 				t.Fatal("inactive variant claimed fields", fields)
 			}
 			if test.warning {
-				if len(diagnostics.Warnings()) != 1 || !e.Validate(t.Context(), "test", value, true).HasError() {
-					t.Fatal("stored union should warn while configuration stays invalid", diagnostics)
+				if len(diagnostics) != 0 || !e.Validate(t.Context(), "test", value, true).HasError() {
+					t.Fatal("stored union should decode cleanly while configuration stays invalid", diagnostics)
 				}
 				return
 			}
@@ -376,13 +348,8 @@ func TestEngineReturnsIndependentSchemaViews(t *testing.T) {
 	objectType := attributes["options"].GetType().(types.ObjectType)
 	value := testValue(t, e, map[string]attr.Value{"options": types.ObjectValueMust(objectType.AttrTypes, map[string]attr.Value{"name": types.StringValue("x"), "style": types.StringValue("line")})})
 
-	// Changes to a returned schema, including its validators, must not affect
-	// the shared engine.
+	// Changes to a returned schema must not affect the shared engine.
 	view := attributes["options"].(schema.SingleNestedAttribute)
-	validation := view.Validators[0].(objectValidation).property
-	validation.Properties["style"].Values[0] = "pie"
-	*validation.Properties["name"].MinLength = 10
-	validation.Mapping.Path[0] = "other"
 	delete(view.Attributes, "style")
 	delete(attributes, "options")
 

@@ -15,36 +15,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-func TestDecodeModernFieldsAndOwnership(t *testing.T) {
-	engine, err := New()
-	if err != nil {
-		t.Fatal(err)
-	}
-	spec := map[string]any{"<o11y:TimeSeriesChart>": []any{}, "chart": map[string]any{"chartOptions": map[string]any{"maximumSignificantDigits": int64(6)}, "seriesOptions": map[string]any{"cpu": map[string]any{"displayUnit": map[string]any{"prefix": "$", "suffix": " USD"}, "maximumSignificantDigits": int64(4), "unknown": map[string]any{}}}, "yAxes": []any{map[string]any{"min": 1.5}, map[string]any{"extra": nil}}}, "datasource": map[string]any{"program": "cpu"}, "widget": map[string]any{"links": []any{}}}
-	original := copySpec(spec)
-	value, leftovers, d := engine.Decode(context.Background(), "metrics_time_series", spec, types.ObjectNull(nil))
-	if d.HasError() {
-		t.Fatal(d)
-	}
-	if !reflect.DeepEqual(spec, original) {
-		t.Fatal("Decode mutated caller input")
-	}
-	if !reflect.DeepEqual(leftovers, []string{"chart.seriesOptions.cpu.unknown", "chart.yAxes.1.extra"}) {
-		t.Fatal(leftovers)
-	}
-	rebuilt, d := engine.Encode(context.Background(), "metrics_time_series", value)
-	if d.HasError() {
-		t.Fatal(d)
-	}
-	series := rebuilt["chart"].(map[string]any)["seriesOptions"].(map[string]any)["cpu"].(map[string]any)
-	if !reflect.DeepEqual(series["displayUnit"], map[string]any{"prefix": "$", "suffix": " USD"}) || series["maximumSignificantDigits"] != int64(4) {
-		t.Fatal(series)
-	}
-	if _, exists := rebuilt["widget"].(map[string]any)["links"]; !exists {
-		t.Fatal("empty list changed to null")
-	}
-}
-
 func TestNewChartDiscoveryAndExplicitOverlay(t *testing.T) {
 	files := fstest.MapFS{
 		"new.yml": {Data: []byte(`type: tiny

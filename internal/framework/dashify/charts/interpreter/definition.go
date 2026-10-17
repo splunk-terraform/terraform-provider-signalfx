@@ -55,36 +55,6 @@ type Property struct {
 	Variants      map[string]Property `yaml:"variants"`
 }
 
-// Public schema views must not share mutable authored data with the cached
-// engine, which serves concurrent resource operations.
-func copyProperties(properties map[string]Property) map[string]Property {
-	if properties == nil {
-		return nil
-	}
-	result := make(map[string]Property, len(properties))
-	for name, p := range properties {
-		p.Values, p.Mapping.Path = slices.Clone(p.Values), slices.Clone(p.Mapping.Path)
-		p.ConflictsWith, p.AtLeastOneOf = slices.Clone(p.ConflictsWith), slices.Clone(p.AtLeastOneOf)
-		p.Min, p.Max, p.MinLength, p.MaxItems = copyPointer(p.Min), copyPointer(p.Max), copyPointer(p.MinLength), copyPointer(p.MaxItems)
-		p.RequiresValue, p.RequiredWhen = copyPointer(p.RequiresValue), copyPointer(p.RequiredWhen)
-		p.Default = clone(p.Default)
-		p.Properties, p.Variants = copyProperties(p.Properties), copyProperties(p.Variants)
-		if p.Item != nil {
-			p.Item = &Item{Type: p.Item.Type, Properties: copyProperties(p.Item.Properties)}
-		}
-		result[name] = p
-	}
-	return result
-}
-
-func copyPointer[T any](value *T) *T {
-	if value == nil {
-		return nil
-	}
-	copy := *value
-	return &copy
-}
-
 // Reject declarations the interpreter cannot enforce rather than silently
 // accepting a newer dialect or producing ambiguous wire mappings.
 func checkProperties(properties map[string]Property) error {

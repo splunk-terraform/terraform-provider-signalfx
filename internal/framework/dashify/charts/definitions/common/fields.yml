@@ -26,10 +26,10 @@ properties:
     mapping:
       path: ['chart', 'maximumSignificantDigits']
 
-  # Confirmed identical (same field name, mapping path, and default) across
-  # SingleValue, List, and Table - the "Show timestamp in footer" control is
-  # the same editor component for all three, not a per-chart-type
-  # reimplementation.
+  # Referenced by SingleValue, List, Table and ClusterMap at the same mapping
+  # path and default. For the first three, the "Show timestamp in footer"
+  # control was confirmed to be the same editor component, not a
+  # per-chart-type reimplementation.
   show_timestamp:
     type: bool
     optional: true
@@ -70,8 +70,6 @@ properties:
     # displayUnit key - a bare unit string, or a {prefix, suffix} object.
     variants:
       unit:
-        # Shares scaling_unit with the per-series value_unit field so the
-        # value lists cannot drift apart.
         ref: common/fields.yml#scaling_unit
       custom:
         type: block
