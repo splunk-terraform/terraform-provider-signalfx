@@ -7,7 +7,6 @@ package interpreter
 
 import (
 	"fmt"
-	"reflect"
 	"slices"
 	"strings"
 )
@@ -140,8 +139,10 @@ func checkProperties(properties map[string]Property) error {
 // Block variants contribute fields to the parent object; they do not retain a
 // separate value on which presence, mappings, or constraints could operate.
 func checkBlockVariant(p Property) error {
-	allowed := Property{Type: p.Type, Description: p.Description, Properties: p.Properties}
-	if !reflect.DeepEqual(p, allowed) {
+	if p.Ref != "" || p.Optional || p.Required || p.Values != nil || p.Default != nil ||
+		p.Min != nil || p.Max != nil || p.MinLength != nil || p.MaxItems != nil ||
+		p.ConflictsWith != nil || p.AtLeastOneOf != nil || p.RequiresValue != nil || p.RequiredWhen != nil ||
+		p.Mapping.Path != nil || p.Mapping.Transform != "" || p.Item != nil || p.Variants != nil {
 		return fmt.Errorf("oneof block variants support only type, description, and properties; put constraints on the parent or its fields")
 	}
 	if len(p.Properties) == 0 {

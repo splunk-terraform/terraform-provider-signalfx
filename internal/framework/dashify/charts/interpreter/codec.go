@@ -6,7 +6,6 @@ package interpreter
 import (
 	"context"
 	"fmt"
-	"reflect"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -171,9 +170,9 @@ func decodeValue(ctx context.Context, p Property, valueType attr.Type, spec map[
 		if p.Mapping.Transform == "relative_duration" {
 			value, err := TakeRelativeDuration(spec, p.Mapping.Path)
 			if old, ok := prior.(types.String); ok && present(old) && present(value) {
-				oldSpec, valid := RelativeDurationSpec(old.ValueString())
-				newSpec, _ := RelativeDurationSpec(value.ValueString())
-				if valid && reflect.DeepEqual(oldSpec, newSpec) {
+				oldMillis, valid := relativeDurationMillis(old.ValueString())
+				newMillis, _ := relativeDurationMillis(value.ValueString())
+				if valid && oldMillis == newMillis {
 					value = old
 				}
 			}

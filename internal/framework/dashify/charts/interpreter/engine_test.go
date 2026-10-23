@@ -257,13 +257,30 @@ func TestOneOfRejectsUnsupportedWireAlternatives(t *testing.T) {
 }
 
 func TestOneOfRejectsIgnoredBlockVariantMetadata(t *testing.T) {
+	bound := 0
 	for name, change := range map[string]func(*Property){
-		"presence":     func(p *Property) { p.Optional = true },
-		"mapping":      func(p *Property) { p.Mapping.Path = []string{"custom"} },
-		"at least one": func(p *Property) { p.AtLeastOneOf = []string{"prefix"} },
-		"condition":    func(p *Property) { p.RequiredWhen = &Condition{Field: "unit", Value: "Byte"} },
-		"bounds":       func(p *Property) { minimum := 1; p.Min = &minimum },
-		"default":      func(p *Property) { p.Default = "ignored" },
+		"reference":          func(p *Property) { p.Ref = "common/fields.yml#display_unit" },
+		"optional":           func(p *Property) { p.Optional = true },
+		"required":           func(p *Property) { p.Required = true },
+		"values":             func(p *Property) { p.Values = []string{"Byte"} },
+		"empty values":       func(p *Property) { p.Values = []string{} },
+		"default":            func(p *Property) { p.Default = false },
+		"minimum":            func(p *Property) { p.Min = &bound },
+		"maximum":            func(p *Property) { p.Max = &bound },
+		"minimum length":     func(p *Property) { p.MinLength = &bound },
+		"maximum items":      func(p *Property) { p.MaxItems = &bound },
+		"conflicts":          func(p *Property) { p.ConflictsWith = []string{"unit"} },
+		"empty conflicts":    func(p *Property) { p.ConflictsWith = []string{} },
+		"at least one":       func(p *Property) { p.AtLeastOneOf = []string{"prefix"} },
+		"empty at least one": func(p *Property) { p.AtLeastOneOf = []string{} },
+		"requires value":     func(p *Property) { p.RequiresValue = &Condition{Field: "unit", Value: "Byte"} },
+		"required when":      func(p *Property) { p.RequiredWhen = &Condition{Field: "unit", Value: "Byte"} },
+		"mapping path":       func(p *Property) { p.Mapping.Path = []string{"custom"} },
+		"empty mapping path": func(p *Property) { p.Mapping.Path = []string{} },
+		"mapping transform":  func(p *Property) { p.Mapping.Transform = "negate" },
+		"item":               func(p *Property) { p.Item = &Item{} },
+		"variants":           func(p *Property) { p.Variants = map[string]Property{"unit": testProperty("string", "unit")} },
+		"empty variants":     func(p *Property) { p.Variants = map[string]Property{} },
 	} {
 		t.Run(name, func(t *testing.T) {
 			variant := Property{Type: "block", Properties: map[string]Property{"prefix": testProperty("string", "prefix")}}
