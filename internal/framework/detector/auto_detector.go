@@ -6,7 +6,9 @@ package fwdetector
 import (
 	"context"
 	"fmt"
+	"maps"
 	"net/url"
+	"slices"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -542,8 +544,29 @@ func (r *AutoDetectorResource) syncModelFromDetector(ctx context.Context, model 
 		"values": types.ListType{ElemType: types.StringType},
 	}
 
+	// Preserve configured filter order; map iteration cannot define a Terraform list.
+	var previousFilters []autoDetectorFilterModel
+	if !model.Filters.IsNull() && !model.Filters.IsUnknown() {
+		diags.Append(model.Filters.ElementsAs(ctx, &previousFilters, false)...)
+		if diags.HasError() {
+			return diags
+		}
+	}
+	var filterKeys []string
+	for _, filter := range previousFilters {
+		if _, exists := filters[filter.Key.ValueString()]; exists {
+			filterKeys = append(filterKeys, filter.Key.ValueString())
+		}
+	}
+	for _, key := range slices.Sorted(maps.Keys(filters)) {
+		if !slices.Contains(filterKeys, key) {
+			filterKeys = append(filterKeys, key)
+		}
+	}
+
 	var filterModels []autoDetectorFilterModel
-	for key, values := range filters {
+	for _, key := range filterKeys {
+		values := filters[key]
 		var vals []attr.Value
 		for _, value := range values {
 			vals = append(vals, types.StringValue(value))

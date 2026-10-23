@@ -5,9 +5,13 @@ package fwdetector
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"regexp"
+	"slices"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -17,6 +21,7 @@ import (
 	"github.com/signalfx/signalfx-go/detector"
 	"github.com/signalfx/signalfx-go/notification"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/experimental/pkg/metadata"
 	flow "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/experimental/pkg/signalflow"
@@ -309,15 +314,33 @@ func TestAutoDetectorResource(t *testing.T) {
 			},
 		},
 	} {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
+		filterOrders := []bool{false}
+		if tc.name == "valid lifecycle" {
+			filterOrders = append(filterOrders, true)
+		}
+		for _, reverseFilters := range filterOrders {
+			t.Run(fmt.Sprintf("%s/reverse_filters=%t", tc.name, reverseFilters), func(t *testing.T) {
+				t.Parallel()
 
-			resourcetest.UnitTest(t, resourcetest.TestCase{
-				ProtoV6ProviderFactories: fwtest.NewMockProto6Server(
-					t, tc.endpoints, fwtest.WithMockResources(NewAutoDetectorResource),
-				),
-				Steps: tc.steps,
+				steps := slices.Clone(tc.steps)
+				if reverseFilters {
+					content, err := os.ReadFile("testdata/auto_detect_create.tf")
+					require.NoError(t, err)
+					steps[0].ConfigFile = nil
+					steps[0].Config = strings.Replace(string(content),
+						`{ key = "service", values = ["web"] },
+    { key = "environment", values = ["production"] },`,
+						`{ key = "environment", values = ["production"] },
+    { key = "service", values = ["web"] },`, 1)
+					require.NotEqual(t, string(content), steps[0].Config)
+				}
+				resourcetest.UnitTest(t, resourcetest.TestCase{
+					ProtoV6ProviderFactories: fwtest.NewMockProto6Server(
+						t, tc.endpoints, fwtest.WithMockResources(NewAutoDetectorResource),
+					),
+					Steps: steps,
+				})
 			})
-		})
+		}
 	}
 }
