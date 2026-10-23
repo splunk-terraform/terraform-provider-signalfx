@@ -5,22 +5,28 @@ package fwdetector
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"regexp"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-testing/config"
 	resourcetest "github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/signalfx/signalfx-go/detector"
 	"github.com/signalfx/signalfx-go/notification"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/experimental/pkg/metadata"
 	flow "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/experimental/pkg/signalflow"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/fwtest"
+	pmeta "github.com/splunk-terraform/terraform-provider-signalfx/internal/providermeta"
 )
 
 func TestAutoDetectorResourceMetadata(t *testing.T) {
@@ -319,5 +325,87 @@ func TestAutoDetectorResource(t *testing.T) {
 				Steps: tc.steps,
 			})
 		})
+	}
+}
+
+func TestAutoDetectorSyncModelKeepsFilterOrder(t *testing.T) {
+	t.Parallel()
+
+	filter := func(field, value string) (*flow.ExecutionBlockArgumentFilter, json.RawMessage) {
+		return &flow.ExecutionBlockArgumentFilter{
+				Type:  "filter",
+				Field: flow.ExecutionBlockArgumentLiteral{Value: field},
+				Value: &flow.ExecutionBlockArgumentLiteral{Value: value},
+			},
+			json.RawMessage(fmt.Sprintf(`{"type": "filter", "field": {"value": %q}, "value": {"value": %q}}`, field, value))
+	}
+	left, leftRaw := filter("service", "web")
+	right, rightRaw := filter("environment", "production")
+	graph := flow.ExecutionGraph{
+		flow.ExecutionBlockImport{Typed: "IMPORT", Module: "signalfx.detectors.autodetect.apm", Name: "requests"},
+		flow.ExecutionBlockStream{
+			Typed: "DETECT",
+			Start: flow.ExecutionBlockStreamMethod{
+				FunctionName: "requests.blended",
+				Arguments: flow.ExecutionBlockArguments{
+					"filter_": &flow.ExecutionBlockArgumentOperation{
+						Type:      "binary_expression",
+						Operation: "AND",
+						Left:      left,
+						LeftRaw:   leftRaw,
+						Right:     right,
+						RightRaw:  rightRaw,
+					},
+				},
+			},
+		},
+	}
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("POST /v2/signalflow/_/getSignalFlowModel", func(w http.ResponseWriter, _ *http.Request) {
+		_ = json.NewEncoder(w).Encode(&graph)
+	})
+	mux.HandleFunc("GET /v2/signalflow/_/extractMetadata", func(w http.ResponseWriter, _ *http.Request) {
+		_ = json.NewEncoder(w).Encode(&metadata.Metadata{
+			Arguments: []metadata.Argument{{Name: "filter_", Type: "filter"}},
+		})
+	})
+	srv := httptest.NewServer(mux)
+	t.Cleanup(srv.Close)
+
+	r := &AutoDetectorResource{}
+	r.Configure(t.Context(), resource.ConfigureRequest{ProviderData: &pmeta.Meta{APIURL: srv.URL}}, &resource.ConfigureResponse{})
+
+	filterType := types.ObjectType{AttrTypes: map[string]attr.Type{
+		"key":    types.StringType,
+		"values": types.ListType{ElemType: types.StringType},
+	}}
+
+	for _, order := range [][]string{{"service", "environment"}, {"environment", "service"}} {
+		var previous []autoDetectorFilterModel
+		for _, key := range order {
+			previous = append(previous, autoDetectorFilterModel{
+				Key:    types.StringValue(key),
+				Values: types.ListValueMust(types.StringType, []attr.Value{types.StringValue("v")}),
+			})
+		}
+		prior, diags := types.ListValueFrom(t.Context(), filterType, previous)
+		require.False(t, diags.HasError(), diags)
+
+		// Map iteration order is random, so repeat to make a regression near-certain to fail.
+		for range 50 {
+			model := &AutoDetectorResourceModel{Filters: prior}
+			diags := r.syncModelFromDetector(t.Context(), model, &detector.Detector{ProgramText: "regen"})
+			require.False(t, diags.HasError(), diags)
+
+			var got []autoDetectorFilterModel
+			require.False(t, model.Filters.ElementsAs(t.Context(), &got, false).HasError())
+
+			var keys []string
+			for _, f := range got {
+				keys = append(keys, f.Key.ValueString())
+			}
+			require.Equal(t, order, keys)
+		}
 	}
 }
