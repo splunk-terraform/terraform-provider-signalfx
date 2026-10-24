@@ -1,0 +1,202 @@
+# Copyright Splunk, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
+type: metrics_list
+version: 1
+description: >-
+  A list of metric values, one row per series, with optional sorting and a
+  secondary sparkline or gauge per row. This is the Dashify equivalent of the
+  classic `signalfx_list_chart` resource. Note that `color_by` and
+  `color_scale` render correctly and survive import, but the Dashify UI does
+  not write them back when saving, so editing this chart in the UI will drop
+  them.
+
+element: 'o11y:List'
+
+extends:
+  - common/metric_chart.yml
+
+properties:
+  maximum_significant_digits:
+    ref: common/fields.yml#maximum_significant_digits
+
+  show_timestamp:
+    ref: common/fields.yml#show_timestamp
+
+  secondary_visualization:
+    ref: common/fields.yml#secondary_visualization
+
+  # List-only: SingleValue has no publishedStreams concept, and TableChart
+  # types it but never reads or writes it, so modeling it there would write
+  # JSON Dashify silently ignores.
+  published_streams:
+    # A map keyed by publish label ("A", "B"), not a list - the key must match
+    # a `publish(label=...)` in `program`, so it's user-chosen rather than
+    # positional. `item` describes the map's value shape.
+    type: map
+    optional: true
+    description: >-
+      Per-plot display overrides, keyed by the SignalFlow publish label each
+      override applies to.
+    mapping:
+      path: ['chart', 'publishedStreams']
+    item:
+      properties:
+        name:
+          type: string
+          optional: true
+          description: >-
+            An alternate display name for this plot, shown in the legend and
+            data table in place of its raw SignalFlow label.
+          mapping:
+            path: ['name']
+
+        display_unit:
+          ref: common/fields.yml#display_unit
+          optional: true
+          mapping:
+            path: ['displayUnit']
+
+        palette_index:
+          type: number
+          optional: true
+          min: 0
+          max: 15
+          # An index, not a color string: Dashify's color picker only ever
+          # emits paletteIndex.
+          description: >-
+            The palette color index (0-15) to draw this plot in, overriding
+            the chart's automatic color assignment.
+          mapping:
+            path: ['paletteIndex']
+
+  hide_missing_values:
+    type: bool
+    optional: true
+    default: false
+    description: >-
+      Whether to exclude a series whose most recent value is missing, and
+      any series whose latest timestamp is older than the newest remaining
+      series.
+    mapping:
+      path: ['chart', 'hideMissingValues']
+
+  color_by:
+    type: enum
+    optional: true
+    default: Metric
+    values: [Dimension, Metric, Scale]
+    # `Scale` pairs with `color_scale` below.
+    description: >-
+      How to assign series colors when no explicit `palette_index` is set:
+      by dimension value, uniformly by metric, or by the value thresholds in
+      `color_scale`.
+    mapping:
+      path: ['chart', 'colorBy']
+
+  color_scale:
+    type: list
+    optional: true
+    max_items: 5
+    requires_value:
+      field: color_by
+      value: Scale
+    required_when:
+      field: color_by
+      value: Scale
+    description: >-
+      Color bands applied to each series' value based on which threshold
+      range it falls in. Only meaningful when `color_by` is `Scale`.
+    mapping:
+      path: ['chart', 'colorScale']
+    item:
+      properties:
+        gt:
+          type: float
+          optional: true
+          conflicts_with: [gte]
+          description: This bucket's lower bound, exclusive. Mutually exclusive with `gte`.
+          mapping:
+            path: ['gt']
+        gte:
+          type: float
+          optional: true
+          conflicts_with: [gt]
+          description: This bucket's lower bound, inclusive. Mutually exclusive with `gt`.
+          mapping:
+            path: ['gte']
+        lt:
+          type: float
+          optional: true
+          conflicts_with: [lte]
+          description: >-
+            This bucket's upper bound, exclusive. Mutually exclusive with
+            `lte`. Not settable in the Dashify editor.
+          mapping:
+            path: ['lt']
+        lte:
+          type: float
+          optional: true
+          conflicts_with: [lt]
+          description: >-
+            This bucket's upper bound, inclusive. Mutually exclusive with
+            `lt`. Not settable in the Dashify editor.
+          mapping:
+            path: ['lte']
+        palette_index:
+          type: number
+          optional: true
+          min: 0
+          max: 21
+          description: The palette color index to draw this bucket in.
+          mapping:
+            path: ['paletteIndex']
+
+  display_fields:
+    type: list
+    optional: true
+    description: >-
+      Which metadata properties to show as columns, and whether each is
+      shown. Unset means "Auto" (Dashify infers fields from the live
+      result) rather than an empty custom list.
+    mapping:
+      path: ['chart', 'displayFields']
+    item:
+      properties:
+        property:
+          type: string
+          required: true
+          description: The metadata property's key name.
+          mapping:
+            path: ['property']
+        enabled:
+          type: bool
+          required: true
+          description: Whether this property's column is shown.
+          mapping:
+            path: ['enabled']
+
+  sort:
+    type: block
+    optional: true
+    description: >-
+      How to order rows. Unset means "Auto" (sorted by the SignalFlow
+      publish label, ascending).
+    mapping:
+      path: ['chart', 'sort']
+    properties:
+      by:
+        type: string
+        required: true
+        description: >-
+          The field to sort by, such as `value` or a metadata property
+          name.
+        mapping:
+          path: ['by']
+      direction:
+        type: enum
+        required: true
+        values: [asc, desc]
+        description: The sort direction.
+        mapping:
+          path: ['direction']

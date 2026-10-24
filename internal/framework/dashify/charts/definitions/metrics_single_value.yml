@@ -1,0 +1,107 @@
+# Copyright Splunk, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
+type: metrics_single_value
+version: 1
+description: >-
+  A single current metric value, optionally paired with a sparkline or a
+  radial/linear gauge and a color scale. This is the Dashify equivalent of the
+  classic `signalfx_single_value_chart` resource.
+
+element: 'o11y:SingleValue'
+
+extends:
+  - common/metric_chart.yml
+
+properties:
+  maximum_significant_digits:
+    ref: common/fields.yml#maximum_significant_digits
+
+  show_timestamp:
+    ref: common/fields.yml#show_timestamp
+
+  secondary_visualization:
+    ref: common/fields.yml#secondary_visualization
+
+  maximum_fraction_digits:
+    type: number
+    optional: true
+    min: 0
+    max: 20
+    description: The maximum number of digits to display after the decimal point.
+    mapping:
+      path: ['chart', 'maximumFractionDigits']
+
+  display_unit:
+    # Chart-level rather than per-plot: SingleValueProps.displayUnit is the
+    # only display-unit control SingleValue has.
+    ref: common/fields.yml#display_unit
+    optional: true
+    mapping:
+      path: ['chart', 'displayUnit']
+
+  color_scale:
+    type: list
+    optional: true
+    max_items: 5
+    # Dashify infers Scale mode from colorScale being present, so this chart
+    # needs no separate color_by field.
+    #
+    # Each bucket sets one lower bound (gt or gte) plus a palette color.
+    # Upper bounds (lt/lte) are not authored by the Dashify editor - it
+    # derives them from the next bucket's lower bound - but they are a real,
+    # import-preserved part of the document, so they're modeled for
+    # round-trip fidelity even though the editor won't write them itself.
+    description: >-
+      Color bands applied to the displayed value based on which threshold
+      range it falls in. Buckets are evaluated in the order given.
+    mapping:
+      path: ['chart', 'colorScale']
+    item:
+      properties:
+        gt:
+          type: float
+          optional: true
+          conflicts_with: [gte]
+          description: >-
+            This bucket's lower bound, exclusive. Mutually exclusive with
+            `gte`.
+          mapping:
+            path: ['gt']
+        gte:
+          type: float
+          optional: true
+          conflicts_with: [gt]
+          description: >-
+            This bucket's lower bound, inclusive. Mutually exclusive with
+            `gt`.
+          mapping:
+            path: ['gte']
+        lt:
+          type: float
+          optional: true
+          conflicts_with: [lte]
+          # Import-preserved but not editor-authored - see the color_scale
+          # note above.
+          description: >-
+            This bucket's upper bound, exclusive. Mutually exclusive with
+            `lte`. Not settable in the Dashify editor.
+          mapping:
+            path: ['lt']
+        lte:
+          type: float
+          optional: true
+          conflicts_with: [lt]
+          description: >-
+            This bucket's upper bound, inclusive. Mutually exclusive with
+            `lt`. Not settable in the Dashify editor.
+          mapping:
+            path: ['lte']
+        palette_index:
+          type: number
+          optional: true
+          min: 0
+          max: 21
+          description: The palette color index (0-21) to draw this bucket in.
+          mapping:
+            path: ['paletteIndex']
