@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func testProperty(kind string, path ...string) property {
+func testProperty(kind propertyType, path ...string) property {
 	return property{Type: kind, Optional: true, Description: "Test field.", Mapping: mapping{Path: path}}
 }
 func testEngine(t *testing.T, properties map[string]property) *Engine {

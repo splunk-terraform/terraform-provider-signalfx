@@ -66,10 +66,10 @@ func encodeValue(p property, value attr.Value) (any, error) {
 	case types.Float64:
 		return v.ValueFloat64(), nil
 	case types.Object:
-		if p.Type == "oneof" {
+		if p.Type == propertyTypeOneOf {
 			for _, name := range keys(p.Variants) {
 				variant := p.Variants[name]
-				if variant.Type != "block" {
+				if variant.Type != propertyTypeBlock {
 					if present(v.Attributes()[name]) {
 						return encodeValue(variant, v.Attributes()[name])
 					}
@@ -88,7 +88,7 @@ func encodeValue(p property, value attr.Value) (any, error) {
 	case types.List:
 		result := make([]any, len(v.Elements()))
 		for index, child := range v.Elements() {
-			wire, err := encodeValue(property{Type: "block", Properties: p.Item.Properties}, child)
+			wire, err := encodeValue(property{Type: propertyTypeBlock, Properties: p.Item.Properties}, child)
 			if err != nil {
 				return nil, fmt.Errorf("element %d: %w", index, err)
 			}
@@ -98,7 +98,7 @@ func encodeValue(p property, value attr.Value) (any, error) {
 	case types.Map:
 		result := map[string]any{}
 		for key, child := range v.Elements() {
-			wire, err := encodeValue(property{Type: "block", Properties: p.Item.Properties}, child)
+			wire, err := encodeValue(property{Type: propertyTypeBlock, Properties: p.Item.Properties}, child)
 			if err != nil {
 				return nil, fmt.Errorf("key %q: %w", key, err)
 			}
@@ -180,8 +180,9 @@ func decodeObject(ctx context.Context, properties map[string]property, attribute
 }
 
 func decodeValue(ctx context.Context, p property, valueType attr.Type, spec map[string]any, prior attr.Value) (attr.Value, error) {
+	//exhaustive:enforce
 	switch p.Type {
-	case "string", "enum":
+	case propertyTypeString, propertyTypeEnum:
 		if p.Mapping.Transform == "relative_duration" {
 			value, err := takeRelativeDuration(spec, p.Mapping.Path)
 			if old, ok := prior.(types.String); ok && present(old) && present(value) {
@@ -194,28 +195,26 @@ func decodeValue(ctx context.Context, p property, valueType attr.Type, spec map[
 			return value, err
 		}
 		return takeString(spec, p.Mapping.Path)
-	case "bool":
+	case propertyTypeBool:
 		value, err := takeBool(spec, p.Mapping.Path)
 		if p.Mapping.Transform == "negate" && present(value) {
 			value = types.BoolValue(!value.ValueBool())
 		}
 		return value, err
-	case "number":
+	case propertyTypeNumber:
 		return takeInt64(spec, p.Mapping.Path)
-	case "float":
+	case propertyTypeFloat:
 		return takeFloat64(spec, p.Mapping.Path)
-	case "block", "oneof":
+	case propertyTypeBlock, propertyTypeOneOf:
 		objectType := valueType.(types.ObjectType)
+		decoder := objectDecoder{ctx: ctx, definition: p, objectType: objectType}
 		null := types.ObjectNull(objectType.AttrTypes)
-		if p.Type == "oneof" {
-			return takeOneOf(spec, p.Mapping.Path, null, func(raw any) (types.Object, error) { return decodeOneOf(ctx, p, raw, objectType) })
+		if p.Type == propertyTypeOneOf {
+			return takeOneOf(spec, p.Mapping.Path, null, decoder.decodeOneOf)
 		}
-		return takeObject(spec, p.Mapping.Path, null, func(raw map[string]any) (types.Object, error) {
-			children, _ := childProperties(p)
-			return decodeObject(ctx, children, objectType.AttrTypes, raw, nil)
-		})
-	case "list", "map":
-		if p.Type == "list" && p.Item.Type == "string" {
+		return takeObject(spec, p.Mapping.Path, null, decoder.decodeObject)
+	case propertyTypeList, propertyTypeMap:
+		if p.Type == propertyTypeList && p.Item.Type == propertyTypeString {
 			values, err := takeStringList(spec, p.Mapping.Path)
 			if err != nil || values == nil {
 				return types.ListNull(types.StringType), err
@@ -226,12 +225,10 @@ func decodeValue(ctx context.Context, p property, valueType attr.Type, spec map[
 			}
 			return value, nil
 		}
-		children := p.Item.Properties
-		if p.Type == "list" {
+		if p.Type == propertyTypeList {
 			objectType := valueType.(types.ListType).ElemType.(types.ObjectType)
-			values, err := takeObjectList(spec, p.Mapping.Path, func(raw map[string]any) (attr.Value, error) {
-				return decodeObject(ctx, children, objectType.AttrTypes, raw, nil)
-			})
+			decoder := objectDecoder{ctx: ctx, definition: p, objectType: objectType}
+			values, err := takeObjectList(spec, p.Mapping.Path, decoder.decodeObject)
 			if err != nil || values == nil {
 				return types.ListNull(objectType), err
 			}
@@ -242,9 +239,8 @@ func decodeValue(ctx context.Context, p property, valueType attr.Type, spec map[
 			return value, nil
 		}
 		objectType := valueType.(types.MapType).ElemType.(types.ObjectType)
-		values, err := takeObjectMap(spec, p.Mapping.Path, func(raw map[string]any) (attr.Value, error) {
-			return decodeObject(ctx, children, objectType.AttrTypes, raw, nil)
-		})
+		decoder := objectDecoder{ctx: ctx, definition: p, objectType: objectType}
+		values, err := takeObjectMap(spec, p.Mapping.Path, decoder.decodeObject)
 		if err != nil || values == nil {
 			return types.MapNull(objectType), err
 		}
@@ -258,12 +254,27 @@ func decodeValue(ctx context.Context, p property, valueType attr.Type, spec map[
 	}
 }
 
+type objectDecoder struct {
+	ctx        context.Context
+	definition property
+	objectType types.ObjectType
+}
+
+func (d objectDecoder) decodeObject(raw map[string]any) (types.Object, error) {
+	children, _ := childProperties(d.definition)
+	return decodeObject(d.ctx, children, d.objectType.AttrTypes, raw, nil)
+}
+
+func (d objectDecoder) decodeOneOf(raw any) (types.Object, error) {
+	return decodeOneOf(d.ctx, d.definition, raw, d.objectType)
+}
+
 func decodeOneOf(ctx context.Context, p property, raw any, objectType types.ObjectType) (types.Object, error) {
 	children, _ := childProperties(p)
 	if object, ok := raw.(map[string]any); ok {
 		blockFields := map[string]property{}
 		for _, variant := range p.Variants {
-			if variant.Type == "block" {
+			if variant.Type == propertyTypeBlock {
 				for name, child := range variant.Properties {
 					blockFields[name] = child
 				}
@@ -274,10 +285,10 @@ func decodeOneOf(ctx context.Context, p property, raw any, objectType types.Obje
 		}
 	}
 	for name, variant := range p.Variants {
-		if variant.Type == "block" {
+		if variant.Type == propertyTypeBlock {
 			continue
 		}
-		if _, ok := raw.(string); ok && (variant.Type == "string" || variant.Type == "enum") {
+		if _, ok := raw.(string); ok && (variant.Type == propertyTypeString || variant.Type == propertyTypeEnum) {
 			object := map[string]any{name: raw}
 			return decodeObject(ctx, map[string]property{name: children[name]}, objectType.AttrTypes, object, nil)
 		}

@@ -113,33 +113,34 @@ func buildAttributes(properties map[string]property) (map[string]schema.Attribut
 		if p.Mapping.Transform != "" && p.Mapping.Transform != "negate" && p.Mapping.Transform != "relative_duration" {
 			return nil, fmt.Errorf("%s: unsupported transform %q", name, p.Mapping.Transform)
 		}
-		if (p.Mapping.Transform == "negate" && p.Type != "bool") || (p.Mapping.Transform == "relative_duration" && p.Type != "string") {
+		if (p.Mapping.Transform == "negate" && p.Type != propertyTypeBool) || (p.Mapping.Transform == "relative_duration" && p.Type != propertyTypeString) {
 			return nil, fmt.Errorf("%s: transform does not match type", name)
 		}
 		description := p.Description
 		if p.Default != nil {
 			description += fmt.Sprintf(" Defaults to `%v` when unset.", p.Default)
 		}
+		//exhaustive:enforce
 		switch p.Type {
-		case "string", "enum":
-			if p.Type == "enum" {
+		case propertyTypeString, propertyTypeEnum:
+			if p.Type == propertyTypeEnum {
 				if len(p.Values) == 0 {
 					return nil, fmt.Errorf("%s: enum has no values", name)
 				}
 			}
 			attributes[name] = schema.StringAttribute{Required: p.Required, Optional: !p.Required, MarkdownDescription: description}
-		case "bool":
+		case propertyTypeBool:
 			attributes[name] = schema.BoolAttribute{Required: p.Required, Optional: !p.Required, MarkdownDescription: description}
-		case "number":
+		case propertyTypeNumber:
 			attributes[name] = schema.Int64Attribute{Required: p.Required, Optional: !p.Required, MarkdownDescription: description}
-		case "float":
+		case propertyTypeFloat:
 			attributes[name] = schema.Float64Attribute{Required: p.Required, Optional: !p.Required, MarkdownDescription: description}
-		case "block", "oneof", "list", "map":
+		case propertyTypeBlock, propertyTypeOneOf, propertyTypeList, propertyTypeMap:
 			children, err := childProperties(p)
 			if err != nil {
 				return nil, fmt.Errorf("%s: %w", name, err)
 			}
-			if p.Type == "list" && p.Item != nil && p.Item.Type == "string" {
+			if p.Type == propertyTypeList && p.Item != nil && p.Item.Type == propertyTypeString {
 				attributes[name] = schema.ListAttribute{Required: p.Required, Optional: !p.Required, ElementType: types.StringType, MarkdownDescription: description}
 				break
 			}
@@ -149,11 +150,11 @@ func buildAttributes(properties map[string]property) (map[string]schema.Attribut
 			}
 			object := schema.NestedAttributeObject{Attributes: nested}
 			switch p.Type {
-			case "block", "oneof":
+			case propertyTypeBlock, propertyTypeOneOf:
 				attributes[name] = schema.SingleNestedAttribute{Required: p.Required, Optional: !p.Required, Attributes: nested, MarkdownDescription: description}
-			case "list":
+			case propertyTypeList:
 				attributes[name] = schema.ListNestedAttribute{Required: p.Required, Optional: !p.Required, NestedObject: object, MarkdownDescription: description}
-			case "map":
+			case propertyTypeMap:
 				attributes[name] = schema.MapNestedAttribute{Required: p.Required, Optional: !p.Required, NestedObject: object, MarkdownDescription: description}
 			}
 		default:
@@ -168,27 +169,27 @@ func buildAttributes(properties map[string]property) (map[string]schema.Attribut
 // the active variant; mutually exclusive variants cannot be silently combined.
 func childProperties(p property) (map[string]property, error) {
 	switch p.Type {
-	case "block":
+	case propertyTypeBlock:
 		return p.Properties, nil
-	case "list", "map":
+	case propertyTypeList, propertyTypeMap:
 		if p.Item == nil {
 			return nil, fmt.Errorf("collection requires item")
 		}
-		if p.Item.Type != "" && (p.Item.Type != "string" || p.Type != "list") {
+		if p.Item.Type != "" && (p.Item.Type != propertyTypeString || p.Type != propertyTypeList) {
 			return nil, fmt.Errorf("unsupported %s item type %q", p.Type, p.Item.Type)
 		}
 		return p.Item.Properties, nil
-	case "oneof":
+	case propertyTypeOneOf:
 		out := map[string]property{}
 		scalarVariants := 0
 		for variant, definition := range p.Variants {
 			children := definition.Properties
-			if definition.Type == "block" {
+			if definition.Type == propertyTypeBlock {
 				if err := checkBlockVariant(definition); err != nil {
 					return nil, fmt.Errorf("%s: %w", variant, err)
 				}
 			} else {
-				if definition.Type != "string" && definition.Type != "enum" {
+				if definition.Type != propertyTypeString && definition.Type != propertyTypeEnum {
 					return nil, fmt.Errorf("unsupported oneof variant type %q", definition.Type)
 				}
 				scalarVariants++
@@ -200,7 +201,7 @@ func childProperties(p property) (map[string]property, error) {
 				children = map[string]property{variant: definition}
 			}
 			for name, child := range children {
-				if definition.Type == "block" && child.Required {
+				if definition.Type == propertyTypeBlock && child.Required {
 					return nil, fmt.Errorf("oneof block field %q cannot be required", name)
 				}
 				if _, exists := out[name]; exists {
@@ -225,7 +226,7 @@ func (e *Engine) Validate(name string, value types.Object) diag.Diagnostics {
 		diagnostics.AddError("Invalid chart", fmt.Sprintf("Unknown chart %q.", name))
 		return diagnostics
 	}
-	validateValue(name, property{Type: "block", Required: true, Properties: d.Properties}, value, &diagnostics)
+	validateValue(name, property{Type: propertyTypeBlock, Required: true, Properties: d.Properties}, value, &diagnostics)
 	return diagnostics
 }
 
@@ -245,7 +246,7 @@ func validateValue(path string, p property, value attr.Value, diagnostics *diag.
 		if p.MinLength != nil && utf8.RuneCountInString(v.ValueString()) < *p.MinLength {
 			fail(fmt.Sprintf("must contain at least %d characters", *p.MinLength))
 		}
-		if p.Type == "enum" && !slices.Contains(p.Values, v.ValueString()) {
+		if p.Type == propertyTypeEnum && !slices.Contains(p.Values, v.ValueString()) {
 			fail(fmt.Sprintf("must be one of %v", p.Values))
 		}
 		if p.Mapping.Transform == "relative_duration" {
@@ -284,11 +285,11 @@ func validateValue(path string, p property, value attr.Value, diagnostics *diag.
 				fail(name + " must be set when " + condition.Field + " = " + condition.Value)
 			}
 		}
-		if p.Type == "oneof" {
+		if p.Type == propertyTypeOneOf {
 			active := 0
 			for name, variant := range p.Variants {
 				fields := []string{name}
-				if variant.Type == "block" {
+				if variant.Type == propertyTypeBlock {
 					fields = keys(variant.Properties)
 				}
 				for _, field := range fields {
@@ -317,18 +318,18 @@ func validateValue(path string, p property, value attr.Value, diagnostics *diag.
 		if p.MaxItems != nil && len(v.Elements()) > *p.MaxItems {
 			fail(fmt.Sprintf("must contain at most %d items", *p.MaxItems))
 		}
-		item := property{Type: "block", Required: true}
+		item := property{Type: propertyTypeBlock, Required: true}
 		if p.Item != nil {
 			item.Properties = p.Item.Properties
-			if p.Item.Type == "string" {
-				item.Type = "string"
+			if p.Item.Type == propertyTypeString {
+				item.Type = propertyTypeString
 			}
 		}
 		for index, child := range v.Elements() {
 			validateValue(fmt.Sprintf("%s.%d", path, index), item, child, diagnostics)
 		}
 	case types.Map:
-		item := property{Type: "block", Required: true}
+		item := property{Type: propertyTypeBlock, Required: true}
 		if p.Item != nil {
 			item.Properties = p.Item.Properties
 		}

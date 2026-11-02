@@ -11,6 +11,20 @@ import (
 	"strings"
 )
 
+type propertyType string
+
+const (
+	propertyTypeString propertyType = "string"
+	propertyTypeEnum   propertyType = "enum"
+	propertyTypeBool   propertyType = "bool"
+	propertyTypeNumber propertyType = "number"
+	propertyTypeFloat  propertyType = "float"
+	propertyTypeBlock  propertyType = "block"
+	propertyTypeOneOf  propertyType = "oneof"
+	propertyTypeList   propertyType = "list"
+	propertyTypeMap    propertyType = "map"
+)
+
 type definition struct {
 	Type        string              `yaml:"type"`
 	Version     int                 `yaml:"version"`
@@ -25,7 +39,7 @@ type mapping struct {
 	Transform string   `yaml:"transform"`
 }
 type item struct {
-	Type       string              `yaml:"type"`
+	Type       propertyType        `yaml:"type"`
 	Properties map[string]property `yaml:"properties"`
 }
 type condition struct {
@@ -33,7 +47,7 @@ type condition struct {
 	Value string `yaml:"value"`
 }
 type property struct {
-	Type          string              `yaml:"type"`
+	Type          propertyType        `yaml:"type"`
 	Description   string              `yaml:"description"`
 	Ref           string              `yaml:"ref"`
 	Optional      bool                `yaml:"optional"`
@@ -61,37 +75,37 @@ func checkProperties(properties map[string]property) error {
 	for index, name := range names {
 		p := properties[name]
 		fail := func(message string) error { return fmt.Errorf("%s: %s", name, message) }
-		if p.Values != nil && p.Type != "enum" {
+		if p.Values != nil && p.Type != propertyTypeEnum {
 			return fail("values require enum")
 		}
-		if (p.Min != nil || p.Max != nil) && p.Type != "number" {
+		if (p.Min != nil || p.Max != nil) && p.Type != propertyTypeNumber {
 			return fail("numeric bounds require number")
 		}
 		if p.Min != nil && p.Max != nil && *p.Min > *p.Max {
 			return fail("minimum exceeds maximum")
 		}
-		if p.MinLength != nil && ((*p.MinLength < 0) || (p.Type != "string" && p.Type != "enum")) {
+		if p.MinLength != nil && ((*p.MinLength < 0) || (p.Type != propertyTypeString && p.Type != propertyTypeEnum)) {
 			return fail("min_length needs a string and a nonnegative value")
 		}
-		if p.MaxItems != nil && (p.Type != "list" || *p.MaxItems < 0) {
+		if p.MaxItems != nil && (p.Type != propertyTypeList || *p.MaxItems < 0) {
 			return fail("max_items needs a list and a nonnegative value")
 		}
-		if p.Item != nil && p.Type != "list" && p.Type != "map" {
+		if p.Item != nil && p.Type != propertyTypeList && p.Type != propertyTypeMap {
 			return fail("item requires list or map")
 		}
-		if len(p.Properties) > 0 && p.Type != "block" {
+		if len(p.Properties) > 0 && p.Type != propertyTypeBlock {
 			return fail("properties require block")
 		}
-		if len(p.Variants) > 0 && p.Type != "oneof" {
+		if len(p.Variants) > 0 && p.Type != propertyTypeOneOf {
 			return fail("variants require oneof")
 		}
-		if len(p.AtLeastOneOf) > 0 && p.Type != "block" && p.Type != "oneof" {
+		if len(p.AtLeastOneOf) > 0 && p.Type != propertyTypeBlock && p.Type != propertyTypeOneOf {
 			return fail("at_least_one_of requires object")
 		}
-		if p.Type == "block" && len(p.Properties) == 0 {
+		if p.Type == propertyTypeBlock && len(p.Properties) == 0 {
 			return fail("block has no properties")
 		}
-		if (p.Type == "list" || p.Type == "map") && p.Item != nil && p.Item.Type == "" && len(p.Item.Properties) == 0 {
+		if (p.Type == propertyTypeList || p.Type == propertyTypeMap) && p.Item != nil && p.Item.Type == "" && len(p.Item.Properties) == 0 {
 			return fail("object item has no properties")
 		}
 		if p.Item != nil && p.Item.Type != "" && len(p.Item.Properties) > 0 {
@@ -107,10 +121,10 @@ func checkProperties(properties map[string]property) error {
 				continue
 			}
 			peer, exists := properties[condition.Field]
-			if !exists || condition.Field == name || (peer.Type != "string" && peer.Type != "enum") {
+			if !exists || condition.Field == name || (peer.Type != propertyTypeString && peer.Type != propertyTypeEnum) {
 				return fail("condition needs a sibling string field")
 			}
-			if peer.Type == "enum" && !slices.Contains(peer.Values, condition.Value) {
+			if peer.Type == propertyTypeEnum && !slices.Contains(peer.Values, condition.Value) {
 				return fail("condition uses value outside sibling enum")
 			}
 		}

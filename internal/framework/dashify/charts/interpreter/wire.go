@@ -124,7 +124,7 @@ func takeStringList(root map[string]any, path []string) ([]attr.Value, error) {
 	return out, nil
 }
 
-func takeObjectList(root map[string]any, path []string, parse func(map[string]any) (attr.Value, error)) ([]attr.Value, error) {
+func takeObjectList(root map[string]any, path []string, parse func(map[string]any) (types.Object, error)) ([]attr.Value, error) {
 	raw, ok, err := takeLeaf(root, path)
 	if err != nil || !ok {
 		return nil, err
@@ -163,7 +163,7 @@ func takeObjectList(root map[string]any, path []string, parse func(map[string]an
 // unmodeled fields. It cannot be confused with a stored empty JSON object.
 type consumedListItem struct{}
 
-func takeObjectMap(root map[string]any, path []string, parse func(map[string]any) (attr.Value, error)) (map[string]attr.Value, error) {
+func takeObjectMap(root map[string]any, path []string, parse func(map[string]any) (types.Object, error)) (map[string]attr.Value, error) {
 	raw, ok, err := takeLeaf(root, path)
 	if err != nil || !ok {
 		return nil, err
