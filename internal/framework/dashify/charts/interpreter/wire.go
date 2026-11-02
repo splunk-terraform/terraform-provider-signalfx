@@ -53,9 +53,9 @@ func takeLeaf(root map[string]any, path []string) (any, bool, error) {
 	return value, value != nil, nil
 }
 
-// take removes the value at path, returning null when absent, and converts
+// decodeField removes the value at path, returning null when absent, and converts
 // present values with the type-specific parser.
-func take[T any](root map[string]any, path []string, null T, convert func(raw any) (T, error)) (T, error) {
+func decodeField[T any](root map[string]any, path []string, null T, convert func(raw any) (T, error)) (T, error) {
 	raw, ok, err := takeLeaf(root, path)
 	if err != nil || !ok {
 		return null, err
@@ -64,7 +64,7 @@ func take[T any](root map[string]any, path []string, null T, convert func(raw an
 }
 
 func takeString(root map[string]any, path []string) (types.String, error) {
-	return take(root, path, types.StringNull(), func(raw any) (types.String, error) {
+	return decodeField(root, path, types.StringNull(), func(raw any) (types.String, error) {
 		value, ok := raw.(string)
 		if !ok {
 			return types.StringNull(), typeError(path, "a string", raw)
@@ -74,7 +74,7 @@ func takeString(root map[string]any, path []string) (types.String, error) {
 }
 
 func takeBool(root map[string]any, path []string) (types.Bool, error) {
-	return take(root, path, types.BoolNull(), func(raw any) (types.Bool, error) {
+	return decodeField(root, path, types.BoolNull(), func(raw any) (types.Bool, error) {
 		value, ok := raw.(bool)
 		if !ok {
 			return types.BoolNull(), typeError(path, "true or false", raw)
@@ -85,7 +85,7 @@ func takeBool(root map[string]any, path []string) (types.Bool, error) {
 
 // takeInt64 decodes a JSON integer, rejecting fractional numbers and overflow.
 func takeInt64(root map[string]any, path []string) (types.Int64, error) {
-	return take(root, path, types.Int64Null(), func(raw any) (types.Int64, error) {
+	return decodeField(root, path, types.Int64Null(), func(raw any) (types.Int64, error) {
 		value, err := jsonInt64(raw)
 		if err != nil {
 			return types.Int64Null(), fmt.Errorf("%s: %w", strings.Join(path, "."), err)
@@ -96,7 +96,7 @@ func takeInt64(root map[string]any, path []string) (types.Int64, error) {
 
 // takeFloat64 decodes a JSON number into a Terraform Float64 value.
 func takeFloat64(root map[string]any, path []string) (types.Float64, error) {
-	return take(root, path, types.Float64Null(), func(raw any) (types.Float64, error) {
+	return decodeField(root, path, types.Float64Null(), func(raw any) (types.Float64, error) {
 		value, err := jsonFloat64(raw)
 		if err != nil {
 			return types.Float64Null(), fmt.Errorf("%s: %w", strings.Join(path, "."), err)
@@ -196,7 +196,7 @@ func takeObjectMap(root map[string]any, path []string, parse func(map[string]any
 }
 
 func takeObject(root map[string]any, path []string, null types.Object, parse func(map[string]any) (types.Object, error)) (types.Object, error) {
-	return take(root, path, null, func(raw any) (types.Object, error) {
+	return decodeField(root, path, null, func(raw any) (types.Object, error) {
 		value, ok := raw.(map[string]any)
 		if !ok {
 			return null, typeError(path, "an object", raw)
@@ -215,7 +215,7 @@ func takeObject(root map[string]any, path []string, null types.Object, parse fun
 // takeOneOf decodes a scalar or object variant, leaving unrecognized object
 // fields available for unsupported-field warnings.
 func takeOneOf(root map[string]any, path []string, null types.Object, parse func(raw any) (types.Object, error)) (types.Object, error) {
-	return take(root, path, null, func(raw any) (types.Object, error) {
+	return decodeField(root, path, null, func(raw any) (types.Object, error) {
 		parsed, err := parse(raw)
 		if err != nil {
 			return null, fmt.Errorf("%s: %w", strings.Join(path, "."), err)
