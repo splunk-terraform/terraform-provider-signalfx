@@ -88,9 +88,10 @@ properties:
     values: [Dimension, Metric, Scale]
     # `Scale` pairs with `color_scale` below.
     description: >-
-      How to assign series colors when no explicit `palette_index` is set:
-      by dimension value, uniformly by metric, or by the value thresholds in
-      `color_scale`.
+      How to assign series colors: by dimension value, uniformly by metric,
+      or by the value thresholds in `color_scale`. In `Scale` mode, thresholds
+      take precedence over explicit plot colors. In `Dimension` and `Metric`
+      modes, explicit plot colors take precedence.
     mapping:
       path: ['chart', 'colorBy']
 

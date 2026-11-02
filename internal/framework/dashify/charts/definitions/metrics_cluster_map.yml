@@ -62,11 +62,14 @@ properties:
     type: block
     optional: true
     conflicts_with: [color_scale]
+    requires_value:
+      field: color_by
+      value: Range
     # The Range-side counterpart to color_scale. Dashify has no free-color
     # range, only three named sequential palettes.
     description: >-
       A continuous color palette applied across the cells' actual value
-      range. Only meaningful when `color_by` is `Range`.
+      range. Requires `color_by` to be explicitly set to `Range`.
     mapping:
       path: ['chart', 'colorRange']
     properties:

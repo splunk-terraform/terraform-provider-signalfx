@@ -80,6 +80,18 @@ func TestResourceObservabilityChartRejectsInvalidPlans(t *testing.T) {
   title = "Chart"
   metrics_cluster_map = { program = "A", color_scale = [{ gte = 1 }] }
 }`, "color_scale requires color_by"},
+		{"cluster range needs range mode", `resource "signalfx_observability_chart" "test" {
+  title = "Chart"
+  metrics_cluster_map = { program = "A", color_by = "Scale", color_range = { palette = "cyan" } }
+}`, "color_range requires color_by = Range"},
+		{"cluster range needs explicit mode", `resource "signalfx_observability_chart" "test" {
+  title = "Chart"
+  metrics_cluster_map = { program = "A", color_range = { palette = "cyan" } }
+}`, "color_range requires color_by = Range"},
+		{"single value rejects UI color mode label", `resource "signalfx_observability_chart" "test" {
+  title = "Chart"
+  metrics_single_value = { program = "A", color_by = "Value" }
+}`, "must be one of"},
 		{"cluster conflicting lower bounds", `resource "terraform_data" "unknown" { input = "A" }
 resource "signalfx_observability_chart" "test" {
   title = "Chart"
@@ -148,6 +160,15 @@ resource "signalfx_observability_chart" "test" {
 resource "signalfx_observability_chart" "test" {
   title = "Chart"
   metrics_time_series = { program = terraform_data.program.output }
+}`},
+		{"cluster range with unknown mode", `resource "terraform_data" "mode" { input = "Range" }
+resource "signalfx_observability_chart" "test" {
+  title = "Chart"
+  metrics_cluster_map = {
+    program = "A"
+    color_by = terraform_data.mode.output
+    color_range = { palette = "cyan" }
+  }
 }`},
 		{"nested map and lists", `resource "terraform_data" "series" { input = { A = { name = "Requests" } } }
 resource "terraform_data" "links" { input = [{ url = "https://example.com" }] }

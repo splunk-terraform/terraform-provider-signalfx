@@ -40,12 +40,25 @@ properties:
     mapping:
       path: ['chart', 'displayUnit']
 
+  color_by:
+    type: enum
+    optional: true
+    values: [None, Dimension, Metric, Scale]
+    description: >-
+      How to color the displayed value: no color override (`None`), by the
+      selected series' dimension values (`Dimension`) or metric (`Metric`),
+      or by value thresholds (`Scale`, labeled Value in the UI). When unset,
+      uses `Scale` if `color_scale` is present and `None` otherwise.
+      Radial and linear gauges always use `Scale`, regardless of this setting.
+    mapping:
+      path: ['chart', 'colorBy']
+
   color_scale:
     type: list
     optional: true
     max_items: 5
-    # Dashify infers Scale mode from colorScale being present, so this chart
-    # needs no separate color_by field.
+    # Preserve omitted color_by for legacy inference and retain thresholds
+    # when an explicit non-Scale mode is selected.
     #
     # Each bucket sets one lower bound (gt or gte) plus a palette color.
     # Upper bounds (lt/lte) are not authored by the Dashify editor - it
@@ -54,7 +67,8 @@ properties:
     # round-trip fidelity even though the editor won't write them itself.
     description: >-
       Color bands applied to the displayed value based on which threshold
-      range it falls in. Buckets are evaluated in the order given.
+      range it falls in. Used when `color_by` is `Scale` or unset, and by
+      radial/linear gauges regardless of `color_by`.
     mapping:
       path: ['chart', 'colorScale']
     item:

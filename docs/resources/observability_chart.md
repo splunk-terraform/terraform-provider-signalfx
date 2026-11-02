@@ -162,7 +162,7 @@ Optional:
 
 - `borderless` (Boolean) Whether to hide the widget's border and background panel.
 - `color_by` (String) How to color each cell: by threshold buckets (`color_scale`) or by a continuous palette range (`color_range`). Must be set to `Scale` for `color_scale` to have any visible effect - it is not inferred from `color_scale` being present. Defaults to `Range` when unset.
-- `color_range` (Attributes) A continuous color palette applied across the cells' actual value range. Only meaningful when `color_by` is `Range`. (see [below for nested schema](#nestedatt--metrics_cluster_map--color_range))
+- `color_range` (Attributes) A continuous color palette applied across the cells' actual value range. Requires `color_by` to be explicitly set to `Range`. (see [below for nested schema](#nestedatt--metrics_cluster_map--color_range))
 - `color_scale` (Attributes List) Color bands applied to each cell's value based on which threshold range it falls in. Only meaningful when `color_by` is `Scale`. (see [below for nested schema](#nestedatt--metrics_cluster_map--color_scale))
 - `description` (String) Extended text shown below the title describing the chart's purpose.
 - `display_unit` (Attributes) A literal prefix and/or suffix to attach to displayed values. At least one of prefix or suffix must be set when this object is present. (see [below for nested schema](#nestedatt--metrics_cluster_map--display_unit))
@@ -235,7 +235,7 @@ Required:
 Optional:
 
 - `borderless` (Boolean) Whether to hide the widget's border and background panel.
-- `color_by` (String) How to assign series colors when no explicit `palette_index` is set: by dimension value, uniformly by metric, or by the value thresholds in `color_scale`. Defaults to `Metric` when unset.
+- `color_by` (String) How to assign series colors: by dimension value, uniformly by metric, or by the value thresholds in `color_scale`. In `Scale` mode, thresholds take precedence over explicit plot colors. In `Dimension` and `Metric` modes, explicit plot colors take precedence. Defaults to `Metric` when unset.
 - `color_scale` (Attributes List) Color bands applied to each series' value based on which threshold range it falls in. Only meaningful when `color_by` is `Scale`. (see [below for nested schema](#nestedatt--metrics_list--color_scale))
 - `description` (String) Extended text shown below the title describing the chart's purpose.
 - `display_fields` (Attributes List) Which metadata properties to show as columns, and whether each is shown. Unset means "Auto" (Dashify infers fields from the live result) rather than an empty custom list. (see [below for nested schema](#nestedatt--metrics_list--display_fields))
@@ -327,7 +327,8 @@ Required:
 Optional:
 
 - `borderless` (Boolean) Whether to hide the widget's border and background panel.
-- `color_scale` (Attributes List) Color bands applied to the displayed value based on which threshold range it falls in. Buckets are evaluated in the order given. (see [below for nested schema](#nestedatt--metrics_single_value--color_scale))
+- `color_by` (String) How to color the displayed value: no color override (`None`), by the selected series' dimension values (`Dimension`) or metric (`Metric`), or by value thresholds (`Scale`, labeled Value in the UI). When unset, uses `Scale` if `color_scale` is present and `None` otherwise. Radial and linear gauges always use `Scale`, regardless of this setting.
+- `color_scale` (Attributes List) Color bands applied to the displayed value based on which threshold range it falls in. Used when `color_by` is `Scale` or unset, and by radial/linear gauges regardless of `color_by`. (see [below for nested schema](#nestedatt--metrics_single_value--color_scale))
 - `description` (String) Extended text shown below the title describing the chart's purpose.
 - `display_unit` (Attributes) How to scale and label displayed values: either a named unit (bits, bytes, or a time duration) or a custom prefix/suffix pair. Omit for no unit conversion or annotation. (see [below for nested schema](#nestedatt--metrics_single_value--display_unit))
 - `headerless` (Boolean) Whether to hide the widget header, including its title and description.
