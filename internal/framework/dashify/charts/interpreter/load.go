@@ -19,9 +19,11 @@ import (
 
 // Default resolves the embedded chart definitions once for the provider.
 // Invalid definitions return an error rather than panicking during startup.
-var Default = sync.OnceValues(func() (*Engine, error) {
+var Default = sync.OnceValues(loadDefault)
+
+func loadDefault() (*Engine, error) {
 	return load(definitions.Files)
-})
+}
 
 // load resolves chart definitions from a definitions filesystem.
 // Files at its root are charts; common files are loaded only through references.
