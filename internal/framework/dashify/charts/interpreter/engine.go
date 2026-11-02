@@ -231,10 +231,9 @@ func (e *Engine) Validate(name string, value types.Object) diag.Diagnostics {
 }
 
 func validateValue(path string, p property, value attr.Value, diagnostics *diag.Diagnostics) {
-	fail := func(message string) { diagnostics.AddError("Invalid chart value", path+": "+message) }
 	if value == nil || value.IsNull() {
 		if p.Required {
-			fail("must be set")
+			diagnostics.AddError("Invalid chart value", path+": must be set")
 		}
 		return
 	}
@@ -244,26 +243,26 @@ func validateValue(path string, p property, value attr.Value, diagnostics *diag.
 	switch v := value.(type) {
 	case types.String:
 		if p.MinLength != nil && utf8.RuneCountInString(v.ValueString()) < *p.MinLength {
-			fail(fmt.Sprintf("must contain at least %d characters", *p.MinLength))
+			diagnostics.AddError("Invalid chart value", fmt.Sprintf("%s: must contain at least %d characters", path, *p.MinLength))
 		}
 		if p.Type == propertyTypeEnum && !slices.Contains(p.Values, v.ValueString()) {
-			fail(fmt.Sprintf("must be one of %v", p.Values))
+			diagnostics.AddError("Invalid chart value", fmt.Sprintf("%s: must be one of %v", path, p.Values))
 		}
 		if p.Mapping.Transform == transformRelativeDuration {
 			if _, valid := relativeDurationSpec(v.ValueString()); !valid {
-				fail("must be a nonzero relative time range such as -15m or -1h30m, representable as whole seconds")
+				diagnostics.AddError("Invalid chart value", path+": must be a nonzero relative time range such as -15m or -1h30m, representable as whole seconds")
 			}
 		}
 	case types.Int64:
 		if p.Min != nil && v.ValueInt64() < int64(*p.Min) {
-			fail(fmt.Sprintf("must be at least %d", *p.Min))
+			diagnostics.AddError("Invalid chart value", fmt.Sprintf("%s: must be at least %d", path, *p.Min))
 		}
 		if p.Max != nil && v.ValueInt64() > int64(*p.Max) {
-			fail(fmt.Sprintf("must be at most %d", *p.Max))
+			diagnostics.AddError("Invalid chart value", fmt.Sprintf("%s: must be at most %d", path, *p.Max))
 		}
 	case types.Float64:
 		if math.IsNaN(v.ValueFloat64()) || math.IsInf(v.ValueFloat64(), 0) {
-			fail("must be a finite number")
+			diagnostics.AddError("Invalid chart value", path+": must be a finite number")
 		}
 	case types.Object:
 		children, _ := childProperties(p)
@@ -274,15 +273,15 @@ func validateValue(path string, p property, value attr.Value, diagnostics *diag.
 			if present(attributes[name]) {
 				for _, other := range child.ConflictsWith {
 					if present(attributes[other]) {
-						fail(name + " conflicts with " + other)
+						diagnostics.AddError("Invalid chart value", path+": "+name+" conflicts with "+other)
 					}
 				}
 				if condition := child.RequiresValue; condition != nil && !matches(attributes[condition.Field], condition.Value) && !unknown(attributes[condition.Field]) {
-					fail(name + " requires " + condition.Field + " = " + condition.Value)
+					diagnostics.AddError("Invalid chart value", path+": "+name+" requires "+condition.Field+" = "+condition.Value)
 				}
 			}
 			if condition := child.RequiredWhen; condition != nil && !unknown(attributes[name]) && !nonempty(attributes[name]) && matches(attributes[condition.Field], condition.Value) {
-				fail(name + " must be set when " + condition.Field + " = " + condition.Value)
+				diagnostics.AddError("Invalid chart value", path+": "+name+" must be set when "+condition.Field+" = "+condition.Value)
 			}
 		}
 		if p.Type == propertyTypeOneOf {
@@ -300,7 +299,7 @@ func validateValue(path string, p property, value attr.Value, diagnostics *diag.
 				}
 			}
 			if active > 1 {
-				fail("oneof variants conflict")
+				diagnostics.AddError("Invalid chart value", path+": oneof variants conflict")
 			}
 		}
 		if len(p.AtLeastOneOf) > 0 {
@@ -311,12 +310,12 @@ func validateValue(path string, p property, value attr.Value, diagnostics *diag.
 				}
 			}
 			if !found {
-				fail(fmt.Sprintf("must set at least one of %v", p.AtLeastOneOf))
+				diagnostics.AddError("Invalid chart value", fmt.Sprintf("%s: must set at least one of %v", path, p.AtLeastOneOf))
 			}
 		}
 	case types.List:
 		if p.MaxItems != nil && len(v.Elements()) > *p.MaxItems {
-			fail(fmt.Sprintf("must contain at most %d items", *p.MaxItems))
+			diagnostics.AddError("Invalid chart value", fmt.Sprintf("%s: must contain at most %d items", path, *p.MaxItems))
 		}
 		item := property{Type: propertyTypeBlock, Required: true}
 		if p.Item != nil {
