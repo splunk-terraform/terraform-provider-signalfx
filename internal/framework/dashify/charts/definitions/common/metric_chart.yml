@@ -102,13 +102,14 @@ properties:
   time_range:
     type: string
     optional: true
-    # Basic relative override such as "15m" or "1h". The transform writes
+    # Relative override such as "-15m" or "-1h30m". The transform writes
     # {type: "relative", range: <milliseconds>, rangeEnd: 0}. Absolute and
     # other custom time objects use the raw-template path.
     description: >-
-      A stored relative time range for this chart, such as "15m" or "1h",
+      A stored relative time range for this chart, such as "-15m" or "-1h30m",
       resolved together with the dashboard's current time controls. Absolute
-      ranges are not supported here.
+      ranges are not supported here. Must use a negative prefix and represent
+      a nonzero whole number of seconds. Bare values are milliseconds.
     mapping:
       path: ['datasource', 'time']
       transform: relative_duration

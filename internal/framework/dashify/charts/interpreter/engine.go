@@ -251,7 +251,7 @@ func validateValue(path string, p property, value attr.Value, diagnostics *diag.
 		}
 		if p.Mapping.Transform == "relative_duration" {
 			if _, valid := relativeDurationSpec(v.ValueString()); !valid {
-				fail("must be a positive whole-number duration such as 15m or 1h")
+				fail("must be a nonzero relative time range such as -15m or -1h30m, representable as whole seconds")
 			}
 		}
 	case types.Int64:

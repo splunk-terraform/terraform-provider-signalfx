@@ -8,13 +8,14 @@ package interpreter
 import (
 	"encoding/json"
 	"fmt"
-	"math"
 	"sort"
 	"strconv"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/common"
 )
 
 // takeLeaf removes and returns the value at path. Null decodes as an unset
@@ -235,38 +236,8 @@ func relativeDurationSpec(value string) (map[string]any, bool) {
 }
 
 func relativeDurationMillis(value string) (int64, bool) {
-	if len(value) < 2 || value[0] < '1' || value[0] > '9' {
-		return 0, false
-	}
-	for _, digit := range value[1 : len(value)-1] {
-		if digit < '0' || digit > '9' {
-			return 0, false
-		}
-	}
-	number, err := strconv.ParseInt(value[:len(value)-1], 10, 64)
-	if err != nil || number <= 0 {
-		return 0, false
-	}
-
-	var multiplier int64
-	switch value[len(value)-1:] {
-	case "s":
-		multiplier = 1000
-	case "m":
-		multiplier = 60 * 1000
-	case "h":
-		multiplier = 60 * 60 * 1000
-	case "d":
-		multiplier = 24 * 60 * 60 * 1000
-	case "w":
-		multiplier = 7 * 24 * 60 * 60 * 1000
-	default:
-		return 0, false
-	}
-	if number > math.MaxInt64/multiplier {
-		return 0, false
-	}
-	return number * multiplier, true
+	milliseconds, err := common.FromTimeRangeToMilliseconds(value)
+	return int64(milliseconds), err == nil && milliseconds > 0 && milliseconds%1000 == 0
 }
 
 func takeRelativeDuration(root map[string]any, path []string) (types.String, error) {
@@ -299,13 +270,9 @@ func takeRelativeDuration(root map[string]any, path []string) (types.String, err
 	if len(value) != 0 {
 		setPath(root, path, value)
 	}
-	units := []struct {
-		suffix string
-		millis int64
-	}{{"w", 7 * 24 * 60 * 60 * 1000}, {"d", 24 * 60 * 60 * 1000}, {"h", 60 * 60 * 1000}, {"m", 60 * 1000}, {"s", 1000}}
-	for _, unit := range units {
-		if rangeValue%unit.millis == 0 {
-			return types.StringValue(strconv.FormatInt(rangeValue/unit.millis, 10) + unit.suffix), nil
+	for _, suffix := range []rune{'w', 'd', 'h', 'm', 's'} {
+		if millis, ok := common.TimeRangeUnitMilliseconds(suffix); ok && rangeValue%int64(millis) == 0 {
+			return types.StringValue("-" + strconv.FormatInt(rangeValue/int64(millis), 10) + string(suffix)), nil
 		}
 	}
 	return types.StringNull(), fmt.Errorf("%s.range is %dms, which cannot be represented as whole seconds", strings.Join(path, "."), rangeValue)

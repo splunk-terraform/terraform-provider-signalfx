@@ -5,11 +5,13 @@ package common
 
 import (
 	"fmt"
+	"math"
 	"strings"
 	"unicode"
 )
 
 var millistamps = map[rune]int{
+	's': 1000,                    // Second in Milliseconds
 	'm': 60 * 1000,               // Minute in Milliseconds
 	'h': 60 * 60 * 1000,          // Hour in Milliseconds
 	'd': 24 * 60 * 60 * 1000,     // Day in Milliseconds
@@ -19,6 +21,12 @@ var millistamps = map[rune]int{
 func isUnit(r rune) bool {
 	_, ok := millistamps[r]
 	return ok
+}
+
+// TimeRangeUnitMilliseconds returns the milliseconds in a timerange unit.
+func TimeRangeUnitMilliseconds(unit rune) (int, bool) {
+	millis, ok := millistamps[unit]
+	return millis, ok
 }
 
 // FromTimeRange converts a timerange value into a millisecond value.
@@ -42,10 +50,17 @@ func FromTimeRangeToMilliseconds(tr string) (int, error) {
 	for _, r := range strings.TrimPrefix(tr, "-") {
 		switch {
 		case unicode.IsDigit(r):
-			partial = partial*10 + int(r-'0')
+			digit := int(r - '0')
+			if partial > (math.MaxInt-digit)/10 {
+				return 0, fmt.Errorf("invalid timerange %q: overflows milliseconds", tr)
+			}
+			partial = partial*10 + digit
 		case isUnit(r):
 			if partial == 0 {
 				return 0, fmt.Errorf("invalid timerange %q: missing digits", tr)
+			}
+			if partial > (math.MaxInt-total)/millistamps[r] {
+				return 0, fmt.Errorf("invalid timerange %q: overflows milliseconds", tr)
 			}
 			total, partial = (total + partial*millistamps[r]), 0
 		default:

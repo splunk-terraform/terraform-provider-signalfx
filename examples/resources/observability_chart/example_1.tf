@@ -4,7 +4,7 @@ resource "signalfx_observability_chart" "request_rate" {
   metrics_time_series = {
     title         = "Request rate"
     program       = "A = data('requests.count').sum().publish('A')"
-    time_range    = "1h"
+    time_range    = "-1h"
     visualization = "line"
 
     series = {

@@ -16,7 +16,7 @@ Updates replace the complete saved Chart document. Unsupported fields are absent
 
 {{tffile "examples/resources/observability_chart/example_1.tf"}}
 
-Each metric chart requires a nonempty SignalFlow `program`. The optional `time_range` accepts a positive whole-number duration such as `15m`, `60m`, or `1h`. A dashboard's selected time range takes precedence when the chart is displayed there. Equivalent duration spellings remain stable on refresh; changing only the configured spelling can cause one in-place update. Text charts use optional `markdown` and do not require a program.
+Each metric chart requires a nonempty SignalFlow `program`. The optional `time_range` uses a negative prefix, such as `-15m` or `-1h30m`. Units can be combined (`s`, `m`, `h`, `d`, `w`); bare values are milliseconds, such as `-3600000`. The range must be nonzero and represent a whole number of seconds. A dashboard's selected time range takes precedence when the chart is displayed there. Equivalent duration spellings remain stable on refresh; changing only the configured spelling can cause one in-place update. Text charts use optional `markdown` and do not require a program.
 
 ### Single value
 

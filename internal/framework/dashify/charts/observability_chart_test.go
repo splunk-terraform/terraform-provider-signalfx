@@ -27,7 +27,7 @@ func observabilityChartTestModel(t *testing.T) observabilityChartModel {
 	}, observabilityChartModel{})
 	require.False(t, diags.HasError(), diags)
 	attributes := model.Content.Attributes()
-	attributes["time_range"] = types.StringValue("60m")
+	attributes["time_range"] = types.StringValue("-60m")
 	model.Content = types.ObjectValueMust(model.Content.AttributeTypes(t.Context()), attributes)
 	return model
 }
@@ -45,15 +45,25 @@ func TestObservabilityChartContentAndDurationRead(t *testing.T) {
 	assert.Nil(t, write.Metadata.Datasource)
 	record := &template.Template{ID: "chart-1", Title: write.Title, Spec: write.Spec, Metadata: &template.Metadata{RootElement: write.Metadata.RootElement}}
 	for _, test := range []struct {
-		name  string
-		prior observabilityChartModel
-		want  string
+		name, configured, want string
 	}{
-		{"refresh", model, "60m"},
-		{"import", observabilityChartModel{}, "1h"},
+		{"refresh", "-60m", "-60m"},
+		{"compound refresh", "-30m30m", "-30m30m"},
+		{"milliseconds refresh", "-3600000", "-3600000"},
+		{"import", "", "-1h"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			parsed, diagnostics := managed.modelFromRecord(t.Context(), record, test.prior)
+			prior := observabilityChartModel{}
+			if test.configured != "" {
+				prior = model
+				attributes := prior.Content.Attributes()
+				attributes["time_range"] = types.StringValue(test.configured)
+				prior.Content = types.ObjectValueMust(prior.Content.AttributeTypes(t.Context()), attributes)
+				write, diagnostics := managed.write(t.Context(), prior)
+				require.False(t, diagnostics.HasError(), diagnostics)
+				assert.JSONEq(t, observabilityChartFixture, string(write.Spec))
+			}
+			parsed, diagnostics := managed.modelFromRecord(t.Context(), record, prior)
 			require.False(t, diagnostics.HasError(), diagnostics)
 			assert.Equal(t, test.want, parsed.Content.Attributes()["time_range"].(types.String).ValueString())
 		})
@@ -61,7 +71,7 @@ func TestObservabilityChartContentAndDurationRead(t *testing.T) {
 	record.Spec = json.RawMessage(`{"<Chart>":[{"<o11y:TimeSeriesChart>":[],"datasource":{"program":"data('requests').publish()","time":{"type":"relative","range":7200000,"rangeEnd":0}},"chart":{},"widget":{}}]}`)
 	changed, diags := managed.modelFromRecord(t.Context(), record, model)
 	require.False(t, diags.HasError(), diags)
-	assert.Equal(t, "2h", changed.Content.Attributes()["time_range"].(types.String).ValueString())
+	assert.Equal(t, "-2h", changed.Content.Attributes()["time_range"].(types.String).ValueString())
 }
 
 func TestParseObservabilityChartSpecAcceptsUnmodeledFields(t *testing.T) {
@@ -202,9 +212,9 @@ func TestObservabilityChartValidatesResolvedAndUnknownValues(t *testing.T) {
 	model.Content = types.ObjectValueMust(model.Content.AttributeTypes(t.Context()), attributes)
 	require.False(t, managed.engine.Validate(model.Name, model.Content).HasError())
 	// A different chart's prior object must not influence duration decoding.
-	prior := observabilityChartModel{Name: "text", Content: types.ObjectValueMust(map[string]attr.Type{"time_range": types.StringType}, map[string]attr.Value{"time_range": types.StringValue("60m")})}
+	prior := observabilityChartModel{Name: "text", Content: types.ObjectValueMust(map[string]attr.Type{"time_range": types.StringType}, map[string]attr.Value{"time_range": types.StringValue("-60m")})}
 	root := template.RootElementChart
 	parsed, diags := managed.modelFromRecord(t.Context(), &template.Template{ID: "chart-1", Spec: json.RawMessage(observabilityChartFixture), Metadata: &template.Metadata{RootElement: &root}}, prior)
 	require.False(t, diags.HasError(), diags)
-	assert.Equal(t, "1h", parsed.Content.Attributes()["time_range"].(types.String).ValueString())
+	assert.Equal(t, "-1h", parsed.Content.Attributes()["time_range"].(types.String).ValueString())
 }

@@ -21,7 +21,7 @@ resource "signalfx_observability_chart" "request_rate" {
   metrics_time_series = {
     title         = "Request rate"
     program       = "A = data('requests.count').sum().publish('A')"
-    time_range    = "1h"
+    time_range    = "-1h"
     visualization = "line"
 
     series = {
@@ -44,7 +44,7 @@ resource "signalfx_observability_dashboard" "service" {
 }
 ```
 
-Each metric chart requires a nonempty SignalFlow `program`. The optional `time_range` accepts a positive whole-number duration such as `15m`, `60m`, or `1h`. A dashboard's selected time range takes precedence when the chart is displayed there. Equivalent duration spellings remain stable on refresh; changing only the configured spelling can cause one in-place update. Text charts use optional `markdown` and do not require a program.
+Each metric chart requires a nonempty SignalFlow `program`. The optional `time_range` uses a negative prefix, such as `-15m` or `-1h30m`. Units can be combined (`s`, `m`, `h`, `d`, `w`); bare values are milliseconds, such as `-3600000`. The range must be nonzero and represent a whole number of seconds. A dashboard's selected time range takes precedence when the chart is displayed there. Equivalent duration spellings remain stable on refresh; changing only the configured spelling can cause one in-place update. Text charts use optional `markdown` and do not require a program.
 
 ### Single value
 
@@ -54,7 +54,7 @@ resource "signalfx_observability_chart" "request_total" {
 
   metrics_single_value = {
     program                 = "A = data('requests.count').sum().publish('A')"
-    time_range              = "15m"
+    time_range              = "-15m"
     maximum_fraction_digits = 0
     display_unit            = { suffix = " requests" }
   }
@@ -174,7 +174,7 @@ Optional:
 - `minimum_resolution` (Number) The lowest resolution, in milliseconds, to use when computing the chart's SignalFlow program. 0 lets Splunk Observability Cloud choose automatically. Must be nonnegative.
 - `sample_size` (Number) The maximum number of time series to sample when a query matches more than this many. Must be at least 1.
 - `show_timestamp` (Boolean) Whether to show the latest data point's timestamp in the chart footer. Defaults to `true` when unset.
-- `time_range` (String) A stored relative time range for this chart, such as "15m" or "1h", resolved together with the dashboard's current time controls. Absolute ranges are not supported here.
+- `time_range` (String) A stored relative time range for this chart, such as "-15m" or "-1h30m", resolved together with the dashboard's current time controls. Absolute ranges are not supported here. Must use a negative prefix and represent a nonzero whole number of seconds. Bare values are milliseconds.
 - `title` (String) The chart's display title, shown above the chart content.
 
 <a id="nestedatt--metrics_cluster_map--color_range"></a>
@@ -250,7 +250,7 @@ Optional:
 - `secondary_visualization` (String) An additional visualization (a sparkline or a radial/linear gauge) shown alongside the chart's primary value. Defaults to `None` when unset.
 - `show_timestamp` (Boolean) Whether to show the latest data point's timestamp in the chart footer. Defaults to `true` when unset.
 - `sort` (Attributes) How to order rows. Unset means "Auto" (sorted by the SignalFlow publish label, ascending). (see [below for nested schema](#nestedatt--metrics_list--sort))
-- `time_range` (String) A stored relative time range for this chart, such as "15m" or "1h", resolved together with the dashboard's current time controls. Absolute ranges are not supported here.
+- `time_range` (String) A stored relative time range for this chart, such as "-15m" or "-1h30m", resolved together with the dashboard's current time controls. Absolute ranges are not supported here. Must use a negative prefix and represent a nonzero whole number of seconds. Bare values are milliseconds.
 - `title` (String) The chart's display title, shown above the chart content.
 
 <a id="nestedatt--metrics_list--color_scale"></a>
@@ -340,7 +340,7 @@ Optional:
 - `sample_size` (Number) The maximum number of time series to sample when a query matches more than this many. Must be at least 1.
 - `secondary_visualization` (String) An additional visualization (a sparkline or a radial/linear gauge) shown alongside the chart's primary value. Defaults to `None` when unset.
 - `show_timestamp` (Boolean) Whether to show the latest data point's timestamp in the chart footer. Defaults to `true` when unset.
-- `time_range` (String) A stored relative time range for this chart, such as "15m" or "1h", resolved together with the dashboard's current time controls. Absolute ranges are not supported here.
+- `time_range` (String) A stored relative time range for this chart, such as "-15m" or "-1h30m", resolved together with the dashboard's current time controls. Absolute ranges are not supported here. Must use a negative prefix and represent a nonzero whole number of seconds. Bare values are milliseconds.
 - `title` (String) The chart's display title, shown above the chart content.
 
 <a id="nestedatt--metrics_single_value--color_scale"></a>
@@ -401,7 +401,7 @@ Optional:
 - `minimum_resolution` (Number) The lowest resolution, in milliseconds, to use when computing the chart's SignalFlow program. 0 lets Splunk Observability Cloud choose automatically. Must be nonnegative.
 - `sample_size` (Number) The maximum number of time series to sample when a query matches more than this many. Must be at least 1.
 - `show_timestamp` (Boolean) Whether to show the latest data point's timestamp in the chart footer. Defaults to `true` when unset.
-- `time_range` (String) A stored relative time range for this chart, such as "15m" or "1h", resolved together with the dashboard's current time controls. Absolute ranges are not supported here.
+- `time_range` (String) A stored relative time range for this chart, such as "-15m" or "-1h30m", resolved together with the dashboard's current time controls. Absolute ranges are not supported here. Must use a negative prefix and represent a nonzero whole number of seconds. Bare values are milliseconds.
 - `title` (String) The chart's display title, shown above the chart content.
 
 <a id="nestedatt--metrics_table--columns"></a>
@@ -474,7 +474,7 @@ Optional:
 - `show_event_lines` (Boolean) Whether to draw a vertical line on the chart at each point where a matching event occurred. Defaults to `false` when unset.
 - `show_legend` (Boolean) Whether to show the legend below the chart. Defaults to `true` when unset.
 - `show_series_value` (Boolean) Whether to show each series' current value next to its legend entry when hovering over the chart.
-- `time_range` (String) A stored relative time range for this chart, such as "15m" or "1h", resolved together with the dashboard's current time controls. Absolute ranges are not supported here.
+- `time_range` (String) A stored relative time range for this chart, such as "-15m" or "-1h30m", resolved together with the dashboard's current time controls. Absolute ranges are not supported here. Must use a negative prefix and represent a nonzero whole number of seconds. Bare values are milliseconds.
 - `title` (String) The chart's display title, shown above the chart content.
 - `use_binary_units` (Boolean) Whether to scale byte-based values using 1024-based (binary) units instead of 1000-based (decimal) units. Defaults to `false` when unset.
 - `visualization` (String) The chart's rendering style. `stacked-area` and `stacked-bar` draw the same area/column shapes as `area`/`bar` but stack series values rather than overlaying them. Defaults to `line` when unset.

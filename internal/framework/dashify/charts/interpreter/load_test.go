@@ -196,7 +196,7 @@ func TestTimeSeriesRejectsMalformedParentsAndUnsupportedDurations(t *testing.T) 
 	}
 	value, _, diagnostics := engine.Decode(t.Context(), "metrics_time_series", timeSeriesSpec(map[string]any{}, map[string]any{}), types.ObjectNull(nil))
 	require.False(t, diagnostics.HasError(), diagnostics)
-	for _, invalid := range []string{"0s", "-1h", "+1h", "01h", "1.5h", "999999999999999999999999999999s"} {
+	for _, invalid := range []string{"", "-", "-0s", "-0", "1h", "+1h", "01h", "-1.5h", "-1", "-1001", "-1h100", "-999999999999999999999999999999s"} {
 		values := value.Attributes()
 		values["time_range"] = types.StringValue(invalid)
 		configured := types.ObjectValueMust(value.AttributeTypes(t.Context()), values)

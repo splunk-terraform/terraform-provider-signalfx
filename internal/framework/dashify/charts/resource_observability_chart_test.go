@@ -35,7 +35,7 @@ const observabilityChartConfig = `resource "signalfx_observability_chart" "test"
   metrics_time_series = {
     title = "Requests"
     program = "data('requests').publish()"
-    time_range = "60m"
+    time_range = "-60m"
     visualization = "line"
   }
 }`
@@ -110,7 +110,7 @@ resource "signalfx_observability_chart" "test" {
   metrics_time_series = {}
 }`, "program"},
 		{"invalid visualization", strings.Replace(observabilityChartConfig, `visualization = "line"`, `visualization = "pie"`, 1), "must be one of"},
-		{"invalid duration", strings.Replace(observabilityChartConfig, `time_range = "60m"`, `time_range = "-1h"`, 1), "must"},
+		{"invalid duration", strings.Replace(observabilityChartConfig, `time_range = "-60m"`, `time_range = "1h"`, 1), "must"},
 		{"known invalid with unknown title and series", `resource "terraform_data" "unknown" { input = "Chart" }
 resource "terraform_data" "series" { input = { A = { name = "Requests" } } }
 resource "signalfx_observability_chart" "test" {
@@ -438,7 +438,7 @@ var observabilityChartExamples = []struct {
 	{"metrics_time_series", `{
   program = "A"
   headerless = true
-  time_range = "60m"
+  time_range = "-60m"
   visualization = "line"
   links = [{ url = "https://example.com" }]
   show_legend = false
@@ -545,7 +545,7 @@ resource "signalfx_observability_chart" "test" {
 			)
 			if example.name == "metrics_time_series" {
 				check = testresource.ComposeAggregateTestCheckFunc(check,
-					testresource.TestCheckResourceAttr("signalfx_observability_chart.test", "metrics_time_series.time_range", "60m"))
+					testresource.TestCheckResourceAttr("signalfx_observability_chart.test", "metrics_time_series.time_range", "-60m"))
 			}
 			steps := []testresource.TestStep{
 				{Config: config, Check: check},
@@ -558,7 +558,7 @@ resource "signalfx_observability_chart" "test" {
 				// Equivalent duration spellings stay stable on refresh and can
 				// each be explicitly configured without changing the wire value.
 				steps = append(steps,
-					testresource.TestStep{Config: strings.Replace(updated, `time_range = "60m"`, `time_range = "1h"`, 1), Check: testresource.TestCheckResourceAttr("signalfx_observability_chart.test", "metrics_time_series.time_range", "1h")},
+					testresource.TestStep{Config: strings.Replace(updated, `time_range = "-60m"`, `time_range = "-30m30m"`, 1), Check: testresource.TestCheckResourceAttr("signalfx_observability_chart.test", "metrics_time_series.time_range", "-30m30m")},
 					testresource.TestStep{Config: updated, Check: check},
 				)
 				expectedWrites += 2
