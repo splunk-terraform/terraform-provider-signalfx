@@ -184,25 +184,76 @@ func TestDefinitionRejectsUnenforceableAndAmbiguousFields(t *testing.T) {
 		assert.Error(t, err, "chart %s can overwrite a resource attribute", name)
 	}
 	minimum := 1
-	for name, properties := range map[string]map[string]property{
-		"overlap":        {"a": testProperty("string", "chart", "a"), "b": testProperty("string", "chart", "a", "b")},
-		"ignored bounds": {"a": func() property { p := testProperty("bool", "chart", "a"); p.Min = &minimum; return p }()},
-		"ignored values": {"a": func() property { p := testProperty("string", "chart", "a"); p.Values = []string{"allowed"}; return p }()},
-		"empty values on string": {"a": func() property {
-			p := testProperty("string", "chart", "a")
-			p.Values = []string{}
-			return p
-		}()},
-		"string map": {"a": func() property { p := testProperty("map", "chart", "a"); p.Item = &item{Type: "string"}; return p }()},
-		"unknown condition": {"a": func() property {
-			p := testProperty("string", "chart", "a")
-			p.RequiredWhen = &condition{Field: "missing", Value: "x"}
-			return p
-		}()},
-		"missing presence": {"a": {Type: "string", Description: "Test.", Mapping: mapping{Path: []string{"chart", "a"}}}},
+	for _, tc := range []struct {
+		name       string
+		properties map[string]property
+	}{
+		{
+			name: "overlap",
+			properties: map[string]property{
+				"a": {Type: propertyTypeString, Optional: true, Description: "Test field.", Mapping: mapping{Path: []string{"chart", "a"}}},
+				"b": {Type: propertyTypeString, Optional: true, Description: "Test field.", Mapping: mapping{Path: []string{"chart", "a", "b"}}},
+			},
+		},
+		{
+			name: "ignored bounds",
+			properties: map[string]property{
+				"a": {
+					Type: propertyTypeBool, Optional: true, Description: "Test field.",
+					Mapping: mapping{Path: []string{"chart", "a"}},
+					Min:     &minimum,
+				},
+			},
+		},
+		{
+			name: "ignored values",
+			properties: map[string]property{
+				"a": {
+					Type: propertyTypeString, Optional: true, Description: "Test field.",
+					Mapping: mapping{Path: []string{"chart", "a"}},
+					Values:  []string{"allowed"},
+				},
+			},
+		},
+		{
+			name: "empty values on string",
+			properties: map[string]property{
+				"a": {
+					Type: propertyTypeString, Optional: true, Description: "Test field.",
+					Mapping: mapping{Path: []string{"chart", "a"}},
+					Values:  []string{},
+				},
+			},
+		},
+		{
+			name: "string map",
+			properties: map[string]property{
+				"a": {
+					Type: propertyTypeMap, Optional: true, Description: "Test field.",
+					Mapping: mapping{Path: []string{"chart", "a"}},
+					Item:    &item{Type: propertyTypeString},
+				},
+			},
+		},
+		{
+			name: "unknown condition",
+			properties: map[string]property{
+				"a": {
+					Type: propertyTypeString, Optional: true, Description: "Test field.",
+					Mapping:      mapping{Path: []string{"chart", "a"}},
+					RequiredWhen: &condition{Field: "missing", Value: "x"},
+				},
+			},
+		},
+		{
+			name: "missing presence",
+			properties: map[string]property{
+				"a": {Type: propertyTypeString, Description: "Test.", Mapping: mapping{Path: []string{"chart", "a"}}},
+			},
+		},
 	} {
-		t.Run(name, func(t *testing.T) {
-			_, err := newEngine([]definition{{Type: "test", Version: 1, Element: "T", Properties: properties}})
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := newEngine([]definition{{Type: "test", Version: 1, Element: "T", Properties: tc.properties}})
 			assert.Error(t, err, "invalid definition accepted")
 		})
 	}
