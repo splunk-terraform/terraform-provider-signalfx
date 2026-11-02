@@ -5,9 +5,9 @@ package interpreter
 
 import (
 	"fmt"
+	"maps"
 	"math"
 	"slices"
-	"sort"
 	"unicode/utf8"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -340,12 +340,7 @@ func validateValue(path string, p property, value attr.Value, diagnostics *diag.
 }
 
 func keys[T any](values map[string]T) []string {
-	result := make([]string, 0, len(values))
-	for key := range values {
-		result = append(result, key)
-	}
-	sort.Strings(result)
-	return result
+	return slices.Sorted(maps.Keys(values))
 }
 func join(parent, child string) string {
 	if parent == "" {
