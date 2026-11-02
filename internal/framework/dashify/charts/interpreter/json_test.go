@@ -6,6 +6,9 @@ package interpreter
 import (
 	"encoding/json"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDecodeObjectPreservesNumbersAndRequiresObject(t *testing.T) {
@@ -16,17 +19,15 @@ func TestDecodeObjectPreservesNumbersAndRequiresObject(t *testing.T) {
 		"empty":      ``,
 	} {
 		t.Run(name, func(t *testing.T) {
-			if _, err := DecodeObject(raw); err == nil {
-				t.Fatal("accepted malformed JSON or a non-object root")
-			}
+			_, err := DecodeObject(raw)
+			assert.Error(t, err, "accepted malformed JSON or a non-object root")
 		})
 	}
 	object, err := DecodeObject(`{"large":9007199254740993,"null":null,"empty":[]}`)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
+	assert.Equal(t, json.Number("9007199254740993"), object["large"], "lost numeric precision")
 	empty, ok := object["empty"].([]any)
-	if object["large"] != json.Number("9007199254740993") || !ok || empty == nil || len(empty) != 0 {
-		t.Fatalf("lost numeric or empty array semantics: %#v", object)
-	}
+	require.True(t, ok, "empty array must decode as []any, got %T", object["empty"])
+	assert.NotNil(t, empty, "empty array must not become null")
+	assert.Empty(t, empty)
 }

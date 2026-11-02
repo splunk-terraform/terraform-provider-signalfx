@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -21,30 +22,25 @@ func testProperty(kind propertyType, path ...string) property {
 func testEngine(t *testing.T, properties map[string]property) *Engine {
 	t.Helper()
 	e, err := newEngine([]definition{{Type: "test", Version: 1, Element: "o11y:Test", Properties: properties}})
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	return e
 }
 func testValue(t *testing.T, e *Engine, overrides map[string]attr.Value) types.Object {
 	t.Helper()
-	attributes, _ := e.Attributes("test")
+	attributes, err := e.Attributes("test")
+	require.NoError(t, err)
 	attrTypes := attributeTypes(attributes)
 	values := map[string]attr.Value{}
 	for name, typ := range attrTypes {
 		value, err := typ.ValueFromTerraform(t.Context(), tftypes.NewValue(typ.TerraformType(t.Context()), nil))
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 		values[name] = value
 	}
 	for name, value := range overrides {
 		values[name] = value
 	}
 	value, d := types.ObjectValue(attrTypes, values)
-	if d.HasError() {
-		t.Fatal(d)
-	}
+	require.False(t, d.HasError(), d)
 	return value
 }
 
@@ -57,17 +53,14 @@ func TestValidationDefersUnknownAndEnforcesConditionalCollections(t *testing.T) 
 	scale.RequiresValue = &condition{Field: "mode", Value: "Scale"}
 	e := testEngine(t, map[string]property{"mode": mode, "scale": scale})
 	unknown := testValue(t, e, map[string]attr.Value{"mode": types.StringValue("Scale"), "scale": types.ListUnknown(types.StringType)})
-	if d := e.Validate("test", unknown); d.HasError() {
-		t.Fatal("unknown rejected during plan", d)
-	}
+	d := e.Validate("test", unknown)
+	assert.False(t, d.HasError(), "unknown rejected during plan: %v", d)
 	empty := testValue(t, e, map[string]attr.Value{"mode": types.StringValue("Scale"), "scale": types.ListValueMust(types.StringType, []attr.Value{})})
-	if d := e.Validate("test", empty); !d.HasError() {
-		t.Fatal("conditional empty collection accepted")
-	}
+	d = e.Validate("test", empty)
+	assert.True(t, d.HasError(), "conditional empty collection accepted")
 	wrong := testValue(t, e, map[string]attr.Value{"mode": types.StringValue("None"), "scale": types.ListValueMust(types.StringType, []attr.Value{types.StringValue("red")})})
-	if d := e.Validate("test", wrong); !d.HasError() {
-		t.Fatal("required sibling value ignored")
-	}
+	d = e.Validate("test", wrong)
+	assert.True(t, d.HasError(), "required sibling value ignored")
 }
 
 func TestUnicodeLengthAndFiniteFloats(t *testing.T) {
@@ -77,14 +70,12 @@ func TestUnicodeLengthAndFiniteFloats(t *testing.T) {
 	e := testEngine(t, map[string]property{"title": title, "limit": testProperty("float", "chart", "limit")})
 	for _, limit := range []float64{math.Inf(1), math.Inf(-1)} {
 		value := testValue(t, e, map[string]attr.Value{"title": types.StringValue("你好"), "limit": types.Float64Value(limit)})
-		if _, d := e.Encode(context.Background(), "test", value); !d.HasError() {
-			t.Fatal("nonfinite write accepted")
-		}
+		_, d := e.Encode(context.Background(), "test", value)
+		assert.True(t, d.HasError(), "nonfinite write accepted: %v", limit)
 	}
 	value := testValue(t, e, map[string]attr.Value{"title": types.StringValue("你")})
-	if d := e.Validate("test", value); !d.HasError() {
-		t.Fatal("UTF-8 bytes counted as characters")
-	}
+	d := e.Validate("test", value)
+	assert.True(t, d.HasError(), "UTF-8 bytes counted as characters")
 }
 
 func TestNestedCollectionsRoundTrip(t *testing.T) {
@@ -94,34 +85,29 @@ func TestNestedCollectionsRoundTrip(t *testing.T) {
 	items := testProperty("map", "chart", "namedWindows")
 	items.Item = list.Item
 	e := testEngine(t, map[string]property{"windows": list, "named_windows": items})
-	attributes, _ := e.Attributes("test")
+	attributes, err := e.Attributes("test")
+	require.NoError(t, err)
 	objectType := attributes["windows"].GetType().(types.ListType).ElemType.(types.ObjectType)
 	window := types.ObjectValueMust(objectType.AttrTypes, map[string]attr.Value{"label": types.StringValue("sample")})
 	configured := testValue(t, e, map[string]attr.Value{"windows": types.ListValueMust(objectType, []attr.Value{window}), "named_windows": types.MapValueMust(objectType, map[string]attr.Value{"a": window})})
 	spec, d := e.Encode(context.Background(), "test", configured)
-	if d.HasError() {
-		t.Fatal(d)
-	}
+	require.False(t, d.HasError(), d)
 	decoded, leftovers, d := e.Decode(context.Background(), "test", jsonSpec(t, spec), types.ObjectNull(nil))
-	if d.HasError() || len(leftovers) > 0 || !decoded.Equal(configured) {
-		t.Fatalf("nested collections changed: %v %v", leftovers, d)
-	}
+	require.False(t, d.HasError(), d)
+	assert.Empty(t, leftovers)
+	assert.True(t, decoded.Equal(configured), "nested collections changed: expected %s, got %s", configured, decoded)
 	empty := testValue(t, e, map[string]attr.Value{"windows": types.ListValueMust(objectType, []attr.Value{}), "named_windows": types.MapValueMust(objectType, map[string]attr.Value{})})
 	spec, d = e.Encode(context.Background(), "test", empty)
-	if d.HasError() {
-		t.Fatal(d)
-	}
+	require.False(t, d.HasError(), d)
 	decoded, leftovers, d = e.Decode(context.Background(), "test", jsonSpec(t, spec), empty)
-	if d.HasError() || len(leftovers) > 0 || !decoded.Equal(empty) {
-		t.Fatal("empty collections lost", leftovers, d)
-	}
+	require.False(t, d.HasError(), d)
+	assert.Empty(t, leftovers)
+	assert.True(t, decoded.Equal(empty), "empty collections changed: expected %s, got %s", empty, decoded)
 }
 
 func TestTableGroupingDecodesCurrentArrays(t *testing.T) {
 	e, err := Default()
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	for _, test := range []struct {
 		name     string
 		wire     any
@@ -139,18 +125,14 @@ func TestTableGroupingDecodesCurrentArrays(t *testing.T) {
 				"chart":             map[string]any{"groupBy": test.wire},
 			}
 			value, leftovers, diagnostics := e.Decode(t.Context(), "metrics_table", spec, types.ObjectNull(nil))
-			if diagnostics.HasError() || len(leftovers) != 0 {
-				t.Fatalf("decode: leftovers %v, diagnostics %v", leftovers, diagnostics)
-			}
+			require.False(t, diagnostics.HasError(), diagnostics)
+			assert.Empty(t, leftovers)
 			grouping := value.Attributes()["group_by"].(types.List)
-			if grouping.IsNull() || !grouping.Equal(types.ListValueMust(types.StringType, test.want)) {
-				t.Fatalf("unexpected grouping: %v", grouping)
-			}
+			assert.False(t, grouping.IsNull(), "grouping must preserve an empty list rather than null")
+			assert.True(t, grouping.Equal(types.ListValueMust(types.StringType, test.want)), "unexpected grouping: expected %v, got %s", test.want, grouping)
 			encoded, diagnostics := e.Encode(t.Context(), "metrics_table", value)
-			if diagnostics.HasError() {
-				t.Fatal(diagnostics)
-			}
-			require.Equal(t, test.wantWire, encoded["chart"].(map[string]any)["groupBy"].([]any), "encoded grouping changed")
+			require.False(t, diagnostics.HasError(), diagnostics)
+			assert.Equal(t, test.wantWire, encoded["chart"].(map[string]any)["groupBy"].([]any), "encoded grouping changed")
 		})
 	}
 	tooMany := map[string]any{
@@ -160,16 +142,12 @@ func TestTableGroupingDecodesCurrentArrays(t *testing.T) {
 		"chart":             map[string]any{"groupBy": []any{"host", "region"}},
 	}
 	value, _, diagnostics := e.Decode(t.Context(), "metrics_table", jsonSpec(t, tooMany), types.ObjectNull(nil))
-	if diagnostics.HasError() || len(diagnostics) != 0 {
-		t.Fatal("stored grouping outside the configured limit should decode without diagnostics", diagnostics)
-	}
-	if _, diagnostics := e.Encode(t.Context(), "metrics_table", value); !diagnostics.HasError() {
-		t.Fatal("Table grouping configuration accepted more than one property")
-	}
+	require.Empty(t, diagnostics, "stored grouping outside the configured limit should decode without diagnostics")
+	_, diagnostics = e.Encode(t.Context(), "metrics_table", value)
+	assert.True(t, diagnostics.HasError(), "Table grouping configuration accepted more than one property")
 	tooMany["chart"].(map[string]any)["groupBy"] = "host"
-	if _, _, diagnostics := e.Decode(t.Context(), "metrics_table", tooMany, types.ObjectNull(nil)); !diagnostics.HasError() {
-		t.Fatal("Table grouping accepted the obsolete scalar form")
-	}
+	_, _, diagnostics = e.Decode(t.Context(), "metrics_table", tooMany, types.ObjectNull(nil))
+	assert.True(t, diagnostics.HasError(), "Table grouping accepted the obsolete scalar form")
 }
 
 func TestDecodeNumbersAndElementArgs(t *testing.T) {
@@ -182,31 +160,28 @@ func TestDecodeNumbersAndElementArgs(t *testing.T) {
 	}{{"9007199254740993", 9007199254740993, "0.125", 0.125}, {"-0", 0, "0.1000000000000000001", 0.1}} {
 		spec := map[string]any{"<o11y:Test>": []any{}, "chart": map[string]any{"count": number.integer, "fraction": number.fraction}}
 		value, leftovers, diagnostics := e.Decode(t.Context(), "test", spec, types.ObjectNull(nil))
-		if diagnostics.HasError() || len(leftovers) != 0 || value.Attributes()["count"].(types.Int64).ValueInt64() != number.wantInteger || value.Attributes()["fraction"].(types.Float64).ValueFloat64() != number.wantFraction {
-			t.Fatal("unexpected numeric value", value, leftovers, diagnostics)
-		}
+		require.False(t, diagnostics.HasError(), diagnostics)
+		assert.Empty(t, leftovers)
+		assert.Equal(t, number.wantInteger, value.Attributes()["count"].(types.Int64).ValueInt64())
+		assert.Equal(t, number.wantFraction, value.Attributes()["fraction"].(types.Float64).ValueFloat64())
 	}
 	for _, fieldValue := range []struct {
 		field string
 		value any
 	}{{"count", json.Number("1.1")}, {"count", json.Number("1.0")}, {"count", json.Number("1e3")}, {"count", json.Number("9223372036854775808")}, {"fraction", json.Number("1e1000")}} {
 		spec := map[string]any{"<o11y:Test>": []any{}, "chart": map[string]any{fieldValue.field: fieldValue.value}, "widget": map[string]any{}, "datasource": map[string]any{}}
-		if _, _, d := e.Decode(context.Background(), "test", spec, types.ObjectNull(nil)); !d.HasError() {
-			t.Fatalf("invalid numeric value accepted: %v", fieldValue.value)
-		}
+		_, _, d := e.Decode(context.Background(), "test", spec, types.ObjectNull(nil))
+		assert.True(t, d.HasError(), "invalid numeric value accepted: %v", fieldValue.value)
 	}
 	spec := map[string]any{"<o11y:Test>": []any{"argument"}, "chart": map[string]any{}, "widget": map[string]any{}, "datasource": map[string]any{}}
-	if _, _, d := e.Decode(context.Background(), "test", spec, types.ObjectNull(nil)); !d.HasError() {
-		t.Fatal("element arguments accepted")
-	}
+	_, _, d := e.Decode(context.Background(), "test", spec, types.ObjectNull(nil))
+	assert.True(t, d.HasError(), "element arguments accepted")
 }
 
 func TestDefinitionRejectsUnenforceableAndAmbiguousFields(t *testing.T) {
 	for _, name := range []string{"id", "title"} {
 		_, err := newEngine([]definition{{Type: name, Version: 1, Element: "o11y:Reserved", Properties: map[string]property{"program": testProperty("string", "datasource", "program")}}})
-		if err == nil {
-			t.Fatalf("chart %s can overwrite a resource attribute", name)
-		}
+		assert.Error(t, err, "chart %s can overwrite a resource attribute", name)
 	}
 	minimum := 1
 	for name, properties := range map[string]map[string]property{
@@ -228,9 +203,7 @@ func TestDefinitionRejectsUnenforceableAndAmbiguousFields(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			_, err := newEngine([]definition{{Type: "test", Version: 1, Element: "T", Properties: properties}})
-			if err == nil {
-				t.Fatal("invalid definition accepted")
-			}
+			assert.Error(t, err, "invalid definition accepted")
 		})
 	}
 }
@@ -245,9 +218,7 @@ func TestOneOfRejectsUnsupportedWireAlternatives(t *testing.T) {
 			choice := testProperty("oneof", "chart", "choice")
 			choice.Variants = variants
 			_, err := newEngine([]definition{{Type: "test", Version: 1, Element: "T", Properties: map[string]property{"choice": choice}}})
-			if err == nil {
-				t.Fatal("unsupported oneof accepted")
-			}
+			assert.Error(t, err, "unsupported oneof accepted")
 		})
 	}
 }
@@ -264,9 +235,8 @@ func TestOneOfRejectsIgnoredBlockVariantMetadata(t *testing.T) {
 			change(&variant)
 			choice := testProperty("oneof", "chart", "choice")
 			choice.Variants = map[string]property{"custom": variant}
-			if _, err := newEngine([]definition{{Type: "test", Version: 1, Element: "o11y:Test", Properties: map[string]property{"choice": choice}}}); err == nil {
-				t.Fatal("ignored block-variant metadata accepted")
-			}
+			_, err := newEngine([]definition{{Type: "test", Version: 1, Element: "o11y:Test", Properties: map[string]property{"choice": choice}}})
+			assert.Error(t, err, "ignored block-variant metadata accepted")
 		})
 	}
 }
@@ -282,7 +252,8 @@ func TestOneOfDecodeSelectsWireShapeAndPreservesUnmodeledFields(t *testing.T) {
 		}},
 	}
 	e := testEngine(t, map[string]property{"choice": choice})
-	attributes, _ := e.Attributes("test")
+	attributes, err := e.Attributes("test")
+	require.NoError(t, err)
 	objectType := attributes["choice"].GetType().(types.ObjectType)
 	// A prior scalar variant must not leak into a subsequent custom object.
 	prior := testValue(t, e, map[string]attr.Value{"choice": types.ObjectValueMust(objectType.AttrTypes, map[string]attr.Value{"unit": types.StringValue("Byte"), "prefix": types.StringNull(), "suffix": types.StringNull()})})
@@ -302,26 +273,23 @@ func TestOneOfDecodeSelectsWireShapeAndPreservesUnmodeledFields(t *testing.T) {
 			spec := map[string]any{"<o11y:Test>": []any{}, "chart": map[string]any{"choice": test.wire}}
 			value, leftovers, diagnostics := e.Decode(t.Context(), "test", spec, prior)
 			if test.invalid {
-				if !diagnostics.HasError() {
-					t.Fatal("invalid union shape accepted")
-				}
+				assert.True(t, diagnostics.HasError(), "invalid union shape accepted")
 				return
 			}
 			require.False(t, diagnostics.HasError(), diagnostics)
-			require.Equal(t, test.leftovers, leftovers, "incorrect union import")
+			assert.Equal(t, test.leftovers, leftovers, "incorrect union import")
 			fields := value.Attributes()["choice"].(types.Object).Attributes()
-			if !fields["unit"].Equal(test.unit) || !fields["prefix"].Equal(test.prefix) {
-				t.Fatal("inactive variant claimed fields", fields)
-			}
+			assert.True(t, fields["unit"].Equal(test.unit), "incorrect unit: expected %s, got %s", test.unit, fields["unit"])
+			assert.True(t, fields["prefix"].Equal(test.prefix), "incorrect prefix: expected %s, got %s", test.prefix, fields["prefix"])
 			if test.warning {
-				if len(diagnostics) != 0 || !e.Validate("test", value).HasError() {
-					t.Fatal("stored union should decode cleanly while configuration stays invalid", diagnostics)
-				}
+				assert.Empty(t, diagnostics, "stored union should decode cleanly")
+				validation := e.Validate("test", value)
+				assert.True(t, validation.HasError(), "stored union configuration should stay invalid")
 				return
 			}
 			rebuilt, diagnostics := e.Encode(t.Context(), "test", value)
 			require.False(t, diagnostics.HasError(), diagnostics)
-			require.Equal(t, test.rebuilt, rebuilt["chart"].(map[string]any)["choice"], "incorrect union reconstruction")
+			assert.Equal(t, test.rebuilt, rebuilt["chart"].(map[string]any)["choice"], "incorrect union reconstruction")
 		})
 	}
 }
@@ -366,10 +334,10 @@ func TestEncodeReportsUnsupportedValues(t *testing.T) {
 				map[string]attr.Value{"value": tc.value},
 			)
 			spec, diagnostics := engine.Encode(t.Context(), "test", value)
-			require.Nil(t, spec, "encoding errors must not return a partial document")
+			assert.Nil(t, spec, "encoding errors must not return a partial document")
 			require.Len(t, diagnostics.Errors(), 1)
-			require.Equal(t, "Invalid chart value", diagnostics.Errors()[0].Summary())
-			require.Contains(t, diagnostics.Errors()[0].Detail(), "test: value: "+tc.location+"unsupported chart value")
+			assert.Equal(t, "Invalid chart value", diagnostics.Errors()[0].Summary())
+			assert.Contains(t, diagnostics.Errors()[0].Detail(), "test: value: "+tc.location+"unsupported chart value")
 		})
 	}
 }

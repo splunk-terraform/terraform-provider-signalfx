@@ -5,14 +5,13 @@ package interpreter
 
 import (
 	"encoding/json"
-	"slices"
-	"strings"
 	"testing"
 	"testing/fstest"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -58,25 +57,19 @@ properties:
 `)},
 	}
 	engine, err := load(files)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if charts := engine.Charts(); len(charts) != 1 || charts[0].Name != "tiny" {
-		t.Fatal(charts)
-	}
-	attributes, _ := engine.Attributes("tiny")
-	if attributes["program"].IsRequired() {
-		t.Fatal("explicit false did not override inherited true")
-	}
+	require.NoError(t, err)
+	charts := engine.Charts()
+	require.Len(t, charts, 1)
+	assert.Equal(t, "tiny", charts[0].Name)
+	attributes, err := engine.Attributes("tiny")
+	require.NoError(t, err)
+	assert.False(t, attributes["program"].IsRequired(), "explicit false did not override inherited true")
 	objectType := attributeTypes(attributes)
 	values := map[string]attr.Value{"program": types.StringValue(""), "query": types.ObjectNull(objectType["query"].(types.ObjectType).AttrTypes)}
 	value, d := types.ObjectValue(objectType, values)
-	if d.HasError() {
-		t.Fatal(d)
-	}
-	if diagnostics := engine.Validate("tiny", value); diagnostics.HasError() {
-		t.Fatal(diagnostics)
-	}
+	require.False(t, d.HasError(), d)
+	diagnostics := engine.Validate("tiny", value)
+	assert.False(t, diagnostics.HasError(), diagnostics)
 }
 
 func TestLoaderRejectsUnsafeOrIgnoredSchema(t *testing.T) {
@@ -91,12 +84,7 @@ func TestLoaderRejectsUnsafeOrIgnoredSchema(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			_, err := load(fstest.MapFS{"test.yml": {Data: []byte(test.text)}})
-			if err == nil {
-				t.Fatal("invalid schema accepted")
-			}
-			if !strings.Contains(err.Error(), test.want) {
-				t.Fatalf("expected error containing %q, got %v", test.want, err)
-			}
+			assert.ErrorContains(t, err, test.want)
 		})
 	}
 }
@@ -104,42 +92,33 @@ func TestLoaderRejectsUnsafeOrIgnoredSchema(t *testing.T) {
 func jsonSpec(t *testing.T, spec map[string]any) map[string]any {
 	t.Helper()
 	data, err := json.Marshal(spec)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	object, err := DecodeObject(string(data))
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	return object
 }
 
 func TestTextWithoutDatasourceAndUnmodeledContent(t *testing.T) {
 	engine, err := Default()
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	spec := map[string]any{"<o11y:Text>": []any{}, "chart": map[string]any{"markdown": "# Notes"}, "widget": map[string]any{}}
 	value, leftovers, d := engine.Decode(t.Context(), "text", jsonSpec(t, spec), types.ObjectNull(nil))
-	if d.HasError() || len(leftovers) != 0 {
-		t.Fatalf("text import without datasource failed: %v %v", leftovers, d)
-	}
+	require.False(t, d.HasError(), d)
+	assert.Empty(t, leftovers, "text import without datasource left unmodeled fields")
 	encoded, d := engine.Encode(t.Context(), "text", value)
 	require.False(t, d.HasError(), d)
-	require.Equal(t, spec, encoded, "text round trip changed")
+	assert.Equal(t, spec, encoded, "text round trip changed")
 	for _, group := range []string{"chart", "widget"} {
 		for _, malformed := range []any{nil, "invalid", []any{}} {
 			invalid := jsonSpec(t, spec)
 			invalid[group] = malformed
-			if _, _, d := engine.Decode(t.Context(), "text", invalid, value); !d.HasError() {
-				t.Fatalf("malformed %s accepted: %#v", group, malformed)
-			}
+			_, _, d := engine.Decode(t.Context(), "text", invalid, value)
+			assert.True(t, d.HasError(), "malformed %s accepted: %#v", group, malformed)
 		}
 		missing := jsonSpec(t, spec)
 		delete(missing, group)
-		if _, _, d := engine.Decode(t.Context(), "text", missing, value); !d.HasError() {
-			t.Fatalf("missing required container %s accepted", group)
-		}
+		_, _, d := engine.Decode(t.Context(), "text", missing, value)
+		assert.True(t, d.HasError(), "missing required container %s accepted", group)
 	}
 	for _, extra := range []map[string]any{{}, {"program": "unmodeled"}} {
 		withExtra := jsonSpec(t, spec)
@@ -149,9 +128,8 @@ func TestTextWithoutDatasourceAndUnmodeledContent(t *testing.T) {
 		if len(extra) > 0 {
 			want += ".program"
 		}
-		if d.HasError() || !slices.Equal(leftovers, []string{want}) {
-			t.Fatalf("unmodeled datasource lost: %v %v", leftovers, d)
-		}
+		require.False(t, d.HasError(), d)
+		assert.Equal(t, []string{want}, leftovers, "unmodeled datasource lost")
 	}
 }
 
@@ -161,32 +139,22 @@ func timeSeriesSpec(chart, widget map[string]any) map[string]any {
 
 func TestTimeSeriesCuratedRequiredFieldsAndOmittedUIControls(t *testing.T) {
 	engine, err := Default()
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	attributes, err := engine.Attributes("metrics_time_series")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !attributes["program"].IsRequired() {
-		t.Fatal("a metric chart must require a program")
-	}
+	require.NoError(t, err)
+	assert.True(t, attributes["program"].IsRequired(), "a metric chart must require a program")
 	properties := attributes["additional_properties"].(schema.ListNestedAttribute).NestedObject.Attributes
-	if !properties["property"].IsRequired() || !properties["enabled"].IsRequired() || !attributes["links"].(schema.ListNestedAttribute).NestedObject.Attributes["url"].IsRequired() {
-		t.Fatal("configured properties and links must retain their required fields")
-	}
+	assert.True(t, properties["property"].IsRequired(), "additional_properties.property must be required")
+	assert.True(t, properties["enabled"].IsRequired(), "additional_properties.enabled must be required")
+	assert.True(t, attributes["links"].(schema.ListNestedAttribute).NestedObject.Attributes["url"].IsRequired(), "links.url must be required")
 	for _, name := range []string{"resolution", "backfill_slice_count"} {
-		if _, exposed := attributes[name]; exposed {
-			t.Errorf("ineffective UI control %q is exposed", name)
-		}
+		assert.NotContains(t, attributes, name, "ineffective UI control must not be exposed")
 	}
 }
 
 func TestTimeSeriesLegacyFieldsRemainUnmodeled(t *testing.T) {
 	engine, err := Default()
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	spec := timeSeriesSpec(map[string]any{
 		"chartOptions": map[string]any{"axisPrecision": int64(7), "maximumSignificantDigits": int64(5)},
 		"seriesOptions": map[string]any{
@@ -194,9 +162,8 @@ func TestTimeSeriesLegacyFieldsRemainUnmodeled(t *testing.T) {
 		},
 	}, map[string]any{})
 	value, leftovers, diagnostics := engine.Decode(t.Context(), "metrics_time_series", jsonSpec(t, spec), types.ObjectNull(nil))
-	if diagnostics.HasError() || !slices.Equal(leftovers, []string{"chart.chartOptions.axisPrecision", "chart.seriesOptions.A.precision", "chart.seriesOptions.A.valueUnit"}) {
-		t.Fatal(leftovers, diagnostics)
-	}
+	require.False(t, diagnostics.HasError(), diagnostics)
+	assert.Equal(t, []string{"chart.chartOptions.axisPrecision", "chart.seriesOptions.A.precision", "chart.seriesOptions.A.valueUnit"}, leftovers)
 	rebuilt, diagnostics := engine.Encode(t.Context(), "metrics_time_series", value)
 	want := map[string]any{
 		"chartOptions": map[string]any{"maximumSignificantDigits": int64(5)},
@@ -205,20 +172,17 @@ func TestTimeSeriesLegacyFieldsRemainUnmodeled(t *testing.T) {
 		},
 	}
 	require.False(t, diagnostics.HasError(), diagnostics)
-	require.Equal(t, want, rebuilt["chart"], "modern values changed")
+	assert.Equal(t, want, rebuilt["chart"], "modern values changed")
 }
 
 func TestTimeSeriesRejectsMalformedParentsAndUnsupportedDurations(t *testing.T) {
 	engine, err := Default()
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	for _, parent := range []string{"chartOptions", "legend", "noDataOptions"} {
 		for _, invalid := range []any{true, "bad", []any{}, nil} {
 			spec := timeSeriesSpec(map[string]any{parent: invalid}, map[string]any{})
-			if _, _, diagnostics := engine.Decode(t.Context(), "metrics_time_series", spec, types.ObjectNull(nil)); !diagnostics.HasError() {
-				t.Errorf("malformed chart.%s=%#v accepted", parent, invalid)
-			}
+			_, _, diagnostics := engine.Decode(t.Context(), "metrics_time_series", spec, types.ObjectNull(nil))
+			assert.True(t, diagnostics.HasError(), "malformed chart.%s=%#v accepted", parent, invalid)
 		}
 	}
 	for _, duration := range []map[string]any{
@@ -227,29 +191,23 @@ func TestTimeSeriesRejectsMalformedParentsAndUnsupportedDurations(t *testing.T) 
 	} {
 		spec := timeSeriesSpec(map[string]any{}, map[string]any{})
 		spec["datasource"].(map[string]any)["time"] = duration
-		if _, _, diagnostics := engine.Decode(t.Context(), "metrics_time_series", jsonSpec(t, spec), types.ObjectNull(nil)); !diagnostics.HasError() {
-			t.Errorf("unsupported duration accepted: %#v", duration)
-		}
+		_, _, diagnostics := engine.Decode(t.Context(), "metrics_time_series", jsonSpec(t, spec), types.ObjectNull(nil))
+		assert.True(t, diagnostics.HasError(), "unsupported duration accepted: %#v", duration)
 	}
 	value, _, diagnostics := engine.Decode(t.Context(), "metrics_time_series", timeSeriesSpec(map[string]any{}, map[string]any{}), types.ObjectNull(nil))
-	if diagnostics.HasError() {
-		t.Fatal(diagnostics)
-	}
+	require.False(t, diagnostics.HasError(), diagnostics)
 	for _, invalid := range []string{"0s", "-1h", "+1h", "01h", "1.5h", "999999999999999999999999999999s"} {
 		values := value.Attributes()
 		values["time_range"] = types.StringValue(invalid)
 		configured := types.ObjectValueMust(value.AttributeTypes(t.Context()), values)
-		if _, diagnostics := engine.Encode(t.Context(), "metrics_time_series", configured); !diagnostics.HasError() {
-			t.Errorf("invalid duration %q accepted", invalid)
-		}
+		_, diagnostics := engine.Encode(t.Context(), "metrics_time_series", configured)
+		assert.True(t, diagnostics.HasError(), "invalid duration %q accepted", invalid)
 	}
 }
 
 func TestTimeSeriesReportsNestedLeftoversAtOriginalPaths(t *testing.T) {
 	engine, err := Default()
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	spec := timeSeriesSpec(map[string]any{
 		"seriesOptions": map[string]any{"A": map[string]any{"name": "CPU", "displayUnit": map[string]any{"suffix": "%", "futureUnit": true}}},
 		"yAxes":         []any{map[string]any{"min": 0.125}, map[string]any{"max": 99.5, "width": int64(50)}},
@@ -258,9 +216,8 @@ func TestTimeSeriesReportsNestedLeftoversAtOriginalPaths(t *testing.T) {
 	spec["datasource"].(map[string]any)["time"] = map[string]any{"type": "relative", "range": int64(3600000), "rangeEnd": int64(0), "futureTime": []any{}}
 	value, leftovers, diagnostics := engine.Decode(t.Context(), "metrics_time_series", jsonSpec(t, spec), types.ObjectNull(nil))
 	want := []string{"chart.seriesOptions.A.displayUnit.futureUnit", "chart.unknownArray.0", "chart.unknownArray.1", "chart.unknownArray.2", "chart.unknownArray.3.nested", "chart.yAxes.1.width", "datasource.time.futureTime", "widget.links.0.futureLink"}
-	if diagnostics.HasError() || !slices.Equal(leftovers, want) {
-		t.Fatal("nested ownership paths changed", leftovers, diagnostics)
-	}
+	require.False(t, diagnostics.HasError(), diagnostics)
+	assert.Equal(t, want, leftovers, "nested ownership paths changed")
 	rebuilt, diagnostics := engine.Encode(t.Context(), "metrics_time_series", value)
 	wantSpec := timeSeriesSpec(map[string]any{
 		"seriesOptions": map[string]any{"A": map[string]any{"name": "CPU", "displayUnit": map[string]any{"suffix": "%"}}},
@@ -268,5 +225,5 @@ func TestTimeSeriesReportsNestedLeftoversAtOriginalPaths(t *testing.T) {
 	}, map[string]any{"links": []any{map[string]any{"url": "/service"}}})
 	wantSpec["datasource"].(map[string]any)["time"] = map[string]any{"type": "relative", "range": int64(3600000), "rangeEnd": int64(0)}
 	require.False(t, diagnostics.HasError(), diagnostics)
-	require.Equal(t, wantSpec, rebuilt, "modeled nested fields did not survive the read")
+	assert.Equal(t, wantSpec, rebuilt, "modeled nested fields did not survive the read")
 }
