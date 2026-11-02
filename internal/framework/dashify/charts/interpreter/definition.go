@@ -79,46 +79,45 @@ func checkProperties(properties map[string]property) error {
 	names := keys(properties)
 	for index, name := range names {
 		p := properties[name]
-		fail := func(message string) error { return fmt.Errorf("%s: %s", name, message) }
 		if p.Values != nil && p.Type != propertyTypeEnum {
-			return fail("values require enum")
+			return fmt.Errorf("%s: values require enum", name)
 		}
 		if (p.Min != nil || p.Max != nil) && p.Type != propertyTypeNumber {
-			return fail("numeric bounds require number")
+			return fmt.Errorf("%s: numeric bounds require number", name)
 		}
 		if p.Min != nil && p.Max != nil && *p.Min > *p.Max {
-			return fail("minimum exceeds maximum")
+			return fmt.Errorf("%s: minimum exceeds maximum", name)
 		}
 		if p.MinLength != nil && ((*p.MinLength < 0) || (p.Type != propertyTypeString && p.Type != propertyTypeEnum)) {
-			return fail("min_length needs a string and a nonnegative value")
+			return fmt.Errorf("%s: min_length needs a string and a nonnegative value", name)
 		}
 		if p.MaxItems != nil && (p.Type != propertyTypeList || *p.MaxItems < 0) {
-			return fail("max_items needs a list and a nonnegative value")
+			return fmt.Errorf("%s: max_items needs a list and a nonnegative value", name)
 		}
 		if p.Item != nil && p.Type != propertyTypeList && p.Type != propertyTypeMap {
-			return fail("item requires list or map")
+			return fmt.Errorf("%s: item requires list or map", name)
 		}
 		if len(p.Properties) > 0 && p.Type != propertyTypeBlock {
-			return fail("properties require block")
+			return fmt.Errorf("%s: properties require block", name)
 		}
 		if len(p.Variants) > 0 && p.Type != propertyTypeOneOf {
-			return fail("variants require oneof")
+			return fmt.Errorf("%s: variants require oneof", name)
 		}
 		if len(p.AtLeastOneOf) > 0 && p.Type != propertyTypeBlock && p.Type != propertyTypeOneOf {
-			return fail("at_least_one_of requires object")
+			return fmt.Errorf("%s: at_least_one_of requires object", name)
 		}
 		if p.Type == propertyTypeBlock && len(p.Properties) == 0 {
-			return fail("block has no properties")
+			return fmt.Errorf("%s: block has no properties", name)
 		}
 		if (p.Type == propertyTypeList || p.Type == propertyTypeMap) && p.Item != nil && p.Item.Type == "" && len(p.Item.Properties) == 0 {
-			return fail("object item has no properties")
+			return fmt.Errorf("%s: object item has no properties", name)
 		}
 		if p.Item != nil && p.Item.Type != "" && len(p.Item.Properties) > 0 {
-			return fail("item must select scalar type or object properties")
+			return fmt.Errorf("%s: item must select scalar type or object properties", name)
 		}
 		for _, peer := range p.ConflictsWith {
 			if peer == name || properties[peer].Type == "" {
-				return fail("unknown or self conflict: " + peer)
+				return fmt.Errorf("%s: unknown or self conflict: %s", name, peer)
 			}
 		}
 		for _, condition := range []*condition{p.RequiresValue, p.RequiredWhen} {
@@ -127,10 +126,10 @@ func checkProperties(properties map[string]property) error {
 			}
 			peer, exists := properties[condition.Field]
 			if !exists || condition.Field == name || (peer.Type != propertyTypeString && peer.Type != propertyTypeEnum) {
-				return fail("condition needs a sibling string field")
+				return fmt.Errorf("%s: condition needs a sibling string field", name)
 			}
 			if peer.Type == propertyTypeEnum && !slices.Contains(peer.Values, condition.Value) {
-				return fail("condition uses value outside sibling enum")
+				return fmt.Errorf("%s: condition uses value outside sibling enum", name)
 			}
 		}
 		if len(p.AtLeastOneOf) > 0 {
@@ -140,7 +139,7 @@ func checkProperties(properties map[string]property) error {
 			}
 			for _, field := range p.AtLeastOneOf {
 				if children[field].Type == "" {
-					return fail("unknown at_least_one_of field: " + field)
+					return fmt.Errorf("%s: unknown at_least_one_of field: %s", name, field)
 				}
 			}
 		}
@@ -148,7 +147,7 @@ func checkProperties(properties map[string]property) error {
 			other := properties[otherName]
 			left, right := strings.Join(p.Mapping.Path, "\x00"), strings.Join(other.Mapping.Path, "\x00")
 			if left != "" && right != "" && (left == right || strings.HasPrefix(left, right+"\x00") || strings.HasPrefix(right, left+"\x00")) {
-				return fail("mapping overlaps " + otherName)
+				return fmt.Errorf("%s: mapping overlaps %s", name, otherName)
 			}
 		}
 	}
