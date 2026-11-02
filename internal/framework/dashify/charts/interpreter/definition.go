@@ -79,41 +79,67 @@ func checkProperties(properties map[string]property) error {
 	names := keys(properties)
 	for index, name := range names {
 		p := properties[name]
-		if p.Values != nil && p.Type != propertyTypeEnum {
-			return fmt.Errorf("%s: values require enum", name)
-		}
-		if (p.Min != nil || p.Max != nil) && p.Type != propertyTypeNumber {
-			return fmt.Errorf("%s: numeric bounds require number", name)
-		}
-		if p.Min != nil && p.Max != nil && *p.Min > *p.Max {
-			return fmt.Errorf("%s: minimum exceeds maximum", name)
-		}
-		if p.MinLength != nil && ((*p.MinLength < 0) || (p.Type != propertyTypeString && p.Type != propertyTypeEnum)) {
-			return fmt.Errorf("%s: min_length needs a string and a nonnegative value", name)
-		}
-		if p.MaxItems != nil && (p.Type != propertyTypeList || *p.MaxItems < 0) {
-			return fmt.Errorf("%s: max_items needs a list and a nonnegative value", name)
-		}
-		if p.Item != nil && p.Type != propertyTypeList && p.Type != propertyTypeMap {
-			return fmt.Errorf("%s: item requires list or map", name)
-		}
-		if len(p.Properties) > 0 && p.Type != propertyTypeBlock {
-			return fmt.Errorf("%s: properties require block", name)
-		}
-		if len(p.Variants) > 0 && p.Type != propertyTypeOneOf {
-			return fmt.Errorf("%s: variants require oneof", name)
-		}
-		if len(p.AtLeastOneOf) > 0 && p.Type != propertyTypeBlock && p.Type != propertyTypeOneOf {
-			return fmt.Errorf("%s: at_least_one_of requires object", name)
-		}
-		if p.Type == propertyTypeBlock && len(p.Properties) == 0 {
-			return fmt.Errorf("%s: block has no properties", name)
-		}
-		if (p.Type == propertyTypeList || p.Type == propertyTypeMap) && p.Item != nil && p.Item.Type == "" && len(p.Item.Properties) == 0 {
-			return fmt.Errorf("%s: object item has no properties", name)
-		}
-		if p.Item != nil && p.Item.Type != "" && len(p.Item.Properties) > 0 {
-			return fmt.Errorf("%s: item must select scalar type or object properties", name)
+		//exhaustive:enforce
+		switch p.Type {
+		case propertyTypeString:
+			if err := checkPropertyFields(name, p, checkNoValues, checkNoBounds, checkNoMaxItems, checkNoItem, checkNoProperties, checkNoVariants, checkNoAtLeastOneOf); err != nil {
+				return err
+			}
+			if p.MinLength != nil && *p.MinLength < 0 {
+				return fmt.Errorf("%s: min_length needs a string and a nonnegative value", name)
+			}
+		case propertyTypeEnum:
+			if err := checkPropertyFields(name, p, checkNoBounds, checkNoMaxItems, checkNoItem, checkNoProperties, checkNoVariants, checkNoAtLeastOneOf); err != nil {
+				return err
+			}
+			if p.MinLength != nil && *p.MinLength < 0 {
+				return fmt.Errorf("%s: min_length needs a string and a nonnegative value", name)
+			}
+		case propertyTypeNumber:
+			if err := checkPropertyFields(name, p, checkNoValues, checkNoMinLength, checkNoMaxItems, checkNoItem, checkNoProperties, checkNoVariants, checkNoAtLeastOneOf); err != nil {
+				return err
+			}
+			if p.Min != nil && p.Max != nil && *p.Min > *p.Max {
+				return fmt.Errorf("%s: minimum exceeds maximum", name)
+			}
+		case propertyTypeBool, propertyTypeFloat:
+			if err := checkPropertyFields(name, p, checkNoValues, checkNoBounds, checkNoMinLength, checkNoMaxItems, checkNoItem, checkNoProperties, checkNoVariants, checkNoAtLeastOneOf); err != nil {
+				return err
+			}
+		case propertyTypeList:
+			if err := checkPropertyFields(name, p, checkNoValues, checkNoBounds, checkNoMinLength, checkNoProperties, checkNoVariants, checkNoAtLeastOneOf); err != nil {
+				return err
+			}
+			if p.MaxItems != nil && *p.MaxItems < 0 {
+				return fmt.Errorf("%s: max_items needs a list and a nonnegative value", name)
+			}
+			if err := checkItem(name, p); err != nil {
+				return err
+			}
+		case propertyTypeMap:
+			if err := checkPropertyFields(name, p, checkNoValues, checkNoBounds, checkNoMinLength, checkNoMaxItems, checkNoProperties, checkNoVariants, checkNoAtLeastOneOf); err != nil {
+				return err
+			}
+			if err := checkItem(name, p); err != nil {
+				return err
+			}
+		case propertyTypeBlock:
+			if err := checkPropertyFields(name, p, checkNoValues, checkNoBounds, checkNoMinLength, checkNoMaxItems, checkNoItem, checkNoVariants); err != nil {
+				return err
+			}
+			if len(p.Properties) == 0 {
+				return fmt.Errorf("%s: block has no properties", name)
+			}
+			if err := checkAtLeastOneOf(name, p); err != nil {
+				return err
+			}
+		case propertyTypeOneOf:
+			if err := checkPropertyFields(name, p, checkNoValues, checkNoBounds, checkNoMinLength, checkNoMaxItems, checkNoItem, checkNoProperties); err != nil {
+				return err
+			}
+			if err := checkAtLeastOneOf(name, p); err != nil {
+				return err
+			}
 		}
 		for _, peer := range p.ConflictsWith {
 			if peer == name || properties[peer].Type == "" {
@@ -132,23 +158,107 @@ func checkProperties(properties map[string]property) error {
 				return fmt.Errorf("%s: condition uses value outside sibling enum", name)
 			}
 		}
-		if len(p.AtLeastOneOf) > 0 {
-			children, err := childProperties(p)
-			if err != nil {
-				return err
-			}
-			for _, field := range p.AtLeastOneOf {
-				if children[field].Type == "" {
-					return fmt.Errorf("%s: unknown at_least_one_of field: %s", name, field)
-				}
-			}
-		}
 		for _, otherName := range names[index+1:] {
 			other := properties[otherName]
 			left, right := strings.Join(p.Mapping.Path, "\x00"), strings.Join(other.Mapping.Path, "\x00")
 			if left != "" && right != "" && (left == right || strings.HasPrefix(left, right+"\x00") || strings.HasPrefix(right, left+"\x00")) {
 				return fmt.Errorf("%s: mapping overlaps %s", name, otherName)
 			}
+		}
+	}
+	return nil
+}
+
+// checkPropertyFields runs the selected checks in order and returns the first error.
+func checkPropertyFields(name string, p property, checks ...func(string, property) error) error {
+	for _, check := range checks {
+		if err := check(name, p); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func checkNoValues(name string, p property) error {
+	if p.Values != nil {
+		return fmt.Errorf("%s: values require enum", name)
+	}
+	return nil
+}
+
+func checkNoBounds(name string, p property) error {
+	if p.Min != nil || p.Max != nil {
+		return fmt.Errorf("%s: numeric bounds require number", name)
+	}
+	return nil
+}
+
+func checkNoMinLength(name string, p property) error {
+	if p.MinLength != nil {
+		return fmt.Errorf("%s: min_length needs a string and a nonnegative value", name)
+	}
+	return nil
+}
+
+func checkNoMaxItems(name string, p property) error {
+	if p.MaxItems != nil {
+		return fmt.Errorf("%s: max_items needs a list and a nonnegative value", name)
+	}
+	return nil
+}
+
+func checkNoItem(name string, p property) error {
+	if p.Item != nil {
+		return fmt.Errorf("%s: item requires list or map", name)
+	}
+	return nil
+}
+
+func checkNoProperties(name string, p property) error {
+	if len(p.Properties) > 0 {
+		return fmt.Errorf("%s: properties require block", name)
+	}
+	return nil
+}
+
+func checkNoVariants(name string, p property) error {
+	if len(p.Variants) > 0 {
+		return fmt.Errorf("%s: variants require oneof", name)
+	}
+	return nil
+}
+
+func checkNoAtLeastOneOf(name string, p property) error {
+	if len(p.AtLeastOneOf) > 0 {
+		return fmt.Errorf("%s: at_least_one_of requires object", name)
+	}
+	return nil
+}
+
+func checkItem(name string, p property) error {
+	if p.Item == nil {
+		return nil
+	}
+	if p.Item.Type == "" && len(p.Item.Properties) == 0 {
+		return fmt.Errorf("%s: object item has no properties", name)
+	}
+	if p.Item.Type != "" && len(p.Item.Properties) > 0 {
+		return fmt.Errorf("%s: item must select scalar type or object properties", name)
+	}
+	return nil
+}
+
+func checkAtLeastOneOf(name string, p property) error {
+	if len(p.AtLeastOneOf) == 0 {
+		return nil
+	}
+	children, err := childProperties(p)
+	if err != nil {
+		return err
+	}
+	for _, field := range p.AtLeastOneOf {
+		if children[field].Type == "" {
+			return fmt.Errorf("%s: unknown at_least_one_of field: %s", name, field)
 		}
 	}
 	return nil
