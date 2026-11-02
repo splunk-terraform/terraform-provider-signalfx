@@ -18,7 +18,11 @@ func (e *Engine) Encode(ctx context.Context, name string, value types.Object) (m
 	if diagnostics.HasError() {
 		return nil, diagnostics
 	}
-	spec := encodeObject(e.definitions[name].Properties, value)
+	spec, err := encodeObject(e.definitions[name].Properties, value)
+	if err != nil {
+		diagnostics.AddError("Invalid chart value", fmt.Sprintf("%s: %v", name, err))
+		return nil, diagnostics
+	}
 	spec["<"+e.definitions[name].Element+">"] = []any{}
 	for _, group := range e.roots[name] {
 		if _, exists := spec[group]; !exists {
@@ -28,7 +32,7 @@ func (e *Engine) Encode(ctx context.Context, name string, value types.Object) (m
 	return spec, diagnostics
 }
 
-func encodeObject(properties map[string]property, value types.Object) map[string]any {
+func encodeObject(properties map[string]property, value types.Object) (map[string]any, error) {
 	result := map[string]any{}
 	for _, name := range keys(properties) {
 		v := value.Attributes()[name]
@@ -36,7 +40,10 @@ func encodeObject(properties map[string]property, value types.Object) map[string
 			continue
 		}
 		p := properties[name]
-		wire := encodeValue(p, v)
+		wire, err := encodeValue(p, v)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", name, err)
+		}
 		if p.Mapping.Transform == "negate" {
 			wire = !wire.(bool)
 		}
@@ -45,19 +52,19 @@ func encodeObject(properties map[string]property, value types.Object) map[string
 		}
 		setPath(result, p.Mapping.Path, wire)
 	}
-	return result
+	return result, nil
 }
 
-func encodeValue(p property, value attr.Value) any {
+func encodeValue(p property, value attr.Value) (any, error) {
 	switch v := value.(type) {
 	case types.String:
-		return v.ValueString()
+		return v.ValueString(), nil
 	case types.Bool:
-		return v.ValueBool()
+		return v.ValueBool(), nil
 	case types.Int64:
-		return v.ValueInt64()
+		return v.ValueInt64(), nil
 	case types.Float64:
-		return v.ValueFloat64()
+		return v.ValueFloat64(), nil
 	case types.Object:
 		if p.Type == "oneof" {
 			for _, name := range keys(p.Variants) {
@@ -74,24 +81,32 @@ func encodeValue(p property, value attr.Value) any {
 					}
 				}
 			}
-			return nil
+			return nil, nil
 		}
 		children, _ := childProperties(p)
 		return encodeObject(children, v)
 	case types.List:
 		result := make([]any, len(v.Elements()))
 		for index, child := range v.Elements() {
-			result[index] = encodeValue(property{Type: "block", Properties: p.Item.Properties}, child)
+			wire, err := encodeValue(property{Type: "block", Properties: p.Item.Properties}, child)
+			if err != nil {
+				return nil, fmt.Errorf("element %d: %w", index, err)
+			}
+			result[index] = wire
 		}
-		return result
+		return result, nil
 	case types.Map:
 		result := map[string]any{}
 		for key, child := range v.Elements() {
-			result[key] = encodeValue(property{Type: "block", Properties: p.Item.Properties}, child)
+			wire, err := encodeValue(property{Type: "block", Properties: p.Item.Properties}, child)
+			if err != nil {
+				return nil, fmt.Errorf("key %q: %w", key, err)
+			}
+			result[key] = wire
 		}
-		return result
+		return result, nil
 	default:
-		panic(fmt.Sprintf("unsupported chart value %T", value))
+		return nil, fmt.Errorf("unsupported chart value %T", value)
 	}
 }
 

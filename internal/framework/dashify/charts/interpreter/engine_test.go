@@ -325,3 +325,51 @@ func TestOneOfDecodeSelectsWireShapeAndPreservesUnmodeledFields(t *testing.T) {
 		})
 	}
 }
+
+func TestEncodeReportsUnsupportedValues(t *testing.T) {
+	t.Parallel()
+	unsupported := types.SetValueMust(types.StringType, []attr.Value{types.StringValue("A")})
+	object := types.ObjectValueMust(
+		map[string]attr.Type{"label": unsupported.Type(t.Context())},
+		map[string]attr.Value{"label": unsupported},
+	)
+	children := map[string]property{"label": testProperty("string", "label")}
+	block := testProperty("block", "chart", "value")
+	block.Properties = children
+	list := testProperty("list", "chart", "value")
+	list.Item = &item{Properties: children}
+	items := testProperty("map", "chart", "value")
+	items.Item = list.Item
+	scalarChoice := testProperty("oneof", "chart", "value")
+	scalarChoice.Variants = map[string]property{"label": {Type: "string", Description: "Label."}}
+	blockChoice := testProperty("oneof", "chart", "value")
+	blockChoice.Variants = map[string]property{"custom": {Type: "block", Properties: children}}
+
+	for _, tc := range []struct {
+		name     string
+		property property
+		value    attr.Value
+		location string
+	}{
+		{"scalar", testProperty("string", "chart", "value"), unsupported, ""},
+		{"object", block, object, "label: "},
+		{"list", list, types.ListValueMust(object.Type(t.Context()), []attr.Value{object}), "element 0: label: "},
+		{"map", items, types.MapValueMust(object.Type(t.Context()), map[string]attr.Value{"source": object}), `key "source": label: `},
+		{"scalar variant", scalarChoice, object, ""},
+		{"block variant", blockChoice, object, "label: "},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			engine := testEngine(t, map[string]property{"value": tc.property})
+			// Deliberately diverge from the schema to exercise the encode boundary.
+			value := types.ObjectValueMust(
+				map[string]attr.Type{"value": tc.value.Type(t.Context())},
+				map[string]attr.Value{"value": tc.value},
+			)
+			spec, diagnostics := engine.Encode(t.Context(), "test", value)
+			require.Nil(t, spec, "encoding errors must not return a partial document")
+			require.Len(t, diagnostics.Errors(), 1)
+			require.Equal(t, "Invalid chart value", diagnostics.Errors()[0].Summary())
+			require.Contains(t, diagnostics.Errors()[0].Detail(), "test: value: "+tc.location+"unsupported chart value")
+		})
+	}
+}
