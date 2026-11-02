@@ -169,10 +169,10 @@ Optional:
 - `group_by` (List of String) Metadata properties to group cells by (in nesting order). At most two.
 - `headerless` (Boolean) Whether to hide the widget header, including its title and description.
 - `links` (Attributes List) Drilldown links for this widget. Only the first entry is rendered, as a magnifier button in the widget header. (see [below for nested schema](#nestedatt--metrics_cluster_map--links))
-- `max_delay` (Number) Milliseconds to wait for late-arriving data points before charting what has arrived. Omit this field to use the backend default; zero means no additional delay. The UI rounds to 10-second increments and limits the delay to 15 minutes.
+- `max_delay` (Number) Milliseconds to wait for late-arriving data points before charting what has arrived. Omit this field to use the backend default; zero means no additional delay. The UI rounds to 10-second increments and limits the delay to 15 minutes. Must be nonnegative.
 - `maximum_significant_digits` (Number) The number of significant digits to display for values in this chart. Unset lets Splunk Observability Cloud adjust precision to fit the available space. The chart renders this setting, but saving the chart in the UI drops it.
-- `minimum_resolution` (Number) The lowest resolution, in milliseconds, to use when computing the chart's SignalFlow program. 0 lets Splunk Observability Cloud choose automatically.
-- `sample_size` (Number) The maximum number of time series to sample when a query matches more than this many.
+- `minimum_resolution` (Number) The lowest resolution, in milliseconds, to use when computing the chart's SignalFlow program. 0 lets Splunk Observability Cloud choose automatically. Must be nonnegative.
+- `sample_size` (Number) The maximum number of time series to sample when a query matches more than this many. Must be at least 1.
 - `show_timestamp` (Boolean) Whether to show the latest data point's timestamp in the chart footer. Defaults to `true` when unset.
 - `time_range` (String) A stored relative time range for this chart, such as "15m" or "1h", resolved together with the dashboard's current time controls. Absolute ranges are not supported here.
 - `title` (String) The chart's display title, shown above the chart content.
@@ -242,11 +242,11 @@ Optional:
 - `headerless` (Boolean) Whether to hide the widget header, including its title and description.
 - `hide_missing_values` (Boolean) Whether to exclude a series whose most recent value is missing, and any series whose latest timestamp is older than the newest remaining series. Defaults to `false` when unset.
 - `links` (Attributes List) Drilldown links for this widget. Only the first entry is rendered, as a magnifier button in the widget header. (see [below for nested schema](#nestedatt--metrics_list--links))
-- `max_delay` (Number) Milliseconds to wait for late-arriving data points before charting what has arrived. Omit this field to use the backend default; zero means no additional delay. The UI rounds to 10-second increments and limits the delay to 15 minutes.
+- `max_delay` (Number) Milliseconds to wait for late-arriving data points before charting what has arrived. Omit this field to use the backend default; zero means no additional delay. The UI rounds to 10-second increments and limits the delay to 15 minutes. Must be nonnegative.
 - `maximum_significant_digits` (Number) The number of significant digits to display for values in this chart. Unset lets Splunk Observability Cloud adjust precision to fit the available space.
-- `minimum_resolution` (Number) The lowest resolution, in milliseconds, to use when computing the chart's SignalFlow program. 0 lets Splunk Observability Cloud choose automatically.
+- `minimum_resolution` (Number) The lowest resolution, in milliseconds, to use when computing the chart's SignalFlow program. 0 lets Splunk Observability Cloud choose automatically. Must be nonnegative.
 - `published_streams` (Attributes Map) Per-plot display overrides, keyed by the SignalFlow publish label each override applies to. (see [below for nested schema](#nestedatt--metrics_list--published_streams))
-- `sample_size` (Number) The maximum number of time series to sample when a query matches more than this many.
+- `sample_size` (Number) The maximum number of time series to sample when a query matches more than this many. Must be at least 1.
 - `secondary_visualization` (String) An additional visualization (a sparkline or a radial/linear gauge) shown alongside the chart's primary value. Defaults to `None` when unset.
 - `show_timestamp` (Boolean) Whether to show the latest data point's timestamp in the chart footer. Defaults to `true` when unset.
 - `sort` (Attributes) How to order rows. Unset means "Auto" (sorted by the SignalFlow publish label, ascending). (see [below for nested schema](#nestedatt--metrics_list--sort))
@@ -332,11 +332,11 @@ Optional:
 - `display_unit` (Attributes) How to scale and label displayed values: either a named unit (bits, bytes, or a time duration) or a custom prefix/suffix pair. Omit for no unit conversion or annotation. (see [below for nested schema](#nestedatt--metrics_single_value--display_unit))
 - `headerless` (Boolean) Whether to hide the widget header, including its title and description.
 - `links` (Attributes List) Drilldown links for this widget. Only the first entry is rendered, as a magnifier button in the widget header. (see [below for nested schema](#nestedatt--metrics_single_value--links))
-- `max_delay` (Number) Milliseconds to wait for late-arriving data points before charting what has arrived. Omit this field to use the backend default; zero means no additional delay. The UI rounds to 10-second increments and limits the delay to 15 minutes.
+- `max_delay` (Number) Milliseconds to wait for late-arriving data points before charting what has arrived. Omit this field to use the backend default; zero means no additional delay. The UI rounds to 10-second increments and limits the delay to 15 minutes. Must be nonnegative.
 - `maximum_fraction_digits` (Number) The maximum number of digits to display after the decimal point.
 - `maximum_significant_digits` (Number) The number of significant digits to display for values in this chart. Unset lets Splunk Observability Cloud adjust precision to fit the available space.
-- `minimum_resolution` (Number) The lowest resolution, in milliseconds, to use when computing the chart's SignalFlow program. 0 lets Splunk Observability Cloud choose automatically.
-- `sample_size` (Number) The maximum number of time series to sample when a query matches more than this many.
+- `minimum_resolution` (Number) The lowest resolution, in milliseconds, to use when computing the chart's SignalFlow program. 0 lets Splunk Observability Cloud choose automatically. Must be nonnegative.
+- `sample_size` (Number) The maximum number of time series to sample when a query matches more than this many. Must be at least 1.
 - `secondary_visualization` (String) An additional visualization (a sparkline or a radial/linear gauge) shown alongside the chart's primary value. Defaults to `None` when unset.
 - `show_timestamp` (Boolean) Whether to show the latest data point's timestamp in the chart footer. Defaults to `true` when unset.
 - `time_range` (String) A stored relative time range for this chart, such as "15m" or "1h", resolved together with the dashboard's current time controls. Absolute ranges are not supported here.
@@ -395,10 +395,10 @@ Optional:
 - `headerless` (Boolean) Whether to hide the widget header, including its title and description.
 - `hide_missing_values` (Boolean) Whether to exclude a series whose most recent value is missing, and any series whose latest timestamp is older than the newest remaining series. Defaults to `false` when unset.
 - `links` (Attributes List) Drilldown links for this widget. Only the first entry is rendered, as a magnifier button in the widget header. (see [below for nested schema](#nestedatt--metrics_table--links))
-- `max_delay` (Number) Milliseconds to wait for late-arriving data points before charting what has arrived. Omit this field to use the backend default; zero means no additional delay. The UI rounds to 10-second increments and limits the delay to 15 minutes.
+- `max_delay` (Number) Milliseconds to wait for late-arriving data points before charting what has arrived. Omit this field to use the backend default; zero means no additional delay. The UI rounds to 10-second increments and limits the delay to 15 minutes. Must be nonnegative.
 - `maximum_significant_digits` (Number) The number of significant digits to display for values in this chart. Unset lets Splunk Observability Cloud adjust precision to fit the available space.
-- `minimum_resolution` (Number) The lowest resolution, in milliseconds, to use when computing the chart's SignalFlow program. 0 lets Splunk Observability Cloud choose automatically.
-- `sample_size` (Number) The maximum number of time series to sample when a query matches more than this many.
+- `minimum_resolution` (Number) The lowest resolution, in milliseconds, to use when computing the chart's SignalFlow program. 0 lets Splunk Observability Cloud choose automatically. Must be nonnegative.
+- `sample_size` (Number) The maximum number of time series to sample when a query matches more than this many. Must be at least 1.
 - `show_timestamp` (Boolean) Whether to show the latest data point's timestamp in the chart footer. Defaults to `true` when unset.
 - `time_range` (String) A stored relative time range for this chart, such as "15m" or "1h", resolved together with the dashboard's current time controls. Absolute ranges are not supported here.
 - `title` (String) The chart's display title, shown above the chart content.
@@ -460,14 +460,14 @@ Optional:
 - `legend_dimension` (String) Which metadata dimension to display in the legend, such as a specific property name shared by every matched series.
 - `legend_position` (String) Where to place the legend relative to the chart.
 - `links` (Attributes List) Drilldown links for this widget. Only the first entry is rendered, as a magnifier button in the widget header. (see [below for nested schema](#nestedatt--metrics_time_series--links))
-- `max_delay` (Number) Milliseconds to wait for late-arriving data points before charting what has arrived. Omit this field to use the backend default; zero means no additional delay. The UI rounds to 10-second increments and limits the delay to 15 minutes.
+- `max_delay` (Number) Milliseconds to wait for late-arriving data points before charting what has arrived. Omit this field to use the backend default; zero means no additional delay. The UI rounds to 10-second increments and limits the delay to 15 minutes. Must be nonnegative.
 - `max_series` (Number) The maximum number of series to draw before the rest are omitted.
 - `maximum_fraction_digits` (Number) Chart-wide fraction-digit precision applied to every Y axis that doesn't set its own `maximum_fraction_digits`.
 - `maximum_significant_digits` (Number) Chart-wide significant-digit precision applied to every Y axis that doesn't set its own `maximum_significant_digits`.
-- `minimum_resolution` (Number) The lowest resolution, in milliseconds, to use when computing the chart's SignalFlow program. 0 lets Splunk Observability Cloud choose automatically.
+- `minimum_resolution` (Number) The lowest resolution, in milliseconds, to use when computing the chart's SignalFlow program. 0 lets Splunk Observability Cloud choose automatically. Must be nonnegative.
 - `no_data_message` (String) A custom message to display when no data matches this chart's query, in place of the default empty-chart state.
 - `preferred_editor` (String) Which editor mode this chart's query was last authored in. Cosmetic: it selects which tab the Dashify UI opens to and has no effect on how the chart renders.
-- `sample_size` (Number) The maximum number of time series to sample when a query matches more than this many.
+- `sample_size` (Number) The maximum number of time series to sample when a query matches more than this many. Must be at least 1.
 - `series` (Attributes Map) Per-series display overrides, keyed by the SignalFlow publish label each override applies to. (see [below for nested schema](#nestedatt--metrics_time_series--series))
 - `show_data_markers` (Boolean) Whether to draw a marker at each data point instead of an unmarked line or area. Defaults to `false` when unset.
 - `show_event_lines` (Boolean) Whether to draw a vertical line on the chart at each point where a matching event occurred. Defaults to `false` when unset.

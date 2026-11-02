@@ -68,31 +68,34 @@ properties:
   max_delay:
     type: number
     optional: true
+    min: 0
     description: >-
       Milliseconds to wait for late-arriving data points before charting
       what has arrived. Omit this field to use the backend default; zero
       means no additional delay. The UI rounds to 10-second increments and
-      limits the delay to 15 minutes.
+      limits the delay to 15 minutes. Must be nonnegative.
     mapping:
       path: ['datasource', 'maxDelay']
 
   minimum_resolution:
     type: number
     optional: true
+    min: 0
     description: >-
       The lowest resolution, in milliseconds, to use when computing the
       chart's SignalFlow program. 0 lets Splunk Observability Cloud choose
-      automatically.
+      automatically. Must be nonnegative.
     mapping:
       path: ['datasource', 'minimumResolution']
 
   sample_size:
     type: number
     optional: true
+    min: 1
     # Dashify stores a numeric cap here rather than a boolean toggle.
     description: >-
       The maximum number of time series to sample when a query matches more
-      than this many.
+      than this many. Must be at least 1.
     mapping:
       path: ['datasource', 'sampleSize']
 

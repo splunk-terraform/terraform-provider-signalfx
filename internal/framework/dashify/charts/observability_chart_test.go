@@ -122,6 +122,7 @@ func TestObservabilityChartReadsConfigurationViolations(t *testing.T) {
 	}{
 		{"missing program", `{"<Chart>":[{"<o11y:TimeSeriesChart>":[],"datasource":{},"chart":{},"widget":{}}]}`, []string{"1 value(s)", "program: must be set"}},
 		{"invalid visualization", `{"<Chart>":[{"<o11y:TimeSeriesChart>":[],"datasource":{"program":"A"},"chart":{"chartOptions":{"type":"pie"}},"widget":{}}]}`, []string{"1 value(s)", "must be one of"}},
+		{"negative numeric controls", `{"<Chart>":[{"<o11y:TimeSeriesChart>":[],"datasource":{"program":"A","maxDelay":-1,"minimumResolution":-1,"sampleSize":-1},"chart":{},"widget":{}}]}`, []string{"3 value(s)", "max_delay: must be at least 0", "minimum_resolution: must be at least 0", "sample_size: must be at least 1"}},
 		{"several violations", `{"<Chart>":[{"<o11y:TimeSeriesChart>":[],"datasource":{},"chart":{"chartOptions":{"type":"pie"}},"widget":{}}]}`, []string{"2 value(s)", "program: must be set", "must be one of"}},
 	} {
 		t.Run(test.name, func(t *testing.T) {
@@ -137,6 +138,53 @@ func TestObservabilityChartReadsConfigurationViolations(t *testing.T) {
 			}
 			_, diags = managed.write(t.Context(), model)
 			assert.True(t, diags.HasError(), "configuration rules must still apply to writes")
+		})
+	}
+}
+
+func TestObservabilityChartSharedNumericControls(t *testing.T) {
+	t.Parallel()
+	managed := NewResourceObservabilityChart().(*observabilityChartResource)
+	for _, chart := range managed.engine.Charts() {
+		if chart.Name == "text" {
+			continue
+		}
+		t.Run(chart.Name, func(t *testing.T) {
+			base, _, diags := managed.engine.Decode(t.Context(), chart.Name, map[string]any{
+				chart.Element: []any{},
+				"datasource":  map[string]any{"program": "A"},
+				"chart":       map[string]any{},
+				"widget":      map[string]any{},
+			}, types.ObjectNull(nil))
+			require.False(t, diags.HasError(), diags)
+			for _, field := range []string{"max_delay", "minimum_resolution", "sample_size"} {
+				t.Run(field, func(t *testing.T) {
+					for _, tc := range []struct {
+						name    string
+						value   types.Int64
+						invalid bool
+					}{
+						{"negative", types.Int64Value(-1), true},
+						{"zero", types.Int64Value(0), field == "sample_size"},
+						{"positive", types.Int64Value(1), false},
+						{"unset", types.Int64Null(), false},
+						{"unknown", types.Int64Unknown(), false},
+					} {
+						t.Run(tc.name, func(t *testing.T) {
+							values := base.Attributes()
+							values[field] = tc.value
+							value := types.ObjectValueMust(base.AttributeTypes(t.Context()), values)
+							diagnostics := managed.engine.Validate(chart.Name, value)
+							if tc.invalid {
+								require.Len(t, diagnostics.Errors(), 1)
+								assert.Contains(t, diagnostics.Errors()[0].Detail(), field+": must be at least ")
+							} else {
+								assert.False(t, diagnostics.HasError(), diagnostics)
+							}
+						})
+					}
+				})
+			}
 		})
 	}
 }
