@@ -10,18 +10,15 @@ import (
 	"io"
 	"io/fs"
 	"strings"
-	"sync"
 
 	"go.yaml.in/yaml/v3"
 
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/dashify/charts/definitions"
 )
 
-// Default resolves the embedded chart definitions once for the provider.
+// Default loads a new engine from the embedded chart definitions.
 // Invalid definitions return an error rather than panicking during startup.
-var Default = sync.OnceValues(loadDefault)
-
-func loadDefault() (*Engine, error) {
+func Default() (*Engine, error) {
 	return load(definitions.Files)
 }
 
