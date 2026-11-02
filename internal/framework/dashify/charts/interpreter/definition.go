@@ -25,6 +25,11 @@ const (
 	propertyTypeMap    propertyType = "map"
 )
 
+const (
+	transformNegate           = "negate"
+	transformRelativeDuration = "relative_duration"
+)
+
 type definition struct {
 	Type        string              `yaml:"type"`
 	Version     int                 `yaml:"version"`

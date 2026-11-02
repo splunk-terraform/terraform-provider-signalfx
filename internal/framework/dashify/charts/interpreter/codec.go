@@ -44,10 +44,10 @@ func encodeObject(properties map[string]property, value types.Object) (map[strin
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", name, err)
 		}
-		if p.Mapping.Transform == "negate" {
+		if p.Mapping.Transform == transformNegate {
 			wire = !wire.(bool)
 		}
-		if p.Mapping.Transform == "relative_duration" {
+		if p.Mapping.Transform == transformRelativeDuration {
 			wire, _ = relativeDurationSpec(wire.(string))
 		}
 		setPath(result, p.Mapping.Path, wire)
@@ -183,7 +183,7 @@ func decodeValue(ctx context.Context, p property, valueType attr.Type, spec map[
 	//exhaustive:enforce
 	switch p.Type {
 	case propertyTypeString, propertyTypeEnum:
-		if p.Mapping.Transform == "relative_duration" {
+		if p.Mapping.Transform == transformRelativeDuration {
 			value, err := takeRelativeDuration(spec, p.Mapping.Path)
 			if old, ok := prior.(types.String); ok && present(old) && present(value) {
 				oldMillis, valid := relativeDurationMillis(old.ValueString())
@@ -197,7 +197,7 @@ func decodeValue(ctx context.Context, p property, valueType attr.Type, spec map[
 		return takeString(spec, p.Mapping.Path)
 	case propertyTypeBool:
 		value, err := takeBool(spec, p.Mapping.Path)
-		if p.Mapping.Transform == "negate" && present(value) {
+		if p.Mapping.Transform == transformNegate && present(value) {
 			value = types.BoolValue(!value.ValueBool())
 		}
 		return value, err

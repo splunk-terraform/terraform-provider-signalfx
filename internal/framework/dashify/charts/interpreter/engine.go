@@ -110,10 +110,10 @@ func buildAttributes(properties map[string]property) (map[string]schema.Attribut
 				return nil, fmt.Errorf("%s: empty mapping segment", name)
 			}
 		}
-		if p.Mapping.Transform != "" && p.Mapping.Transform != "negate" && p.Mapping.Transform != "relative_duration" {
+		if p.Mapping.Transform != "" && p.Mapping.Transform != transformNegate && p.Mapping.Transform != transformRelativeDuration {
 			return nil, fmt.Errorf("%s: unsupported transform %q", name, p.Mapping.Transform)
 		}
-		if (p.Mapping.Transform == "negate" && p.Type != propertyTypeBool) || (p.Mapping.Transform == "relative_duration" && p.Type != propertyTypeString) {
+		if (p.Mapping.Transform == transformNegate && p.Type != propertyTypeBool) || (p.Mapping.Transform == transformRelativeDuration && p.Type != propertyTypeString) {
 			return nil, fmt.Errorf("%s: transform does not match type", name)
 		}
 		description := p.Description
@@ -249,7 +249,7 @@ func validateValue(path string, p property, value attr.Value, diagnostics *diag.
 		if p.Type == propertyTypeEnum && !slices.Contains(p.Values, v.ValueString()) {
 			fail(fmt.Sprintf("must be one of %v", p.Values))
 		}
-		if p.Mapping.Transform == "relative_duration" {
+		if p.Mapping.Transform == transformRelativeDuration {
 			if _, valid := relativeDurationSpec(v.ValueString()); !valid {
 				fail("must be a nonzero relative time range such as -15m or -1h30m, representable as whole seconds")
 			}
