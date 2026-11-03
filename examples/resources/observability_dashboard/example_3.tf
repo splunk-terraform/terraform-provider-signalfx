@@ -1,26 +1,11 @@
-resource "signalfx_observability_template" "latency" {
-  title        = "Service latency"
-  root_element = "Chart"
-
-  spec = jsonencode({
-    "<Chart>" = [{
-      "<o11y:SingleValue>" = []
-      chart                = {}
-      datasource = {
-        program = "A = data('latency.p99').mean().publish('A')"
-      }
-      widget = {
-        title = "Service latency"
-      }
-    }]
-  })
-}
-
 resource "signalfx_observability_dashboard" "service_layout" {
   title = "Service layout"
 
   container = [{
-    template_id = signalfx_observability_template.latency.id
+    metrics_single_value = {
+      title   = "Service latency"
+      program = "A = data('latency.p99').mean().publish('A')"
+    }
     layout = {
       absolute   = true
       x          = "1/2"

@@ -285,7 +285,7 @@ func TestResourceObservabilityDashboardAllControlsConfig(t *testing.T) {
 func TestBuildDashboardSpecOmitsAbsentControlBar(t *testing.T) {
 	t.Parallel()
 
-	raw, _, err := buildDashboardSpec(observabilityDashboardModel{Title: types.StringValue("No controls")})
+	raw, err := buildDashboardSpecFixture(t, observabilityDashboardModel{Title: types.StringValue("No controls")})
 	require.NoError(t, err)
 	assert.NotContains(t, string(raw), "controlBar")
 }
@@ -296,7 +296,7 @@ func TestDashboardSpecPlacesControlBarAtTopLevel(t *testing.T) {
 	controlBar := &dashifyControlBarModel{
 		TimeRange: &dashifyTimeRangeControlModel{Default: types.StringValue("-15m")},
 	}
-	raw, _, err := buildDashboardSpec(observabilityDashboardModel{
+	raw, err := buildDashboardSpecFixture(t, observabilityDashboardModel{
 		Title:      types.StringValue("Controls"),
 		ControlBar: controlBar,
 	})
@@ -308,7 +308,7 @@ func TestDashboardSpecPlacesControlBarAtTopLevel(t *testing.T) {
 	assert.Contains(t, spec, "layout")
 
 	root := template.RootElementDashboard
-	parsed, diags := parseDashboardTemplate(&template.Template{Title: "Controls", Spec: raw, Metadata: &template.Metadata{RootElement: &root}})
+	parsed, diags := parseDashboardTemplateFixture(t, &template.Template{Title: "Controls", Spec: raw, Metadata: &template.Metadata{RootElement: &root}})
 	require.Empty(t, diags, diags)
 	require.NotNil(t, parsed.ControlBar)
 	require.NotNil(t, parsed.ControlBar.TimeRange)

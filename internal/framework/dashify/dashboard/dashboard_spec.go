@@ -4,6 +4,7 @@
 package dashboard
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"sort"
@@ -15,6 +16,8 @@ import (
 	"github.com/signalfx/signalfx-go/template"
 
 	fwdashify "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/dashify"
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/dashify/charts"
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/dashify/charts/interpreter"
 )
 
 const (
@@ -39,8 +42,8 @@ func isDashifyImportElement(tag string) bool {
 	return alias != "" && !strings.Contains(alias, ">")
 }
 
-// Converts the Terraform model into a complete Dashify document and its direct imports.
-func buildDashboardSpec(model observabilityDashboardModel) (json.RawMessage, []string, error) {
+// Inline panels embed literal content; only explicit references add imports.
+func buildDashboardSpec(ctx context.Context, engine *interpreter.Engine, model observabilityDashboardModel) (json.RawMessage, []string, error) {
 	spec := map[string]any{"title": model.Title.ValueString()}
 	if model.ControlBar != nil {
 		spec["controlBar"] = buildDashifyControlBar(model.ControlBar)
@@ -48,17 +51,19 @@ func buildDashboardSpec(model observabilityDashboardModel) (json.RawMessage, []s
 	children := make([]any, len(model.Container))
 	items := make([]any, len(model.Container))
 	var imports []string
-	for i := range model.Container {
+	for i, panel := range model.Container {
 		id := fmt.Sprintf("_.%d", i)
-		child, reference, err := buildDashifyPanelChild(spec, model.Container[i], id)
+		child, err := buildDashifyPanelChild(ctx, engine, panel, dashifyImportAlias(id))
 		if err != nil {
-			return nil, nil, fmt.Errorf("container %s template: %w", id, err)
+			return nil, nil, fmt.Errorf("container %s: %w", id, err)
 		}
-		children[i] = child
-		if reference != "" {
+		if !panel.TemplateID.IsNull() {
+			reference := fwdashify.ObservabilityTemplateReference(panel.TemplateID.ValueString())
+			spec[dashifyImportPrefix+dashifyImportAlias(id)] = reference
 			imports = append(imports, reference)
 		}
-		items[i] = buildDashifyLayoutItem(id, model.Container[i].Layout)
+		children[i] = child
+		items[i] = buildDashifyLayoutItem(id, panel.Layout)
 	}
 	spec[dashifyDashboardElement] = children
 	spec["layout"] = map[string]any{"saved": map[string]any{"_": map[string]any{"items": items}}}
@@ -66,38 +71,28 @@ func buildDashboardSpec(model observabilityDashboardModel) (json.RawMessage, []s
 	return raw, imports, err
 }
 
-// Wraps an imported Template or opaque inline content in a Panel; only
-// imports add API metadata, signaled by a non-empty reference.
-func buildDashifyPanelChild(spec map[string]any, model dashifyDashboardContainerModel, id string) (map[string]any, string, error) {
-	if model.TemplateID.IsUnknown() || model.InlineContent.IsUnknown() {
-		return nil, "", fmt.Errorf("template_id and inline_content must be known before writing")
+func buildDashifyPanelChild(ctx context.Context, engine *interpreter.Engine, model dashifyDashboardContainerModel, alias string) (map[string]any, error) {
+	if !model.TemplateID.IsNull() {
+		return map[string]any{dashifyPanelElement: []any{map[string]any{dashifyImportElement + alias + ">": []any{}}}}, nil
 	}
-	idSet := !model.TemplateID.IsNull()
-	contentSet := !model.InlineContent.IsNull()
-	if idSet == contentSet {
-		return nil, "", fmt.Errorf("exactly one of template_id or inline_content must be set")
-	}
-	if contentSet {
-		content, err := decodeDashifyInlineContent(model.InlineContent.ValueString())
+	var content map[string]any
+	if !model.InlineContent.IsNull() {
+		var err error
+		content, err = decodeDashifyInlineContent(model.InlineContent.ValueString())
 		if err != nil {
-			return nil, "", err
+			return nil, err
 		}
-		return map[string]any{dashifyPanelElement: []any{content}}, "", nil
+	} else {
+		var diags diag.Diagnostics
+		content, diags = charts.EncodeContent(ctx, engine, model.Chart)
+		if diags.HasError() {
+			return nil, fmt.Errorf("invalid inline chart: %v", diags)
+		}
 	}
-	if !fwdashify.ObservabilityTemplateIDValid(model.TemplateID.ValueString()) {
-		return nil, "", fmt.Errorf("template_id must be a Template ID without an API path")
-	}
-	alias := dashifyImportAlias(id)
-	reference := fwdashify.ObservabilityTemplateReference(model.TemplateID.ValueString())
-	spec[dashifyImportPrefix+alias] = reference
-	return map[string]any{
-		dashifyPanelElement: []any{
-			map[string]any{dashifyImportElement + alias + ">": []any{}},
-		},
-	}, reference, nil
+	return map[string]any{dashifyPanelElement: []any{content}}, nil
 }
 
-// Validates an opaque Panel child and reserves import elements for template_id.
+// Validates self-contained raw panel content.
 func decodeDashifyInlineContent(raw string) (map[string]any, error) {
 	var value any
 	if err := decodeDashifyJSON([]byte(raw), &value); err != nil {
@@ -112,10 +107,13 @@ func decodeDashifyInlineContent(raw string) (map[string]any, error) {
 		return nil, fmt.Errorf("inline_content %w", err)
 	}
 	if isDashifyImportElement(tag) {
-		return nil, fmt.Errorf("inline_content cannot be an import element; use template_id instead")
+		return nil, fmt.Errorf("inline_content cannot be an import element; use template_id for a shared chart or embed the complete chart content")
 	}
 	if nestedTag, ok := findDashifyImportElement(content); ok {
-		return nil, fmt.Errorf("inline_content cannot contain import element %q; use template_id instead", nestedTag)
+		return nil, fmt.Errorf("inline_content cannot contain import element %q; use template_id for a shared chart or embed the complete chart content", nestedTag)
+	}
+	if key, found := findDashifyImportDependency(content); found {
+		return nil, fmt.Errorf("inline_content cannot contain import dependency %q; use template_id for a shared chart or embed the complete chart content", key)
 	}
 	return content, nil
 }
@@ -126,7 +124,7 @@ func dashifyImportAlias(id string) string {
 }
 
 // Consumes modeled fields and warns about leftovers that a complete-document update would drop.
-func parseDashboardTemplate(record *template.Template) (observabilityDashboardModel, diag.Diagnostics) {
+func parseDashboardTemplate(ctx context.Context, engine *interpreter.Engine, record *template.Template, prior observabilityDashboardModel, resolve dashboardChartResolver) (observabilityDashboardModel, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	var model observabilityDashboardModel
 	if record == nil || record.Metadata == nil || record.Metadata.RootElement == nil {
@@ -186,8 +184,14 @@ func parseDashboardTemplate(record *template.Template) (observabilityDashboardMo
 		if tag != dashifyPanelElement {
 			return model, unsupportedDashboardSpec(fmt.Sprintf("container %s contains unsupported %s; this resource supports flat panels", id, tag))
 		}
-		containerPath := fmt.Sprintf("container.%d", len(model.Container))
-		panel, panelLeftovers, err := parseDashifyPanel(spec, used, id, containerPath, value)
+		position := len(model.Container)
+		var previous dashifyDashboardContainerModel
+		if position < len(prior.Container) {
+			previous = prior.Container[position]
+		}
+		containerPath := fmt.Sprintf("container.%d", position)
+		panel, panelDiags, err := parseDashifyPanel(ctx, engine, spec, used, containerPath, value, previous, resolve)
+		diags.Append(panelDiags...)
 		if err != nil {
 			return model, formatDashboardParseError(fmt.Errorf("container %s: %w", id, err))
 		}
@@ -195,7 +199,6 @@ func parseDashboardTemplate(record *template.Template) (observabilityDashboardMo
 		panel.Layout = layouts[i]
 		model.Container = append(model.Container, panel)
 		leftovers = append(leftovers, dashifyLeftovers(containerPath, node)...)
-		leftovers = append(leftovers, panelLeftovers...)
 	}
 	leftovers = append(controlLeftovers, leftovers...)
 	for alias := range used {
@@ -216,8 +219,9 @@ func parseDashboardTemplate(record *template.Template) (observabilityDashboardMo
 	return model, diags
 }
 
-// Resolves imports to Template IDs and preserves other elements as opaque inline content.
-func parseDashifyPanel(spec map[string]any, used map[string]bool, id, path string, raw any) (dashifyDashboardContainerModel, []string, error) {
+// Expand referenced source charts into literal content, then choose a lossless
+// typed representation. Configured raw panels remain raw on refresh.
+func parseDashifyPanel(ctx context.Context, engine *interpreter.Engine, spec map[string]any, used map[string]bool, panelPath string, raw any, prior dashifyDashboardContainerModel, resolve dashboardChartResolver) (dashifyDashboardContainerModel, diag.Diagnostics, error) {
 	items, ok := raw.([]any)
 	if !ok {
 		return dashifyDashboardContainerModel{}, nil, fmt.Errorf("panel value is %T rather than a list", raw)
@@ -229,37 +233,74 @@ func parseDashifyPanel(spec map[string]any, used map[string]bool, id, path strin
 	if !ok {
 		return dashifyDashboardContainerModel{}, nil, fmt.Errorf("panel content is %T rather than an element object", items[0])
 	}
-	panelContent := unwrapDashifyChartContent(content)
-	tag, value, err := oneDashifyElement(panelContent)
+	if !prior.TemplateID.IsNull() && !prior.TemplateID.IsUnknown() {
+		panelContent := content
+		if inner, ok := wrappedDashifyChartImport(content); ok && len(content) == 1 {
+			panelContent = inner
+		}
+		tag, value, err := oneDashifyElement(panelContent)
+		if err != nil {
+			return dashifyDashboardContainerModel{}, nil, err
+		}
+		if isDashifyImportElement(tag) {
+			alias := strings.TrimSuffix(strings.TrimPrefix(tag, dashifyImportElement), ">")
+			reference, ok := spec[dashifyImportPrefix+alias].(string)
+			if !ok {
+				return dashifyDashboardContainerModel{}, nil, fmt.Errorf("import %q has no matching declaration", alias)
+			}
+			id, ok := fwdashify.ObservabilityTemplateIDFromReference(reference)
+			if !ok {
+				return dashifyDashboardContainerModel{}, nil, fmt.Errorf("import %q references %q rather than a Template ID", alias, reference)
+			}
+			used[alias] = true
+			if args, ok := value.([]any); ok && len(args) == 0 {
+				delete(panelContent, tag)
+			}
+			var warnings diag.Diagnostics
+			if leftovers := dashifyLeftovers(panelPath, panelContent); len(leftovers) > 0 {
+				sort.Strings(leftovers)
+				warnings.AddWarning(dashifyUnmodeledFieldsSummary, "The shared chart reference contains fields absent from Terraform state: "+strings.Join(leftovers, ", ")+". Any update replaces the complete dashboard document and will discard them.")
+			}
+			return dashifyDashboardContainerModel{TemplateID: types.StringValue(id)}, warnings, nil
+		}
+	}
+	_, imported := findDashifyImportElement(content)
+	content, err := expandDashboardChartContent(content, spec, used, resolve, map[string]bool{})
 	if err != nil {
 		return dashifyDashboardContainerModel{}, nil, err
 	}
-	if !isDashifyImportElement(tag) {
-		if nestedTag, found := findDashifyImportElement(content); found {
-			return dashifyDashboardContainerModel{}, nil, fmt.Errorf("container %s contains unsupported nested import element %q", id, nestedTag)
+	encoded, err := json.Marshal(content)
+	if err != nil {
+		return dashifyDashboardContainerModel{}, nil, fmt.Errorf("encode inline content: %w", err)
+	}
+	panel := dashifyDashboardContainerModel{InlineContent: jsontypes.NewNormalizedValue(string(encoded))}
+	if !prior.InlineContent.IsNull() {
+		return panel, nil, nil
+	}
+	chart, leftovers, diags := charts.DecodeContent(ctx, engine, encoded, prior.Chart)
+	if !diags.HasError() && len(leftovers) == 0 {
+		// A typed import must reproduce the complete document. This also catches
+		// explicit nulls and numbers that cannot survive the typed conversion.
+		rebuilt, encodeDiags := charts.EncodeContent(ctx, engine, chart)
+		if !encodeDiags.HasError() {
+			candidate, err := json.Marshal(rebuilt)
+			if err == nil {
+				equal, compareDiags := panel.InlineContent.StringSemanticEquals(ctx, jsontypes.NewNormalizedValue(string(candidate)))
+				if !compareDiags.HasError() && equal {
+					return dashifyDashboardContainerModel{Chart: chart}, nil, nil
+				}
+			}
 		}
-		encoded, err := json.Marshal(content)
-		if err != nil {
-			return dashifyDashboardContainerModel{}, nil, fmt.Errorf("container %s encode inline content: %w", id, err)
+	}
+	if imported {
+		reason := "the chart has unsupported content or values that the typed attributes cannot represent"
+		if len(leftovers) > 0 {
+			sort.Strings(leftovers)
+			reason = "the chart has unmodeled fields: " + strings.Join(leftovers, ", ")
 		}
-		return dashifyDashboardContainerModel{InlineContent: jsontypes.NewNormalizedValue(string(encoded))}, nil, nil
+		return panel, diag.Diagnostics{diag.NewWarningDiagnostic("Chart preserved as raw inline content", "The complete source chart was kept in inline_content because "+reason+". No source chart record was changed.")}, nil
 	}
-	alias := strings.TrimSuffix(strings.TrimPrefix(tag, dashifyImportElement), ">")
-	reference, ok := spec[dashifyImportPrefix+alias].(string)
-	if !ok {
-		return dashifyDashboardContainerModel{}, nil, fmt.Errorf("import %q has no matching declaration", alias)
-	}
-	idValue, ok := fwdashify.ObservabilityTemplateIDFromReference(reference)
-	if !ok {
-		return dashifyDashboardContainerModel{}, nil, fmt.Errorf("import %q references %q rather than a Template ID", alias, reference)
-	}
-	used[alias] = true
-	// Import elements normally carry an empty argument list. If they carry
-	// anything else, leave the tag behind so Read warns that an update drops it.
-	if args, ok := value.([]any); ok && len(args) == 0 {
-		delete(panelContent, tag)
-	}
-	return dashifyDashboardContainerModel{TemplateID: types.StringValue(idValue)}, dashifyLeftovers(path, panelContent), nil
+	return panel, nil, nil
 }
 
 // Finds one angle-bracket element while leaving ordinary sibling properties untouched.
@@ -327,23 +368,4 @@ func findDashifyImportElement(value any) (string, bool) {
 		}
 	}
 	return "", false
-}
-
-func unwrapDashifyChartContent(content map[string]any) map[string]any {
-	tag, value, err := oneDashifyElement(content)
-	if err != nil || tag != dashifyChartElement || len(content) != 1 {
-		return content
-	}
-	items, ok := value.([]any)
-	if !ok || len(items) != 1 {
-		return content
-	}
-	inner, ok := items[0].(map[string]any)
-	if !ok {
-		return content
-	}
-	if _, _, err := oneDashifyElement(inner); err != nil {
-		return content
-	}
-	return inner
 }

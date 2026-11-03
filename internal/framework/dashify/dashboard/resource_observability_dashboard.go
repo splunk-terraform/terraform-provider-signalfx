@@ -17,11 +17,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/signalfx/signalfx-go"
 	"github.com/signalfx/signalfx-go/template"
 
 	fwdashify "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/dashify"
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/dashify/charts"
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/dashify/charts/interpreter"
 	fwembed "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/embed"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/fwerr"
 	fwshared "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/shared"
@@ -30,15 +31,19 @@ import (
 type observabilityDashboardResource struct {
 	fwembed.ResourceData
 	fwembed.ResourceIDImporter
+	engine      *interpreter.Engine
+	schemaError error
 }
 
 var (
-	_ resource.Resource              = (*observabilityDashboardResource)(nil)
-	_ resource.ResourceWithConfigure = (*observabilityDashboardResource)(nil)
+	_ resource.Resource                   = (*observabilityDashboardResource)(nil)
+	_ resource.ResourceWithConfigure      = (*observabilityDashboardResource)(nil)
+	_ resource.ResourceWithValidateConfig = (*observabilityDashboardResource)(nil)
 )
 
 func NewResourceObservabilityDashboard() resource.Resource {
-	return &observabilityDashboardResource{}
+	engine, err := interpreter.Default()
+	return &observabilityDashboardResource{engine: engine, schemaError: err}
 }
 
 func (r *observabilityDashboardResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -46,8 +51,17 @@ func (r *observabilityDashboardResource) Metadata(_ context.Context, req resourc
 }
 
 func (r *observabilityDashboardResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+	if r.schemaError != nil {
+		resp.Diagnostics.AddError("Invalid chart schema", r.schemaError.Error())
+		return
+	}
+	containers, err := dashifyContainerListAttribute(r.engine)
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid chart schema", err.Error())
+		return
+	}
 	resp.Schema = schema.Schema{
-		Description: "Manages an Observability dashboard Template using reusable Template references or raw inline dashboard content. Updates replace the saved dashboard content and discard unsupported fields. Typed chart attributes are coming soon; Directory placement is managed by signalfx_observability_directory.",
+		Description: "Manages an Observability dashboard with inline charts and shared Template references. Configure one typed chart, template_id, or raw inline_content per panel. Updates replace the saved dashboard document and discard unsupported dashboard fields. Directory placement is managed by signalfx_observability_directory.",
 		Attributes: map[string]schema.Attribute{
 			"id": fwshared.ResourceIDAttribute(),
 			"title": schema.StringAttribute{
@@ -58,29 +72,30 @@ func (r *observabilityDashboardResource) Schema(_ context.Context, _ resource.Sc
 				},
 			},
 			"control_bar": dashifyControlBarAttribute(),
-			"container":   dashifyContainerListAttribute(),
+			"container":   containers,
 		},
 	}
 }
 
-func dashifyContainerListAttribute() schema.ListNestedAttribute {
-	return schema.ListNestedAttribute{
-		Optional:    true,
-		Description: "Ordered dashboard panels. Terraform declaration order is authoritative.",
-		Validators:  []validator.List{listvalidator.SizeAtLeast(1)},
-		NestedObject: schema.NestedAttributeObject{Attributes: map[string]schema.Attribute{
-			"template_id": schema.StringAttribute{
-				Optional:    true,
-				Description: "ID of a reusable Observability Template rendered in this panel.",
-			},
-			"inline_content": schema.StringAttribute{
-				Optional:    true,
-				CustomType:  jsontypes.NormalizedType{},
-				Description: "Self-contained dashboard JSON object rendered inline in this panel.",
-			},
-			"layout": dashifyItemLayoutAttribute(),
-		}},
+func dashifyContainerListAttribute(engine *interpreter.Engine) (schema.ListNestedAttribute, error) {
+	attributes, err := charts.Attributes(engine)
+	if err != nil {
+		return schema.ListNestedAttribute{}, err
 	}
+	attributes["inline_content"] = schema.StringAttribute{
+		Optional: true, CustomType: jsontypes.NormalizedType{},
+		Description: "Complete self-contained JSON object rendered inline in this panel. Use for content that the typed chart attributes cannot represent. External template imports are not allowed.",
+	}
+	attributes["layout"] = dashifyItemLayoutAttribute()
+	attributes["template_id"] = schema.StringAttribute{
+		Optional: true, Description: "ID of a reusable Observability Template rendered by reference in this panel. The dashboard does not manage the referenced Template's lifecycle.",
+	}
+	return schema.ListNestedAttribute{
+		Optional:     true,
+		Description:  "Ordered containers. Each container holds a typed inline chart, raw inline_content, or a template_id reference to a shared Template. Terraform declaration order is authoritative.",
+		Validators:   []validator.List{listvalidator.SizeAtLeast(1)},
+		NestedObject: schema.NestedAttributeObject{Attributes: attributes},
+	}, nil
 }
 
 func dashifyItemLayoutAttribute() schema.SingleNestedAttribute {
@@ -99,38 +114,23 @@ func dashifyItemLayoutAttribute() schema.SingleNestedAttribute {
 	}
 }
 
-// Validates each top-level value once it is fully known; Create and Update
-// validate the complete model again after unknown values resolve.
+// Validate known panel content even when another panel has computed values.
 func (r *observabilityDashboardResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
-	model := observabilityDashboardModel{Title: types.StringUnknown()}
-	for _, field := range []struct {
-		name   string
-		target any
-	}{
-		{"title", &model.Title},
-		{"control_bar", &model.ControlBar},
-		{"container", &model.Container},
-	} {
-		value, _, err := tftypes.WalkAttributePath(req.Config.Raw, tftypes.NewAttributePath().WithAttributeName(field.name))
-		if known, ok := value.(tftypes.Value); err != nil || !ok || !known.IsFullyKnown() {
-			continue
-		}
-		resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root(field.name), field.target)...)
+	model, diags := r.model(ctx, req.Config)
+	resp.Diagnostics.Append(diags...)
+	if !resp.Diagnostics.HasError() {
+		resp.Diagnostics.Append(validateDashboardModel(r.engine, model)...)
 	}
-	if resp.Diagnostics.HasError() {
-		return
-	}
-	resp.Diagnostics.Append(validateDashboardModel(model)...)
 }
 
-func validateDashboardModel(model observabilityDashboardModel) diag.Diagnostics {
+func validateDashboardModel(engine *interpreter.Engine, model observabilityDashboardModel) diag.Diagnostics {
 	var resp resource.ValidateConfigResponse
 	fwdashify.ValidateObservabilityTitle(&resp, path.Root("title"), model.Title)
 	validateDashifyControlBar(&resp, path.Root("control_bar"), model.ControlBar)
 	for i := range model.Container {
 		containerPath := path.Root("container").AtListIndex(i)
 		validateDashifyLayout(&resp, containerPath.AtName("layout"), model.Container[i].Layout)
-		validateDashifyTemplate(&resp, containerPath, &model.Container[i])
+		validateDashifyPanel(engine, &resp, containerPath, &model.Container[i])
 	}
 	return resp.Diagnostics
 }
@@ -144,21 +144,27 @@ func validateDashifyLayout(resp *resource.ValidateConfigResponse, layoutPath pat
 	}
 }
 
-func validateDashifyTemplate(resp *resource.ValidateConfigResponse, containerPath path.Path, model *dashifyDashboardContainerModel) {
-	idKnown := !model.TemplateID.IsUnknown()
+func validateDashifyPanel(engine *interpreter.Engine, resp *resource.ValidateConfigResponse, containerPath path.Path, model *dashifyDashboardContainerModel) {
 	contentKnown := !model.InlineContent.IsUnknown()
-	idSet := idKnown && !model.TemplateID.IsNull()
 	contentSet := contentKnown && !model.InlineContent.IsNull()
-
-	if idKnown && contentKnown && idSet == contentSet {
-		resp.Diagnostics.AddAttributeError(containerPath, "Invalid panel content", "container must set exactly one of template_id or inline_content")
+	idKnown := !model.TemplateID.IsUnknown()
+	idSet := idKnown && !model.TemplateID.IsNull()
+	chartKnown := !model.ChartUnknown
+	chartSet := model.Chart.Name != ""
+	selected := 0
+	for _, set := range []bool{contentSet, idSet, chartSet} {
+		if set {
+			selected++
+		}
+	}
+	if selected > 1 || contentKnown && idKnown && chartKnown && selected != 1 {
+		resp.Diagnostics.AddAttributeError(containerPath, "Invalid panel content", "Configure exactly one chart type, template_id, or inline_content per panel.")
 		return
 	}
 	if idSet {
-		id := model.TemplateID.ValueString()
-		if id == "" {
+		if model.TemplateID.ValueString() == "" {
 			resp.Diagnostics.AddAttributeError(containerPath.AtName("template_id"), "Missing required value", "template_id must be non-empty when set")
-		} else if !fwdashify.ObservabilityTemplateIDValid(id) {
+		} else if !fwdashify.ObservabilityTemplateIDValid(model.TemplateID.ValueString()) {
 			resp.Diagnostics.AddAttributeError(containerPath.AtName("template_id"), "Invalid Template ID", "Use a Template ID without an API path.")
 		}
 	}
@@ -167,19 +173,24 @@ func validateDashifyTemplate(resp *resource.ValidateConfigResponse, containerPat
 			resp.Diagnostics.AddAttributeError(containerPath.AtName("inline_content"), "Invalid inline content", err.Error())
 		}
 	}
+	if model.Chart.Name != "" {
+		for _, diagnostic := range engine.Validate(model.Chart.Name, model.Chart.Value) {
+			resp.Diagnostics.AddAttributeError(containerPath.AtName(model.Chart.Name), diagnostic.Summary(), diagnostic.Detail())
+		}
+	}
 }
 
 func (r *observabilityDashboardResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var model observabilityDashboardModel
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &model)...)
+	model, diags := r.model(ctx, req.Plan)
+	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	resp.Diagnostics.Append(validateDashboardModel(model)...)
+	resp.Diagnostics.Append(validateDashboardModel(r.engine, model)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	write, err := observabilityDashboardTemplateWrite(model)
+	write, err := observabilityDashboardTemplateWrite(ctx, r.engine, model)
 	if err != nil {
 		resp.Diagnostics.AddError("Error creating dashboard", err.Error())
 		return
@@ -192,22 +203,28 @@ func (r *observabilityDashboardResource) Create(ctx context.Context, req resourc
 	if resp.Diagnostics.Append(fwerr.ErrorHandler(ctx, resp.State, err)...); resp.Diagnostics.HasError() || err != nil {
 		return
 	}
-	record, _, resultDiags := observabilityDashboardFromResult(result, "")
+	record, resultDiags := dashboardRecordFromResult(result, "")
 	resp.Diagnostics.Append(resultDiags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 	model.ID = types.StringValue(record.ID)
-	resp.Diagnostics.Append(resp.State.Set(ctx, &model)...)
+	resp.Diagnostics.Append(r.setState(ctx, &resp.State, model)...)
 }
 
 func (r *observabilityDashboardResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var state observabilityDashboardModel
-	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	state, diags := r.model(ctx, req.State)
+	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	result, err := r.Details().Client.GetTemplate(ctx, state.ID.ValueString(), nil)
+	var options *template.GetOptions
+	if len(state.Container) == 0 {
+		// Imports can expand all panels. Ordinary refresh resolves only panels
+		// that need inline content, without requesting shared chart records.
+		options = &template.GetOptions{Imports: []template.Import{template.ImportAllChildren}}
+	}
+	result, err := r.Details().Client.GetTemplate(ctx, state.ID.ValueString(), options)
 	if responseErr, ok := signalfx.AsResponseError(err); ok && responseErr.Code() == http.StatusNotFound {
 		resp.State.RemoveResource(ctx)
 		return
@@ -215,32 +232,36 @@ func (r *observabilityDashboardResource) Read(ctx context.Context, req resource.
 	if resp.Diagnostics.Append(fwerr.ErrorHandler(ctx, resp.State, err)...); resp.Diagnostics.HasError() || err != nil {
 		return
 	}
-	_, model, resultDiags := observabilityDashboardFromResult(result, state.ID.ValueString())
+	record, resultDiags := dashboardRecordFromResult(result, state.ID.ValueString())
+	resp.Diagnostics.Append(resultDiags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	resolve := newDashboardChartResolver(ctx, r.Details().Client, result.Includes)
+	model, resultDiags := parseDashboardTemplate(ctx, r.engine, record, state, resolve)
 	resp.Diagnostics.Append(resultDiags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 	model.ID = state.ID
-	resp.Diagnostics.Append(resp.State.Set(ctx, &model)...)
+	resp.Diagnostics.Append(r.setState(ctx, &resp.State, model)...)
 }
 
 func (r *observabilityDashboardResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var model observabilityDashboardModel
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &model)...)
+	model, diags := r.model(ctx, req.Plan)
+	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	resp.Diagnostics.Append(validateDashboardModel(model)...)
+	resp.Diagnostics.Append(validateDashboardModel(r.engine, model)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	var state observabilityDashboardModel
-	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("id"), &model.ID)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	model.ID = state.ID
-	write, err := observabilityDashboardTemplateWrite(model)
+	write, err := observabilityDashboardTemplateWrite(ctx, r.engine, model)
 	if err != nil {
 		resp.Diagnostics.AddError("Error updating dashboard", err.Error())
 		return
@@ -253,44 +274,43 @@ func (r *observabilityDashboardResource) Update(ctx context.Context, req resourc
 	if resp.Diagnostics.Append(fwerr.ErrorHandler(ctx, resp.State, err)...); resp.Diagnostics.HasError() || err != nil {
 		return
 	}
-	_, _, resultDiags := observabilityDashboardFromResult(result, model.ID.ValueString())
+	_, resultDiags := dashboardRecordFromResult(result, model.ID.ValueString())
 	resp.Diagnostics.Append(resultDiags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	resp.Diagnostics.Append(resp.State.Set(ctx, &model)...)
+	resp.Diagnostics.Append(r.setState(ctx, &resp.State, model)...)
 }
 
 func (r *observabilityDashboardResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var state observabilityDashboardModel
-	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	var id types.String
+	resp.Diagnostics.Append(req.State.GetAttribute(ctx, path.Root("id"), &id)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	err := r.Details().Client.DeleteTemplate(ctx, state.ID.ValueString())
+	err := r.Details().Client.DeleteTemplate(ctx, id.ValueString())
 	if responseErr, ok := signalfx.AsResponseError(err); ok && responseErr.Code() == http.StatusNotFound {
 		return
 	}
 	resp.Diagnostics.Append(fwerr.ErrorHandler(ctx, resp.State, err)...)
 }
 
-func observabilityDashboardFromResult(result *template.Result, expectedID string) (*template.Template, observabilityDashboardModel, diag.Diagnostics) {
+func dashboardRecordFromResult(result *template.Result, expectedID string) (*template.Template, diag.Diagnostics) {
 	record, err := fwdashify.ObservabilityTemplateFromResult(result)
 	if err != nil {
-		return nil, observabilityDashboardModel{}, diag.Diagnostics{diag.NewErrorDiagnostic("Invalid Dashboard API response", err.Error())}
+		return nil, diag.Diagnostics{diag.NewErrorDiagnostic("Invalid Dashboard API response", err.Error())}
 	}
-	if expectedID != "" && record.ID != expectedID {
-		return nil, observabilityDashboardModel{}, diag.Diagnostics{diag.NewErrorDiagnostic(
+	if !fwdashify.ObservabilityTemplateIDValid(record.ID) || expectedID != "" && record.ID != expectedID {
+		return nil, diag.Diagnostics{diag.NewErrorDiagnostic(
 			"Invalid Dashboard API response",
 			fmt.Sprintf("Template API returned record %q for Dashboard %q.", record.ID, expectedID),
 		)}
 	}
-	model, diags := parseDashboardTemplate(record)
-	return record, model, diags
+	return record, nil
 }
 
-func observabilityDashboardTemplateWrite(model observabilityDashboardModel) (*template.CreateUpdateTemplateRequest, error) {
-	spec, imports, err := buildDashboardSpec(model)
+func observabilityDashboardTemplateWrite(ctx context.Context, engine *interpreter.Engine, model observabilityDashboardModel) (*template.CreateUpdateTemplateRequest, error) {
+	spec, imports, err := buildDashboardSpec(ctx, engine, model)
 	if err != nil {
 		return nil, err
 	}

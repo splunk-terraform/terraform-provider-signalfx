@@ -6,13 +6,17 @@ package dashboard
 import (
 	"github.com/hashicorp/terraform-plugin-framework-jsontypes/jsontypes"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/dashify/charts"
 )
 
+// model and setState in dashboard_values.go convert this model explicitly.
+// Nested control and layout structs use tfsdk tags for automatic conversion.
 type observabilityDashboardModel struct {
-	ID         types.String                     `tfsdk:"id"`
-	Title      types.String                     `tfsdk:"title"`
-	ControlBar *dashifyControlBarModel          `tfsdk:"control_bar"`
-	Container  []dashifyDashboardContainerModel `tfsdk:"container"`
+	ID         types.String
+	Title      types.String
+	ControlBar *dashifyControlBarModel
+	Container  []dashifyDashboardContainerModel
 }
 
 type dashifyControlBarModel struct {
@@ -76,9 +80,11 @@ type dashifyLayoutModel struct {
 }
 
 type dashifyDashboardContainerModel struct {
-	Layout        *dashifyLayoutModel  `tfsdk:"layout"`
-	TemplateID    types.String         `tfsdk:"template_id"`
-	InlineContent jsontypes.Normalized `tfsdk:"inline_content"`
+	Layout        *dashifyLayoutModel
+	TemplateID    types.String
+	InlineContent jsontypes.Normalized
+	Chart         charts.Content
+	ChartUnknown  bool // some chart attribute is set from a value not known until apply
 }
 
 func (m dashifyPinnedFilterControlModel) effectiveVariableName() types.String {
