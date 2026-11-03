@@ -18,7 +18,13 @@ type UsedVisitor struct {
 	mem       map[string]string
 	inputs    [][3]string
 	arguments map[string]metadata.Argument
-	filters   map[string][]string
+	filters   []Filter
+}
+
+// Filter represents one filter invocation and its values.
+type Filter struct {
+	Key    string
+	Values []string
 }
 
 var (
@@ -30,7 +36,7 @@ func NewUsedVisitor() *UsedVisitor {
 		mem:       make(map[string]string),
 		inputs:    make([][3]string, 0),
 		arguments: make(map[string]metadata.Argument),
-		filters:   make(map[string][]string),
+		filters:   make([]Filter, 0),
 	}
 }
 
@@ -42,8 +48,12 @@ func (uv *UsedVisitor) Arguments() map[string]metadata.Argument {
 	return uv.arguments
 }
 
-func (uv *UsedVisitor) Filters() map[string][]string {
+func (uv *UsedVisitor) Filters() []Filter {
 	return uv.filters
+}
+
+func (uv *UsedVisitor) addFilter(key string, values []string) {
+	uv.filters = append(uv.filters, Filter{Key: key, Values: slices.Clone(values)})
 }
 
 func (uv *UsedVisitor) Visit(block flow.ExecutionBlock) error {
@@ -77,7 +87,7 @@ func (uv *UsedVisitor) Visit(block flow.ExecutionBlock) error {
 				for _, v := range val.Values {
 					values = append(values, fmt.Sprint(v.Value))
 				}
-				uv.filters[field] = append(uv.filters[field], values...)
+				uv.addFilter(field, values)
 			case *flow.ExecutionBlockArgumentOperation:
 				queue := list.New()
 				queue.PushBack(val.Left)
@@ -101,10 +111,10 @@ func (uv *UsedVisitor) Visit(block flow.ExecutionBlock) error {
 						for _, v := range v.Values {
 							values = append(values, fmt.Sprint(v.Value))
 						}
-						uv.filters[field] = append(uv.filters[field], values...)
+						uv.addFilter(field, values)
 					case *flow.ExecutionBlockArgumentOperation:
-						queue.PushBack(v.Left)
-						queue.PushBack(v.Right)
+						queue.PushFront(v.Right)
+						queue.PushFront(v.Left)
 					}
 				}
 			}
