@@ -25,6 +25,19 @@ func NewInspector(domain *url.URL, token string) *Inspector {
 }
 
 func (inspect *Inspector) GetAutoDetectorArgumentsAndFilters(ctx context.Context, programText string) ([]metadata.Argument, map[string][]string, error) {
+	arguments, filters, err := inspect.GetAutoDetectorArgumentsAndOrderedFilters(ctx, programText)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	byKey := make(map[string][]string, len(filters))
+	for _, filter := range filters {
+		byKey[filter.Key] = append(byKey[filter.Key], filter.Values...)
+	}
+	return arguments, byKey, nil
+}
+
+func (inspect *Inspector) GetAutoDetectorArgumentsAndOrderedFilters(ctx context.Context, programText string) ([]metadata.Argument, []Filter, error) {
 	graph, err := inspect.flow.GetExecutionGraph(ctx, programText)
 	if err != nil {
 		return nil, nil, fmt.Errorf("unable to load exec graph: %w", err)

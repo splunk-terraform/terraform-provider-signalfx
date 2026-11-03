@@ -38,7 +38,7 @@ func TestUsedVisitorVisit(t *testing.T) {
 		blocks      flow.ExecutionGraph
 		wantInputs  [][3]string
 		wantArgs    map[string]metadata.Argument
-		wantFilters map[string][]string
+		wantFilters []Filter
 	}{
 		{
 			name: "import without alias stores module by name",
@@ -50,7 +50,7 @@ func TestUsedVisitorVisit(t *testing.T) {
 				},
 			},
 			wantArgs:    map[string]metadata.Argument{},
-			wantFilters: map[string][]string{},
+			wantFilters: []Filter{},
 		},
 		{
 			name: "import with alias stores module by alias",
@@ -63,7 +63,7 @@ func TestUsedVisitorVisit(t *testing.T) {
 				},
 			},
 			wantArgs:    map[string]metadata.Argument{},
-			wantFilters: map[string][]string{},
+			wantFilters: []Filter{},
 		},
 		{
 			name: "non detect stream is ignored",
@@ -81,7 +81,7 @@ func TestUsedVisitorVisit(t *testing.T) {
 				},
 			},
 			wantArgs:    map[string]metadata.Argument{},
-			wantFilters: map[string][]string{},
+			wantFilters: []Filter{},
 		},
 		{
 			name: "detect stream with known import adds input",
@@ -103,7 +103,7 @@ func TestUsedVisitorVisit(t *testing.T) {
 				{"signalfx.detectors.autodetect.apm", "apm", "blended"},
 			},
 			wantArgs:    map[string]metadata.Argument{},
-			wantFilters: map[string][]string{},
+			wantFilters: []Filter{},
 		},
 		{
 			name: "detect stream with unknown import does not add input",
@@ -117,7 +117,7 @@ func TestUsedVisitorVisit(t *testing.T) {
 			},
 			wantInputs:  nil,
 			wantArgs:    map[string]metadata.Argument{},
-			wantFilters: map[string][]string{},
+			wantFilters: []Filter{},
 		},
 		{
 			name: "Detect stream with arguments set",
@@ -159,9 +159,9 @@ func TestUsedVisitorVisit(t *testing.T) {
 			wantArgs: map[string]metadata.Argument{
 				"limit": {Name: "limit", Type: "int", DefaultValue: 10},
 			},
-			wantFilters: map[string][]string{
-				"service.name": {"checkout", "payment", "cart"},
-				"env":          {"production"},
+			wantFilters: []Filter{
+				{Key: "service.name", Values: []string{"checkout", "payment", "cart"}},
+				{Key: "env", Values: []string{"production"}},
 			},
 		},
 	} {
@@ -177,4 +177,44 @@ func TestUsedVisitorVisit(t *testing.T) {
 			assert.Equal(t, tc.wantFilters, visitor.Filters(), "Must match the expected filters")
 		})
 	}
+}
+
+func TestUsedVisitorPreservesNestedFilterOrder(t *testing.T) {
+	t.Parallel()
+
+	visitor := NewUsedVisitor()
+	require.NoError(t, flow.ExecutionGraph{
+		flow.ExecutionBlockStream{
+			Typed: "DETECT",
+			Start: flow.ExecutionBlockStreamMethod{
+				FunctionName: "requests.blended",
+				Arguments: flow.ExecutionBlockArguments{
+					"filter_": &flow.ExecutionBlockArgumentOperation{
+						Operation: "AND",
+						Left: &flow.ExecutionBlockArgumentOperation{
+							Operation: "AND",
+							Left: &flow.ExecutionBlockArgumentFilter{
+								Field: flow.ExecutionBlockArgumentLiteral{Value: "service"},
+								Value: &flow.ExecutionBlockArgumentLiteral{Value: "web"},
+							},
+							Right: &flow.ExecutionBlockArgumentFilter{
+								Field: flow.ExecutionBlockArgumentLiteral{Value: "environment"},
+								Value: &flow.ExecutionBlockArgumentLiteral{Value: "production"},
+							},
+						},
+						Right: &flow.ExecutionBlockArgumentFilter{
+							Field: flow.ExecutionBlockArgumentLiteral{Value: "service"},
+							Value: &flow.ExecutionBlockArgumentLiteral{Value: "api"},
+						},
+					},
+				},
+			},
+		},
+	}.Visit(visitor))
+
+	assert.Equal(t, []Filter{
+		{Key: "service", Values: []string{"web"}},
+		{Key: "environment", Values: []string{"production"}},
+		{Key: "service", Values: []string{"api"}},
+	}, visitor.Filters())
 }
