@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func makeProperty(kind propertyType, path ...string) property {
+func newProperty(kind propertyType, path ...string) property {
 	return property{Type: kind, Optional: true, Description: "Test field.", Mapping: mapping{Path: path}}
 }
 
@@ -52,9 +52,9 @@ func (f *chartFixture) Value(overrides map[string]attr.Value) types.Object {
 }
 
 func TestValidationDefersUnknownAndEnforcesConditionalCollections(t *testing.T) {
-	mode := makeProperty("enum", "chart", "mode")
+	mode := newProperty("enum", "chart", "mode")
 	mode.Values = []string{"Scale", "None"}
-	scale := makeProperty("list", "chart", "scale")
+	scale := newProperty("list", "chart", "scale")
 	scale.Item = &item{Type: "string"}
 	scale.RequiredWhen = &condition{Field: "mode", Value: "Scale"}
 	scale.RequiresValue = &condition{Field: "mode", Value: "Scale"}
@@ -72,9 +72,9 @@ func TestValidationDefersUnknownAndEnforcesConditionalCollections(t *testing.T) 
 
 func TestUnicodeLengthAndFiniteFloats(t *testing.T) {
 	minimum := 2
-	title := makeProperty("string", "widget", "title")
+	title := newProperty("string", "widget", "title")
 	title.MinLength = &minimum
-	fixture := newChartFixture(t, map[string]property{"title": title, "limit": makeProperty("float", "chart", "limit")})
+	fixture := newChartFixture(t, map[string]property{"title": title, "limit": newProperty("float", "chart", "limit")})
 	for _, limit := range []float64{math.Inf(1), math.Inf(-1)} {
 		value := fixture.Value(map[string]attr.Value{"title": types.StringValue("你好"), "limit": types.Float64Value(limit)})
 		_, d := fixture.engine.Encode(context.Background(), "test", value)
@@ -86,10 +86,10 @@ func TestUnicodeLengthAndFiniteFloats(t *testing.T) {
 }
 
 func TestNestedCollectionsRoundTrip(t *testing.T) {
-	label := makeProperty("string", "label")
-	list := makeProperty("list", "chart", "windows")
+	label := newProperty("string", "label")
+	list := newProperty("list", "chart", "windows")
 	list.Item = &item{Properties: map[string]property{"label": label}}
-	items := makeProperty("map", "chart", "namedWindows")
+	items := newProperty("map", "chart", "namedWindows")
 	items.Item = list.Item
 	fixture := newChartFixture(t, map[string]property{"windows": list, "named_windows": items})
 	attributes, err := fixture.engine.Attributes("test")
@@ -158,7 +158,7 @@ func TestTableGroupingDecodesCurrentArrays(t *testing.T) {
 }
 
 func TestDecodeNumbersAndElementArgs(t *testing.T) {
-	fixture := newChartFixture(t, map[string]property{"count": makeProperty("number", "chart", "count"), "fraction": makeProperty("float", "chart", "fraction")})
+	fixture := newChartFixture(t, map[string]property{"count": newProperty("number", "chart", "count"), "fraction": newProperty("float", "chart", "fraction")})
 	for _, number := range []struct {
 		integer      json.Number
 		wantInteger  int64
@@ -187,7 +187,7 @@ func TestDecodeNumbersAndElementArgs(t *testing.T) {
 
 func TestDefinitionRejectsUnenforceableAndAmbiguousFields(t *testing.T) {
 	for _, name := range []string{"id", "title"} {
-		_, err := newEngine([]definition{{Type: name, Version: 1, Element: "o11y:Reserved", Properties: map[string]property{"program": makeProperty("string", "datasource", "program")}}})
+		_, err := newEngine([]definition{{Type: name, Version: 1, Element: "o11y:Reserved", Properties: map[string]property{"program": newProperty("string", "datasource", "program")}}})
 		assert.Error(t, err, "chart %s can overwrite a resource attribute", name)
 	}
 	minimum := 1
@@ -273,7 +273,7 @@ func TestOneOfRejectsUnsupportedWireAlternatives(t *testing.T) {
 		"required block child": {"unit": {Type: "enum", Description: "Unit.", Values: []string{"Byte"}}, "custom": {Type: "block", Properties: map[string]property{"prefix": {Type: "string", Required: true, Description: "Prefix.", Mapping: mapping{Path: []string{"prefix"}}}}}},
 	} {
 		t.Run(name, func(t *testing.T) {
-			choice := makeProperty("oneof", "chart", "choice")
+			choice := newProperty("oneof", "chart", "choice")
 			choice.Variants = variants
 			_, err := newEngine([]definition{{Type: "test", Version: 1, Element: "T", Properties: map[string]property{"choice": choice}}})
 			assert.Error(t, err, "unsupported oneof accepted")
@@ -289,9 +289,9 @@ func TestOneOfRejectsIgnoredBlockVariantMetadata(t *testing.T) {
 		"mapping path": func(p *property) { p.Mapping.Path = []string{"custom"} },
 	} {
 		t.Run(name, func(t *testing.T) {
-			variant := property{Type: "block", Properties: map[string]property{"prefix": makeProperty("string", "prefix")}}
+			variant := property{Type: "block", Properties: map[string]property{"prefix": newProperty("string", "prefix")}}
 			change(&variant)
-			choice := makeProperty("oneof", "chart", "choice")
+			choice := newProperty("oneof", "chart", "choice")
 			choice.Variants = map[string]property{"custom": variant}
 			_, err := newEngine([]definition{{Type: "test", Version: 1, Element: "o11y:Test", Properties: map[string]property{"choice": choice}}})
 			assert.Error(t, err, "ignored block-variant metadata accepted")
@@ -300,13 +300,13 @@ func TestOneOfRejectsIgnoredBlockVariantMetadata(t *testing.T) {
 }
 
 func TestOneOfDecodeSelectsWireShapeAndPreservesUnmodeledFields(t *testing.T) {
-	choice := makeProperty("oneof", "chart", "choice")
+	choice := newProperty("oneof", "chart", "choice")
 	choice.AtLeastOneOf = []string{"unit", "prefix", "suffix"}
 	choice.Variants = map[string]property{
 		"unit": {Type: "enum", Description: "Named unit.", Values: []string{"Byte"}},
 		"custom": {Type: "block", Properties: map[string]property{
-			"prefix": makeProperty("string", "prefix"),
-			"suffix": makeProperty("string", "suffix"),
+			"prefix": newProperty("string", "prefix"),
+			"suffix": newProperty("string", "suffix"),
 		}},
 	}
 	fixture := newChartFixture(t, map[string]property{"choice": choice})
@@ -359,16 +359,16 @@ func TestEncodeReportsUnsupportedValues(t *testing.T) {
 		map[string]attr.Type{"label": unsupported.Type(t.Context())},
 		map[string]attr.Value{"label": unsupported},
 	)
-	children := map[string]property{"label": makeProperty("string", "label")}
-	block := makeProperty("block", "chart", "value")
+	children := map[string]property{"label": newProperty("string", "label")}
+	block := newProperty("block", "chart", "value")
 	block.Properties = children
-	list := makeProperty("list", "chart", "value")
+	list := newProperty("list", "chart", "value")
 	list.Item = &item{Properties: children}
-	items := makeProperty("map", "chart", "value")
+	items := newProperty("map", "chart", "value")
 	items.Item = list.Item
-	scalarChoice := makeProperty("oneof", "chart", "value")
+	scalarChoice := newProperty("oneof", "chart", "value")
 	scalarChoice.Variants = map[string]property{"label": {Type: "string", Description: "Label."}}
-	blockChoice := makeProperty("oneof", "chart", "value")
+	blockChoice := newProperty("oneof", "chart", "value")
 	blockChoice.Variants = map[string]property{"custom": {Type: "block", Properties: children}}
 
 	for _, tc := range []struct {
@@ -377,7 +377,7 @@ func TestEncodeReportsUnsupportedValues(t *testing.T) {
 		value    attr.Value
 		location string
 	}{
-		{"scalar", makeProperty("string", "chart", "value"), unsupported, ""},
+		{"scalar", newProperty("string", "chart", "value"), unsupported, ""},
 		{"object", block, object, "label: "},
 		{"list", list, types.ListValueMust(object.Type(t.Context()), []attr.Value{object}), "element 0: label: "},
 		{"map", items, types.MapValueMust(object.Type(t.Context()), map[string]attr.Value{"source": object}), `key "source": label: `},
