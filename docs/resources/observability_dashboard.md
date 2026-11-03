@@ -102,11 +102,11 @@ resource "signalfx_observability_dashboard" "service_layout" {
     layout = {
       absolute   = true
       x          = "1/2"
-      y          = "26"
+      y          = "2"
       width      = "1/2"
-      height     = "228"
+      height     = "15"
       min_width  = "4"
-      min_height = "168"
+      min_height = "11"
     }
   }]
 }
@@ -178,9 +178,9 @@ A pinned filter's required `property` names the dimension or property to filter.
 
 Each `container` represents one panel and needs exactly one content source: `template_id` for a reusable Template or `inline_content` for inline JSON.
 
-A panel's `layout` supports `x`, `y`, `absolute`, `width`, `height`, `min_width`, and `min_height`. Use `x = "0"` for the left edge and `x = "1/2"` or `x = "50%"` to start halfway across the dashboard. Omit `x` for automatic horizontal placement. Numeric values are layout units, not pixels; simple fractions and percentages are also supported. Terraform list order controls panel order and row flow. Use a `for` expression to generate panels from a list, for example `container = [for id in var.chart_ids : { template_id = id }]`.
+A panel's `layout` supports `x`, `y`, `absolute`, `width`, `height`, `min_width`, and `min_height`. Use `x = "0"` for the left edge and `x = "1/2"` or `x = "50%"` to start halfway across the dashboard. Omit `x` for automatic horizontal placement. Numeric values are layout units, not pixels; simple fractions and percentages are also supported. In the current UI, a flat dashboard uses a 16-pixel layout step, so `height = "15"` produces a panel roughly 224 pixels tall after its gap. Terraform list order controls panel order and row flow. Use a `for` expression to generate panels from a list, for example `container = [for id in var.chart_ids : { template_id = id }]`.
 
-Set `absolute = true` to position a panel outside normal row flow using both `x` and `y`. For example, `x = "1/2"` and `y = "26"` starts the panel halfway across and 26 layout units down. Absolute panels are placed independently and can overlap. Set `absolute = false` or omit it to use normal row flow, where the UI calculates vertical placement and ignores `y`. The UI resolves fractions and percentages against canvas width for both axes, so `y = "50%"` is half the canvas width in layout units, not half the dashboard height.
+Set `absolute = true` to position a panel outside normal row flow using both `x` and `y`. For example, `x = "1/2"` and `y = "2"` starts the panel halfway across and two layout units down. Absolute panels are placed independently and can overlap. Set `absolute = false` or omit it to use normal row flow, where the UI calculates vertical placement and ignores `y`. The UI resolves fractions and percentages against canvas width for both axes, so `y = "50%"` is half the canvas width in layout units, not half the dashboard height.
 
 Deleted UI content can leave null panel slots in the saved dashboard. Import omits these slots and keeps the surviving panels' positions and sizes. Saved layout data attached to omitted slots is reported as unsupported and discarded on update.
 

@@ -1,0 +1,23 @@
+# Copyright Splunk, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
+type: text
+version: 1
+description: >-
+  A markdown notes widget with no metric plumbing, commonly used for runbook
+  links and dashboard annotations. This is the Dashify equivalent of the
+  classic `signalfx_text_chart` resource.
+
+element: 'o11y:Text'
+
+extends:
+  - common/widget.yml
+
+properties:
+  markdown:
+    type: string
+    optional: true
+    description: >-
+      The widget's body content, in GitHub-flavored Markdown or HTML.
+    mapping:
+      path: ['chart', 'markdown']
