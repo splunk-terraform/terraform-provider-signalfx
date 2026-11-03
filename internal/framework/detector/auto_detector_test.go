@@ -18,6 +18,7 @@ import (
 	"github.com/signalfx/signalfx-go/notification"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/experimental"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/experimental/pkg/metadata"
 	flow "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/experimental/pkg/signalflow"
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/fwtest"
@@ -31,6 +32,23 @@ func TestAutoDetectorResourceMetadata(t *testing.T) {
 	r.Metadata(t.Context(), resource.MetadataRequest{ProviderTypeName: "signalfx"}, resp)
 
 	assert.Equal(t, "signalfx_customized_auto_detector", resp.TypeName)
+}
+
+func TestPreserveFilterOrderKeepsConfiguredOrderAndDuplicateCalls(t *testing.T) {
+	assert.Equal(t, []experimental.Filter{
+		{Key: "environment", Values: []string{"production"}},
+		{Key: "service", Values: []string{"web"}},
+		{Key: "service", Values: []string{"api"}},
+		{Key: "region", Values: []string{"us-east-1"}},
+	}, preserveFilterOrder(
+		[]string{"environment", "service", "service"},
+		[]experimental.Filter{
+			{Key: "service", Values: []string{"web"}},
+			{Key: "environment", Values: []string{"production"}},
+			{Key: "service", Values: []string{"api"}},
+			{Key: "region", Values: []string{"us-east-1"}},
+		},
+	))
 }
 
 func TestAutoDetectorResourceSchema(t *testing.T) {

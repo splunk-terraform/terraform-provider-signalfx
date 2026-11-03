@@ -416,14 +416,14 @@ func (r *AutoDetectorResource) buildRequest(ctx context.Context, parent *detecto
 		vb   = experimental.NewProgramBuilderVisitor()
 	)
 
-	if results, filters, err := experimental.NewInspector(u, r.Details().AuthToken).GetAutoDetectorArgumentsAndFilters(ctx, parent.ProgramText); err == nil {
+	if results, filters, err := experimental.NewInspector(u, r.Details().AuthToken).GetAutoDetectorArgumentsAndOrderedFilters(ctx, parent.ProgramText); err == nil {
 		for _, r := range results {
 			if r.Type == "filter" {
 				vb.WithFilterKey(r.Name)
 			}
 		}
-		for key, values := range filters {
-			vb.WithFilter(key, values...)
+		for _, filter := range filters {
+			vb.WithFilter(filter.Key, filter.Values...)
 		}
 	} else {
 		tflog.Warn(ctx, "Unable to load results from server, filter key may be wrong", tfext.ErrorLogFields(err))
@@ -519,7 +519,7 @@ func (r *AutoDetectorResource) syncModelFromDetector(ctx context.Context, model 
 		inspector = experimental.NewInspector(u, r.Details().AuthToken)
 	)
 
-	arguments, filters, err := inspector.GetAutoDetectorArgumentsAndFilters(ctx, current.ProgramText)
+	arguments, filters, err := inspector.GetAutoDetectorArgumentsAndOrderedFilters(ctx, current.ProgramText)
 	if err != nil {
 		diags.AddError("Unable to load auto detector input details", err.Error())
 		return diags
@@ -542,14 +542,28 @@ func (r *AutoDetectorResource) syncModelFromDetector(ctx context.Context, model 
 		"values": types.ListType{ElemType: types.StringType},
 	}
 
+	var previousFilters []autoDetectorFilterModel
+	if !model.Filters.IsNull() && !model.Filters.IsUnknown() {
+		diags.Append(model.Filters.ElementsAs(ctx, &previousFilters, false)...)
+		if diags.HasError() {
+			return diags
+		}
+	}
+
+	previousKeys := make([]string, 0, len(previousFilters))
+	for _, filter := range previousFilters {
+		previousKeys = append(previousKeys, filter.Key.ValueString())
+	}
+	orderedFilters := preserveFilterOrder(previousKeys, filters)
+
 	var filterModels []autoDetectorFilterModel
-	for key, values := range filters {
+	for _, filter := range orderedFilters {
 		var vals []attr.Value
-		for _, value := range values {
+		for _, value := range filter.Values {
 			vals = append(vals, types.StringValue(value))
 		}
 		filterModels = append(filterModels, autoDetectorFilterModel{
-			Key:    types.StringValue(key),
+			Key:    types.StringValue(filter.Key),
 			Values: types.ListValueMust(types.StringType, vals),
 		})
 	}
@@ -561,4 +575,19 @@ func (r *AutoDetectorResource) syncModelFromDetector(ctx context.Context, model 
 	}
 
 	return diags
+}
+
+func preserveFilterOrder(previousKeys []string, filters []experimental.Filter) []experimental.Filter {
+	ordered := make([]experimental.Filter, 0, len(filters))
+	remaining := append([]experimental.Filter(nil), filters...)
+	for _, key := range previousKeys {
+		for i, filter := range remaining {
+			if filter.Key == key {
+				ordered = append(ordered, filter)
+				remaining = append(remaining[:i], remaining[i+1:]...)
+				break
+			}
+		}
+	}
+	return append(ordered, remaining...)
 }
