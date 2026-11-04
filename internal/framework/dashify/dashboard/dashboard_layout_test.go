@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-testing/config"
 	testresource "github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/tfversion"
@@ -34,17 +35,17 @@ func TestDashboardPositionedPanelsCompactDeletedSlots(t *testing.T) {
 			]}}}
 		}`),
 	}
-	model, diags := parseDashboardTemplate(record)
+	model, diags := parseDashboardTemplateFixture(t, record)
 	require.Empty(t, diags, diags)
 	require.Len(t, model.Container, 2)
-	assert.Equal(t, "chart-left", model.Container[0].TemplateID.ValueString())
+	assert.Equal(t, "chart-left", model.Container[0].Chart.Value.Attributes()["title"].(types.String).ValueString())
 	assert.Equal(t, "0", model.Container[0].Layout.X.ValueString())
-	assert.Equal(t, "chart-right", model.Container[1].TemplateID.ValueString())
+	assert.Equal(t, "chart-right", model.Container[1].Chart.Value.Attributes()["title"].(types.String).ValueString())
 	assert.Equal(t, "1/2", model.Container[1].Layout.X.ValueString())
-	rebuilt, _, err := buildDashboardSpec(model)
+	rebuilt, err := buildDashboardSpecFixture(t, model)
 	require.NoError(t, err)
 	record.Spec = rebuilt
-	roundTrip, diags := parseDashboardTemplate(record)
+	roundTrip, diags := parseDashboardTemplateFixture(t, record)
 	require.Empty(t, diags, diags)
 	assert.Equal(t, model, roundTrip)
 	assert.NotContains(t, string(rebuilt), "null")
@@ -65,6 +66,10 @@ func TestResourceObservabilityDashboardPositionedImportUpdate(t *testing.T) {
 	writes := 0
 	handlers := map[string]http.Handler{
 		"GET /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if id := r.PathValue("id"); id == "chart-left" || id == "chart-right" {
+				assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: dashboardSourceChartFixture(id)}))
+				return
+			}
 			assert.Equal(t, record.ID, r.PathValue("id"))
 			assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: record}))
 		}),
@@ -94,7 +99,7 @@ func TestResourceObservabilityDashboardPositionedImportUpdate(t *testing.T) {
 				assert.Equal(t, false, items[1].(map[string]any)["absolute"], "false must restore normal row flow")
 			}
 			assert.Equal(t, "1/2", items[1].(map[string]any)["w"])
-			assert.Equal(t, []string{"/v2/template/chart-left", "/v2/template/chart-right"}, write.Metadata.Imports)
+			assert.Empty(t, write.Metadata.Imports)
 			record.Spec, record.Title = write.Spec, write.Title
 			assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: record}))
 		}),
@@ -109,8 +114,8 @@ func TestResourceObservabilityDashboardPositionedImportUpdate(t *testing.T) {
 resource "signalfx_observability_dashboard" "test" {
   title = "Positioned panels"
   container = [
-    { template_id = "chart-left", layout = { absolute = true, x = "0", y = "0", width = "1/2", height = "26" } },
-    { template_id = "chart-right", layout = { absolute = var.right_position.absolute, x = var.right_position.x, y = var.right_position.y, width = "1/2", height = "26" } },
+    { text = { title = "chart-left", markdown = "chart-left" }, layout = { absolute = true, x = "0", y = "0", width = "1/2", height = "26" } },
+    { text = { title = "chart-right", markdown = "chart-right" }, layout = { absolute = var.right_position.absolute, x = var.right_position.x, y = var.right_position.y, width = "1/2", height = "26" } },
   ]
 }`
 	changedPosition := config.Variables{"right_position": config.ObjectVariable(map[string]config.Variable{

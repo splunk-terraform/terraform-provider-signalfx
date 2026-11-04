@@ -55,13 +55,13 @@ func (r *observabilityChartResource) Schema(_ context.Context, _ resource.Schema
 		"id":    fwshared.ResourceIDAttribute(),
 		"title": schema.StringAttribute{Required: true, Description: "Template record title. The chart display title is configured separately."},
 	}
-	for _, chart := range r.engine.Charts() {
-		nested, err := r.engine.Attributes(chart.Name)
-		if err != nil {
-			resp.Diagnostics.AddError("Invalid chart schema", err.Error())
-			return
-		}
-		attributes[chart.Name] = schema.SingleNestedAttribute{Optional: true, MarkdownDescription: chart.Description, Attributes: nested}
+	chartAttributes, err := Attributes(r.engine)
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid chart schema", err.Error())
+		return
+	}
+	for name, attribute := range chartAttributes {
+		attributes[name] = attribute
 	}
 	resp.Schema = schema.Schema{
 		Description: "Manages a reusable Observability Chart Template. Configure exactly one chart type. Updates replace the complete saved chart and discard unsupported fields. Reference its ID from a Dashboard panel; Directory placement is managed by signalfx_observability_directory.",

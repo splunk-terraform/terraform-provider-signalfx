@@ -6,41 +6,55 @@ description: |-
 
 # Resource: signalfx_observability_dashboard
 
-Use this resource to manage a modern dashboard's flat panels, controls, panel sizes, and positions. Each panel can reference a Template or hold inline JSON.
+Use this resource to manage a modern dashboard's flat panels, controls, panel sizes, and positions. Each panel can embed a typed chart or complete raw JSON directly in the dashboard record, or reference a shared Template by ID. Inline and shared charts can appear together in the same dashboard.
 
-To place the dashboard in a folder, add its ID to a Directory resource's `templates` list. Updates replace the saved dashboard content. Unsupported fields are absent from Terraform state and are discarded on update. Copy UI changes you want to keep into Terraform before applying.
+To place the dashboard in a folder, add its ID to a Directory resource's `templates` list. Updates replace the saved dashboard content. Unsupported dashboard fields are absent from Terraform state and are discarded on update. Copy UI changes you want to keep into Terraform before applying.
 
 ## Example
 
 ```terraform
-resource "signalfx_observability_template" "chart" {
-  title        = "Request rate"
-  root_element = "Chart"
+resource "signalfx_observability_chart" "service_latency" {
+  title = "Reusable service latency"
 
-  spec = jsonencode({
-    "<Chart>" = [{
-      "<o11y:SingleValue>" = []
-      chart                = {}
-      datasource = {
-        program = "A = data('requests.count').sum().publish('A')"
-      }
-      widget = {
-        title = "Request rate"
-      }
-    }]
-  })
+  metrics_single_value = {
+    title   = "Service latency"
+    program = "A = data('latency.p99').mean().publish('A')"
+  }
 }
 
 resource "signalfx_observability_dashboard" "service" {
   title = "Service overview"
 
-  container = [{
-    layout = {
-      width  = "50%"
-      height = "30"
-    }
-    template_id = signalfx_observability_template.chart.id
-  }]
+  container = [
+    {
+      metrics_time_series = {
+        title         = "Request rate"
+        program       = "A = data('requests.count').sum().publish('A')"
+        visualization = "line"
+      }
+      layout = {
+        width  = "50%"
+        height = "30"
+      }
+    },
+    {
+      text = {
+        title    = "Runbook"
+        markdown = "Check request volume before investigating latency."
+      }
+      layout = {
+        width  = "50%"
+        height = "30"
+      }
+    },
+    {
+      template_id = signalfx_observability_chart.service_latency.id
+      layout = {
+        width  = "50%"
+        height = "30"
+      }
+    },
+  ]
 }
 ```
 
@@ -76,29 +90,14 @@ resource "signalfx_observability_dashboard" "inline_content" {
 ## Panel layout
 
 ```terraform
-resource "signalfx_observability_template" "latency" {
-  title        = "Service latency"
-  root_element = "Chart"
-
-  spec = jsonencode({
-    "<Chart>" = [{
-      "<o11y:SingleValue>" = []
-      chart                = {}
-      datasource = {
-        program = "A = data('latency.p99').mean().publish('A')"
-      }
-      widget = {
-        title = "Service latency"
-      }
-    }]
-  })
-}
-
 resource "signalfx_observability_dashboard" "service_layout" {
   title = "Service layout"
 
   container = [{
-    template_id = signalfx_observability_template.latency.id
+    metrics_single_value = {
+      title   = "Service latency"
+      program = "A = data('latency.p99').mean().publish('A')"
+    }
     layout = {
       absolute   = true
       x          = "1/2"
@@ -115,24 +114,6 @@ resource "signalfx_observability_dashboard" "service_layout" {
 ## Dashboard controls
 
 ```terraform
-resource "signalfx_observability_template" "control_chart" {
-  title        = "Request rate"
-  root_element = "Chart"
-
-  spec = jsonencode({
-    "<Chart>" = [{
-      "<o11y:SingleValue>" = []
-      chart                = {}
-      datasource = {
-        program = "A = data('requests.count').sum().publish('A')"
-      }
-      widget = {
-        title = "Request rate"
-      }
-    }]
-  })
-}
-
 resource "signalfx_observability_dashboard" "controls" {
   title = "Service health"
 
@@ -169,16 +150,23 @@ resource "signalfx_observability_dashboard" "controls" {
       height     = "30"
       min_height = "22"
     }
-    template_id = signalfx_observability_template.control_chart.id
+    metrics_time_series = {
+      title   = "Request rate"
+      program = "A = data('requests.count').sum().publish('A')"
+    }
   }]
 }
 ```
 
 A pinned filter's required `property` names the dimension or property to filter. Its optional `variable_name` defaults to `property` and provides a separate control identity when set explicitly. Control identities must be unique, so duplicate properties without identity overrides are rejected. Distinct identities can target the same property, but their selections do not combine: the later active filter wins.
 
-Each `container` represents one panel and needs exactly one content source: `template_id` for a reusable Template or `inline_content` for inline JSON.
+Each `container` represents one panel and needs exactly one of `metrics_time_series`, `metrics_single_value`, `metrics_list`, `metrics_table`, `metrics_cluster_map`, `text`, `inline_content`, or `template_id`. Typed charts use the same settings as [signalfx_observability_chart](observability_chart.html#schema); see that reference for chart options. Metric charts require a nonempty SignalFlow `program`; Text charts use optional `markdown`. The optional chart `title` controls its display title, independently of the dashboard title. A chart's `time_range` accepts durations such as `-15m` or `-1h30m`; the dashboard's selected time range takes precedence. Equivalent configured duration spellings remain stable on refresh.
 
-A panel's `layout` supports `x`, `y`, `absolute`, `width`, `height`, `min_width`, and `min_height`. Use `x = "0"` for the left edge and `x = "1/2"` or `x = "50%"` to start halfway across the dashboard. Omit `x` for automatic horizontal placement. Numeric values are layout units, not pixels; simple fractions and percentages are also supported. In the current UI, a flat dashboard uses a 16-pixel layout step, so `height = "15"` produces a panel roughly 224 pixels tall after its gap. Terraform list order controls panel order and row flow. Use a `for` expression to generate panels from a list, for example `container = [for id in var.chart_ids : { template_id = id }]`.
+Use `inline_content` for content or settings outside the typed chart schema. It must be a complete self-contained JSON object without Template imports. Configured raw content stays raw on refresh, even if a typed chart could represent it. Use `template_id` for a deliberately shared chart, such as `template_id = signalfx_observability_chart.request_rate.id` or an existing Template ID. Configured shared panels stay references on refresh, and the provider does not fetch their chart content. The referenced Template is managed independently. A dashboard create or update writes only the Dashboard Template, and destroy deletes only that dashboard.
+
+Use Terraform to persist changes to inline charts. UI Open/Edit availability depends on the UI version and chart type.
+
+A panel's `layout` supports `x`, `y`, `absolute`, `width`, `height`, `min_width`, and `min_height`. Use `x = "0"` for the left edge and `x = "1/2"` or `x = "50%"` to start halfway across the dashboard. Omit `x` for automatic horizontal placement. Numeric values are layout units, not pixels; simple fractions and percentages are also supported. In the current UI, a flat dashboard uses a 16-pixel layout step, so `height = "15"` produces a panel roughly 224 pixels tall after its gap. Terraform list order controls panel order and row flow. Use a `for` expression to generate panels from a list, for example `container = [for program in var.programs : { metrics_time_series = { program = program } }]`.
 
 Set `absolute = true` to position a panel outside normal row flow using both `x` and `y`. For example, `x = "1/2"` and `y = "2"` starts the panel halfway across and two layout units down. Absolute panels are placed independently and can overlap. Set `absolute = false` or omit it to use normal row flow, where the UI calculates vertical placement and ignores `y`. The UI resolves fractions and percentages against canvas width for both axes, so `y = "50%"` is half the canvas width in layout units, not half the dashboard height.
 
@@ -186,123 +174,82 @@ Deleted UI content can leave null panel slots in the saved dashboard. Import omi
 
 For sections, groups, and advanced layout, use `signalfx_observability_template` with the full `spec`. Importing a nested dashboard into this resource returns an error. A flat dashboard with other unsupported fields can be read and updated; the provider warns which fields will be discarded on update.
 
-<!-- schema generated by tfplugindocs -->
+
 ## Schema
 
-### Required
+| Attribute | Type | Description |
+| --- | --- | --- |
+| `title` | String, required | Dashboard title. Must be nonempty. |
+| `container` | List of objects, optional | Ordered panels. Must contain at least one panel when set. See [Panels](#panels). |
+| `control_bar` | Object, optional | Dashboard controls. Must contain at least one control when set. See [Controls](#controls). |
 
-- `title` (String) Dashboard title.
+### Panels
 
-### Optional
+Each `container` item contains one chart attribute, `inline_content`, or `template_id`, plus an optional `layout` object.
 
-- `container` (Attributes List) Ordered dashboard panels. Terraform declaration order is authoritative. (see [below for nested schema](#nestedatt--container))
-- `control_bar` (Attributes) Optional controls applied to the dashboard and its charts. (see [below for nested schema](#nestedatt--control_bar))
+| Attribute | Type | Description |
+| --- | --- | --- |
+| Typed chart attribute | Object | Use one of the chart types listed above. Its fields match the [chart resource schema](observability_chart.html#schema). |
+| `inline_content` | String | Complete self-contained JSON object, usually supplied with `jsonencode`. External Template imports are not allowed. |
+| `template_id` | String | Bare ID of a shared Template managed independently of this dashboard. |
+| `layout` | Object | Panel size and position. Set at least one of the options below. |
 
-### Read-Only
+All `layout` attributes are optional. Sizes and positions are strings containing layout units, simple fractions, or percentages.
 
-- `id` (String) The unique identifier for the resource.
+| Attribute | Type | Description |
+| --- | --- | --- |
+| `absolute` | Boolean | Use `x` and `y` outside normal row flow. Defaults to normal flow when omitted. Panels can overlap. |
+| `x` | String | Horizontal starting position. Omit for automatic placement. |
+| `y` | String | Vertical starting position when `absolute = true`. Fractions and percentages are relative to canvas width. |
+| `width` | String | Starting width. |
+| `height` | String | Starting height. |
+| `min_width` | String | Minimum width. |
+| `min_height` | String | Minimum height. |
 
-<a id="nestedatt--container"></a>
-### Nested Schema for `container`
+### Controls
 
-Optional:
+The `control_bar` object accepts these optional attributes:
 
-- `inline_content` (String) Self-contained dashboard JSON object rendered inline in this panel.
-- `layout` (Attributes) Panel sizing and position. Numeric values are layout units, not pixels. (see [below for nested schema](#nestedatt--container--layout))
-- `template_id` (String) ID of a reusable Observability Template rendered in this panel.
+| Attribute | Type | Description |
+| --- | --- | --- |
+| `time_range` | Object | Time-range control with reserved identity `TIME`. Optional string `default`, such as `"-15m"`, `"-PT15M"`, or an absolute time range. |
+| `density` | Object | Resolution control with reserved identity `DENSITY`. Optional numeric `default`: `30`, `60`, `120`, or `240` seconds. |
+| `pinned_filter` | List of objects | Ordered pinned filters. Must contain at least one filter when set. See [Pinned filters](#pinned-filters). |
+| `filter_set` | Object | Ad-hoc filter picker with reserved identity `FILTERS`. See [Filter set](#filter-set). |
 
-<a id="nestedatt--container--layout"></a>
-### Nested Schema for `container.layout`
+The `time_range`, `density`, and `filter_set` objects also accept optional string `label` and `description` attributes and an optional Boolean `hidden`. Strings must be nonempty when set.
 
-Optional:
+#### Pinned filters
 
-- `absolute` (Boolean) Position the panel outside normal row flow using x and y. Defaults to normal flow when omitted. Absolute panels can overlap.
-- `height` (String) Starting height of the panel.
-- `min_height` (String) Minimum height of the panel.
-- `min_width` (String) Minimum width of the panel.
-- `width` (String) Starting width of the panel.
-- `x` (String) Starting horizontal position of the panel. Use 0 for the left edge, or a fraction or percentage such as 1/2 or 50%.
-- `y` (String) Starting vertical position in layout units. Takes effect when absolute is true; normal row flow calculates vertical placement automatically. Fractions and percentages are relative to canvas width, not height.
+Each `control_bar.pinned_filter` item accepts:
 
+| Attribute | Type | Description |
+| --- | --- | --- |
+| `property` | String, required | Nonempty telemetry property to filter, such as `service.name`. |
+| `variable_name` | String, optional | Unique control identity. Defaults to `property`. `TIME`, `DENSITY`, and `FILTERS` are reserved. |
+| `label` | String, optional | Control label. Must be nonempty when set. |
+| `description` | String, optional | Control description. Must be nonempty when set. |
+| `hidden` | Boolean, optional | Hide the control. |
+| `default` | List of strings, optional | Initially selected values. |
+| `suggested_values` | List of strings, optional | Preferred suggestions. |
+| `only_suggest_preferred_values` | Boolean, optional | Offer only preferred suggestions. |
+| `match_missing` | Boolean, optional | Match data missing the property. |
+| `required` | Boolean, optional | Require a selection in a visible filter before charts render. |
+| `application_mode` | String, optional | How to apply the filter: `add`, `override`, or `ignore`. |
 
+#### Filter set
 
-<a id="nestedatt--control_bar"></a>
-### Nested Schema for `control_bar`
+The `control_bar.filter_set` object accepts an optional `filter` list of default filters. The list must contain at least one item when set. Each item accepts:
 
-Optional:
+| Attribute | Type | Description |
+| --- | --- | --- |
+| `property` | String, required | Nonempty property to filter. |
+| `values` | List of strings, required | Selected values. An empty list has no effect. |
+| `negated` | Boolean, optional | Negate the filter. |
+| `disabled` | Boolean, optional | Disable this default filter. |
+| `match_missing` | Boolean, optional | Match data missing the property. |
 
-- `density` (Attributes) The chart density control. Its reserved variable name is always DENSITY. (see [below for nested schema](#nestedatt--control_bar--density))
-- `filter_set` (Attributes) The ad-hoc filter picker and its optional default filters. Its reserved variable name is always FILTERS. (see [below for nested schema](#nestedatt--control_bar--filter_set))
-- `pinned_filter` (Attributes List) Ordered filter controls pinned to the dashboard bar. (see [below for nested schema](#nestedatt--control_bar--pinned_filter))
-- `time_range` (Attributes) The dashboard time-range control. Its reserved variable name is always TIME. (see [below for nested schema](#nestedatt--control_bar--time_range))
-
-<a id="nestedatt--control_bar--density"></a>
-### Nested Schema for `control_bar.density`
-
-Optional:
-
-- `default` (Number) Default chart resolution in seconds. Supported values are 30, 60, 120, and 240.
-- `description` (String) The density control description.
-- `hidden` (Boolean) Whether to hide the density control.
-- `label` (String) The density control label.
-
-
-<a id="nestedatt--control_bar--filter_set"></a>
-### Nested Schema for `control_bar.filter_set`
-
-Optional:
-
-- `description` (String) The filter-set control description.
-- `filter` (Attributes List) Ordered default filters for the filter-set control. Empty values are a no-op. (see [below for nested schema](#nestedatt--control_bar--filter_set--filter))
-- `hidden` (Boolean) Whether to hide the filter-set control.
-- `label` (String) The filter-set control label.
-
-<a id="nestedatt--control_bar--filter_set--filter"></a>
-### Nested Schema for `control_bar.filter_set.filter`
-
-Required:
-
-- `property` (String) Property to filter.
-- `values` (List of String) Values for the filter. An empty list has no effect.
-
-Optional:
-
-- `disabled` (Boolean) Whether to disable this default filter.
-- `match_missing` (Boolean) Whether values missing the property should match.
-- `negated` (Boolean) Whether to negate this filter.
-
-
-
-<a id="nestedatt--control_bar--pinned_filter"></a>
-### Nested Schema for `control_bar.pinned_filter`
-
-Required:
-
-- `property` (String) Telemetry property to filter, such as service.name or sf_service.
-
-Optional:
-
-- `application_mode` (String) How the filter is applied: add, override, or ignore.
-- `default` (List of String) Default selected filter values.
-- `description` (String) Control description.
-- `hidden` (Boolean) Whether to hide this control.
-- `label` (String) Control label.
-- `match_missing` (Boolean) Whether values missing the property should match.
-- `only_suggest_preferred_values` (Boolean) Whether only preferred suggestions should be offered.
-- `required` (Boolean) Whether a visible filter must have a selected value before charts render.
-- `suggested_values` (List of String) Preferred filter suggestions.
-- `variable_name` (String) Unique control identity. Defaults to property. TIME, DENSITY, and FILTERS are reserved.
-
-
-<a id="nestedatt--control_bar--time_range"></a>
-### Nested Schema for `control_bar.time_range`
-
-Optional:
-
-- `default` (String) Default time-range value, such as -15m, -PT15M, or an absolute time range.
-- `description` (String) The time-range control description.
-- `hidden` (Boolean) Whether to hide the time-range control.
-- `label` (String) The time-range control label.
+Filter value and suggestion lists must contain only nonempty strings.
 
 ## Import
 
@@ -312,4 +259,8 @@ After adding a matching resource block, import an existing Dashboard by its Temp
 terraform import signalfx_observability_dashboard.service G47WjI1AABc
 ```
 
-Terraform can update an imported flat dashboard even when its saved content includes unsupported fields. The provider warns about those fields, and any update discards them. To preserve them, use `signalfx_observability_template` with the full `spec`, and review its advanced metadata note first. For a legacy dashboard whose Template has an empty spec, use Save As in the UI and import the new Template ID.
+By default, an ID-only import reads used chart references from the dashboard's specification and expands them into inline chart values in this one resource. To keep selected charts shared, configure those panels with `template_id`; subsequent refreshes preserve that representation. Source charts that cannot be represented losslessly by the typed attributes are preserved completely in `inline_content`. For panels being expanded, missing, cyclic, foreign, or otherwise unresolved chart dependencies produce an error instead of incomplete configuration.
+
+Import and refresh do not write to the dashboard or its source chart records. A no-change apply after import leaves the remote reference-based storage intact. The first intentional dashboard update embeds the expanded chart content and removes its now-unused import declarations, while retaining imports required by explicit `template_id` panels. Source chart records are retained because they may be shared by other dashboards. To generate configuration, use an import block with `terraform plan -generate-config-out=generated.tf`, review the result, and apply an import-only plan. Imported durations use their canonical spelling, such as `-1h` for `-60m`; changing the spelling in configuration can cause an update.
+
+Terraform can update an imported flat dashboard even when its saved content includes unsupported dashboard fields. The provider warns about those fields, and any update discards them. To preserve them, use `signalfx_observability_template` with the full `spec`, and review its advanced metadata note first. For a legacy dashboard whose Template has an empty spec, use Save As in the UI and import the new Template ID.

@@ -57,6 +57,10 @@ func TestResourceObservabilityDashboardMetadataAndSchema(t *testing.T) {
 	content, diags := resourceSchema.AttributeAtPath(t.Context(), root.AtName("inline_content"))
 	require.False(t, diags.HasError())
 	assert.Equal(t, jsontypes.NormalizedType{}, content.(schema.StringAttribute).CustomType)
+	shared, sharedDiags := resourceSchema.AttributeAtPath(t.Context(), root.AtName("template_id"))
+	require.False(t, sharedDiags.HasError(), sharedDiags)
+	assert.True(t, shared.(schema.StringAttribute).Optional)
+
 	horizontalPosition, diags := resourceSchema.AttributeAtPath(t.Context(), root.AtName("layout").AtName("x"))
 	require.False(t, diags.HasError())
 	assert.True(t, horizontalPosition.(schema.StringAttribute).Optional)
@@ -72,7 +76,7 @@ func TestResourceObservabilityDashboardRejectsInvalidPlans(t *testing.T) {
 			name: "blank title",
 			config: `resource "signalfx_observability_dashboard" "test" {
   title     = "   "
-  container = [{ template_id = "chart-1" }]
+  container = [{ text = { markdown = "Notes" } }]
 }`,
 			want: "title must contain at least one non-whitespace character",
 		},
@@ -89,7 +93,7 @@ func TestResourceObservabilityDashboardRejectsInvalidPlans(t *testing.T) {
 			config: `resource "signalfx_observability_dashboard" "test" {
   title = "Service overview"
   container = [{
-    template_id      = "chart-1"
+    text = { markdown = "Notes" }
     inline_content = jsonencode({ "<Chart>" = [] })
   }]
 }`,
@@ -127,7 +131,7 @@ func TestResourceObservabilityDashboardRejectsInvalidPlans(t *testing.T) {
 			name: "empty item layout",
 			config: `resource "signalfx_observability_dashboard" "test" {
   title     = "Service overview"
-  container = [{ template_id = "chart-1", layout = {} }]
+  container = [{ text = { markdown = "Notes" }, layout = {} }]
 }`,
 			want: "layout must set at least one size or position option",
 		},
@@ -202,7 +206,7 @@ func TestResourceObservabilityDashboardPlansWithUnknownValues(t *testing.T) {
 }
 resource "signalfx_observability_dashboard" "test" {
   title     = "Unknown containers"
-  container = [for id in terraform_data.ids.output : { template_id = id }]
+  container = [for id in terraform_data.ids.output : { text = { markdown = id } }]
   control_bar = { pinned_filter = [{ property = terraform_data.ids.output[0] }] }
 }`,
 				ConfigPlanChecks: testresource.ConfigPlanChecks{PostApplyPreRefresh: []plancheck.PlanCheck{
@@ -226,7 +230,15 @@ resource "signalfx_observability_dashboard" "test" {
 }
 resource "signalfx_observability_dashboard" "test" {
   title = "Computed panel content"
-  container = [{ template_id = terraform_data.id.output }]
+  container = [{ metrics_time_series = { program = terraform_data.id.output } }]
+}`,
+				ExpectError: regexp.MustCompile("must contain at least 1 characters"),
+			},
+			{
+				Config: `resource "terraform_data" "shared" { input = "" }
+resource "signalfx_observability_dashboard" "test" {
+  title = "Computed shared reference"
+  container = [{ template_id = terraform_data.shared.output }]
 }`,
 				ExpectError: regexp.MustCompile("template_id must be non-empty when set"),
 			},
@@ -339,6 +351,10 @@ func TestResourceObservabilityDashboardImportsAndUpdatesUIEmptyControlStrings(t 
 	writes := 0
 	handlers := map[string]http.Handler{
 		"GET /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.PathValue("id") == "chart-id" {
+				assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: dashboardSourceChartFixture("chart-id")}))
+				return
+			}
 			assert.Equal(t, record.ID, r.PathValue("id"))
 			assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: &record}))
 		}),
@@ -352,7 +368,7 @@ func TestResourceObservabilityDashboardImportsAndUpdatesUIEmptyControlStrings(t 
 				return
 			}
 			assert.Equal(t, "Changed", write.Title)
-			assert.Equal(t, []string{"/v2/template/chart-id"}, write.Metadata.Imports)
+			assert.Empty(t, write.Metadata.Imports)
 			var spec map[string]json.RawMessage
 			assert.NoError(t, json.Unmarshal(write.Spec, &spec))
 			assert.NotContains(t, spec, "futureField")
@@ -365,7 +381,7 @@ func TestResourceObservabilityDashboardImportsAndUpdatesUIEmptyControlStrings(t 
 	}
 	const importedConfig = `resource "signalfx_observability_dashboard" "test" {
   title = "Imported"
-  container = [{ template_id = "chart-id", layout = { x = "0", width = "1/2", height = "26" } }]
+  container = [{ text = { title = "chart-id", markdown = "chart-id" }, layout = { x = "0", width = "1/2", height = "26" } }]
   control_bar = {
     time_range = { default = "-PT15M" }
     density = { default = 60 }
@@ -461,31 +477,31 @@ func TestResourceObservabilityDashboardInlineContentLifecycleAndGeneratedConfig(
 	})
 }
 
-func TestValidateDashifyTemplate(t *testing.T) {
+func TestValidateDashifyPanel(t *testing.T) {
 	t.Parallel()
 	tests := map[string]struct {
 		model       dashifyDashboardContainerModel
-		wantError   bool
 		wantMessage string
 	}{
-		"empty template id":              {model: dashifyDashboardContainerModel{TemplateID: types.StringValue("")}, wantError: true, wantMessage: "non-empty"},
-		"malformed content":              {model: dashifyDashboardContainerModel{InlineContent: jsontypes.NewNormalizedValue(`{"<Chart>":`)}, wantError: true, wantMessage: "valid JSON"},
-		"non-object content":             {model: dashifyDashboardContainerModel{InlineContent: jsontypes.NewNormalizedValue(`[]`)}, wantError: true, wantMessage: "JSON object"},
-		"content with multiple elements": {model: dashifyDashboardContainerModel{InlineContent: jsontypes.NewNormalizedValue(`{"<Chart>":[],"<Dashboard>":[]}`)}, wantError: true, wantMessage: "multiple dashboard element keys"},
-		"content import element":         {model: dashifyDashboardContainerModel{InlineContent: jsontypes.NewNormalizedValue(`{"<$import.widget0>":[]}`)}, wantError: true, wantMessage: "use template_id"},
-		"unknown template id":            {model: dashifyDashboardContainerModel{TemplateID: types.StringUnknown()}},
-		"known id with unknown content":  {model: dashifyDashboardContainerModel{TemplateID: types.StringValue("chart-id"), InlineContent: jsontypes.NewNormalizedUnknown()}},
+		"missing content":     {wantMessage: "exactly one"},
+		"malformed content":   {model: dashifyDashboardContainerModel{InlineContent: jsontypes.NewNormalizedValue(`{"<Chart>":`)}, wantMessage: "valid JSON"},
+		"non-object content":  {model: dashifyDashboardContainerModel{InlineContent: jsontypes.NewNormalizedValue(`[]`)}, wantMessage: "JSON object"},
+		"multiple elements":   {model: dashifyDashboardContainerModel{InlineContent: jsontypes.NewNormalizedValue(`{"<Chart>":[],"<Dashboard>":[]}`)}, wantMessage: "multiple dashboard element keys"},
+		"import element":      {model: dashifyDashboardContainerModel{InlineContent: jsontypes.NewNormalizedValue(`{"<$import.widget0>":[]}`)}, wantMessage: "embed the complete chart"},
+		"unknown raw content": {model: dashifyDashboardContainerModel{InlineContent: jsontypes.NewNormalizedUnknown()}},
 	}
+	engine := newDashboardTestEngine(t)
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			var response resource.ValidateConfigResponse
-			validateDashifyTemplate(&response, path.Root("container").AtListIndex(0), &test.model)
-			assert.Equal(t, test.wantError, response.Diagnostics.HasError(), response.Diagnostics)
-			if test.wantMessage != "" {
-				require.NotEmpty(t, response.Diagnostics.Errors())
-				assert.Contains(t, response.Diagnostics.Errors()[0].Detail(), test.wantMessage)
+			validateDashifyPanel(engine, &response, path.Root("container").AtListIndex(0), &test.model)
+			if test.wantMessage == "" {
+				require.False(t, response.Diagnostics.HasError(), response.Diagnostics)
+				return
 			}
+			require.True(t, response.Diagnostics.HasError(), response.Diagnostics)
+			assert.Contains(t, response.Diagnostics.Errors()[0].Detail(), test.wantMessage)
 		})
 	}
 }
@@ -495,18 +511,18 @@ func TestDashifyDashboardSpecRoundTrip(t *testing.T) {
 	model := observabilityDashboardModel{
 		Title: types.StringValue("Service overview"),
 		Container: []dashifyDashboardContainerModel{
-			{Layout: &dashifyLayoutModel{X: types.StringValue("0"), Width: types.StringValue("1/2"), Height: types.StringValue("20"), MinWidth: types.StringValue("4"), MinHeight: types.StringValue("2")}, TemplateID: types.StringValue("chart-a")},
-			{Layout: &dashifyLayoutModel{X: types.StringValue("50%")}, TemplateID: types.StringValue("chart-b")},
+			{Layout: &dashifyLayoutModel{X: types.StringValue("0"), Width: types.StringValue("1/2"), Height: types.StringValue("20"), MinWidth: types.StringValue("4"), MinHeight: types.StringValue("2")}, InlineContent: jsontypes.NewNormalizedValue(`{"<test:Chart>":[],"title":"chart-a"}`)},
+			{Layout: &dashifyLayoutModel{X: types.StringValue("50%")}, InlineContent: jsontypes.NewNormalizedValue(`{"<test:Chart>":[],"title":"chart-b"}`)},
 		},
 	}
-	spec, imports, err := buildDashboardSpec(model)
+	spec, err := buildDashboardSpecFixture(t, model)
 	require.NoError(t, err)
-	assert.Equal(t, []string{"/v2/template/chart-a", "/v2/template/chart-b"}, imports)
+	assert.NotContains(t, string(spec), "$import:")
 	var document map[string]any
 	require.NoError(t, json.Unmarshal(spec, &document))
 	assert.Len(t, document[dashifyDashboardElement], 2)
-	assert.Contains(t, document, "$import:widget0")
-	assert.Contains(t, document, "$import:widget1")
+	assert.NotContains(t, document, "$import:widget0")
+	assert.NotContains(t, document, "$import:widget1")
 	layout := document["layout"].(map[string]any)
 	saved := layout["saved"].(map[string]any)
 	items := saved["_"].(map[string]any)["items"].([]any)
@@ -517,10 +533,14 @@ func TestDashifyDashboardSpecRoundTrip(t *testing.T) {
 	assert.NotContains(t, items[0].(map[string]any), "order")
 	assert.NotContains(t, layout, "gap")
 	root := template.RootElementDashboard
-	parsed, diags := parseDashboardTemplate(&template.Template{ID: "dashboard-id", Title: "Service overview", Spec: spec, Metadata: &template.Metadata{RootElement: &root}})
+	parsed, diags := parseDashboardTemplateFixture(t, &template.Template{ID: "dashboard-id", Title: "Service overview", Spec: spec, Metadata: &template.Metadata{RootElement: &root}})
 	require.Empty(t, diags, diags)
 	assert.Equal(t, model.Title, parsed.Title)
-	assert.Equal(t, model.Container, parsed.Container)
+	require.Len(t, parsed.Container, len(model.Container))
+	for i := range model.Container {
+		assert.Equal(t, model.Container[i].Layout, parsed.Container[i].Layout)
+		assert.JSONEq(t, model.Container[i].InlineContent.ValueString(), parsed.Container[i].InlineContent.ValueString())
+	}
 }
 
 func TestDashifyDashboardInlineContentRoundTrip(t *testing.T) {
@@ -539,9 +559,9 @@ func TestDashifyDashboardInlineContentRoundTrip(t *testing.T) {
 				}},
 			}
 
-			spec, imports, err := buildDashboardSpec(model)
+			spec, err := buildDashboardSpecFixture(t, model)
 			require.NoError(t, err)
-			assert.Empty(t, imports)
+			assert.NotContains(t, string(spec), "$import:")
 
 			var document map[string]any
 			require.NoError(t, json.Unmarshal(spec, &document))
@@ -553,7 +573,7 @@ func TestDashifyDashboardInlineContentRoundTrip(t *testing.T) {
 			assert.JSONEq(t, content, string(encodedPanelContent))
 
 			root := template.RootElementDashboard
-			parsed, diags := parseDashboardTemplate(&template.Template{
+			parsed, diags := parseDashboardTemplateFixture(t, &template.Template{
 				Type:     fwdashify.ObservabilityTemplateRecordType,
 				Title:    "Dashboard",
 				Spec:     spec,
@@ -561,12 +581,12 @@ func TestDashifyDashboardInlineContentRoundTrip(t *testing.T) {
 			})
 			require.Empty(t, diags, diags)
 			require.Len(t, parsed.Container, 1)
-			assert.True(t, parsed.Container[0].TemplateID.IsNull())
+			assert.Empty(t, parsed.Container[0].Chart.Name)
 			assert.JSONEq(t, content, parsed.Container[0].InlineContent.ValueString())
 
-			rebuilt, rebuiltImports, err := buildDashboardSpec(parsed)
+			rebuilt, err := buildDashboardSpecFixture(t, parsed)
 			require.NoError(t, err)
-			assert.Empty(t, rebuiltImports)
+			assert.NotContains(t, string(rebuilt), "$import:")
 			assert.JSONEq(t, string(spec), string(rebuilt))
 		})
 	}
@@ -577,12 +597,12 @@ func TestDashifyDashboardSpecWarnsAboutUnmodeledFields(t *testing.T) {
 	root := template.RootElementDashboard
 	spec := json.RawMessage(`{
 		"title":"Dashboard",
-		"<Dashboard>":[{"<Panel>":[{"<$import.widget0>":[{"key":"env","value":"prod"}],"futureContent":{"preserve":true}}],"futureContainer":true,"futureEmpty":{}}],
+		"<Dashboard>":[{"<Panel>":[{"<test:Chart>":[],"futureContent":{"preserve":true}}],"futureContainer":true,"futureEmpty":{}}],
 		"layout":{"gap":{},"saved":{"_":{"items":[{"id":"_.0","order":0,"absolute":true,"x":{},"w":{"value":"1/2","futureEmpty":{}},"minW":2,"maxW":{}}]}}},
 		"$import:widget0":"/v2/template/chart-id",
 		"$import:orphan":"/v2/template/orphan-id"
 	}`)
-	model, diags := parseDashboardTemplate(&template.Template{Title: "Dashboard", Spec: spec, Metadata: &template.Metadata{RootElement: &root}})
+	model, diags := parseDashboardTemplateFixture(t, &template.Template{Title: "Dashboard", Spec: spec, Metadata: &template.Metadata{RootElement: &root}})
 	require.False(t, diags.HasError(), diags)
 	require.Len(t, model.Container, 1)
 	require.NotNil(t, model.Container[0].Layout)
@@ -591,7 +611,7 @@ func TestDashifyDashboardSpecWarnsAboutUnmodeledFields(t *testing.T) {
 	require.Len(t, warnings, 1)
 	assert.Contains(t, warnings[0].Detail(), "Any update, including a title-only change")
 	assert.Contains(t, warnings[0].Detail(), "will discard them")
-	for _, path := range []string{"container.0.futureContainer", "container.0.futureContent.preserve", "container.0.futureEmpty", "container.0.<$import.widget0>", "$import:orphan", "layout._.0.order", "layout._.0.x", "layout._.0.w.value", "layout._.0.w.futureEmpty", "layout._.0.maxW", "layout.gap"} {
+	for _, path := range []string{"container.0.futureContainer", "container.0.futureEmpty", "$import:orphan", "layout._.0.order", "layout._.0.x", "layout._.0.w.value", "layout._.0.w.futureEmpty", "layout._.0.maxW", "layout.gap"} {
 		assert.Contains(t, warnings[0].Detail(), path)
 	}
 	assert.NotContains(t, warnings[0].Detail(), "layout._.0.minW")
@@ -602,11 +622,11 @@ func TestDashifyDashboardSpecAllowsMissingLayout(t *testing.T) {
 
 	root := template.RootElementDashboard
 	spec := json.RawMessage(`{"title":"Dashboard","<Dashboard>":[{"<Panel>":[{"<$import.widget0>":[]}]}],"$import:widget0":"/v2/template/chart-id"}`)
-	model, diags := parseDashboardTemplate(&template.Template{Title: "Dashboard", Spec: spec, Metadata: &template.Metadata{RootElement: &root}})
+	model, diags := parseDashboardTemplateFixture(t, &template.Template{Title: "Dashboard", Spec: spec, Metadata: &template.Metadata{RootElement: &root}})
 	require.Empty(t, diags, diags)
 	require.Len(t, model.Container, 1)
 	assert.Nil(t, model.Container[0].Layout)
-	assert.Equal(t, "chart-id", model.Container[0].TemplateID.ValueString())
+	assert.Equal(t, "chart-id", model.Container[0].Chart.Value.Attributes()["title"].(types.String).ValueString())
 }
 
 func TestDashifyDashboardSpecAllowsEmptyLayoutScaffold(t *testing.T) {
@@ -616,7 +636,7 @@ func TestDashifyDashboardSpecAllowsEmptyLayoutScaffold(t *testing.T) {
 			t.Parallel()
 			root := template.RootElementDashboard
 			spec := json.RawMessage(`{"<Dashboard>":[{"<Panel>":[{"<$import.widget0>":[]}]}],"layout":` + layout + `,"$import:widget0":"/v2/template/chart-id"}`)
-			model, diags := parseDashboardTemplate(&template.Template{Title: "Dashboard", Spec: spec, Metadata: &template.Metadata{RootElement: &root}})
+			model, diags := parseDashboardTemplateFixture(t, &template.Template{Title: "Dashboard", Spec: spec, Metadata: &template.Metadata{RootElement: &root}})
 			require.Empty(t, diags, diags)
 			require.Len(t, model.Container, 1)
 			assert.Nil(t, model.Container[0].Layout)
@@ -631,7 +651,7 @@ func TestDashifyDashboardSpecRejectsNestedContainers(t *testing.T) {
 			t.Parallel()
 			root := template.RootElementDashboard
 			spec := json.RawMessage(`{"title":"Dashboard","<Dashboard>":[{"` + tag + `":[{"<Panel>":[{"<$import.widget0>":[]}]}]}],"$import:widget0":"/v2/template/chart-id"}`)
-			_, diags := parseDashboardTemplate(&template.Template{Title: "Dashboard", Spec: spec, Metadata: &template.Metadata{RootElement: &root}})
+			_, diags := parseDashboardTemplateFixture(t, &template.Template{Title: "Dashboard", Spec: spec, Metadata: &template.Metadata{RootElement: &root}})
 			require.True(t, diags.HasError(), diags)
 			assert.Contains(t, diags.Errors()[0].Detail(), tag)
 			assert.Contains(t, diags.Errors()[0].Detail(), "signalfx_observability_template")
@@ -673,7 +693,7 @@ func TestDashifyDashboardSpecRejectsAmbiguousLayouts(t *testing.T) {
 			t.Parallel()
 			root := template.RootElementDashboard
 			spec := json.RawMessage(`{"title":"Dashboard","<Dashboard>":[{"<Panel>":[{"<$import.widget0>":[]}]}],"layout":` + test.layout + `,"$import:widget0":"/v2/template/chart-id"}`)
-			_, diags := parseDashboardTemplate(&template.Template{Title: "Dashboard", Spec: spec, Metadata: &template.Metadata{RootElement: &root}})
+			_, diags := parseDashboardTemplateFixture(t, &template.Template{Title: "Dashboard", Spec: spec, Metadata: &template.Metadata{RootElement: &root}})
 			require.True(t, diags.HasError(), diags)
 			assert.Contains(t, diags.Errors()[0].Detail(), test.want)
 		})
@@ -701,13 +721,13 @@ func TestDashifyDashboardSpecMatchesLayoutByID(t *testing.T) {
 		"$import:widget0":"/v2/template/chart-a",
 		"$import:widget1":"/v2/template/chart-b"
 	}`)
-	model, diags := parseDashboardTemplate(&template.Template{Title: "Dashboard", Spec: spec, Metadata: &template.Metadata{RootElement: &root}})
+	model, diags := parseDashboardTemplateFixture(t, &template.Template{Title: "Dashboard", Spec: spec, Metadata: &template.Metadata{RootElement: &root}})
 	require.Empty(t, diags, diags)
 	require.Len(t, model.Container, 2)
 	assert.Equal(t, "8", model.Container[0].Layout.Width.ValueString())
 	assert.Equal(t, "4", model.Container[1].Layout.Width.ValueString())
 
-	rebuilt, _, err := buildDashboardSpec(model)
+	rebuilt, err := buildDashboardSpecFixture(t, model)
 	require.NoError(t, err)
 	assert.NotContains(t, string(rebuilt), `"parent"`)
 	assert.NotContains(t, string(rebuilt), `"at"`)
@@ -1001,7 +1021,7 @@ func TestObservabilityDashboardRejectsInvalidAPIRecords(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
-			_, _, diags := observabilityDashboardFromResult(&template.Result{Data: &test.record}, test.record.ID)
+			_, diags := parseDashboardTemplateFixture(t, &test.record)
 			require.True(t, diags.HasError(), diags)
 			assert.Contains(t, diags.Errors()[0].Detail(), test.want)
 		})
@@ -1091,7 +1111,7 @@ func TestResourceObservabilityDashboardUpdateReportsNotFound(t *testing.T) {
 
 func TestDashboardUsesRecordTitle(t *testing.T) {
 	model := observabilityDashboardModel{Title: types.StringValue("Dashboard title")}
-	spec, _, err := buildDashboardSpec(model)
+	spec, err := buildDashboardSpecFixture(t, model)
 	require.NoError(t, err)
 	var document map[string]any
 	require.NoError(t, json.Unmarshal(spec, &document))
@@ -1099,7 +1119,7 @@ func TestDashboardUsesRecordTitle(t *testing.T) {
 	spec, err = json.Marshal(document)
 	require.NoError(t, err)
 	rootElement := template.RootElementDashboard
-	parsed, diags := parseDashboardTemplate(&template.Template{
+	parsed, diags := parseDashboardTemplateFixture(t, &template.Template{
 		Title:    "Dashboard title",
 		Spec:     spec,
 		Metadata: &template.Metadata{RootElement: &rootElement},
@@ -1124,7 +1144,7 @@ func TestDashboardCompactsNullContainersWithoutLosingLayout(t *testing.T) {
             ]}}}
         }`),
 	}
-	model, diags := parseDashboardTemplate(record)
+	model, diags := parseDashboardTemplateFixture(t, record)
 	require.False(t, diags.HasError(), diags)
 	require.Len(t, diags.Warnings(), 1)
 	assert.Contains(t, diags.Warnings()[0].Detail(), "null element")
@@ -1132,7 +1152,7 @@ func TestDashboardCompactsNullContainersWithoutLosingLayout(t *testing.T) {
 	require.NotNil(t, model.Container[0].Layout)
 	assert.Equal(t, "6", model.Container[0].Layout.Width.ValueString())
 
-	rebuilt, _, err := buildDashboardSpec(model)
+	rebuilt, err := buildDashboardSpecFixture(t, model)
 	require.NoError(t, err)
 	var document map[string]any
 	require.NoError(t, json.Unmarshal(rebuilt, &document))
@@ -1149,7 +1169,7 @@ func TestDashboardInlineContentPreservesLargeJSONNumbers(t *testing.T) {
 			InlineContent: jsontypes.NewNormalizedValue(content),
 		}},
 	}
-	spec, _, err := buildDashboardSpec(model)
+	spec, err := buildDashboardSpecFixture(t, model)
 	require.NoError(t, err)
 	assert.Contains(t, string(spec), "9007199254740993")
 	equal, diags := jsontypes.NewNormalizedValue(content).StringSemanticEquals(t.Context(), jsontypes.NewNormalizedValue(`{"<o11y:SingleValue>":[],"chart":{"sampleCount":9007199254740992}}`))
@@ -1157,7 +1177,7 @@ func TestDashboardInlineContentPreservesLargeJSONNumbers(t *testing.T) {
 	assert.False(t, equal)
 
 	rootElement := template.RootElementDashboard
-	parsed, diags := parseDashboardTemplate(&template.Template{
+	parsed, diags := parseDashboardTemplateFixture(t, &template.Template{
 		Title:    "Large numbers",
 		Spec:     spec,
 		Metadata: &template.Metadata{RootElement: &rootElement},
@@ -1184,11 +1204,11 @@ func TestDashboardParsesWrappedTemplateImport(t *testing.T) {
             "layout": {"saved": {"_": {"items": [{"id": "_.0"}]}}}
         }`),
 	}
-	model, diags := parseDashboardTemplate(record)
+	model, diags := parseDashboardTemplateFixture(t, record)
 	require.False(t, diags.HasError(), diags)
 	require.Empty(t, diags.Warnings())
 	require.Len(t, model.Container, 1)
-	assert.Equal(t, "chart-id", model.Container[0].TemplateID.ValueString())
+	assert.Equal(t, "chart-id", model.Container[0].Chart.Value.Attributes()["title"].(types.String).ValueString())
 }
 
 func TestDashboardRejectsNestedImportWithUnmodeledWrapperFields(t *testing.T) {
@@ -1205,7 +1225,7 @@ func TestDashboardRejectsNestedImportWithUnmodeledWrapperFields(t *testing.T) {
             "layout": {"saved": {"_": {"items": [{"id": "_.0"}]}}}
         }`),
 	}
-	_, diags := parseDashboardTemplate(record)
+	_, diags := parseDashboardTemplateFixture(t, record)
 	require.True(t, diags.HasError())
 	assert.Contains(t, diags.Errors()[0].Detail(), "unsupported nested import")
 }

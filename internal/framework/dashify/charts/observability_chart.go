@@ -18,7 +18,6 @@ import (
 	"github.com/signalfx/signalfx-go/template"
 
 	fwdashify "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/dashify"
-	"github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/dashify/charts/interpreter"
 )
 
 const observabilityChartElement = "<Chart>"
@@ -62,11 +61,11 @@ func (r *observabilityChartResource) write(ctx context.Context, model observabil
 	if model.Title.IsUnknown() {
 		return nil, diag.Diagnostics{diag.NewErrorDiagnostic("Unknown chart title", "title must be known before writing a Chart Template.")}
 	}
-	content, diags := r.engine.Encode(ctx, model.Name, model.Content)
+	content, diags := EncodeContent(ctx, r.engine, Content{Name: model.Name, Value: model.Content})
 	if diags.HasError() {
 		return nil, diags
 	}
-	spec, err := json.Marshal(map[string]any{observabilityChartElement: []any{content}})
+	spec, err := json.Marshal(content)
 	if err != nil {
 		diags.AddError("Invalid chart specification", fmt.Sprintf("Encoding chart specification: %v", err))
 		return nil, diags
@@ -96,22 +95,13 @@ func (r *observabilityChartResource) modelFromRecord(ctx context.Context, record
 		diags.AddError("Unsupported Chart Template", "The Template must have Chart root element metadata; use signalfx_observability_template for other Template types.")
 		return model, diags
 	}
-	name, content, rootLeftovers, err := r.parseSpec(record.Spec)
-	if err != nil {
-		diags.AddError("Unsupported Chart Template", err.Error())
-		return model, diags
-	}
-	previous := types.ObjectNull(nil)
-	if prior.Name == name {
-		previous = prior.Content
-	}
-	var leftovers []string
-	model.Content, leftovers, diags = r.engine.Decode(ctx, name, content, previous)
+	content, leftovers, contentDiags := DecodeContent(ctx, r.engine, record.Spec, Content{Name: prior.Name, Value: prior.Content})
+	diags.Append(contentDiags...)
 	if diags.HasError() {
 		return model, diags
 	}
-	model.Name, model.ID, model.Title = name, types.StringValue(record.ID), types.StringValue(record.Title)
-	leftovers = append(leftovers, rootLeftovers...)
+	model.Name, model.Content = content.Name, content.Value
+	model.ID, model.Title = types.StringValue(record.ID), types.StringValue(record.Title)
 	if len(leftovers) > 0 {
 		sort.Strings(leftovers)
 		diags.AddWarning("Unmodeled Chart fields", fmt.Sprintf(
@@ -137,42 +127,6 @@ func (r *observabilityChartResource) ruleWarning(model observabilityChartModel) 
 		"The stored chart has %d value(s) that Terraform configuration does not allow:\n  %s\n\nThe chart was read into state. Its configuration must satisfy these rules before it can be written.",
 		len(details), strings.Join(details, "\n  "),
 	))}
-}
-
-func (r *observabilityChartResource) parseSpec(raw []byte) (string, map[string]any, []string, error) {
-	spec, err := interpreter.DecodeObject(string(raw))
-	if err != nil {
-		return "", nil, nil, fmt.Errorf("invalid Chart specification: %w", err)
-	}
-	children, ok := spec[observabilityChartElement].([]any)
-	if !ok || len(children) != 1 {
-		return "", nil, nil, fmt.Errorf("%s must contain exactly one chart object", observabilityChartElement)
-	}
-	content, ok := children[0].(map[string]any)
-	if !ok {
-		return "", nil, nil, fmt.Errorf("%s child is not a chart object", observabilityChartElement)
-	}
-	var tag string
-	for key := range content {
-		if strings.HasPrefix(key, "<") {
-			if tag != "" {
-				return "", nil, nil, fmt.Errorf("chart child has multiple element keys")
-			}
-			tag = key
-		}
-	}
-	var name string
-	for _, chart := range r.engine.Charts() {
-		if chart.Element == tag {
-			name = chart.Name
-			break
-		}
-	}
-	if name == "" {
-		return "", nil, nil, fmt.Errorf("chart contains unsupported element %q; use signalfx_observability_template for other chart types", tag)
-	}
-	delete(spec, observabilityChartElement)
-	return name, content, interpreter.Leftovers("spec", spec), nil
 }
 
 func (r *observabilityChartResource) setState(ctx context.Context, state *tfsdk.State, model observabilityChartModel) diag.Diagnostics {

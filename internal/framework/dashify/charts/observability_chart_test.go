@@ -106,6 +106,7 @@ func TestParseObservabilityChartSpecRejectsUnsupportedShapes(t *testing.T) {
 		{"multiple children", `{"<Chart>":[{},{}]}`, "exactly one chart object"},
 		{"non-object child", `{"<Chart>":[false]}`, "not a chart object"},
 		{"multiple tags", `{"<Chart>":[{"<o11y:TimeSeriesChart>":[],"<o11y:Text>":[]}]}`, "multiple element keys"},
+		{"missing tag", `{"<Chart>":[{"chart":{}}]}`, "no element key"},
 		{"unsupported tag", `{"<Chart>":[{"<o11y:Future>":[]}]}`, "unsupported element"},
 		{"nonempty marker", `{"<Chart>":[{"<o11y:TimeSeriesChart>":[true],"datasource":{"program":"A"},"chart":{},"widget":{}}]}`, "empty argument list"},
 		{"missing chart group", `{"<Chart>":[{"<o11y:TimeSeriesChart>":[],"datasource":{"program":"A"},"widget":{}}]}`, "chart must be an object"},

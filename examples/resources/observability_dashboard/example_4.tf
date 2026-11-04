@@ -1,21 +1,3 @@
-resource "signalfx_observability_template" "control_chart" {
-  title        = "Request rate"
-  root_element = "Chart"
-
-  spec = jsonencode({
-    "<Chart>" = [{
-      "<o11y:SingleValue>" = []
-      chart                = {}
-      datasource = {
-        program = "A = data('requests.count').sum().publish('A')"
-      }
-      widget = {
-        title = "Request rate"
-      }
-    }]
-  })
-}
-
 resource "signalfx_observability_dashboard" "controls" {
   title = "Service health"
 
@@ -52,6 +34,9 @@ resource "signalfx_observability_dashboard" "controls" {
       height     = "30"
       min_height = "22"
     }
-    template_id = signalfx_observability_template.control_chart.id
+    metrics_time_series = {
+      title   = "Request rate"
+      program = "A = data('requests.count').sum().publish('A')"
+    }
   }]
 }
