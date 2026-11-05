@@ -170,7 +170,7 @@ func getPayloadDataLink(d *schema.ResourceData) (*datalink.CreateUpdateDataLinkR
 		if dataLink.PropertyName == "" {
 			return dataLink, fmt.Errorf("Must supply a property_name when supplying a property_value")
 		}
-		dataLink.PropertyValue = val.(string)
+		dataLink.PropertyValue = new(val.(string))
 	}
 
 	if val, ok := d.GetOk("context_dashboard_id"); ok {
@@ -420,6 +420,14 @@ func dataLinkUpdate(d *schema.ResourceData, meta interface{}) error {
 	debugOutput, _ := json.Marshal(payload)
 	log.Printf("[DEBUG] SignalFx: Update Data Link Payload: %s", string(debugOutput))
 
+	if d.HasChange("property_value") {
+		oldValue, newValue := d.GetChange("property_value")
+		if oldValue.(string) != "" && newValue.(string) == "" {
+			// A pointer to an empty string explicitly clears the remote value;
+			// nil continues to omit propertyValue for create-without-value.
+			payload.PropertyValue = new("")
+		}
+	}
 	dl, err := config.Client.UpdateDataLink(context.TODO(), d.Id(), payload)
 	if err != nil {
 		return err

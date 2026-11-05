@@ -141,6 +141,11 @@ func TestAccCreateUpdateDataLink(t *testing.T) {
 					testDataLinkUpdated,
 				),
 			},
+			// Removing the optional value must clear it remotely as well.
+			{
+				Config: newDataLinkConfigWithoutPropertyValue,
+				Check: testAccCheckDataLinkResourceExists,
+			},
 		},
 	})
 }
@@ -227,6 +232,9 @@ func testAccCheckDataLinkResourceExists(s *terraform.State) error {
 			dl, err := client.GetDataLink(context.TODO(), rs.Primary.ID)
 			if err != nil || dl.Id != rs.Primary.ID {
 				return fmt.Errorf("Error finding data link %s: %s", rs.Primary.ID, err)
+			}
+			if dl.PropertyValue != rs.Primary.Attributes["property_value"] {
+				return fmt.Errorf("Data link property value %q does not match Terraform state %q", dl.PropertyValue, rs.Primary.Attributes["property_value"])
 			}
 		default:
 			return fmt.Errorf("Unexpected resource of type: %s", rs.Type)
