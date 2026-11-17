@@ -35,6 +35,7 @@ type definition struct {
 	Version     int                 `yaml:"version"`
 	Description string              `yaml:"description"`
 	Element     string              `yaml:"element"`
+	RootElement string              `yaml:"root_element"`
 	Extends     []string            `yaml:"extends"`
 	Properties  map[string]property `yaml:"properties"`
 }

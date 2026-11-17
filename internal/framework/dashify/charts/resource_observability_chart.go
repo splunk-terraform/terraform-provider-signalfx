@@ -130,7 +130,6 @@ func (r *observabilityChartResource) Read(ctx context.Context, req resource.Read
 	model, diags := r.modelFromRecord(ctx, record, prior)
 	resp.Diagnostics.Append(diags...)
 	if !resp.Diagnostics.HasError() {
-		resp.Diagnostics.Append(r.ruleWarning(model)...)
 		resp.Diagnostics.Append(r.setState(ctx, &resp.State, model)...)
 	}
 }

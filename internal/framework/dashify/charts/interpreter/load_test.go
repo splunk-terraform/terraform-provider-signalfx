@@ -20,6 +20,7 @@ func TestNewChartDiscoveryAndExplicitOverlay(t *testing.T) {
 		"new.yml": {Data: []byte(`type: tiny
 version: 1
 element: 'o11y:Tiny'
+root_element: TinyWidgetBuilder
 extends: [common/base.yml]
 properties:
   program:
@@ -61,6 +62,7 @@ properties:
 	charts := engine.Charts()
 	require.Len(t, charts, 1)
 	assert.Equal(t, "tiny", charts[0].Name)
+	assert.Equal(t, "TinyWidgetBuilder", engine.RootElement("tiny"))
 	attributes, err := engine.Attributes("tiny")
 	require.NoError(t, err)
 	assert.False(t, attributes["program"].IsRequired(), "explicit false did not override inherited true")
@@ -101,6 +103,7 @@ func jsonSpec(t *testing.T, spec map[string]any) map[string]any {
 func TestTextWithoutDatasourceAndUnmodeledContent(t *testing.T) {
 	engine, err := Default()
 	require.NoError(t, err)
+	assert.Equal(t, "Chart", engine.RootElement("text"))
 	spec := map[string]any{"<o11y:Text>": []any{}, "chart": map[string]any{"markdown": "# Notes"}, "widget": map[string]any{}}
 	value, leftovers, d := engine.Decode(t.Context(), "text", jsonSpec(t, spec), types.ObjectNull(nil))
 	require.False(t, d.HasError(), d)
@@ -112,13 +115,17 @@ func TestTextWithoutDatasourceAndUnmodeledContent(t *testing.T) {
 		for _, malformed := range []any{nil, "invalid", []any{}} {
 			invalid := jsonSpec(t, spec)
 			invalid[group] = malformed
-			_, _, d := engine.Decode(t.Context(), "text", invalid, value)
-			assert.True(t, d.HasError(), "malformed %s accepted: %#v", group, malformed)
+			decoded, leftovers, d := engine.Decode(t.Context(), "text", invalid, value)
+			require.False(t, d.HasError(), d)
+			assert.Contains(t, leftovers, group, "malformed optional group must be reported")
+			_, d = engine.Encode(t.Context(), "text", decoded)
+			assert.False(t, d.HasError(), "decoded settings must be writable: %v", d)
 		}
 		missing := jsonSpec(t, spec)
 		delete(missing, group)
-		_, _, d := engine.Decode(t.Context(), "text", missing, value)
-		assert.True(t, d.HasError(), "missing required container %s accepted", group)
+		_, leftovers, d := engine.Decode(t.Context(), "text", missing, value)
+		assert.Empty(t, d)
+		assert.Empty(t, leftovers, "missing optional group %s needs no warning", group)
 	}
 	for _, extra := range []map[string]any{{}, {"program": "unmodeled"}} {
 		withExtra := jsonSpec(t, spec)
@@ -175,14 +182,17 @@ func TestTimeSeriesLegacyFieldsRemainUnmodeled(t *testing.T) {
 	assert.Equal(t, want, rebuilt["chart"], "modern values changed")
 }
 
-func TestTimeSeriesRejectsMalformedParentsAndUnsupportedDurations(t *testing.T) {
+func TestTimeSeriesOmitsMalformedParentsAndUnsupportedDurations(t *testing.T) {
 	engine, err := Default()
 	require.NoError(t, err)
 	for _, parent := range []string{"chartOptions", "legend", "noDataOptions"} {
 		for _, invalid := range []any{true, "bad", []any{}, nil} {
 			spec := timeSeriesSpec(map[string]any{parent: invalid}, map[string]any{})
-			_, _, diagnostics := engine.Decode(t.Context(), "metrics_time_series", spec, types.ObjectNull(nil))
-			assert.True(t, diagnostics.HasError(), "malformed chart.%s=%#v accepted", parent, invalid)
+			value, leftovers, diagnostics := engine.Decode(t.Context(), "metrics_time_series", spec, types.ObjectNull(nil))
+			require.False(t, diagnostics.HasError(), diagnostics)
+			assert.Contains(t, leftovers, "chart."+parent, "malformed optional parent must be reported")
+			_, diagnostics = engine.Encode(t.Context(), "metrics_time_series", value)
+			assert.False(t, diagnostics.HasError(), "decoded settings must be writable: %v", diagnostics)
 		}
 	}
 	for _, duration := range []map[string]any{
@@ -191,8 +201,10 @@ func TestTimeSeriesRejectsMalformedParentsAndUnsupportedDurations(t *testing.T) 
 	} {
 		spec := timeSeriesSpec(map[string]any{}, map[string]any{})
 		spec["datasource"].(map[string]any)["time"] = duration
-		_, _, diagnostics := engine.Decode(t.Context(), "metrics_time_series", jsonSpec(t, spec), types.ObjectNull(nil))
-		assert.True(t, diagnostics.HasError(), "unsupported duration accepted: %#v", duration)
+		value, leftovers, diagnostics := engine.Decode(t.Context(), "metrics_time_series", jsonSpec(t, spec), types.ObjectNull(nil))
+		require.False(t, diagnostics.HasError(), diagnostics)
+		assert.True(t, value.Attributes()["time_range"].IsNull(), "unsupported duration must be omitted")
+		assert.Contains(t, leftovers, "datasource.time")
 	}
 	value, _, diagnostics := engine.Decode(t.Context(), "metrics_time_series", timeSeriesSpec(map[string]any{}, map[string]any{}), types.ObjectNull(nil))
 	require.False(t, diagnostics.HasError(), diagnostics)

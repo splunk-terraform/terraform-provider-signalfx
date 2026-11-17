@@ -6,6 +6,7 @@ package charts
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -15,6 +16,8 @@ import (
 
 	"github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/dashify/charts/interpreter"
 )
+
+var errUnsupportedChartType = errors.New("unsupported chart type")
 
 // Content is chart content independent of a saved Template record.
 type Content struct {
@@ -41,14 +44,20 @@ func EncodeContent(ctx context.Context, engine *interpreter.Engine, content Cont
 	if diags.HasError() {
 		return nil, diags
 	}
-	return map[string]any{observabilityChartElement: []any{value}}, diags
+	root := "<" + engine.RootElement(content.Name) + ">"
+	return map[string]any{root: []any{value}}, diags
 }
 
-// DecodeContent decodes a Chart document, reusing prior values when the chart type matches.
+// DecodeContent returns typed values for recognized charts and no chart for an
+// unsupported format or type. Optional settings outside the schema's rules are omitted.
+// Prior values are reused only when the chart type matches.
 func DecodeContent(ctx context.Context, engine *interpreter.Engine, raw json.RawMessage, prior Content) (Content, []string, diag.Diagnostics) {
 	name, chart, leftovers, err := parseContent(engine, raw)
+	if errors.Is(err, errUnsupportedChartType) {
+		return Content{}, nil, nil
+	}
 	if err != nil {
-		return Content{}, nil, diag.Diagnostics{diag.NewErrorDiagnostic("Unsupported Chart content", err.Error())}
+		return Content{}, nil, diag.Diagnostics{diag.NewErrorDiagnostic("Invalid Chart content", err.Error())}
 	}
 	previous := types.ObjectNull(nil)
 	if prior.Name == name {
@@ -64,13 +73,29 @@ func parseContent(engine *interpreter.Engine, raw json.RawMessage) (string, map[
 	if err != nil {
 		return "", nil, nil, fmt.Errorf("invalid Chart specification: %w", err)
 	}
-	children, ok := spec[observabilityChartElement].([]any)
-	if !ok || len(children) != 1 {
-		return "", nil, nil, fmt.Errorf("%s must contain exactly one chart object", observabilityChartElement)
+	var root string
+	for key := range spec {
+		if strings.HasPrefix(key, "<") {
+			if root != "" {
+				return "", nil, nil, fmt.Errorf("chart document has multiple root elements")
+			}
+			root = key
+		}
 	}
-	content, ok := children[0].(map[string]any)
+	if root == "" {
+		return "", nil, nil, fmt.Errorf("chart document has no root element")
+	}
+	// Dashify permits a single child as either an object or a one-item list.
+	content, ok := spec[root].(map[string]any)
 	if !ok {
-		return "", nil, nil, fmt.Errorf("%s child is not a chart object", observabilityChartElement)
+		children, ok := spec[root].([]any)
+		if !ok || len(children) != 1 {
+			return "", nil, nil, fmt.Errorf("%s must contain exactly one chart object: %w", root, errUnsupportedChartType)
+		}
+		content, ok = children[0].(map[string]any)
+		if !ok {
+			return "", nil, nil, fmt.Errorf("%s child is not a chart object: %w", root, errUnsupportedChartType)
+		}
 	}
 	var tag string
 	for key := range content {
@@ -82,13 +107,13 @@ func parseContent(engine *interpreter.Engine, raw json.RawMessage) (string, map[
 		}
 	}
 	if tag == "" {
-		return "", nil, nil, fmt.Errorf("chart object has no element key")
+		return "", nil, nil, fmt.Errorf("chart object has no element key: %w", errUnsupportedChartType)
 	}
 	for _, chart := range engine.Charts() {
 		if chart.Element == tag {
-			delete(spec, observabilityChartElement)
+			delete(spec, root)
 			return chart.Name, content, interpreter.Leftovers("spec", spec), nil
 		}
 	}
-	return "", nil, nil, fmt.Errorf("chart contains unsupported element %q; use signalfx_observability_template for other chart types", tag)
+	return "", nil, nil, fmt.Errorf("chart contains unsupported element %q; use signalfx_observability_template for other chart types: %w", tag, errUnsupportedChartType)
 }

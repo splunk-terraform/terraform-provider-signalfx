@@ -86,6 +86,15 @@ func (e *Engine) Charts() []Chart {
 	return result
 }
 
+// RootElement is the document wrapper used when writing a known chart type.
+// Definitions without an explicit root_element use Chart.
+func (e *Engine) RootElement(name string) string {
+	if root := e.definitions[name].RootElement; root != "" {
+		return root
+	}
+	return "Chart"
+}
+
 // Attributes returns the cached chart schema. Callers must not modify it.
 func (e *Engine) Attributes(name string) (map[string]schema.Attribute, error) {
 	attributes, exists := e.attributes[name]

@@ -573,12 +573,12 @@ func TestDashifyDashboardInlineContentRoundTrip(t *testing.T) {
 			assert.JSONEq(t, content, string(encodedPanelContent))
 
 			root := template.RootElementDashboard
-			parsed, diags := parseDashboardTemplateFixture(t, &template.Template{
+			parsed, diags := parseDashboardTemplate(t.Context(), newDashboardTestEngine(t), &template.Template{
 				Type:     fwdashify.ObservabilityTemplateRecordType,
 				Title:    "Dashboard",
 				Spec:     spec,
 				Metadata: &template.Metadata{RootElement: &root},
-			})
+			}, model, nil)
 			require.Empty(t, diags, diags)
 			require.Len(t, parsed.Container, 1)
 			assert.Empty(t, parsed.Container[0].Chart.Name)
@@ -1136,7 +1136,7 @@ func TestDashboardCompactsNullContainersWithoutLosingLayout(t *testing.T) {
 		Spec: json.RawMessage(`{
             "<Dashboard>": [
                 null,
-                {"<Panel>": [{"<Chart>": []}]}
+                {"<Panel>": [{"<Chart>": [{"<o11y:FutureChart>": []}]}]}
             ],
             "layout": {"saved": {"_": {"items": [
                 {"id": "_.0", "w": 2},
