@@ -339,8 +339,8 @@ func TestOneOfDecodeSelectsWireShapeAndPreservesUnmodeledFields(t *testing.T) {
 			assert.Equal(t, test.leftovers, leftovers, "incorrect union import")
 			if test.omitted {
 				assert.True(t, value.Attributes()["choice"].IsNull(), "unrepresentable union must be omitted")
-				rebuilt, diagnostics := fixture.engine.Encode(t.Context(), "test", value)
-				require.False(t, diagnostics.HasError(), diagnostics)
+				rebuilt, encodeDiags := fixture.engine.Encode(t.Context(), "test", value)
+				require.False(t, encodeDiags.HasError(), encodeDiags)
 				assert.NotContains(t, rebuilt["chart"], "choice")
 				return
 			}
