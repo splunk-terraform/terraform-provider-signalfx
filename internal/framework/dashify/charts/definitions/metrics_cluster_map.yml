@@ -61,7 +61,6 @@ properties:
   color_range:
     type: block
     optional: true
-    conflicts_with: [color_scale]
     requires_value:
       field: color_by
       value: Range
@@ -101,7 +100,6 @@ properties:
     type: list
     optional: true
     max_items: 5
-    conflicts_with: [color_range]
     requires_value:
       field: color_by
       value: Scale

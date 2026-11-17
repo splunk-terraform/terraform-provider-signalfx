@@ -54,7 +54,7 @@ func newDashboardChartResolver(ctx context.Context, client *signalfx.Client, inc
 	}
 }
 
-// Only empty-argument chart imports and their Chart wrappers can be expanded
+// Only empty-argument imports and their wrappers can be expanded
 // without evaluating Dashify expressions. Other dependencies fail explicitly.
 func expandDashboardChartContent(content, scope map[string]any, used map[string]bool, resolve dashboardChartResolver, visiting map[string]bool) (map[string]any, error) {
 	tag, value, err := oneDashifyElement(content)
@@ -85,15 +85,16 @@ func expandDashboardChartContent(content, scope map[string]any, used map[string]
 		if err != nil {
 			return nil, err
 		}
-		if record == nil || record.Metadata == nil || record.Metadata.RootElement == nil || *record.Metadata.RootElement != template.RootElementChart {
-			return nil, fmt.Errorf("source template %q is not a Chart", id)
+		if record == nil || record.Metadata == nil || record.Metadata.RootElement == nil || *record.Metadata.RootElement == "" {
+			return nil, fmt.Errorf("source template %q has no root element metadata", id)
 		}
 		var spec map[string]any
 		if decodeErr := decodeDashifyJSON(record.Spec, &spec); decodeErr != nil || spec == nil {
 			return nil, fmt.Errorf("source chart %q has an invalid JSON specification", id)
 		}
-		if _, ok := spec[dashifyChartElement]; !ok {
-			return nil, fmt.Errorf("source chart %q has no Chart element", id)
+		root := "<" + string(*record.Metadata.RootElement) + ">"
+		if _, ok := spec[root]; !ok {
+			return nil, fmt.Errorf("source chart %q has no %s element", id, *record.Metadata.RootElement)
 		}
 		visiting[id] = true
 		expanded, err := expandDashboardChartContent(spec, spec, map[string]bool{}, resolve, visiting)
@@ -104,9 +105,9 @@ func expandDashboardChartContent(content, scope map[string]any, used map[string]
 		used[alias] = true
 		return expanded, nil
 	}
-	if inner, ok := wrappedDashifyChartImport(content); ok {
+	if inner, ok := wrappedDashifyImport(content); ok {
 		for key := range content {
-			if key != dashifyChartElement && !strings.HasPrefix(key, dashifyImportPrefix) {
+			if key != tag && !strings.HasPrefix(key, dashifyImportPrefix) {
 				return nil, fmt.Errorf("unsupported nested import with wrapper field %q", key)
 			}
 		}
@@ -121,14 +122,21 @@ func expandDashboardChartContent(content, scope map[string]any, used map[string]
 	return content, nil
 }
 
-func wrappedDashifyChartImport(content map[string]any) (map[string]any, bool) {
-	items, ok := content[dashifyChartElement].([]any)
-	if !ok || len(items) != 1 {
+func wrappedDashifyImport(content map[string]any) (map[string]any, bool) {
+	_, value, err := oneDashifyElement(content)
+	if err != nil {
 		return nil, false
 	}
-	inner, ok := items[0].(map[string]any)
+	inner, ok := value.(map[string]any)
 	if !ok {
-		return nil, false
+		items, ok := value.([]any)
+		if !ok || len(items) != 1 {
+			return nil, false
+		}
+		inner, ok = items[0].(map[string]any)
+		if !ok {
+			return nil, false
+		}
 	}
 	tag, _, err := oneDashifyElement(inner)
 	if err != nil || !isDashifyImportElement(tag) {

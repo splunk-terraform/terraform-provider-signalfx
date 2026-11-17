@@ -20,8 +20,6 @@ import (
 	fwdashify "github.com/splunk-terraform/terraform-provider-signalfx/internal/framework/dashify"
 )
 
-const observabilityChartElement = "<Chart>"
-
 // Chart attributes are discovered from the curated definitions. Keep their
 // Terraform values intact so that unknown nested values survive planning.
 type observabilityChartModel struct {
@@ -70,7 +68,7 @@ func (r *observabilityChartResource) write(ctx context.Context, model observabil
 		diags.AddError("Invalid chart specification", fmt.Sprintf("Encoding chart specification: %v", err))
 		return nil, diags
 	}
-	root := template.RootElementChart
+	root := template.RootElement(r.engine.RootElement(model.Name))
 	return &template.CreateUpdateTemplateRequest{
 		Type: fwdashify.ObservabilityTemplateRecordType, Title: model.Title.ValueString(), Spec: spec,
 		Metadata: template.WriteMetadata{RootElement: &root},
@@ -91,8 +89,8 @@ func observabilityChartRecordFromResult(result *template.Result, expectedID stri
 func (r *observabilityChartResource) modelFromRecord(ctx context.Context, record *template.Template, prior observabilityChartModel) (observabilityChartModel, diag.Diagnostics) {
 	var model observabilityChartModel
 	var diags diag.Diagnostics
-	if record == nil || record.Metadata == nil || record.Metadata.RootElement == nil || *record.Metadata.RootElement != template.RootElementChart {
-		diags.AddError("Unsupported Chart Template", "The Template must have Chart root element metadata; use signalfx_observability_template for other Template types.")
+	if record == nil || record.Metadata == nil || record.Metadata.RootElement == nil || *record.Metadata.RootElement == "" {
+		diags.AddError("Unsupported Chart Template", "The Template must have root element metadata.")
 		return model, diags
 	}
 	content, leftovers, contentDiags := DecodeContent(ctx, r.engine, record.Spec, Content{Name: prior.Name, Value: prior.Content})
@@ -100,33 +98,20 @@ func (r *observabilityChartResource) modelFromRecord(ctx context.Context, record
 	if diags.HasError() {
 		return model, diags
 	}
+	if content.Name == "" {
+		diags.AddError("Unsupported Chart content", "The Chart document has no supported chart type; use signalfx_observability_template with its complete specification.")
+		return model, diags
+	}
 	model.Name, model.Content = content.Name, content.Value
 	model.ID, model.Title = types.StringValue(record.ID), types.StringValue(record.Title)
 	if len(leftovers) > 0 {
 		sort.Strings(leftovers)
 		diags.AddWarning("Unmodeled Chart fields", fmt.Sprintf(
-			"The stored chart contains %d field(s) this provider does not model:\n  %s\n\nThese fields are absent from Terraform state. Any update, including a title-only change, replaces the complete Chart document and will discard them. To preserve these fields, manage this chart as signalfx_observability_template with its complete specification instead.",
+			"The stored chart contains %d unsupported or invalid optional field(s):\n  %s\n\nThese fields are absent from Terraform state. Any update, including a title-only change, replaces the complete Chart document and will discard them. To preserve these fields, manage this chart as signalfx_observability_template with its complete specification instead.",
 			len(leftovers), strings.Join(leftovers, "\n  "),
 		))
 	}
 	return model, diags
-}
-
-// Read reports server values outside the configuration rules as one warning.
-// Write responses skip this because state comes from the validated plan.
-func (r *observabilityChartResource) ruleWarning(model observabilityChartModel) diag.Diagnostics {
-	violations := r.engine.Validate(model.Name, model.Content)
-	if len(violations) == 0 {
-		return nil
-	}
-	details := make([]string, len(violations))
-	for i, violation := range violations {
-		details[i] = violation.Detail()
-	}
-	return diag.Diagnostics{diag.NewWarningDiagnostic("Stored chart violates configuration rules", fmt.Sprintf(
-		"The stored chart has %d value(s) that Terraform configuration does not allow:\n  %s\n\nThe chart was read into state. Its configuration must satisfy these rules before it can be written.",
-		len(details), strings.Join(details, "\n  "),
-	))}
 }
 
 func (r *observabilityChartResource) setState(ctx context.Context, state *tfsdk.State, model observabilityChartModel) diag.Diagnostics {

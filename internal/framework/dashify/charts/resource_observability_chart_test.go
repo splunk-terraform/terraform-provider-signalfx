@@ -282,7 +282,6 @@ import {
 }
 
 func TestResourceObservabilityChartAPIResponses(t *testing.T) {
-	wrongRoot := template.RootElementDashboard
 	for _, test := range []struct {
 		name, method string
 		status       int
@@ -298,8 +297,7 @@ func TestResourceObservabilityChartAPIResponses(t *testing.T) {
 		{"read failure", "GET", 500, nil, "", false},
 		{"read mismatched ID", "GET", 200, &template.Result{Data: &template.Template{ID: "wrong"}}, "for Chart", false},
 		{"read missing ID", "GET", 200, &template.Result{Data: &template.Template{}}, "without an ID", false},
-		{"read missing root", "GET", 200, &template.Result{Data: &template.Template{ID: "chart-1", Spec: json.RawMessage(observabilityChartFixture)}}, "Chart root element", false},
-		{"read wrong root", "GET", 200, &template.Result{Data: &template.Template{ID: "chart-1", Spec: json.RawMessage(observabilityChartFixture), Metadata: &template.Metadata{RootElement: &wrongRoot}}}, "Chart root element", false},
+		{"read missing root", "GET", 200, &template.Result{Data: &template.Template{ID: "chart-1", Spec: json.RawMessage(observabilityChartFixture)}}, "root element metadata", false},
 		{"update deleted", "PUT", 404, nil, "not found during update", false},
 		{"update mismatched ID", "PUT", 200, &template.Result{Data: &template.Template{ID: "wrong"}}, "for Chart", false},
 		{"update missing data", "PUT", 200, &template.Result{}, "no template record", false},
@@ -594,13 +592,13 @@ func TestResourceObservabilityChartDocumentedExamples(t *testing.T) {
 }
 
 func TestResourceObservabilityChartReadsChangedType(t *testing.T) {
-	root := template.RootElementChart
+	root := template.RootElement("TextWidget")
 	managed, resourceSchema := configuredObservabilityChartResource(t, map[string]http.Handler{
 		"GET /v2/template/{id}": http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			assert.Equal(t, "chart-1", r.PathValue("id"))
 			assert.NoError(t, json.NewEncoder(w).Encode(template.Result{Data: &template.Template{
 				ID: "chart-1", Title: "Changed in UI", Metadata: &template.Metadata{RootElement: &root},
-				Spec: json.RawMessage(`{"<Chart>":[{"<o11y:Text>":[],"widget":{},"chart":{"markdown":"New notes"}}]}`),
+				Spec: json.RawMessage(`{"<TextWidget>":[{"<o11y:Text>":[],"widget":{},"chart":{"markdown":"New notes"}}]}`),
 			}}))
 		}),
 	})
@@ -619,7 +617,7 @@ func TestResourceObservabilityChartReadsChangedType(t *testing.T) {
 	assert.True(t, old.IsNull(), "an out-of-band chart type change must clear the previous content")
 }
 
-func TestResourceObservabilityChartReadsUnlistedVisualization(t *testing.T) {
+func TestResourceObservabilityChartOmitsUnlistedVisualization(t *testing.T) {
 	root := template.RootElementChart
 	deletes := 0
 	managed, resourceSchema := configuredObservabilityChartResource(t, map[string]http.Handler{
@@ -647,11 +645,11 @@ func TestResourceObservabilityChartReadsUnlistedVisualization(t *testing.T) {
 		managed.Read(t.Context(), resource.ReadRequest{State: state}, &response)
 		require.False(t, response.Diagnostics.HasError(), response.Diagnostics)
 		require.Len(t, response.Diagnostics.Warnings(), 1)
-		assert.Contains(t, response.Diagnostics.Warnings()[0].Detail(), "visualization")
+		assert.Contains(t, response.Diagnostics.Warnings()[0].Detail(), "chart.chartOptions.type")
 		model, diags := managed.model(t.Context(), response.State)
 		require.False(t, diags.HasError(), diags)
 		assert.Equal(t, "chart-1", model.ID.ValueString())
-		assert.Equal(t, "pie", model.Content.Attributes()["visualization"].(types.String).ValueString())
+		assert.True(t, model.Content.Attributes()["visualization"].IsNull())
 		deleted := resource.DeleteResponse{State: response.State}
 		managed.Delete(t.Context(), resource.DeleteRequest{State: response.State}, &deleted)
 		require.False(t, deleted.Diagnostics.HasError(), deleted.Diagnostics)

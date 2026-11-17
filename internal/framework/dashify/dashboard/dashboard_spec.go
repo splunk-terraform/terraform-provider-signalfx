@@ -22,7 +22,6 @@ import (
 
 const (
 	dashifyDashboardElement       = "<Dashboard>"
-	dashifyChartElement           = "<Chart>"
 	dashifyPanelElement           = "<Panel>"
 	dashifySectionElement         = "<Section>"
 	dashifyGroupElement           = "<Group>"
@@ -142,6 +141,9 @@ func parseDashboardTemplate(ctx context.Context, engine *interpreter.Engine, rec
 		return model, formatDashboardParseError(err)
 	}
 	model.Title = types.StringValue(record.Title)
+	if strings.TrimSpace(record.Title) == "" {
+		model.Title = types.StringValue(record.ID)
+	}
 	delete(spec, "title")
 	controlBar, controlLeftovers, err := parseDashifyControlBar(spec)
 	if err != nil {
@@ -192,6 +194,9 @@ func parseDashboardTemplate(ctx context.Context, engine *interpreter.Engine, rec
 		containerPath := fmt.Sprintf("container.%d", position)
 		panel, panelDiags, err := parseDashifyPanel(ctx, engine, spec, used, containerPath, value, previous, resolve)
 		diags.Append(panelDiags...)
+		if panelDiags.HasError() {
+			return model, diags
+		}
 		if err != nil {
 			return model, formatDashboardParseError(fmt.Errorf("container %s: %w", id, err))
 		}
@@ -219,8 +224,8 @@ func parseDashboardTemplate(ctx context.Context, engine *interpreter.Engine, rec
 	return model, diags
 }
 
-// Expand referenced source charts into literal content, then choose a lossless
-// typed representation. Configured raw panels remain raw on refresh.
+// Expand referenced source charts into literal content, choosing typed values
+// for recognized chart types. Configured raw panels remain raw on refresh.
 func parseDashifyPanel(ctx context.Context, engine *interpreter.Engine, spec map[string]any, used map[string]bool, panelPath string, raw any, prior dashifyDashboardContainerModel, resolve dashboardChartResolver) (dashifyDashboardContainerModel, diag.Diagnostics, error) {
 	items, ok := raw.([]any)
 	if !ok {
@@ -235,7 +240,7 @@ func parseDashifyPanel(ctx context.Context, engine *interpreter.Engine, spec map
 	}
 	if !prior.TemplateID.IsNull() && !prior.TemplateID.IsUnknown() {
 		panelContent := content
-		if inner, ok := wrappedDashifyChartImport(content); ok && len(content) == 1 {
+		if inner, ok := wrappedDashifyImport(content); ok && len(content) == 1 {
 			panelContent = inner
 		}
 		tag, value, err := oneDashifyElement(panelContent)
@@ -264,7 +269,6 @@ func parseDashifyPanel(ctx context.Context, engine *interpreter.Engine, spec map
 			return dashifyDashboardContainerModel{TemplateID: types.StringValue(id)}, warnings, nil
 		}
 	}
-	_, imported := findDashifyImportElement(content)
 	content, err := expandDashboardChartContent(content, spec, used, resolve, map[string]bool{})
 	if err != nil {
 		return dashifyDashboardContainerModel{}, nil, err
@@ -278,29 +282,17 @@ func parseDashifyPanel(ctx context.Context, engine *interpreter.Engine, spec map
 		return panel, nil, nil
 	}
 	chart, leftovers, diags := charts.DecodeContent(ctx, engine, encoded, prior.Chart)
-	if !diags.HasError() && len(leftovers) == 0 {
-		// A typed import must reproduce the complete document. This also catches
-		// explicit nulls and numbers that cannot survive the typed conversion.
-		rebuilt, encodeDiags := charts.EncodeContent(ctx, engine, chart)
-		if !encodeDiags.HasError() {
-			candidate, err := json.Marshal(rebuilt)
-			if err == nil {
-				equal, compareDiags := panel.InlineContent.StringSemanticEquals(ctx, jsontypes.NewNormalizedValue(string(candidate)))
-				if !compareDiags.HasError() && equal {
-					return dashifyDashboardContainerModel{Chart: chart}, nil, nil
-				}
-			}
-		}
+	if diags.HasError() {
+		return dashifyDashboardContainerModel{}, diags, nil
 	}
-	if imported {
-		reason := "the chart has unsupported content or values that the typed attributes cannot represent"
-		if len(leftovers) > 0 {
-			sort.Strings(leftovers)
-			reason = "the chart has unmodeled fields: " + strings.Join(leftovers, ", ")
-		}
-		return panel, diag.Diagnostics{diag.NewWarningDiagnostic("Chart preserved as raw inline content", "The complete source chart was kept in inline_content because "+reason+". No source chart record was changed.")}, nil
+	if chart.Name == "" {
+		return panel, nil, nil
 	}
-	return panel, nil, nil
+	if len(leftovers) > 0 {
+		sort.Strings(leftovers)
+		diags.AddWarning("Chart fields not represented in Terraform state", fmt.Sprintf("%s omits unsupported or invalid chart settings: %s. These fields are absent from generated Terraform and will be dropped from the dashboard on its next update. The source chart record is unchanged.", panelPath, strings.Join(leftovers, ", ")))
+	}
+	return dashifyDashboardContainerModel{Chart: chart}, diags, nil
 }
 
 // Finds one angle-bracket element while leaving ordinary sibling properties untouched.

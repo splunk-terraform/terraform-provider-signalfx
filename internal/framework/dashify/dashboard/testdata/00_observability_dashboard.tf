@@ -8,7 +8,7 @@ resource "signalfx_observability_template" "chart" {
   root_element = "Chart"
 
   spec = jsonencode({
-    "<Chart>" = []
+    "<Chart>" = [{ "<o11y:FutureChart>" = [] }]
   })
 }
 

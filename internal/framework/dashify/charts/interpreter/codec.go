@@ -6,6 +6,7 @@ package interpreter
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -110,45 +111,84 @@ func encodeValue(p property, value attr.Value) (any, error) {
 	}
 }
 
-// Decode consumes spec to build Terraform values and report unmodeled fields.
+// Decode consumes spec to build valid Terraform values and report omitted fields.
+// Invalid optional settings are omitted; unusable required fields are errors.
 func (e *Engine) Decode(ctx context.Context, name string, spec map[string]any, prior types.Object) (types.Object, []string, diag.Diagnostics) {
-	attributes, exists := e.attributes[name]
-	var diagnostics diag.Diagnostics
+	definition, exists := e.definitions[name]
 	if !exists {
-		diagnostics.AddError("Invalid chart", fmt.Sprintf("Unknown chart %q.", name))
-		return types.ObjectNull(nil), nil, diagnostics
+		return types.ObjectNull(nil), nil, diag.Diagnostics{diag.NewErrorDiagnostic("Invalid chart", fmt.Sprintf("Unknown chart %q.", name))}
 	}
-	null := types.ObjectNull(attributeTypes(attributes))
-	var priorValues map[string]attr.Value
+	properties := definition.Properties
+	typesByName := attributeTypes(e.attributes[name])
+	null := types.ObjectNull(typesByName)
+	tag := "<" + definition.Element + ">"
+	if args, ok := spec[tag].([]any); !ok || len(args) != 0 {
+		return null, nil, diag.Diagnostics{diag.NewErrorDiagnostic("Invalid chart document", "Element "+tag+" must have an empty argument list.")}
+	}
+	// Use the schema's null values for omitted optional settings.
+	empty, _ := decodeObject(ctx, properties, typesByName, map[string]any{}, nil)
+	values := empty.Attributes()
+	var previous map[string]attr.Value
 	if present(prior) {
-		// Only top-level relative durations preserve their configured spelling.
-		priorValues = prior.Attributes()
+		previous = prior.Attributes()
 	}
-	for _, group := range e.roots[name] {
-		if _, ok := spec[group].(map[string]any); !ok {
-			diagnostics.AddError("Invalid chart document", group+" must be an object.")
-			return null, nil, diagnostics
+	var omitted []string
+	var diagnostics diag.Diagnostics
+	drop := func(field string) bool {
+		if !present(values[field]) {
+			return false
+		}
+		values[field] = empty.Attributes()[field]
+		omitted = append(omitted, strings.Join(properties[field].Mapping.Path, "."))
+		return true
+	}
+	for _, field := range keys(properties) {
+		p := properties[field]
+		value, err := decodeValue(ctx, p, typesByName[field], spec, previous[field])
+		var invalid diag.Diagnostics
+		if err == nil {
+			validateValue(field, p, value, &invalid)
+		}
+		if err != nil || invalid.HasError() {
+			if p.Required {
+				diagnostics.AddError("Required chart field cannot be decoded", fmt.Sprintf("%s.%s cannot be represented by the typed chart resource; correct the source chart.", name, field))
+			} else {
+				omitted = append(omitted, strings.Join(p.Mapping.Path, "."))
+			}
+			continue
+		}
+		values[field] = value
+	}
+	// Removing one setting can invalidate a dependent setting. Every pass only
+	// removes values, so this terminates without retrying the chart decoder.
+	for changed := true; changed; {
+		changed = false
+		for _, field := range keys(properties) {
+			p := properties[field]
+			if present(values[field]) {
+				for _, peer := range p.ConflictsWith {
+					if present(values[peer]) {
+						changed = drop(field) || changed
+					}
+				}
+				if condition := p.RequiresValue; condition != nil && !matches(values[condition.Field], condition.Value) {
+					changed = drop(field) || changed
+				}
+			}
+			if condition := p.RequiredWhen; condition != nil && !nonempty(values[field]) && matches(values[condition.Field], condition.Value) {
+				changed = drop(condition.Field) || changed
+			}
 		}
 	}
-	tag := "<" + e.definitions[name].Element + ">"
-	if args, valid := spec[tag].([]any); !valid || len(args) != 0 {
-		diagnostics.AddError("Invalid chart document", "Element "+tag+" must have an empty argument list.")
-		return null, nil, diagnostics
-	}
+	value := types.ObjectValueMust(typesByName, values)
+	diagnostics.Append(e.Validate(name, value)...)
 	delete(spec, tag)
-	value, err := decodeObject(ctx, e.definitions[name].Properties, attributeTypes(attributes), spec, priorValues)
-	if err != nil {
-		diagnostics.AddError("Invalid chart document", err.Error())
-		return null, nil, diagnostics
-	}
-	// Decode does not apply configuration rules, so representable server drift
-	// never blocks refresh or deletion. Callers decide whether to report it.
 	for _, group := range e.roots[name] {
 		if remaining, ok := spec[group].(map[string]any); ok && len(remaining) == 0 {
 			delete(spec, group)
 		}
 	}
-	return value, Leftovers("", spec), diagnostics
+	return value, append(omitted, Leftovers("", spec)...), diagnostics
 }
 
 func decodeObject(ctx context.Context, properties map[string]property, attributeTypes map[string]attr.Type, spec map[string]any, priorValues map[string]attr.Value) (types.Object, error) {

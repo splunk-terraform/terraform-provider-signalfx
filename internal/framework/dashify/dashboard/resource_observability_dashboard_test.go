@@ -573,12 +573,12 @@ func TestDashifyDashboardInlineContentRoundTrip(t *testing.T) {
 			assert.JSONEq(t, content, string(encodedPanelContent))
 
 			root := template.RootElementDashboard
-			parsed, diags := parseDashboardTemplateFixture(t, &template.Template{
+			parsed, diags := parseDashboardTemplate(t.Context(), newDashboardTestEngine(t), &template.Template{
 				Type:     fwdashify.ObservabilityTemplateRecordType,
 				Title:    "Dashboard",
 				Spec:     spec,
 				Metadata: &template.Metadata{RootElement: &root},
-			})
+			}, model, nil)
 			require.Empty(t, diags, diags)
 			require.Len(t, parsed.Container, 1)
 			assert.Empty(t, parsed.Container[0].Chart.Name)
@@ -1119,13 +1119,24 @@ func TestDashboardUsesRecordTitle(t *testing.T) {
 	spec, err = json.Marshal(document)
 	require.NoError(t, err)
 	rootElement := template.RootElementDashboard
-	parsed, diags := parseDashboardTemplateFixture(t, &template.Template{
-		Title:    "Dashboard title",
-		Spec:     spec,
-		Metadata: &template.Metadata{RootElement: &rootElement},
-	})
-	require.False(t, diags.HasError(), diags)
-	assert.Equal(t, "Dashboard title", parsed.Title.ValueString())
+	for _, test := range []struct {
+		name, title, wantTitle string
+	}{
+		{"record title", "Dashboard title", "Dashboard title"},
+		{"empty title", "", "dashboard-id"},
+		{"whitespace title", " \t", "dashboard-id"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			parsed, diags := parseDashboardTemplateFixture(t, &template.Template{
+				ID:       "dashboard-id",
+				Title:    test.title,
+				Spec:     spec,
+				Metadata: &template.Metadata{RootElement: &rootElement},
+			})
+			require.False(t, diags.HasError(), diags)
+			assert.Equal(t, test.wantTitle, parsed.Title.ValueString())
+		})
+	}
 }
 
 func TestDashboardCompactsNullContainersWithoutLosingLayout(t *testing.T) {
@@ -1136,7 +1147,7 @@ func TestDashboardCompactsNullContainersWithoutLosingLayout(t *testing.T) {
 		Spec: json.RawMessage(`{
             "<Dashboard>": [
                 null,
-                {"<Panel>": [{"<Chart>": []}]}
+                {"<Panel>": [{"<Chart>": [{"<o11y:FutureChart>": []}]}]}
             ],
             "layout": {"saved": {"_": {"items": [
                 {"id": "_.0", "w": 2},

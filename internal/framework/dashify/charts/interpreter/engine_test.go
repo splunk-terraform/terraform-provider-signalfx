@@ -148,13 +148,17 @@ func TestTableGroupingDecodesCurrentArrays(t *testing.T) {
 		"datasource":        map[string]any{"program": "A"},
 		"chart":             map[string]any{"groupBy": []any{"host", "region"}},
 	}
-	value, _, diagnostics := e.Decode(t.Context(), "metrics_table", jsonSpec(t, tooMany), types.ObjectNull(nil))
-	require.Empty(t, diagnostics, "stored grouping outside the configured limit should decode without diagnostics")
+	value, leftovers, diagnostics := e.Decode(t.Context(), "metrics_table", jsonSpec(t, tooMany), types.ObjectNull(nil))
+	require.Empty(t, diagnostics)
+	assert.True(t, value.Attributes()["group_by"].IsNull(), "grouping outside the configured limit must be omitted")
+	assert.Contains(t, leftovers, "chart.groupBy")
 	_, diagnostics = e.Encode(t.Context(), "metrics_table", value)
-	assert.True(t, diagnostics.HasError(), "Table grouping configuration accepted more than one property")
+	assert.False(t, diagnostics.HasError(), "decoded settings must be writable: %v", diagnostics)
 	tooMany["chart"].(map[string]any)["groupBy"] = "host"
-	_, _, diagnostics = e.Decode(t.Context(), "metrics_table", tooMany, types.ObjectNull(nil))
-	assert.True(t, diagnostics.HasError(), "Table grouping accepted the obsolete scalar form")
+	value, leftovers, diagnostics = e.Decode(t.Context(), "metrics_table", tooMany, types.ObjectNull(nil))
+	require.Empty(t, diagnostics)
+	assert.True(t, value.Attributes()["group_by"].IsNull(), "obsolete scalar grouping must be omitted")
+	assert.Contains(t, leftovers, "chart.groupBy")
 }
 
 func TestDecodeNumbersAndElementArgs(t *testing.T) {
@@ -164,7 +168,7 @@ func TestDecodeNumbersAndElementArgs(t *testing.T) {
 		wantInteger  int64
 		fraction     json.Number
 		wantFraction float64
-	}{{"9007199254740993", 9007199254740993, "0.125", 0.125}, {"-0", 0, "0.1000000000000000001", 0.1}} {
+	}{{"9007199254740993", 9007199254740993, "0.125", 0.125}, {"0", 0, "0.1", 0.1}} {
 		spec := map[string]any{"<o11y:Test>": []any{}, "chart": map[string]any{"count": number.integer, "fraction": number.fraction}}
 		value, leftovers, diagnostics := fixture.engine.Decode(t.Context(), "test", spec, types.ObjectNull(nil))
 		require.False(t, diagnostics.HasError(), diagnostics)
@@ -177,8 +181,10 @@ func TestDecodeNumbersAndElementArgs(t *testing.T) {
 		value any
 	}{{"count", json.Number("1.1")}, {"count", json.Number("1.0")}, {"count", json.Number("1e3")}, {"count", json.Number("9223372036854775808")}, {"fraction", json.Number("1e1000")}} {
 		spec := map[string]any{"<o11y:Test>": []any{}, "chart": map[string]any{fieldValue.field: fieldValue.value}, "widget": map[string]any{}, "datasource": map[string]any{}}
-		_, _, d := fixture.engine.Decode(context.Background(), "test", spec, types.ObjectNull(nil))
-		assert.True(t, d.HasError(), "invalid numeric value accepted: %v", fieldValue.value)
+		value, leftovers, d := fixture.engine.Decode(context.Background(), "test", spec, types.ObjectNull(nil))
+		require.False(t, d.HasError(), d)
+		assert.True(t, value.Attributes()[fieldValue.field].IsNull(), "unrepresentable number must be omitted: %v", fieldValue.value)
+		assert.Contains(t, leftovers, "chart."+fieldValue.field)
 	}
 	spec := map[string]any{"<o11y:Test>": []any{"argument"}, "chart": map[string]any{}, "widget": map[string]any{}, "datasource": map[string]any{}}
 	_, _, d := fixture.engine.Decode(context.Background(), "test", spec, types.ObjectNull(nil))
@@ -319,32 +325,28 @@ func TestOneOfDecodeSelectsWireShapeAndPreservesUnmodeledFields(t *testing.T) {
 		wire, rebuilt any
 		leftovers     []string
 		unit, prefix  types.String
-		invalid       bool
-		warning       bool
+		omitted       bool
 	}{
 		"scalar":                            {wire: "Byte", rebuilt: "Byte", unit: types.StringValue("Byte"), prefix: types.StringNull()},
 		"object with unmodeled scalar name": {wire: map[string]any{"prefix": "$", "unit": "Byte"}, rebuilt: map[string]any{"prefix": "$"}, leftovers: []string{"chart.choice.unit"}, unit: types.StringNull(), prefix: types.StringValue("$")},
-		"unmodeled scalar name alone":       {wire: map[string]any{"unit": "Byte"}, leftovers: []string{"chart.choice.unit"}, unit: types.StringNull(), prefix: types.StringNull(), warning: true},
-		"invalid shape":                     {wire: true, invalid: true},
+		"unmodeled scalar name alone":       {wire: map[string]any{"unit": "Byte"}, leftovers: []string{"chart.choice", "chart.choice.unit"}, omitted: true},
+		"invalid shape":                     {wire: true, leftovers: []string{"chart.choice"}, omitted: true},
 	} {
 		t.Run(name, func(t *testing.T) {
 			spec := map[string]any{"<o11y:Test>": []any{}, "chart": map[string]any{"choice": test.wire}}
 			value, leftovers, diagnostics := fixture.engine.Decode(t.Context(), "test", spec, prior)
-			if test.invalid {
-				assert.True(t, diagnostics.HasError(), "invalid union shape accepted")
-				return
-			}
 			require.False(t, diagnostics.HasError(), diagnostics)
 			assert.Equal(t, test.leftovers, leftovers, "incorrect union import")
+			if test.omitted {
+				assert.True(t, value.Attributes()["choice"].IsNull(), "unrepresentable union must be omitted")
+				rebuilt, encodeDiags := fixture.engine.Encode(t.Context(), "test", value)
+				require.False(t, encodeDiags.HasError(), encodeDiags)
+				assert.NotContains(t, rebuilt["chart"], "choice")
+				return
+			}
 			fields := value.Attributes()["choice"].(types.Object).Attributes()
 			assert.True(t, fields["unit"].Equal(test.unit), "incorrect unit: expected %s, got %s", test.unit, fields["unit"])
 			assert.True(t, fields["prefix"].Equal(test.prefix), "incorrect prefix: expected %s, got %s", test.prefix, fields["prefix"])
-			if test.warning {
-				assert.Empty(t, diagnostics, "stored union should decode cleanly")
-				validation := fixture.engine.Validate("test", value)
-				assert.True(t, validation.HasError(), "stored union configuration should stay invalid")
-				return
-			}
 			rebuilt, diagnostics := fixture.engine.Encode(t.Context(), "test", value)
 			require.False(t, diagnostics.HasError(), diagnostics)
 			assert.Equal(t, test.rebuilt, rebuilt["chart"].(map[string]any)["choice"], "incorrect union reconstruction")

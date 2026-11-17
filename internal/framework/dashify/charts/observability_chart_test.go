@@ -100,18 +100,17 @@ func TestParseObservabilityChartSpecRejectsUnsupportedShapes(t *testing.T) {
 	root := template.RootElementChart
 	for _, test := range []struct{ name, spec, want string }{
 		{"invalid JSON", `{"<Chart>":`, "invalid Chart specification"},
-		{"missing root", `{}`, "exactly one chart object"},
-		{"wrong root", `{"<Dashboard>":[]}`, "exactly one chart object"},
-		{"non-list root", `{"<Chart>":{}}`, "exactly one chart object"},
-		{"multiple children", `{"<Chart>":[{},{}]}`, "exactly one chart object"},
-		{"non-object child", `{"<Chart>":[false]}`, "not a chart object"},
+		{"missing root", `{}`, "no root element"},
+		{"empty list root", `{"<Dashboard>":[]}`, "no supported chart type"},
+		{"empty object root", `{"<Chart>":{}}`, "no supported chart type"},
+		{"multiple children", `{"<Chart>":[{},{}]}`, "no supported chart type"},
+		{"non-object child", `{"<Chart>":[false]}`, "no supported chart type"},
 		{"multiple tags", `{"<Chart>":[{"<o11y:TimeSeriesChart>":[],"<o11y:Text>":[]}]}`, "multiple element keys"},
-		{"missing tag", `{"<Chart>":[{"chart":{}}]}`, "no element key"},
-		{"unsupported tag", `{"<Chart>":[{"<o11y:Future>":[]}]}`, "unsupported element"},
+		{"missing tag", `{"<Chart>":[{"chart":{}}]}`, "no supported chart type"},
+		{"unsupported tag", `{"<Chart>":[{"<o11y:Future>":[]}]}`, "no supported chart type"},
 		{"nonempty marker", `{"<Chart>":[{"<o11y:TimeSeriesChart>":[true],"datasource":{"program":"A"},"chart":{},"widget":{}}]}`, "empty argument list"},
-		{"missing chart group", `{"<Chart>":[{"<o11y:TimeSeriesChart>":[],"datasource":{"program":"A"},"widget":{}}]}`, "chart must be an object"},
-		{"missing widget group", `{"<Chart>":[{"<o11y:TimeSeriesChart>":[],"datasource":{"program":"A"},"chart":{}}]}`, "widget must be an object"},
-		{"null group", `{"<Chart>":[{"<o11y:TimeSeriesChart>":[],"datasource":{"program":"A"},"chart":null,"widget":{}}]}`, "chart must be an object"},
+		{"missing program", `{"<Chart>":[{"<o11y:TimeSeriesChart>":[],"datasource":{},"chart":{},"widget":{}}]}`, "program"},
+		{"empty program", `{"<Chart>":[{"<o11y:TimeSeriesChart>":[],"datasource":{"program":""},"chart":{},"widget":{}}]}`, "program"},
 		{"wrong program type", `{"<Chart>":[{"<o11y:TimeSeriesChart>":[],"datasource":{"program":42},"chart":{},"widget":{}}]}`, "program"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
@@ -123,7 +122,7 @@ func TestParseObservabilityChartSpecRejectsUnsupportedShapes(t *testing.T) {
 	}
 }
 
-func TestObservabilityChartReadsConfigurationViolations(t *testing.T) {
+func TestObservabilityChartOmitsInvalidOptionalSettings(t *testing.T) {
 	t.Parallel()
 	managed := NewResourceObservabilityChart().(*observabilityChartResource)
 	root := template.RootElementChart
@@ -131,24 +130,29 @@ func TestObservabilityChartReadsConfigurationViolations(t *testing.T) {
 		name, spec string
 		want       []string
 	}{
-		{"missing program", `{"<Chart>":[{"<o11y:TimeSeriesChart>":[],"datasource":{},"chart":{},"widget":{}}]}`, []string{"1 value(s)", "program: must be set"}},
-		{"invalid visualization", `{"<Chart>":[{"<o11y:TimeSeriesChart>":[],"datasource":{"program":"A"},"chart":{"chartOptions":{"type":"pie"}},"widget":{}}]}`, []string{"1 value(s)", "must be one of"}},
-		{"negative numeric controls", `{"<Chart>":[{"<o11y:TimeSeriesChart>":[],"datasource":{"program":"A","maxDelay":-1,"minimumResolution":-1,"sampleSize":-1},"chart":{},"widget":{}}]}`, []string{"3 value(s)", "max_delay: must be at least 0", "minimum_resolution: must be at least 0", "sample_size: must be at least 1"}},
-		{"several violations", `{"<Chart>":[{"<o11y:TimeSeriesChart>":[],"datasource":{},"chart":{"chartOptions":{"type":"pie"}},"widget":{}}]}`, []string{"2 value(s)", "program: must be set", "must be one of"}},
+		{"invalid visualization", `{"<Chart>":[{"<o11y:TimeSeriesChart>":[],"datasource":{"program":"A"},"chart":{"chartOptions":{"type":"pie"}},"widget":{}}]}`, []string{"chart.chartOptions.type"}},
+		{"negative numeric controls", `{"<Chart>":[{"<o11y:TimeSeriesChart>":[],"datasource":{"program":"A","maxDelay":-1,"minimumResolution":-1,"sampleSize":-1},"chart":{},"widget":{}}]}`, []string{"datasource.maxDelay", "datasource.minimumResolution", "datasource.sampleSize"}},
+		{"missing optional groups", `{"<Chart>":[{"<o11y:TimeSeriesChart>":[],"datasource":{"program":"A"}}]}`, nil},
+		{"null optional group", `{"<Chart>":[{"<o11y:TimeSeriesChart>":[],"datasource":{"program":"A"},"chart":null,"widget":{}}]}`, []string{"chart"}},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			model, diags := managed.modelFromRecord(t.Context(), &template.Template{ID: "chart-1", Title: "Chart", Spec: json.RawMessage(test.spec), Metadata: &template.Metadata{RootElement: &root}}, observabilityChartModel{})
 			require.False(t, diags.HasError(), diags)
-			assert.Empty(t, diags.Warnings(), "decoding alone must not apply configuration rules")
 			assert.Equal(t, "chart-1", model.ID.ValueString())
-			warnings := managed.ruleWarning(model)
-			require.Len(t, warnings, 1)
-			assert.Equal(t, "Stored chart violates configuration rules", warnings[0].Summary())
-			for _, want := range test.want {
-				assert.Contains(t, warnings[0].Detail(), want)
+			if len(test.want) > 0 {
+				require.Len(t, diags.Warnings(), 1)
+				for _, want := range test.want {
+					assert.Contains(t, diags.Warnings()[0].Detail(), want)
+				}
+			} else {
+				assert.Empty(t, diags)
 			}
-			_, diags = managed.write(t.Context(), model)
-			assert.True(t, diags.HasError(), "configuration rules must still apply to writes")
+			write, diags := managed.write(t.Context(), model)
+			require.False(t, diags.HasError(), "decoded settings must be writable: %v", diags)
+			assert.Contains(t, string(write.Spec), `"program":"A"`)
+			refreshed, diags := managed.modelFromRecord(t.Context(), &template.Template{ID: "chart-1", Title: "Chart", Spec: write.Spec, Metadata: &template.Metadata{RootElement: &root}}, model)
+			require.Empty(t, diags, "written settings must remain stable on refresh")
+			assert.True(t, model.Content.Equal(refreshed.Content))
 		})
 	}
 }

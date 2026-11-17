@@ -174,7 +174,7 @@ func TestResourceObservabilityDashboardImportsSourceChartsInline(t *testing.T) {
 		t.Run(fmt.Sprintf("includes=%t", included), func(t *testing.T) {
 			root, chartRoot := template.RootElementDashboard, template.RootElementChart
 			typed := template.Template{ID: "source-typed", Spec: json.RawMessage(inlineChartDocuments[0]), Metadata: &template.Metadata{RootElement: &chartRoot}}
-			const rawChart = `{"<Chart>":[{"<o11y:SingleValue>":[],"widget":{},"datasource":{"program":"A"},"chart":{"future":{"sampleCount":9007199254740993}}}]}`
+			const rawChart = `{"<Chart>":[{"<o11y:FutureChart>":[],"widget":{},"datasource":{"program":"A"},"chart":{"future":{"sampleCount":9007199254740993}}}]}`
 			raw := template.Template{ID: "source-raw", Spec: json.RawMessage(rawChart), Metadata: &template.Metadata{RootElement: &chartRoot}}
 			record := template.Template{ID: "ui-dashboard", Type: fwdashify.ObservabilityTemplateRecordType, Title: "Imported", Metadata: &template.Metadata{RootElement: &root}, Spec: json.RawMessage(`{
   "<Dashboard>":[{"<Panel>":[{"<$import.typed>":[]}]},{"<Panel>":[{"<Chart>":[{"<$import.typed>":[]}]}]},{"<Panel>":[{"<$import.raw>":[]}]}],
@@ -633,26 +633,67 @@ func TestDashboardChartReadFailuresPreservePriorState(t *testing.T) {
 
 func TestDashboardPreservesRawChartRepresentation(t *testing.T) {
 	root := template.RootElementDashboard
-	for index, raw := range []string{
-		inlineChartDocuments[0],
-		`{"<Chart>":[{"<o11y:TimeSeriesChart>":[],"widget":{},"datasource":{"program":"A"},"chart":{"chartOptions":{"type":"pie"}}}]}`,
-		`{"<Chart>":[{"<o11y:Text>":[],"widget":{"title":null},"chart":{}}]}`,
-		`{"<Chart>":[{"<o11y:SingleValue>":[],"widget":{},"datasource":{"program":"A"},"chart":{"colorScale":[{"gte":1.0000000000000001,"paletteIndex":0}]}}]}`,
+	for _, test := range []struct {
+		name, raw, wantChart string
+		wantWarnings         int
+	}{
+		{"supported chart", inlineChartDocuments[0], "metrics_time_series", 0},
+		{"invalid optional setting", `{"<Chart>":[{"<o11y:TimeSeriesChart>":[],"widget":{},"datasource":{"program":"A"},"chart":{"chartOptions":{"type":"pie"}}}]}`, "metrics_time_series", 1},
+		{"explicit null", `{"<Chart>":[{"<o11y:Text>":[],"widget":{"title":null},"chart":{}}]}`, "text", 0},
+		{"unmodeled field", `{"<Chart>":[{"<o11y:SingleValue>":[],"widget":{},"datasource":{"program":"A"},"chart":{"colorScale":[{"gte":1.0000000000000001,"paletteIndex":0}],"futureOption":false}}]}`, "metrics_single_value", 1},
+		{"unknown chart type", `{"<Chart>":[{"<o11y:FutureChart>":[],"widget":{},"datasource":{"program":"A"},"chart":{"futureOption":true}}]}`, "", 0},
 	} {
-		spec := json.RawMessage(`{"<Dashboard>":[{"<Panel>":[` + raw + `]}]}`)
-		prior := observabilityDashboardModel{Container: []dashifyDashboardContainerModel{{InlineContent: jsontypes.NewNormalizedValue(raw)}}}
-		parsed, diags := parseDashboardTemplate(t.Context(), newDashboardTestEngine(t), &template.Template{Title: "Raw", Spec: spec, Metadata: &template.Metadata{RootElement: &root}}, prior, nil)
-		require.Empty(t, diags, diags)
-		assert.Empty(t, parsed.Container[0].Chart.Name)
-		assert.JSONEq(t, raw, parsed.Container[0].InlineContent.ValueString())
+		t.Run(test.name, func(t *testing.T) {
+			spec := json.RawMessage(`{"<Dashboard>":[{"<Panel>":[` + test.raw + `]}]}`)
+			prior := observabilityDashboardModel{Container: []dashifyDashboardContainerModel{{InlineContent: jsontypes.NewNormalizedValue(test.raw)}}}
+			parsed, diags := parseDashboardTemplate(t.Context(), newDashboardTestEngine(t), &template.Template{Title: "Raw", Spec: spec, Metadata: &template.Metadata{RootElement: &root}}, prior, nil)
+			require.Empty(t, diags, diags)
+			assert.Empty(t, parsed.Container[0].Chart.Name)
+			assert.JSONEq(t, test.raw, parsed.Container[0].InlineContent.ValueString())
 
-		imported, diags := parseDashboardTemplate(t.Context(), newDashboardTestEngine(t), &template.Template{Title: "Raw", Spec: spec, Metadata: &template.Metadata{RootElement: &root}}, observabilityDashboardModel{}, nil)
-		require.Empty(t, diags, diags)
-		if index == 0 {
-			assert.Equal(t, "metrics_time_series", imported.Container[0].Chart.Name)
-		} else {
-			assert.Empty(t, imported.Container[0].Chart.Name, "imports must keep values that typed configuration cannot reproduce")
-			assert.JSONEq(t, raw, imported.Container[0].InlineContent.ValueString())
-		}
+			imported, diags := parseDashboardTemplate(t.Context(), newDashboardTestEngine(t), &template.Template{Title: "Raw", Spec: spec, Metadata: &template.Metadata{RootElement: &root}}, observabilityDashboardModel{}, nil)
+			require.False(t, diags.HasError(), diags)
+			require.Len(t, diags.Warnings(), test.wantWarnings)
+			assert.Equal(t, test.wantChart, imported.Container[0].Chart.Name)
+			if test.wantChart == "" {
+				assert.JSONEq(t, test.raw, imported.Container[0].InlineContent.ValueString())
+			} else {
+				assert.True(t, imported.Container[0].InlineContent.IsNull())
+			}
+		})
+	}
+}
+
+func TestDashboardKnownChartOmitsInvalidOptionalSettings(t *testing.T) {
+	for _, test := range []struct {
+		name, source, chart, omitted string
+	}{
+		{"invalid enum", `{"<o11y:TimeSeriesChart>":[],"widget":{},"datasource":{"program":"A"},"chart":{"chartOptions":{"type":"pie"}}}`, "metrics_time_series", "chart.chartOptions.type"},
+		{"zero time range", `{"<o11y:TimeSeriesChart>":[],"widget":{},"datasource":{"program":"A","time":{"type":"relative","range":0,"rangeEnd":0}},"chart":{}}`, "metrics_time_series", "datasource.time"},
+		{"malformed number", `{"<o11y:List>":[],"widget":{},"datasource":{"program":"A","maxDelay":"bad"},"chart":{}}`, "metrics_list", "datasource.maxDelay"},
+		{"out of range", `{"<o11y:List>":[],"widget":{},"datasource":{"program":"A","sampleSize":0},"chart":{}}`, "metrics_list", "datasource.sampleSize"},
+		{"scalar grouping", `{"<o11y:TableChart>":[],"widget":{},"datasource":{"program":"A"},"chart":{"groupBy":"host"}}`, "metrics_table", "chart.groupBy"},
+		{"nested required field", `{"<o11y:TimeSeriesChart>":[],"widget":{"links":[{"label":"missing URL"}]},"datasource":{"program":"A"},"chart":{}}`, "metrics_time_series", "widget.links"},
+		{"dependent setting", `{"<o11y:List>":[],"widget":{},"datasource":{"program":"A"},"chart":{"colorBy":"Scale"}}`, "metrics_list", "chart.colorBy"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			root := template.RootElementDashboard
+			record := &template.Template{Title: "Known charts", Metadata: &template.Metadata{RootElement: &root},
+				Spec: json.RawMessage(`{"<Dashboard>":[{"<Panel>":[{"<Chart>":` + test.source + `}]}]}`)}
+			model, diags := parseDashboardTemplate(t.Context(), newDashboardTestEngine(t), record, observabilityDashboardModel{}, nil)
+			require.False(t, diags.HasError(), diags)
+			require.Len(t, model.Container, 1)
+			assert.Equal(t, test.chart, model.Container[0].Chart.Name)
+			assert.True(t, model.Container[0].InlineContent.IsNull())
+			require.Len(t, diags.Warnings(), 1)
+			assert.Contains(t, diags.Warnings()[0].Detail(), test.omitted)
+			written, err := buildDashboardSpecFixture(t, model)
+			require.NoError(t, err, "sanitized typed settings must be writable")
+			assert.Contains(t, string(written), `"program":"A"`)
+			record.Spec = written
+			refreshed, diags := parseDashboardTemplate(t.Context(), newDashboardTestEngine(t), record, model, nil)
+			require.Empty(t, diags, "the sanitized result must be stable on refresh")
+			assert.Equal(t, model.Container[0].Chart, refreshed.Container[0].Chart)
+		})
 	}
 }
