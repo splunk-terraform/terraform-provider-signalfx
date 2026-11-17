@@ -633,35 +633,34 @@ func TestDashboardChartReadFailuresPreservePriorState(t *testing.T) {
 
 func TestDashboardPreservesRawChartRepresentation(t *testing.T) {
 	root := template.RootElementDashboard
-	for index, raw := range []string{
-		inlineChartDocuments[0],
-		`{"<Chart>":[{"<o11y:TimeSeriesChart>":[],"widget":{},"datasource":{"program":"A"},"chart":{"chartOptions":{"type":"pie"}}}]}`,
-		`{"<Chart>":[{"<o11y:Text>":[],"widget":{"title":null},"chart":{}}]}`,
-		`{"<Chart>":[{"<o11y:SingleValue>":[],"widget":{},"datasource":{"program":"A"},"chart":{"colorScale":[{"gte":1.0000000000000001,"paletteIndex":0}],"futureOption":false}}]}`,
-		`{"<Chart>":[{"<o11y:FutureChart>":[],"widget":{},"datasource":{"program":"A"},"chart":{"futureOption":true}}]}`,
+	for _, test := range []struct {
+		name, raw, wantChart string
+		wantWarnings         int
+	}{
+		{"supported chart", inlineChartDocuments[0], "metrics_time_series", 0},
+		{"invalid optional setting", `{"<Chart>":[{"<o11y:TimeSeriesChart>":[],"widget":{},"datasource":{"program":"A"},"chart":{"chartOptions":{"type":"pie"}}}]}`, "metrics_time_series", 1},
+		{"explicit null", `{"<Chart>":[{"<o11y:Text>":[],"widget":{"title":null},"chart":{}}]}`, "text", 0},
+		{"unmodeled field", `{"<Chart>":[{"<o11y:SingleValue>":[],"widget":{},"datasource":{"program":"A"},"chart":{"colorScale":[{"gte":1.0000000000000001,"paletteIndex":0}],"futureOption":false}}]}`, "metrics_single_value", 1},
+		{"unknown chart type", `{"<Chart>":[{"<o11y:FutureChart>":[],"widget":{},"datasource":{"program":"A"},"chart":{"futureOption":true}}]}`, "", 0},
 	} {
-		spec := json.RawMessage(`{"<Dashboard>":[{"<Panel>":[` + raw + `]}]}`)
-		prior := observabilityDashboardModel{Container: []dashifyDashboardContainerModel{{InlineContent: jsontypes.NewNormalizedValue(raw)}}}
-		parsed, diags := parseDashboardTemplate(t.Context(), newDashboardTestEngine(t), &template.Template{Title: "Raw", Spec: spec, Metadata: &template.Metadata{RootElement: &root}}, prior, nil)
-		require.Empty(t, diags, diags)
-		assert.Empty(t, parsed.Container[0].Chart.Name)
-		assert.JSONEq(t, raw, parsed.Container[0].InlineContent.ValueString())
+		t.Run(test.name, func(t *testing.T) {
+			spec := json.RawMessage(`{"<Dashboard>":[{"<Panel>":[` + test.raw + `]}]}`)
+			prior := observabilityDashboardModel{Container: []dashifyDashboardContainerModel{{InlineContent: jsontypes.NewNormalizedValue(test.raw)}}}
+			parsed, diags := parseDashboardTemplate(t.Context(), newDashboardTestEngine(t), &template.Template{Title: "Raw", Spec: spec, Metadata: &template.Metadata{RootElement: &root}}, prior, nil)
+			require.Empty(t, diags, diags)
+			assert.Empty(t, parsed.Container[0].Chart.Name)
+			assert.JSONEq(t, test.raw, parsed.Container[0].InlineContent.ValueString())
 
-		imported, diags := parseDashboardTemplate(t.Context(), newDashboardTestEngine(t), &template.Template{Title: "Raw", Spec: spec, Metadata: &template.Metadata{RootElement: &root}}, observabilityDashboardModel{}, nil)
-		require.False(t, diags.HasError(), diags)
-		if index < 4 {
-			assert.Equal(t, []string{"metrics_time_series", "metrics_time_series", "text", "metrics_single_value"}[index], imported.Container[0].Chart.Name)
-			assert.True(t, imported.Container[0].InlineContent.IsNull())
-			if index == 1 || index == 3 {
-				require.Len(t, diags.Warnings(), 1)
+			imported, diags := parseDashboardTemplate(t.Context(), newDashboardTestEngine(t), &template.Template{Title: "Raw", Spec: spec, Metadata: &template.Metadata{RootElement: &root}}, observabilityDashboardModel{}, nil)
+			require.False(t, diags.HasError(), diags)
+			require.Len(t, diags.Warnings(), test.wantWarnings)
+			assert.Equal(t, test.wantChart, imported.Container[0].Chart.Name)
+			if test.wantChart == "" {
+				assert.JSONEq(t, test.raw, imported.Container[0].InlineContent.ValueString())
 			} else {
-				require.Empty(t, diags)
+				assert.True(t, imported.Container[0].InlineContent.IsNull())
 			}
-		} else {
-			require.Empty(t, diags)
-			assert.Empty(t, imported.Container[0].Chart.Name, "only unknown types automatically use raw content")
-			assert.JSONEq(t, raw, imported.Container[0].InlineContent.ValueString())
-		}
+		})
 	}
 }
 

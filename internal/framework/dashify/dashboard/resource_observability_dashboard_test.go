@@ -1119,13 +1119,24 @@ func TestDashboardUsesRecordTitle(t *testing.T) {
 	spec, err = json.Marshal(document)
 	require.NoError(t, err)
 	rootElement := template.RootElementDashboard
-	parsed, diags := parseDashboardTemplateFixture(t, &template.Template{
-		Title:    "Dashboard title",
-		Spec:     spec,
-		Metadata: &template.Metadata{RootElement: &rootElement},
-	})
-	require.False(t, diags.HasError(), diags)
-	assert.Equal(t, "Dashboard title", parsed.Title.ValueString())
+	for _, test := range []struct {
+		name, title, wantTitle string
+	}{
+		{"record title", "Dashboard title", "Dashboard title"},
+		{"empty title", "", "dashboard-id"},
+		{"whitespace title", " \t", "dashboard-id"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			parsed, diags := parseDashboardTemplateFixture(t, &template.Template{
+				ID:       "dashboard-id",
+				Title:    test.title,
+				Spec:     spec,
+				Metadata: &template.Metadata{RootElement: &rootElement},
+			})
+			require.False(t, diags.HasError(), diags)
+			assert.Equal(t, test.wantTitle, parsed.Title.ValueString())
+		})
+	}
 }
 
 func TestDashboardCompactsNullContainersWithoutLosingLayout(t *testing.T) {

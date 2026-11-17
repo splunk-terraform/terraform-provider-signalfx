@@ -141,6 +141,9 @@ func parseDashboardTemplate(ctx context.Context, engine *interpreter.Engine, rec
 		return model, formatDashboardParseError(err)
 	}
 	model.Title = types.StringValue(record.Title)
+	if strings.TrimSpace(record.Title) == "" {
+		model.Title = types.StringValue(record.ID)
+	}
 	delete(spec, "title")
 	controlBar, controlLeftovers, err := parseDashifyControlBar(spec)
 	if err != nil {
