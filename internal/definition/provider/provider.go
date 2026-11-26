@@ -122,6 +122,14 @@ func New() *schema.Provider {
 				Optional:    true,
 				Description: "Allows for teams to be defined at a provider level, and apply to all applicable resources created.",
 			},
+			"file_output": {
+				Type: schema.TypeString,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+				Optional:    true,
+				Description: "Instead of sending data to the API, write the output to disk",
+			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			team.ResourceName:                    team.NewResource(),
@@ -196,23 +204,30 @@ func configureProvider(ctx context.Context, data *schema.ResourceData) (any, dia
 		MaxIdleConnsPerHost: 100,
 	})
 
-	meta.Client, err = signalfx.NewClient(
-		token,
-		signalfx.APIUrl(meta.APIURL),
-		signalfx.HTTPClient(rc.StandardClient()),
-		signalfx.UserAgent(fmt.Sprintf("Terraform terraform-provider-signalfx/%s", version.ProviderVersion)),
-	)
+	baseDir := data.Get("file_output").(string)
+	if baseDir != "" {
+		meta.Client = &pmeta.FileClient{
+			BaseDir: baseDir,
+		}
+	} else {
+		meta.Client, err = signalfx.NewClient(
+			token,
+			signalfx.APIUrl(meta.APIURL),
+			signalfx.HTTPClient(rc.StandardClient()),
+			signalfx.UserAgent(fmt.Sprintf("Terraform terraform-provider-signalfx/%s", version.ProviderVersion)),
+		)
 
-	if err != nil {
-		return nil, tfext.AsErrorDiagnostics(err)
+		if err != nil {
+			return nil, tfext.AsErrorDiagnostics(err)
+		}
+
+		tflog.Debug(ctx, "Configured settings for http client", tfext.NewLogFields().
+			Field("attempts", attempts).
+			Duration("timeout", timeout).
+			Duration("wait_min", waitmin).
+			Duration("wait_max", waitmax),
+		)
 	}
-
-	tflog.Debug(ctx, "Configured settings for http client", tfext.NewLogFields().
-		Field("attempts", attempts).
-		Duration("timeout", timeout).
-		Duration("wait_min", waitmin).
-		Duration("wait_max", waitmax),
-	)
 
 	for feat, val := range data.Get("feature_preview").(map[string]any) {
 		if err := pmeta.LoadPreviewRegistry(ctx, meta).Configure(ctx, feat, val.(bool)); err != nil {

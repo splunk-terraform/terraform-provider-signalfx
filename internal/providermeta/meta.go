@@ -35,7 +35,7 @@ var (
 // to test CRUD operations within unit tests.
 type Meta struct {
 	Registry *feature.Registry `json:"-"`
-	Client   *signalfx.Client  `json:"-"`
+	Client   Client            `json:"-"`
 
 	AuthToken      string   `json:"auth_token"`
 	APIURL         string   `json:"api_url"`
@@ -50,7 +50,7 @@ type Meta struct {
 // LoadClient returns the configured [signalfx.Client] ready to use.
 //
 // Note that it is a shared instance so high amounts of parallelism could cause issues.
-func LoadClient(ctx context.Context, meta any) (*signalfx.Client, error) {
+func LoadClient(ctx context.Context, meta any) (Client, error) {
 	if m, ok := meta.(*Meta); ok {
 		return m.Client, nil
 	}
