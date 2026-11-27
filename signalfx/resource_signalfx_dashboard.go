@@ -852,7 +852,7 @@ func dashboardRead(d *schema.ResourceData, meta interface{}) error {
 
 	dash, err := config.Client.GetDashboard(context.TODO(), d.Id())
 	if err != nil {
-		if isNotFoundError(err) {
+		if isNotFoundError(err) || isForbiddenError(err) {
 			d.SetId("")
 			return nil
 		}
