@@ -141,3 +141,8 @@ func isNotFoundError(err error) bool {
 	sfxRespErr, ok := err.(*sfxgo.ResponseError)
 	return ok && sfxRespErr.Code() == http.StatusNotFound
 }
+
+func isForbiddenError(err error) bool {
+	sfxRespErr, ok := err.(*sfxgo.ResponseError)
+	return ok && sfxRespErr.Code() == http.StatusForbidden
+}

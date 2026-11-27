@@ -5,9 +5,13 @@ package signalfx
 
 import (
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	sfx "github.com/signalfx/signalfx-go"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -77,6 +81,26 @@ func TestChartWidthAllowed(t *testing.T) {
 			},
 		},
 	})
+}
+
+func TestDashboardReadClearsStateWhenForbidden(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "/v2/dashboard/dashboard-id", r.URL.Path)
+		w.WriteHeader(http.StatusForbidden)
+	}))
+	defer server.Close()
+
+	client, err := sfx.NewClient("test-token", sfx.APIUrl(server.URL), sfx.HTTPClient(server.Client()))
+	if !assert.NoError(t, err) {
+		return
+	}
+	d := schema.TestResourceDataRaw(t, dashboardResource().Schema, nil)
+	d.SetId("dashboard-id")
+
+	err = dashboardRead(d, &signalfxConfig{Client: client})
+
+	assert.NoError(t, err)
+	assert.Empty(t, d.Id())
 }
 
 func TestDashboardTagsApplied(t *testing.T) {
